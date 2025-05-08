@@ -1,0 +1,68 @@
+{% macro render_field(field) %}
+<div class="mb-3">
+    {{ field.label(class="form-label") }}
+    {% if field.errors %}
+        {{ field(class="form-control is-invalid") }}
+        <div class="invalid-feedback">
+            {% for error in field.errors %}
+                {{ error }}
+            {% endfor %}
+        </div>
+    {% else %}
+        {{ field(class="form-control") }}
+    {% endif %}
+    {% if field.description %}
+        <small class="form-text text-muted">{{ field.description }}</small>
+    {% endif %}
+</div>
+{% endmacro %}
+
+{% macro render_checkbox_field(field) %}
+<div class="mb-3 form-check">
+    {% if field.errors %}
+        {{ field(class="form-check-input is-invalid") }}
+        {{ field.label(class="form-check-label") }}
+        <div class="invalid-feedback">
+            {% for error in field.errors %}
+                {{ error }}
+            {% endfor %}
+        </div>
+    {% else %}
+        {{ field(class="form-check-input") }}
+        {{ field.label(class="form-check-label") }}
+    {% endif %}
+    {% if field.description %}
+        <small class="form-text text-muted">{{ field.description }}</small>
+    {% endif %}
+</div>
+{% endmacro %}
+
+{% macro render_field_with_info(field, info_text) %}
+<div class="mb-3">
+    <div class="d-flex align-items-center">
+        {{ field.label(class="form-label me-2") }}
+        <span class="info-icon" data-bs-toggle="tooltip" data-bs-placement="top" title="{{ info_text }}">
+            <i class="fas fa-info-circle text-info"></i>
+        </span>
+    </div>
+    {% if field.errors %}
+        {{ field(class="form-control is-invalid") }}
+        <div class="invalid-feedback">
+            {% for error in field.errors %}
+                {{ error }}
+            {% endfor %}
+        </div>
+    {% else %}
+        {{ field(class="form-control") }}
+    {% endif %}
+    {% if field.description %}
+        <small class="form-text text-muted">{{ field.description }}</small>
+    {% endif %}
+</div>
+{% endmacro %}
+
+{% macro render_submit_button(field) %}
+<div class="d-grid gap-2 mt-4">
+    {{ field(class="btn btn-primary") }}
+</div>
+{% endmacro %}

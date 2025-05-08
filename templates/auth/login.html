@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% from "_form_helpers.html" import render_field, render_checkbox_field, render_submit_button %}
+
+{% block title %}Login - {{ super() }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6 col-lg-5">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">Login</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('auth.login') }}" novalidate>
+                    {{ form.hidden_tag() }}
+                    
+                    {{ render_field(form.email) }}
+                    {{ render_field(form.password) }}
+                    {{ render_checkbox_field(form.remember_me) }}
+                    
+                    {{ render_submit_button(form.submit) }}
+                </form>
+                
+                <div class="mt-3 text-center">
+                    <p>
+                        <a href="{{ url_for('auth.reset_password_request') }}">Forgot your password?</a>
+                    </p>
+                    <p>
+                        <a href="{{ url_for('auth.resend_confirmation') }}">Didn't receive confirmation email?</a>
+                    </p>
+                    <p>
+                        Don't have an account? <a href="{{ url_for('auth.register') }}">Register here</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

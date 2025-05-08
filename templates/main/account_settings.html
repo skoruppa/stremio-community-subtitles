@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% from "_form_helpers.html" import render_field, render_submit_button %}
+
+{% block title %}Account Settings - {{ super() }}{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="mb-3">Account Settings</h1>
+        <p class="lead">
+            Manage your account preferences and settings.
+        </p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Language Preferences</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('main.account_settings') }}" novalidate>
+                    {{ form.hidden_tag() }}
+                    
+                    {{ render_field(form.preferred_language) }}
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        This setting determines which language subtitles will be preferred when watching content in Stremio.
+                    </div>
+                    
+                    {{ render_submit_button(form.submit) }}
+                </form>
+            </div>
+        </div>
+        
+        <div class="card shadow-sm">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0">Security</h5>
+            </div>
+            <div class="card-body">
+                <p>Manage your account security settings:</p>
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('auth.change_password') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-key me-2"></i>Change Password
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">Account Information</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">
+                        <strong>Username:</strong> {{ current_user.username }}
+                    </li>
+                    <li class="list-group-item">
+                        <strong>Email:</strong> {{ current_user.email }}
+                    </li>
+                    <li class="list-group-item">
+                        <strong>Member Since:</strong> {{ current_user.created_at.strftime('%Y-%m-%d') }}
+                    </li>
+                    <li class="list-group-item">
+                        <strong>Current Language:</strong> 
+                        {% for code, name in languages %}
+                            {% if code == current_user.preferred_language %}
+                                {{ name }}
+                            {% endif %}
+                        {% endfor %}
+                    </li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="card shadow-sm">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">Addon Installation</h5>
+            </div>
+            <div class="card-body">
+                <p>Need to reinstall your addon in Stremio?</p>
+                <a href="{{ url_for('main.configure') }}" class="btn btn-primary d-block">Configure Addon</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

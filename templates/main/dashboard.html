@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - {{ super() }}{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="mb-3">Your Dashboard</h1>
+        <p class="lead">
+            Welcome back, {{ current_user.username }}! Here's your recent activity and subtitle history.
+        </p>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-8">
+        <div class="card shadow-sm">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Recent Activity</h5>
+                <span class="badge bg-primary">{{ activities|length }} items</span>
+            </div>
+            <div class="card-body p-0">
+                {% if activities %}
+                <div class="list-group list-group-flush">
+                    {% for activity in activities %}
+                    <a href="{{ url_for('main.content_detail', activity_id=activity.id) }}" class="list-group-item list-group-item-action">
+                        <div class="d-flex">
+                            {% if activity.id in metadata_map and metadata_map[activity.id].poster_url %}
+                            <div class="me-3">
+                                <img src="{{ metadata_map[activity.id].poster_url }}" alt="Poster" class="img-thumbnail" style="height: 80px; width: auto;">
+                            </div>
+                            {% endif %}
+                            <div class="flex-grow-1">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h5 class="mb-1">
+                                        {% if activity.id in metadata_map and metadata_map[activity.id].display_title %}
+                                            {{ metadata_map[activity.id].display_title }}
+                                        {% else %}
+                                            {{ activity.content_id }}
+                                        {% endif %}
+                                    </h5>
+                                    <small class="text-muted">{{ activity.timestamp.strftime('%Y-%m-%d %H:%M') }}</small>
+                                </div>
+                                <p class="mb-1">
+                                    <span class="badge {% if activity.content_type == 'movie' %}bg-info{% else %}bg-warning{% endif %}">
+                                        {{ activity.content_type|capitalize }}
+                                    </span>
+                                    {% if activity.video_hash %}
+                                    <span class="badge bg-secondary">Hash: {{ activity.video_hash }}</span>
+                                    {% endif %}
+                                    <span class="badge bg-dark">ID: {{ activity.content_id }}</span>
+                                </p>
+                            </div>
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="p-4 text-center">
+                    <p class="mb-0">No recent activity found. Start watching content in Stremio with the addon installed!</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">Addon Installation</h5>
+            </div>
+            <div class="card-body">
+                <p>Install the addon in Stremio to start using community subtitles:</p>
+                <a href="{{ url_for('main.configure') }}" class="btn btn-primary d-block">Install Addon</a>
+            </div>
+        </div>
+        
+        <div class="card shadow-sm">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">Your Stats</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Uploaded Subtitles
+                        <span class="badge bg-primary rounded-pill">{{ current_user.uploaded_subtitles|length }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Selected Subtitles
+                        <span class="badge bg-primary rounded-pill">{{ current_user.selections.count() }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        Votes Cast
+                        <span class="badge bg-primary rounded-pill">{{ current_user.votes.count() }}</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

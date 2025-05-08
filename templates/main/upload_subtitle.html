@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% from "_form_helpers.html" import render_field, render_field_with_info, render_submit_button %}
+
+{% block title %}Upload Subtitle - {{ super() }}{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="mb-3">Upload Subtitle</h1>
+        <p class="lead">
+            Upload a subtitle file for 
+            {% if metadata and metadata.title %}
+                <strong>{{ metadata.title }}</strong>
+            {% else %}
+                <strong>{{ activity.content_id }}</strong>
+            {% endif %}
+        </p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Subtitle Information</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" enctype="multipart/form-data" novalidate>
+                    {{ form.hidden_tag() }}
+                    
+                    {{ render_field(form.subtitle_file) }}
+                    {{ render_field(form.language) }}
+                    {{ render_field_with_info(form.encoding, "Enter 'utf8' (default), 'auto' for automatic detection, or a specific encoding like 'cp1250', 'latin1', etc.") }}
+                    {{ render_field_with_info(form.fps, "Select FPS only for subtitle formats that use frames. Leave as 'Auto' if unsure.") }}
+                    {{ render_field(form.author) }}
+                    {{ render_field(form.version_info) }}
+                    
+                    {{ render_submit_button(form.submit) }}
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">Content Information</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">
+                        <strong>Title:</strong> 
+                        {% if metadata and metadata.title %}
+                            {{ metadata.title }}
+                        {% else %}
+                            {{ activity.content_id }}
+                        {% endif %}
+                    </li>
+                    <li class="list-group-item">
+                        <strong>Type:</strong> 
+                        <span class="badge {% if activity.content_type == 'movie' %}bg-info{% else %}bg-warning{% endif %}">
+                            {{ activity.content_type|capitalize }}
+                        </span>
+                    </li>
+                    <li class="list-group-item">
+                        <strong>ID:</strong> {{ activity.content_id }}
+                    </li>
+                    {% if activity.video_hash %}
+                    <li class="list-group-item">
+                        <strong>Video Hash:</strong> 
+                        <span class="text-monospace">{{ activity.video_hash[:12] }}...</span>
+                    </li>
+                    {% endif %}
+                    {% if season is not none %}
+                    <li class="list-group-item">
+                        <strong>Season:</strong> {{ season }}
+                    </li>
+                    {% endif %}
+                    {% if episode is not none %}
+                    <li class="list-group-item">
+                        <strong>Episode:</strong> {{ episode }}
+                    </li>
+                    {% endif %}
+                </ul>
+                
+                {% if metadata and metadata.poster_url %}
+                <div class="mt-3 text-center">
+                    <img src="{{ metadata.poster_url }}" alt="Poster" class="img-thumbnail" style="max-height: 200px;">
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="card shadow-sm">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0">Subtitle Guidelines</h5>
+            </div>
+            <div class="card-body">
+                <ul class="mb-0">
+                    <li>Supported formats: SRT, SUB, ASS, SSA, TXT</li>
+                    <li>Maximum file size: 2MB</li>
+                    <li>Ensure proper timing and formatting</li>
+                    <li>Avoid hardcoded advertisements</li>
+                    <li>Respect copyright and intellectual property</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-3">
+    <div class="col text-center">
+        <a href="{{ url_for('main.content_detail', activity_id=activity.id) }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Back to Content
+        </a>
+    </div>
+</div>
+{% endblock %}

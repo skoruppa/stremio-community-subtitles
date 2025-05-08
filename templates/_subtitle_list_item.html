@@ -1,0 +1,76 @@
+{% macro render_subtitle_item(subtitle, user_votes, user_selection, activity_id, current_user, language_dict) %}
+<div class="list-group-item {% if user_selection and subtitle.id == user_selection.selected_subtitle_id %}active-subtitle{% endif %}">
+    <div class="row align-items-center">
+        <div class="col-md-7">
+            <h5 class="mb-1">
+                {{ language_dict.get(subtitle.language, subtitle.language) }}
+                {% if current_user and subtitle.uploader_id == current_user.id %}
+                <span class="badge bg-info">Your Upload</span>
+                {% endif %}
+            </h5>
+            <p class="mb-1 small text-muted">
+                Uploaded by {{ subtitle.uploader.username }} on {{ subtitle.upload_timestamp.strftime('%Y-%m-%d') }}
+            </p>
+            {% if subtitle.version_info %}
+            <p class="mb-1 small">
+                <i class="fas fa-comment-alt me-1"></i> {{ subtitle.version_info }}
+            </p>
+            {% endif %}
+        </div>
+        <div class="col-md-3">
+            <div class="vote-buttons text-center">
+                {% if current_user.has_role('Admin') or user_selection and subtitle.id == user_selection.selected_subtitle_id or active_subtitle and subtitle.id == active_subtitle.id %}
+                <form method="POST" action="{{ url_for('subtitles.vote_subtitle', subtitle_id=subtitle.id, vote_type='up') }}" class="d-inline">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="activity_id" value="{{ activity_id }}">
+                    <button type="submit" class="btn btn-sm {% if user_votes.get(subtitle.id) == 1 %}btn-success{% else %}btn-outline-success{% endif %}">
+                        <i class="fas fa-thumbs-up"></i>
+                    </button>
+                </form>
+                <span class="vote-count">{{ subtitle.votes }}</span>
+                <form method="POST" action="{{ url_for('subtitles.vote_subtitle', subtitle_id=subtitle.id, vote_type='down') }}" class="d-inline">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="activity_id" value="{{ activity_id }}">
+                    <button type="submit" class="btn btn-sm {% if user_votes.get(subtitle.id) == -1 %}btn-danger{% else %}btn-outline-danger{% endif %}">
+                        <i class="fas fa-thumbs-down"></i>
+                    </button>
+                </form>
+                {% else %}
+                <span class="vote-count">{{ subtitle.votes }}</span>
+                <small class="d-block text-muted">Vote on active subtitles only</small>
+                {% endif %}
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="d-grid gap-2">
+                {% if user_selection and subtitle.id == user_selection.selected_subtitle_id %}
+                <button class="btn btn-sm btn-success" disabled>
+                    <i class="fas fa-check me-1"></i>Selected
+                </button>
+                {% else %}
+                <form method="POST" action="{{ url_for('subtitles.select_subtitle', activity_id=activity_id, subtitle_id=subtitle.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-check me-1"></i>Select
+                    </button>
+                </form>
+                {% endif %}
+                {% if current_user.has_role('Admin') %}
+                <a href="{{ url_for('subtitles.download_subtitle', subtitle_id=subtitle.id) }}" class="btn btn-sm btn-outline-secondary">
+                    <i class="fas fa-download me-1"></i>Download
+                </a>
+                {% endif %}
+                {% if current_user.has_role('Admin') or current_user and subtitle.uploader_id == current_user.id %}
+                <form method="POST" action="{{ url_for('subtitles.delete_subtitle', subtitle_id=subtitle.id) }}" class="mt-1">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="activity_id" value="{{ activity_id }}">
+                    <button type="submit" class="btn btn-sm btn-outline-danger w-100" onclick="return confirm('Are you sure you want to delete this subtitle?')">
+                        <i class="fas fa-trash me-1"></i>Delete
+                    </button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endmacro %}

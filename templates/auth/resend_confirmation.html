@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}Resend Confirmation Email - {{ super() }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">Resend Confirmation Email</h4>
+            </div>
+            <div class="card-body">
+                <p class="mb-3">If you didn't receive the confirmation email or the link has expired, you can request a new one.</p>
+                
+                <form method="POST" action="{{ url_for('auth.resend_confirmation_post') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email Address</label>
+                        <input type="email" class="form-control" id="email" name="email" required>
+                        <div class="form-text">Enter the email address you used to register.</div>
+                    </div>
+                    
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-paper-plane me-1"></i>Resend Confirmation Email
+                        </button>
+                    </div>
+                </form>
+                
+                <div class="mt-3 text-center">
+                    <a href="{{ url_for('auth.login') }}" class="text-decoration-none">
+                        <i class="fas fa-arrow-left me-1"></i>Back to Login
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

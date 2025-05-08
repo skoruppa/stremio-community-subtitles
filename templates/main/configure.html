@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+
+{% block title %}Configure Addon - {{ super() }}{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="mb-3">Configure Stremio Addon</h1>
+        <p class="lead">
+            Follow the instructions below to install the Community Subtitles addon in your Stremio application.
+        </p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Your Personal Addon Link</h5>
+            </div>
+            <div class="card-body">
+                {% if manifest_url %}
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    This is your personal addon link. Do not share it with others as it's tied to your account.
+                </div>
+                
+                <div class="input-group mb-3">
+                    <input type="text" class="form-control" value="{{ manifest_url }}" id="manifestUrl" readonly>
+                    <button class="btn btn-outline-secondary" type="button" onclick="copyToClipboard('manifestUrl')">
+                        <i class="fas fa-copy"></i> Copy
+                    </button>
+                </div>
+                
+                <div class="d-grid gap-2">
+                    {% if stremio_manifest_url %}
+                    <a href="{{ stremio_manifest_url }}" class="btn btn-success btn-lg">
+                        <i class="fas fa-external-link-alt me-2"></i>Install in Stremio
+                    </a>
+                    {% endif %}
+                </div>
+                {% else %}
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    There was a problem generating your addon link. Please contact support.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <h5 class="mb-0">Installation Instructions</h5>
+            </div>
+            <div class="card-body">
+                <ol class="list-group list-group-numbered mb-0">
+                    <li class="list-group-item">
+                        <strong>Open Stremio</strong> on your device
+                    </li>
+                    <li class="list-group-item">
+                        <strong>Click the "Install in Stremio" button</strong> above, or copy the addon URL and add it manually in Stremio
+                    </li>
+                    <li class="list-group-item">
+                        <strong>Confirm the installation</strong> when prompted by Stremio
+                    </li>
+                    <li class="list-group-item">
+                        <strong>Start watching content</strong> with community subtitles
+                    </li>
+                </ol>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">Addon Features</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        Automatic subtitle detection
+                    </li>
+                    <li class="list-group-item">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        Community-contributed subtitles
+                    </li>
+                    <li class="list-group-item">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        Quality voting system
+                    </li>
+                    <li class="list-group-item">
+                        <i class="fas fa-check-circle text-success me-2"></i>
+                        Multiple language support
+                    </li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="card shadow-sm">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0">Need Help?</h5>
+            </div>
+            <div class="card-body">
+                <p>If you're having trouble installing the addon, try these steps:</p>
+                <ul>
+                    <li>Make sure you have the latest version of Stremio</li>
+                    <li>Try copying the URL and adding it manually in Stremio</li>
+                    <li>Restart Stremio and try again</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function copyToClipboard(elementId) {
+    const element = document.getElementById(elementId);
+    element.select();
+    document.execCommand('copy');
+    
+    // Show feedback
+    const button = element.nextElementSibling;
+    const originalText = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-check"></i> Copied!';
+    button.classList.replace('btn-outline-secondary', 'btn-success');
+    
+    // Reset after 2 seconds
+    setTimeout(() => {
+        button.innerHTML = originalText;
+        button.classList.replace('btn-success', 'btn-outline-secondary');
+    }, 2000);
+}
+</script>
+{% endblock %}

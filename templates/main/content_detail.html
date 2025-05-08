@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+
+{% block title %}{{ metadata.display_title if metadata else activity.content_id }} - {{ super() }}{% endblock %}
+
+{% from "_subtitle_list_item.html" import render_subtitle_item %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-4">
+        {% if metadata and metadata.poster_url %}
+        <div class="card shadow-sm mb-4">
+            <img src="{{ metadata.poster_url }}" alt="Poster" class="card-img-top poster-img">
+        </div>
+        {% endif %}
+        
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Content Information</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">
+                        <strong>Type:</strong> 
+                        <span class="badge {% if activity.content_type == 'movie' %}bg-info{% else %}bg-warning{% endif %}">
+                            {{ activity.content_type|capitalize }}
+                        </span>
+                    </li>
+                    <li class="list-group-item">
+                        <strong>ID:</strong> {{ activity.content_id }}
+                    </li>
+                    {% if activity.video_hash %}
+                    <li class="list-group-item">
+                        <strong>Video Hash:</strong> 
+                        <span class="text-monospace">{{ activity.video_hash[:12] }}...</span>
+                    </li>
+                    {% endif %}
+                    {% if season is not none %}
+                    <li class="list-group-item">
+                        <strong>Season:</strong> {{ season }}
+                    </li>
+                    {% endif %}
+                    {% if episode is not none %}
+                    <li class="list-group-item">
+                        <strong>Episode:</strong> {{ episode }}
+                    </li>
+                    {% endif %}
+                    {% if metadata %}
+                    {% if metadata.year %}
+                    <li class="list-group-item">
+                        <strong>Year:</strong> {{ metadata.year }}
+                    </li>
+                    {% endif %}
+                    {% if metadata.runtime %}
+                    <li class="list-group-item">
+                        <strong>Runtime:</strong> {{ metadata.runtime }} min
+                    </li>
+                    {% endif %}
+                    {% if metadata.genres %}
+                    <li class="list-group-item">
+                        <strong>Genres:</strong> 
+                        {% for genre in metadata.genres %}
+                        <span class="badge bg-secondary">{{ genre }}</span>
+                        {% endfor %}
+                    </li>
+                    {% endif %}
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-8">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-dark text-white">
+                <h2 class="mb-0">
+                    {% if metadata and metadata.display_title %}
+                    {{ metadata.display_title }}
+                    {% else %}
+                    {{ activity.content_id }}
+                    {% endif %}
+                </h2>
+            </div>
+            {% if metadata and metadata.overview %}
+            <div class="card-body">
+                <h5>Overview</h5>
+                <p>{{ metadata.overview }}</p>
+            </div>
+            {% endif %}
+        </div>
+        
+        <div class="card shadow-sm mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Available Subtitles</h5>
+                <a href="{{ url_for('subtitles.upload_subtitle', activity_id=activity.id) }}" class="btn btn-sm btn-success">
+                    <i class="fas fa-upload me-1"></i>Upload New
+                </a>
+            </div>
+            <div class="card-body p-0">
+                {% if active_subtitle %}
+                <div class="list-group list-group-flush">
+                    <div class="list-group-item active-subtitle">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h5 class="mb-0">Currently Selected Subtitle</h5>
+                            <div>
+                                {% if user_selection %}
+                                <span class="badge bg-success">User Selected</span>
+                                <form method="POST" action="{{ url_for('subtitles.reset_selection', activity_id=activity.id) }}" class="d-inline ms-2">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure you want to reset your subtitle selection?')">
+                                        <i class="fas fa-times me-1"></i>Reset Selection
+                                    </button>
+                                </form>
+                                {% else %}
+                                <span class="badge bg-info">Auto Selected</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {{ render_subtitle_item(active_subtitle, user_votes, user_selection, activity.id, current_user, LANGUAGE_DICT) }}
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% if subs_matching_hash %}
+                <div class="mt-3">
+                    <h6 class="border-bottom pb-2">Subtitles Matching Video Hash</h6>
+                    <div class="list-group list-group-flush">
+                        {% for subtitle in subs_matching_hash %}
+                            {{ render_subtitle_item(subtitle, user_votes, user_selection, activity.id, current_user, LANGUAGE_DICT) }}
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% if subs_no_hash %}
+                <div class="mt-3">
+                    <h6 class="border-bottom pb-2">General Subtitles (No Hash)</h6>
+                    <div class="list-group list-group-flush">
+                        {% for subtitle in subs_no_hash %}
+                            {{ render_subtitle_item(subtitle, user_votes, user_selection, activity.id, current_user, LANGUAGE_DICT) }}
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% if subs_other_hash %}
+                <div class="mt-3">
+                    <h6 class="border-bottom pb-2">Other Subtitles (Different Hash)</h6>
+                    <div class="list-group list-group-flush">
+                        {% for subtitle in subs_other_hash %}
+                            {{ render_subtitle_item(subtitle, user_votes, user_selection, activity.id, current_user, LANGUAGE_DICT) }}
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% if not active_subtitle and not subs_matching_hash and not subs_no_hash and not subs_other_hash %}
+                <div class="p-4 text-center">
+                    <p class="mb-3">No subtitles available for this content yet.</p>
+                    <a href="{{ url_for('subtitles.upload_subtitle', activity_id=activity.id) }}" class="btn btn-primary">
+                        <i class="fas fa-upload me-1"></i>Be the first to upload subtitles
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

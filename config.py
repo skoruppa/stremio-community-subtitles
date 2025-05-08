@@ -1,0 +1,86 @@
+import os
+import datetime
+from dotenv import load_dotenv
+
+# Load environment variables from .env file if it exists
+load_dotenv()
+
+
+class Config:
+    """Base configuration."""
+    SECRET_KEY = os.environ.get('SECRET_KEY')
+    DEBUG = False
+    TESTING = False
+    
+    # Session configuration
+    PERMANENT_SESSION_LIFETIME = datetime.timedelta(days=7)
+    SESSION_COOKIE_SECURE = False  # Set to True in production with HTTPS
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = 'Lax'
+    
+    # Mail configuration
+    MAIL_SERVER = os.environ.get('MAIL_SERVER')
+    MAIL_PORT = int(os.environ.get('MAIL_PORT') or 587)
+    MAIL_USE_TLS = os.environ.get('MAIL_USE_TLS') is not None or True
+    MAIL_USE_SSL = os.environ.get('MAIL_USE_SSL') is not None or False
+    MAIL_USERNAME = os.environ.get('MAIL_USERNAME')
+    MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
+    MAIL_DEFAULT_SENDER = os.environ.get('MAIL_DEFAULT_SENDER')
+    
+    # Database configuration
+    # Check if USE_SQLITE environment variable is set to a truthy value
+    USE_SQLITE_ENV = os.environ.get('USE_SQLITE', 'false').lower()
+    USE_SQLITE = USE_SQLITE_ENV in ['true', '1', 't', 'y', 'yes']
+
+    if USE_SQLITE:
+        # Ensure the instance folder exists for SQLite
+        instance_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'instance')
+        if not os.path.exists(instance_path):
+            os.makedirs(instance_path)
+        SQLALCHEMY_DATABASE_URI = f"sqlite:///{os.path.join(instance_path, 'local.db')}"
+    else:
+        # Example URI: postgresql://user:password@host:port/database
+        SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
+            'postgresql://stremio_community_subs:password@localhost:5436/stremio_community_subs?sslmode=disable'
+    
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
+    
+    TMDB_KEY = os.environ.get('TMDB_API_KEY')
+    
+    UPLOAD_FOLDER = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'uploads')
+    
+    ALLOWED_EXTENSIONS = {'txt', 'srt', 'sub', 'ass', 'ssa'}
+    
+    CACHE_TYPE = 'SimpleCache'
+    # CACHE_DIR = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'instance/cache')
+    CACHE_DEFAULT_TIMEOUT = 300
+
+
+class DevelopmentConfig(Config):
+    """Development configuration."""
+    DEBUG = True
+
+
+class ProductionConfig(Config):
+    """Production configuration."""
+    # Production specific settings
+    SESSION_COOKIE_SECURE = True
+
+
+class TestingConfig(Config):
+    """Testing configuration."""
+    TESTING = True
+    SQLALCHEMY_DATABASE_URI = 'sqlite:///:memory:'
+
+
+config_by_name = {
+    'development': DevelopmentConfig,
+    'production': ProductionConfig,
+    'testing': TestingConfig,
+    'default': DevelopmentConfig
+}
+
+
+def get_config():
+    env = os.getenv('FLASK_ENV', 'development')
+    return config_by_name.get(env, DevelopmentConfig)

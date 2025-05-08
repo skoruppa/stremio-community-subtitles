@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Confirm Your Email</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            border-radius: 5px 5px 0 0;
+        }
+        .content {
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-top: none;
+            border-radius: 0 0 5px 5px;
+        }
+        .button {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .footer {
+            margin-top: 20px;
+            font-size: 12px;
+            color: #777;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Stremio Community Subs</h1>
+    </div>
+    <div class="content">
+        <h2>Hello {{ user.username }},</h2>
+        <p>Thank you for registering with Stremio Community Subs! Please confirm your email address by clicking the button below:</p>
+        
+        <p style="text-align: center;">
+            <a href="{{ url_for('auth.confirm_email', token=token, _external=True) }}" class="button">Confirm Email</a>
+        </p>
+        
+        <p>If the button doesn't work, you can also copy and paste the following link into your browser:</p>
+        <p>{{ url_for('auth.confirm_email', token=token, _external=True) }}</p>
+        
+        <p>This link will expire in 24 hours.</p>
+        
+        <p>If you did not register for Stremio Community Subs, please ignore this email.</p>
+        
+        <p>Best regards,<br>The Stremio Community Subs Team</p>
+    </div>
+    <div class="footer">
+        <p>This is an automated message, please do not reply to this email.</p>
+    </div>
+</body>
+</html>

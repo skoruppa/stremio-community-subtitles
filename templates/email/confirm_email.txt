@@ -1,0 +1,15 @@
+Hello {{ user.username }},
+
+Thank you for registering with Stremio Community Subs! Please confirm your email address by clicking the link below:
+
+{{ url_for('auth.confirm_email', token=token, _external=True) }}
+
+This link will expire in 24 hours.
+
+If you did not register for Stremio Community Subs, please ignore this email.
+
+Best regards,
+The Stremio Community Subs Team
+
+---
+This is an automated message, please do not reply to this email.
