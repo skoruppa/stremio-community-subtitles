@@ -1,10 +1,11 @@
 import os
 import click
-from app import create_app, db
+from scs import create_app, db
 from waitress import serve
 
 # Create the Flask app instance using the factory
 app = create_app()
+
 
 @app.cli.command("init-db")
 def init_db_command():
@@ -15,10 +16,11 @@ def init_db_command():
     db.create_all()
     click.echo("Initialized the database!")
 
+
 @app.cli.command("create-roles")
 def create_roles_command():
     """Create the default roles."""
-    from app.models import Role
+    from scs.models import Role
     click.echo("Creating default roles...")
     try:
         # Check if roles already exist
@@ -47,7 +49,7 @@ def create_roles_command():
 @click.argument("password")
 def create_admin_command(email, username, password):
     """Create an admin user."""
-    from app.models import User, Role
+    from scs.models import User, Role
     click.echo(f"Creating admin user: {username} ({email})...")
     try:
         # Check if user already exists
@@ -75,6 +77,7 @@ def create_admin_command(email, username, password):
     except Exception as e:
         db.session.rollback()
         click.echo(f"Error creating admin user: {e}")
+
 
 if __name__ == '__main__':
     # Get host and port from environment variables or use defaults

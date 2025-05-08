@@ -5,7 +5,6 @@ import base64
 import tempfile
 from flask import Blueprint, url_for, Response, request, current_app
 from flask_login import current_user, login_required
-from sqlalchemy.orm import Session
 from ..extensions import db
 from ..models import User, Subtitle, UserActivity, UserSubtitleSelection
 from .utils import respond_with
