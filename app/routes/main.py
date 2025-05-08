@@ -5,7 +5,7 @@ from sqlalchemy import func
 from ..models import UserActivity, Subtitle, UserSubtitleSelection, SubtitleVote
 from ..forms import LanguagePreferenceForm
 from ..extensions import db
-from ..lib.metadata import get_metadata
+from app.lib.metadata import get_metadata  # Changed to absolute import
 from ..languages import LANGUAGES, LANGUAGE_DICT
 
 main_bp = Blueprint('main', __name__)
