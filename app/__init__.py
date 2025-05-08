@@ -46,11 +46,11 @@ def create_app():
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
     # Create cache directory if it doesn't exist
-    # os.makedirs(scs.config['CACHE_DIR'], exist_ok=True)
+    # os.makedirs(app.config['CACHE_DIR'], exist_ok=True)
 
     @app.shell_context_processor
     def make_shell_context():
-        return {'db': db, 'scs': app}
+        return {'db': db, 'app': app}
 
     return app
 
