@@ -9,7 +9,7 @@ MANIFEST = {
     'id': 'com.community.stremio-subtitles',
     'version': '0.2.0',
     'name': 'Community Subtitles',
-    'logo': f'https://{request.host}/logo.png',  # Placeholder logo URL
+    'logo': 'https://host/logo.png',  # Placeholder logo URL
     'description': 'Community-driven subtitle addon for Stremio with user accounts and uploading.',
     'types': ['movie', 'series'],
     'catalogs': [],
@@ -33,6 +33,8 @@ def addon_manifest(manifest_token):
 
     # Make a copy to avoid modifying the original MANIFEST dict
     manifest_data = MANIFEST.copy()
+    manifest_data['logo'] = f'https://{request.host}/logo.png'
+
     # Ensure behaviorHints exists and make a copy
     if 'behaviorHints' in manifest_data:
         manifest_data['behaviorHints'] = manifest_data['behaviorHints'].copy()
@@ -54,6 +56,8 @@ def generic_manifest():
     current_app.logger.info("Generic manifest requested.")
     # Make a copy to avoid modifying the original MANIFEST dict
     manifest_data = MANIFEST.copy()
+    manifest_data['logo'] = f'https://{request.host}/logo.png'
+
     # Ensure behaviorHints exists and make a copy
     if 'behaviorHints' in manifest_data:
         manifest_data['behaviorHints'] = manifest_data['behaviorHints'].copy()
