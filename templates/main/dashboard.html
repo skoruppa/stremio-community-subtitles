@@ -27,7 +27,7 @@
                         <div class="d-flex">
                             {% if activity.id in metadata_map and metadata_map[activity.id].poster_url %}
                             <div class="me-3">
-                                <img src="{{ metadata_map[activity.id].poster_url }}" alt="Poster" class="img-thumbnail" style="height: 80px; width: 57px;">
+                                <img src="{{ metadata_map[activity.id].poster_url }}" alt="Poster" class="img-thumbnail" style="height: 80px; width: auto; max-width: fit-content;">
                             </div>
                             {% endif %}
                             <div class="flex-grow-1">
