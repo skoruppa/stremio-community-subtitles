@@ -14,6 +14,15 @@ class Config:
 
     # URL Scheme for external URLs
     PREFERRED_URL_SCHEME = os.environ.get('PREFERRED_URL_SCHEME', 'http')
+
+    # Storage Backend ('local' or 'cloudinary')
+    STORAGE_BACKEND = os.environ.get('STORAGE_BACKEND', 'local')
+
+    # Cloudinary Configuration (only if STORAGE_BACKEND is 'cloudinary')
+    CLOUDINARY_CLOUD_NAME = os.environ.get('CLOUDINARY_CLOUD_NAME')
+    CLOUDINARY_API_KEY = os.environ.get('CLOUDINARY_API_KEY')
+    CLOUDINARY_API_SECRET = os.environ.get('CLOUDINARY_API_SECRET')
+    CLOUDINARY_SUBTITLES_FOLDER = os.environ.get('CLOUDINARY_SUBTITLES_FOLDER', 'community_subtitles')
     
     # Session configuration
     PERMANENT_SESSION_LIFETIME = datetime.timedelta(days=7)

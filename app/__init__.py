@@ -18,6 +18,24 @@ def create_app():
     # Ensure the instance folder exists
     os.makedirs(app.instance_path, exist_ok=True)
 
+    # Initialize Cloudinary if configured
+    if app.config.get('STORAGE_BACKEND') == 'cloudinary':
+        import cloudinary
+        if (app.config.get('CLOUDINARY_CLOUD_NAME') and
+                app.config.get('CLOUDINARY_API_KEY') and
+                app.config.get('CLOUDINARY_API_SECRET')):
+            cloudinary.config(
+                cloud_name=app.config['CLOUDINARY_CLOUD_NAME'],
+                api_key=app.config['CLOUDINARY_API_KEY'],
+                api_secret=app.config['CLOUDINARY_API_SECRET'],
+                secure=True  # Use HTTPS for Cloudinary URLs
+            )
+            app.logger.info("Cloudinary configured for subtitle storage.")
+        else:
+            app.logger.warning("STORAGE_BACKEND is 'cloudinary' but Cloudinary credentials are not fully set. Falling back to local storage behavior might be unexpected.")
+            # Optionally, force STORAGE_BACKEND to 'local' or raise an error
+            # For now, it will proceed, and parts of the app might fail if they expect Cloudinary.
+
     if app.config['DEBUG']:
         logging.basicConfig(level=logging.DEBUG)
     else:
@@ -53,5 +71,3 @@ def create_app():
         return {'db': db, 'app': app}
 
     return app
-
-

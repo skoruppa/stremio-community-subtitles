@@ -33,6 +33,7 @@ jwt = "*"
 chardet = "*"
 "kitsu.py" = "*"
 pycountry = "*"
+cloudinary = "*"
 
 [dev-packages]
 

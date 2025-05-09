@@ -12,6 +12,7 @@ cffi==1.17.1
 chardet==5.2.0
 charset-normalizer==3.4.2
 click==8.1.8
+cloudinary==1.44.0
 cryptography==44.0.3
 dacite==1.9.2
 dnspython==2.7.0
