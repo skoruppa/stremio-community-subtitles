@@ -10,6 +10,7 @@ from ..languages import LANGUAGES, LANGUAGE_DICT
 
 main_bp = Blueprint('main', __name__)
 
+
 @main_bp.route('/')
 def index():
     """Main landing page: Shows login/register or dashboard if logged in."""
@@ -17,14 +18,15 @@ def index():
         return redirect(url_for('main.dashboard'))
     return render_template('main/index.html')
 
+
 @main_bp.route('/dashboard')
 @login_required
 def dashboard():
     """Displays the user's dashboard, showing recent activity."""
     # Fetch recent activity for the current user
-    recent_activity = UserActivity.query.filter_by(user_id=current_user.id)\
-                                        .order_by(UserActivity.timestamp.desc())\
-                                        .limit(20).all()
+    recent_activity = UserActivity.query.filter_by(user_id=current_user.id) \
+        .order_by(UserActivity.timestamp.desc()) \
+        .limit(20).all()
 
     # Fetch metadata for each activity item
     activity_metadata = {}
@@ -44,8 +46,9 @@ def dashboard():
 
     # Pass activities and their metadata to the template
     return render_template('main/dashboard.html',
-                          activities=recent_activity,
-                          metadata_map=activity_metadata)
+                           activities=recent_activity,
+                           metadata_map=activity_metadata)
+
 
 @main_bp.route('/content/<uuid:activity_id>')
 @login_required
@@ -68,7 +71,7 @@ def content_detail(activity_id):
         user_selection_specific = UserSubtitleSelection.query.filter_by(
             user_id=current_user.id, content_id=activity.content_id, video_hash=activity.video_hash
         ).options(joinedload(UserSubtitleSelection.selected_subtitle).joinedload(Subtitle.uploader)).first()
-        
+
         if user_selection_specific and user_selection_specific.selected_subtitle:
             user_selection = user_selection_specific
             active_subtitle = user_selection.selected_subtitle
@@ -78,7 +81,7 @@ def content_detail(activity_id):
         user_selection_general = UserSubtitleSelection.query.filter_by(
             user_id=current_user.id, content_id=activity.content_id, video_hash=None
         ).options(joinedload(UserSubtitleSelection.selected_subtitle).joinedload(Subtitle.uploader)).first()
-        
+
         if user_selection_general and user_selection_general.selected_subtitle:
             user_selection = user_selection_general
             active_subtitle = user_selection.selected_subtitle
@@ -137,7 +140,7 @@ def content_detail(activity_id):
 
     # Fetch metadata using the helper
     metadata = get_metadata(activity.content_id, activity.content_type)
-    
+
     # Add display_title to metadata
     if metadata:
         # Simple title construction for display
@@ -176,7 +179,7 @@ def content_detail(activity_id):
     all_subtitle_ids.extend([sub.id for sub in subs_matching_hash])
     all_subtitle_ids.extend([sub.id for sub in subs_other_hash])
     all_subtitle_ids.extend([sub.id for sub in subs_no_hash])
-    
+
     # Fetch all user votes for these subtitles
     user_votes = {}
     if all_subtitle_ids:
@@ -184,10 +187,10 @@ def content_detail(activity_id):
             SubtitleVote.user_id == current_user.id,
             SubtitleVote.subtitle_id.in_(all_subtitle_ids)
         ).all()
-        
+
         for vote in votes:
             user_votes[vote.subtitle_id] = vote.vote_value
-    
+
     # Pass context to the template
     context = {
         'activity': activity,
@@ -206,6 +209,7 @@ def content_detail(activity_id):
     }
     return render_template('main/content_detail.html', **context)
 
+
 @main_bp.route('/configure')
 @login_required
 def configure():
@@ -220,8 +224,9 @@ def configure():
         stremio_manifest_url = f"stremio://{request.host}{manifest_path}"
 
     return render_template('main/configure.html',
-                          manifest_url=manifest_url,
-                          stremio_manifest_url=stremio_manifest_url)
+                           manifest_url=manifest_url,
+                           stremio_manifest_url=stremio_manifest_url)
+
 
 @main_bp.route('/account', methods=['GET', 'POST'])
 @login_required
@@ -229,10 +234,10 @@ def account_settings():
     """Allows user to change their preferred language."""
     form = LanguagePreferenceForm()
     form.preferred_language.choices = LANGUAGES
-    
+
     if request.method == 'GET':
         form.preferred_language.data = current_user.preferred_language
-    
+
     if form.validate_on_submit():
         try:
             current_user.preferred_language = form.preferred_language.data
