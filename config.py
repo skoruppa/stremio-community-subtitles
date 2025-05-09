@@ -44,6 +44,9 @@ class Config:
             'postgresql://stremio_community_subs:password@localhost:5436/stremio_community_subs?sslmode=disable'
     
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        'pool_pre_ping': True
+    }
     
     TMDB_KEY = os.environ.get('TMDB_API_KEY')
     

@@ -115,7 +115,7 @@
                                 {% endif %}
                             </div>
                         </div>
-                        {{ render_subtitle_item(active_subtitle, user_votes, user_selection, activity.id, current_user, LANGUAGE_DICT) }}
+                        {{ render_subtitle_item(active_subtitle, user_votes, user_selection, activity.id, activity.video_hash, current_user, LANGUAGE_DICT) }}
                     </div>
                 </div>
                 {% endif %}
@@ -125,7 +125,7 @@
                     <h6 class="border-bottom pb-2">Subtitles Matching Video Hash</h6>
                     <div class="list-group list-group-flush">
                         {% for subtitle in subs_matching_hash %}
-                            {{ render_subtitle_item(subtitle, user_votes, user_selection, activity.id, current_user, LANGUAGE_DICT) }}
+                            {{ render_subtitle_item(subtitle, user_votes, user_selection, activity.id, activity.video_hash, current_user, LANGUAGE_DICT) }}
                         {% endfor %}
                     </div>
                 </div>
@@ -136,7 +136,7 @@
                     <h6 class="border-bottom pb-2">General Subtitles (No Hash)</h6>
                     <div class="list-group list-group-flush">
                         {% for subtitle in subs_no_hash %}
-                            {{ render_subtitle_item(subtitle, user_votes, user_selection, activity.id, current_user, LANGUAGE_DICT) }}
+                            {{ render_subtitle_item(subtitle, user_votes, user_selection, activity.id, activity.video_hash, current_user, LANGUAGE_DICT) }}
                         {% endfor %}
                     </div>
                 </div>
@@ -147,7 +147,7 @@
                     <h6 class="border-bottom pb-2">Other Subtitles (Different Hash)</h6>
                     <div class="list-group list-group-flush">
                         {% for subtitle in subs_other_hash %}
-                            {{ render_subtitle_item(subtitle, user_votes, user_selection, activity.id, current_user, LANGUAGE_DICT) }}
+                            {{ render_subtitle_item(subtitle, user_votes, user_selection, activity.id, activity.video_hash, current_user, LANGUAGE_DICT) }}
                         {% endfor %}
                     </div>
                 </div>
