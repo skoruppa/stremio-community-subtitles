@@ -8,12 +8,12 @@ manifest_bp = Blueprint('manifest', __name__)
 MANIFEST = {
     'id': 'com.community.stremio-subtitles',
     'version': '0.2.0',
-    'name': 'Community Subtitles',
+    'name': 'Stremio Community Subtitles',
     'logo': 'https://host/static/logo.png',  # Placeholder logo URL
     'description': 'Community-driven subtitle addon for Stremio with user accounts and uploading.',
     'types': ['movie', 'series'],
     'catalogs': [],
-    'contactEmail': 'YOUR_EMAIL@example.com',  # Placeholder email
+    'contactEmail': 'skoruppa@gmail.com',
     'behaviorHints': {'configurable': True, 'configurationRequired': True},
     'resources': ['subtitles'],
 }
