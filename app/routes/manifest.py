@@ -1,4 +1,4 @@
-from flask import Blueprint, current_app
+from flask import Blueprint, current_app, request
 from .utils import respond_with
 from ..models import User
 
@@ -9,7 +9,7 @@ MANIFEST = {
     'id': 'com.community.stremio-subtitles',
     'version': '0.2.0',
     'name': 'Community Subtitles',
-    'logo': 'https://YOUR_DOMAIN/logo.png',  # Placeholder logo URL
+    'logo': f'https://{request.host}/logo.png',  # Placeholder logo URL
     'description': 'Community-driven subtitle addon for Stremio with user accounts and uploading.',
     'types': ['movie', 'series'],
     'catalogs': [],

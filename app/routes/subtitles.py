@@ -134,7 +134,7 @@ def addon_stream(manifest_token: str, content_type: str, content_id: str, params
         subtitles_list.append({
             'id': stremio_sub_id,
             'url': download_url,
-            'lang': f"Com Subs: {preferred_lang}"  # Display user's preferred lang in Stremio UI
+            'lang': preferred_lang  # Display user's preferred lang in Stremio UI
         })
         current_app.logger.info(f"Generated download URL for context: {download_context}")
     except Exception as e:
