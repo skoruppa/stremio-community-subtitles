@@ -3,6 +3,7 @@ import datetime
 import json
 import base64
 import tempfile
+import shutil
 from flask import Blueprint, url_for, Response, request, current_app
 from flask_login import current_user, login_required
 from sqlalchemy.orm import Session
@@ -145,7 +146,7 @@ def addon_stream(manifest_token: str, content_type: str, content_id: str, params
 
 
 # Unified download route handling dynamic subtitle lookup and user overrides
-@subtitles_bp.route('/<manifest_token>/download/<download_identifier>.vtt')
+@subtitles_bp.route('/<manifest_token>/download/<download_identifier>')
 def unified_download(manifest_token: str, download_identifier: str):
     """
     Decodes the download_identifier to get context, checks for user selection override,
@@ -177,9 +178,8 @@ def unified_download(manifest_token: str, download_identifier: str):
         return Response(generate_vtt_message("Invalid download link."), status=400, mimetype='text/vtt')
 
     # --- Subtitle Selection Logic ---
-    found_subtitle = None
     message_key = None
-    found_subtitle = None  # Initialize
+    found_subtitle = None
 
     # --- Subtitle Selection Logic ---
     # This logic determines which subtitle (if any) should be served.
@@ -248,41 +248,47 @@ def unified_download(manifest_token: str, download_identifier: str):
 
     # --- Serve Content ---
     if found_subtitle:
-        # --- Serve Real Subtitle (Assume VTT) ---
         subtitle_id = found_subtitle.id
         current_app.logger.info(f"Serving subtitle ID {subtitle_id} (Relative Path: {found_subtitle.file_path})")
 
-        # Construct full path using UPLOAD_FOLDER from config
         if not found_subtitle.file_path:
             current_app.logger.error(f"File path missing in DB for Subtitle ID: {subtitle_id}")
             return Response(generate_vtt_message(f"Subtitle file path error (ID: {subtitle_id})."), status=500, mimetype='text/vtt')
 
-        # Use absolute path based on config for reliability
-        file_path = os.path.join(current_app.config['UPLOAD_FOLDER'], found_subtitle.file_path)
+        file_path_on_disk = os.path.join(current_app.config['UPLOAD_FOLDER'], found_subtitle.file_path)
 
-        if not os.path.exists(file_path):
-            current_app.logger.error(f"Subtitle file path invalid or file not found: {file_path} for ID: {subtitle_id}")
+        if not os.path.exists(file_path_on_disk):
+            current_app.logger.error(f"Subtitle file path invalid or file not found: {file_path_on_disk} for ID: {subtitle_id}")
             return Response(generate_vtt_message(f"Subtitle file missing (ID: {subtitle_id})."), status=404, mimetype='text/vtt')
 
         try:
-            # Read the VTT file content directly
-            with open(file_path, 'r', encoding='utf-8') as f:  # Assume UTF-8 for VTT
-                vtt_content = f.read()
-            # Basic VTT validation (optional but recommended)
-            if not vtt_content.strip().startswith("WEBVTT"):
-                current_app.logger.error(f"File content does not look like VTT: {file_path}")
-                raise ValueError("Invalid VTT file format")
+            # Determine mimetype based on file extension
+            _, file_ext = os.path.splitext(found_subtitle.file_path)
+            mimetype = 'text/vtt' # Default
+            if file_ext.lower() in ['.ass', '.ssa']:
+                mimetype = 'application/x-ass'  # Or 'text/plain' if Stremio can't handle it
+            
+            # For VTT, we can validate. For ASS/SSA, serve as is.
+            if mimetype == 'text/vtt':
+                with open(file_path_on_disk, 'r', encoding='utf-8') as f:
+                    file_content = f.read()
+                if not file_content.strip().startswith("WEBVTT"):
+                    current_app.logger.error(f"File content does not look like VTT: {file_path_on_disk}")
+                    # Fallback to serving a VTT error message if it's supposed to be VTT but isn't
+                    return Response(generate_vtt_message(f"Invalid VTT format (ID: {subtitle_id})."), status=500, mimetype='text/vtt')
+                return Response(file_content, mimetype=mimetype)
+            else:
+                from flask import send_file
+                return send_file(file_path_on_disk, mimetype=mimetype, as_attachment=False) # Serve inline
 
-            return Response(vtt_content, mimetype='text/vtt')
         except FileNotFoundError:
-            current_app.logger.error(f"Subtitle file disappeared after check: {file_path} for ID: {subtitle_id}")
+            current_app.logger.error(f"Subtitle file disappeared after check: {file_path_on_disk} for ID: {subtitle_id}")
             return Response(generate_vtt_message(f"Subtitle file missing (ID: {subtitle_id})."), status=404, mimetype='text/vtt')
         except Exception as e:
-            current_app.logger.error(f"Error reading or serving subtitle file ID {subtitle_id} at path {file_path}: {e}")
+            current_app.logger.error(f"Error reading or serving subtitle file ID {subtitle_id} at path {file_path_on_disk}: {e}")
             return Response(generate_vtt_message(f"Error reading subtitle file (ID: {subtitle_id})."), status=500, mimetype='text/vtt')
-
     else:
-        # --- Serve Placeholder Message ---
+        # --- Serve Placeholder Message (always VTT) ---
         # Determine final message key if not set by default logic (e.g., user selection failed)
         if not message_key:
             message_key = 'select_web'  # Default fallback message
@@ -362,41 +368,53 @@ def upload_subtitle(activity_id):
                 except ValueError:
                     fps = None
             
-            # Generate unique filename for the VTT file
-            vtt_filename = f"{uuid.uuid4()}.vtt"
+            # Determine final filename and path
+            final_filename_base = str(uuid.uuid4())
             
             # Create directory if it doesn't exist
-            content_dir = os.path.join(current_app.config['UPLOAD_FOLDER'], activity.content_id.replace(':', '_'))
-            os.makedirs(content_dir, exist_ok=True)
+            content_dir_name = activity.content_id.replace(':', '_')
+            content_full_dir = os.path.join(current_app.config['UPLOAD_FOLDER'], content_dir_name)
+            os.makedirs(content_full_dir, exist_ok=True)
+
+            saved_file_extension = file_extension # Default to original extension
             
-            vtt_file_path = os.path.join(content_dir, vtt_filename)
-            
-            # Save the original file to a temporary location
+            # Save the original file to a temporary location first
             with tempfile.NamedTemporaryFile(delete=False, suffix=file_extension) as temp_file:
                 subtitle_file.save(temp_file.name)
                 temp_file_path = temp_file.name
-            
+
             try:
-                # Read the file data
-                with open(temp_file_path, 'rb') as f:
-                    file_data = f.read()
-                
-                # Convert to VTT format
-                from ..lib.subtitles import convert_to_vtt
-                vtt_content = convert_to_vtt(file_data, file_extension, encoding=encoding, fps=fps)
-                
-                # Save the VTT content to the final location
-                with open(vtt_file_path, 'w', encoding='utf-8') as f:
-                    f.write(vtt_content)
-                
-                current_app.logger.info(f"Successfully converted {original_filename} to VTT format")
+                if file_extension in ['.ass', '.ssa']:
+                    # For ASS/SSA, save directly without conversion
+                    final_filename = f"{final_filename_base}{file_extension}"
+                    final_file_path_on_disk = os.path.join(content_full_dir, final_filename)
+                    shutil.move(temp_file_path, final_file_path_on_disk) # Use shutil.move
+                    temp_file_path = None # Mark as moved
+                    current_app.logger.info(f"Saved {original_filename} directly as {final_filename}")
+                    saved_file_extension = file_extension
+                else:
+                    # For other formats, convert to VTT
+                    saved_file_extension = '.vtt'
+                    final_filename = f"{final_filename_base}{saved_file_extension}"
+                    final_file_path_on_disk = os.path.join(content_full_dir, final_filename)
+
+                    with open(temp_file_path, 'rb') as f_in:
+                        file_data = f_in.read()
+                    
+                    from ..lib.subtitles import convert_to_vtt
+                    vtt_content = convert_to_vtt(file_data, file_extension, encoding=encoding, fps=fps)
+                    
+                    with open(final_file_path_on_disk, 'w', encoding='utf-8') as f_out:
+                        f_out.write(vtt_content)
+                    current_app.logger.info(f"Successfully converted {original_filename} to VTT format: {final_filename}")
+
             except Exception as e:
-                current_app.logger.error(f"Error converting subtitle file: {e}")
-                flash(f'Error converting subtitle file: {str(e)}', 'danger')
+                current_app.logger.error(f"Error processing subtitle file {original_filename}: {e}")
+                flash(f'Error processing subtitle file: {str(e)}', 'danger')
                 return redirect(url_for('main.content_detail', activity_id=activity_id))
             finally:
-                # Clean up the temporary file
-                if os.path.exists(temp_file_path):
+                # Clean up the temporary file if it wasn't moved
+                if temp_file_path and os.path.exists(temp_file_path):
                     os.unlink(temp_file_path)
             
             # Create subtitle record in database
@@ -407,7 +425,7 @@ def upload_subtitle(activity_id):
                 language=form.language.data,
                 uploader_id=current_user.id,
                 video_hash=activity.video_hash,
-                file_path=os.path.join(activity.content_id.replace(':', '_'), vtt_filename),
+                file_path=os.path.join(content_dir_name, final_filename), # Use the actual final filename
                 version_info=form.version_info.data if hasattr(form, 'version_info') and form.version_info.data else None,
                 author=form.author.data if hasattr(form, 'author') and form.author.data else None
             )
@@ -710,6 +728,7 @@ def download_subtitle(subtitle_id):
     from flask import send_file, abort, flash, redirect, url_for, request
     from flask_login import login_required
     import uuid # For new subtitle ID
+    from ..models import UserActivity # Ensure UserActivity is imported if not already
     
     # Check if user has Admin role
     if not current_user.has_role('Admin'):
@@ -731,19 +750,26 @@ def download_subtitle(subtitle_id):
         current_app.logger.error(f"Subtitle file path invalid or file not found: {file_path} for ID: {subtitle_id}")
         abort(404)
     
-    # Generate a filename for the download
+    # Generate a filename for the download using the actual file extension
     content_id_display = subtitle.content_id.replace(':', '_')
-    download_filename = f"{content_id_display}_{subtitle.language}.vtt"
+    _, file_ext = os.path.splitext(subtitle.file_path)
+    download_filename = f"{content_id_display}_{subtitle.language}{file_ext}"
     
-    # Log the download
-    current_app.logger.info(f"User {current_user.id} downloading subtitle ID {subtitle_id}")
+    # Determine mimetype
+    mimetype = 'application/octet-stream' # Default binary
+    if file_ext.lower() == '.vtt':
+        mimetype = 'text/vtt'
+    elif file_ext.lower() in ['.ass', '.ssa']:
+        mimetype = 'application/x-ass' # Or 'text/plain'
+        
+    current_app.logger.info(f"User {current_user.id} downloading subtitle ID {subtitle_id} as {download_filename} with mimetype {mimetype}")
     
     # Send the file
     return send_file(
         file_path,
         as_attachment=True,
         download_name=download_filename,
-        mimetype='text/vtt'
+        mimetype=mimetype
     )
 
 
@@ -755,7 +781,7 @@ def mark_compatible_hash(subtitle_id):
     This creates a new Subtitle entry pointing to the same file but with the new hash.
     """
     from flask import redirect, url_for, request, flash
-    from ..models import Subtitle, UserSubtitleSelection
+    from ..models import Subtitle, UserSubtitleSelection, UserActivity # Ensure UserActivity is imported
     import uuid
 
     target_video_hash = request.form.get('target_video_hash')
