@@ -215,15 +215,17 @@ def content_detail(activity_id):
 def configure():
     """Displays the addon installation page."""
     # Generate manifest URL parts
+    from urllib.parse import urlparse
+
     manifest_url = None
     stremio_manifest_url = None
     if current_user.manifest_token:
-        base_url = request.host_url  # Use http or https as served
         manifest_path = url_for('manifest.addon_manifest',
                                 manifest_token=current_user.manifest_token,
                                 _scheme=current_app.config['PREFERRED_URL_SCHEME'])
-        manifest_url = f"{base_url.strip('/')}{manifest_path}"
-        stremio_manifest_url = f"stremio://{request.host}{manifest_path}"
+        manifest_url = f"{manifest_path}"
+        parsed = urlparse(manifest_path)
+        stremio_manifest_url = f"stremio://{parsed.netloc}{parsed.path}"
 
     return render_template('main/configure.html',
                            manifest_url=manifest_url,
