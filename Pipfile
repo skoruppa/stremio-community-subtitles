@@ -32,6 +32,7 @@ flask-mail = "*"
 jwt = "*"
 chardet = "*"
 "kitsu.py" = "*"
+pycountry = "*"
 
 [dev-packages]
 

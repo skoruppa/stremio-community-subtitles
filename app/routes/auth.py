@@ -2,10 +2,11 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request,
 from flask_login import login_user, logout_user, current_user, login_required
 from urllib.parse import urlparse
 from datetime import datetime
+import pycountry
 from ..models import User, Role
 from ..forms import LoginForm, RegistrationForm, ChangePasswordForm, ResetPasswordRequestForm, ResetPasswordForm
 from ..extensions import db
-from ..languages import LANGUAGES
+from ..languages import LANGUAGES, LANGUAGE_DICT
 from ..email import send_confirmation_email, send_password_reset_email
 
 auth_bp = Blueprint('auth', __name__)
@@ -59,9 +60,32 @@ def register():
     
     # Set default language based on browser preference
     if not form.is_submitted():
-        best_match = request.accept_languages.best_match([lang[0] for lang in LANGUAGES])
-        if best_match:
-            form.preferred_language.data = best_match
+        supported_iso_639_1_codes = []
+        for code_639_2, _ in LANGUAGES:
+            try:
+                lang = pycountry.languages.get(alpha_3=code_639_2)
+                if lang and hasattr(lang, 'alpha_2'):
+                    supported_iso_639_1_codes.append(lang.alpha_2)
+            except KeyError:
+                current_app.logger.warning(f"pycountry could not find ISO 639-1 for supported language {code_639_2}.")
+
+        if supported_iso_639_1_codes:
+            browser_pref_1 = request.accept_languages.best_match(supported_iso_639_1_codes)
+            if browser_pref_1:
+                try:
+                    lang_obj = pycountry.languages.get(alpha_2=browser_pref_1)
+                    if lang_obj and hasattr(lang_obj, 'alpha_3'):
+                        best_match_2 = lang_obj.alpha_3
+                        if best_match_2 in LANGUAGE_DICT:
+                            form.preferred_language.data = best_match_2
+                        else:
+                            current_app.logger.info(f"Browser preferred lang {browser_pref_1} (->{best_match_2}) not in supported app languages.")
+                    else:
+                        current_app.logger.warning(f"pycountry found {browser_pref_1} but it has no alpha_3 code.")
+                except KeyError:
+                    current_app.logger.warning(f"pycountry could not convert browser lang code {browser_pref_1} to ISO 639-2.")
+        else:
+            current_app.logger.warning("No supported ISO 639-1 codes derived for browser preference matching.")
     
     if form.validate_on_submit():
         user = User(username=form.username.data, email=form.email.data, 
@@ -199,4 +223,4 @@ def reset_password(token):
         flash('Your password has been reset.', 'success')
         return redirect(url_for('auth.login'))
     
-    return render_template('auth/reset_password.html', title='Reset Password', form=form)
+    return render_template('auth/reset_password.html', title='Reset Password', form=form, token=token)
