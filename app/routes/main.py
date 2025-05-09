@@ -219,7 +219,9 @@ def configure():
     stremio_manifest_url = None
     if current_user.manifest_token:
         base_url = request.host_url  # Use http or https as served
-        manifest_path = url_for('manifest.addon_manifest', manifest_token=current_user.manifest_token)
+        manifest_path = url_for('manifest.addon_manifest',
+                                manifest_token=current_user.manifest_token,
+                                _scheme=current_app.config['PREFERRED_URL_SCHEME'])
         manifest_url = f"{base_url.strip('/')}{manifest_path}"
         stremio_manifest_url = f"stremio://{request.host}{manifest_path}"
 
