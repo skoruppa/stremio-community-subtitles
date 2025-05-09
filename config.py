@@ -11,6 +11,9 @@ class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY')
     DEBUG = False
     TESTING = False
+
+    # URL Scheme for external URLs
+    PREFERRED_URL_SCHEME = os.environ.get('PREFERRED_URL_SCHEME', 'http')
     
     # Session configuration
     PERMANENT_SESSION_LIFETIME = datetime.timedelta(days=7)
