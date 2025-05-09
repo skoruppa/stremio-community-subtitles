@@ -707,8 +707,9 @@ def delete_subtitle(subtitle_id):
 @login_required
 def download_subtitle(subtitle_id):
     """Download a subtitle file."""
-    from flask import send_file, abort, flash, redirect, url_for
+    from flask import send_file, abort, flash, redirect, url_for, request
     from flask_login import login_required
+    import uuid # For new subtitle ID
     
     # Check if user has Admin role
     if not current_user.has_role('Admin'):
@@ -744,3 +745,99 @@ def download_subtitle(subtitle_id):
         download_name=download_filename,
         mimetype='text/vtt'
     )
+
+
+@subtitles_bp.route('/mark_compatible_hash/<uuid:subtitle_id>', methods=['POST'])
+@login_required
+def mark_compatible_hash(subtitle_id):
+    """
+    Marks an existing subtitle as compatible with a new video hash.
+    This creates a new Subtitle entry pointing to the same file but with the new hash.
+    """
+    from flask import redirect, url_for, request, flash
+    from ..models import Subtitle, UserSubtitleSelection
+    import uuid
+
+    target_video_hash = request.form.get('target_video_hash')
+    activity_id_str = request.form.get('activity_id') # This is UUID as string
+
+    if not target_video_hash:
+        flash('Target video hash is missing.', 'danger')
+        return redirect(request.referrer or url_for('main.dashboard'))
+
+    if not activity_id_str:
+        flash('Activity ID is missing.', 'danger')
+        return redirect(request.referrer or url_for('main.dashboard'))
+
+    try:
+        activity_id = uuid.UUID(activity_id_str) # Convert string to UUID
+    except ValueError:
+        flash('Invalid Activity ID format.', 'danger')
+        return redirect(request.referrer or url_for('main.dashboard'))
+
+    original_subtitle = Subtitle.query.get_or_404(subtitle_id)
+    activity = UserActivity.query.get_or_404(activity_id)
+
+    # Ensure the activity's content_id matches the subtitle's content_id
+    if activity.content_id != original_subtitle.content_id:
+        flash('Content ID mismatch between subtitle and activity.', 'danger')
+        return redirect(url_for('main.content_detail', activity_id=activity.id))
+
+    # Check if a subtitle with this exact content_id, language, and target_video_hash already exists
+    # and points to the same file_path. If so, just select it.
+    existing_compatible_sub = Subtitle.query.filter_by(
+        content_id=original_subtitle.content_id,
+        language=original_subtitle.language,
+        video_hash=target_video_hash,
+        file_path=original_subtitle.file_path 
+    ).first()
+
+    if existing_compatible_sub:
+        new_subtitle_to_select = existing_compatible_sub
+        flash('A compatible subtitle entry for this hash already exists. Selecting it.', 'info')
+    else:
+        # Create a new Subtitle entry for the target_video_hash
+        new_compatible_subtitle = Subtitle(
+            id=uuid.uuid4(),
+            content_id=original_subtitle.content_id,
+            content_type=original_subtitle.content_type,
+            video_hash=target_video_hash, # The new hash
+            language=original_subtitle.language,
+            file_path=original_subtitle.file_path, # Points to the same physical file
+            uploader_id=original_subtitle.uploader_id, # Keep original uploader
+            upload_timestamp=datetime.datetime.utcnow(), # New timestamp for this "compatibility entry"
+            votes=0, # Starts with 0 votes, or 1 if we want to auto-upvote
+            author=original_subtitle.author,
+            version_info=original_subtitle.version_info
+        )
+        db.session.add(new_compatible_subtitle)
+        new_subtitle_to_select = new_compatible_subtitle
+        flash('Subtitle marked as compatible with the current video version.', 'success')
+
+    # Update UserSubtitleSelection for the current user, content_id, and target_video_hash
+    user_selection = UserSubtitleSelection.query.filter_by(
+        user_id=current_user.id,
+        content_id=activity.content_id,
+        video_hash=target_video_hash # Selection is for the new hash
+    ).first()
+
+    if user_selection:
+        user_selection.selected_subtitle_id = new_subtitle_to_select.id
+        user_selection.timestamp = datetime.datetime.utcnow()
+    else:
+        user_selection = UserSubtitleSelection(
+            user_id=current_user.id,
+            content_id=activity.content_id,
+            video_hash=target_video_hash,
+            selected_subtitle_id=new_subtitle_to_select.id
+        )
+        db.session.add(user_selection)
+    
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Error in mark_compatible_hash: {e}")
+        flash('An error occurred while marking subtitle as compatible.', 'danger')
+
+    return redirect(url_for('main.content_detail', activity_id=activity.id))

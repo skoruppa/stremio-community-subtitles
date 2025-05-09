@@ -1,4 +1,4 @@
-{% macro render_subtitle_item(subtitle, user_votes, user_selection, activity_id, current_user, language_dict) %}
+{% macro render_subtitle_item(subtitle, user_votes, user_selection, activity_id, current_activity_hash, current_user, language_dict) %}
 <div class="list-group-item {% if user_selection and subtitle.id == user_selection.selected_subtitle_id %}active-subtitle{% endif %}">
     <div class="row align-items-center">
         <div class="col-md-7">
@@ -9,8 +9,13 @@
                 {% endif %}
             </h5>
             <p class="mb-1 small text-muted">
-                Uploaded by {{ subtitle.uploader.username }} on {{ subtitle.upload_timestamp.strftime('%Y-%m-%d') }}
+                Uploaded by: {{ subtitle.uploader.username }} on {{ subtitle.upload_timestamp.strftime('%Y-%m-%d') }}
             </p>
+            {% if subtitle.author %}
+            <p class="mb-1 small text-muted">
+                Author: {{ subtitle.author }}
+            </p>
+            {% endif %}
             {% if subtitle.version_info %}
             <p class="mb-1 small">
                 <i class="fas fa-comment-alt me-1"></i> {{ subtitle.version_info }}
@@ -50,13 +55,26 @@
                 {% else %}
                 <form method="POST" action="{{ url_for('subtitles.select_subtitle', activity_id=activity_id, subtitle_id=subtitle.id) }}">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <button type="submit" class="btn btn-sm btn-outline-primary">
+                    <button type="submit" class="btn btn-sm btn-outline-primary w-100 mb-1">
                         <i class="fas fa-check me-1"></i>Select
                     </button>
                 </form>
                 {% endif %}
+
+                {# Button to mark subtitle as compatible with current video hash #}
+                {% if user_selection and subtitle.id == user_selection.selected_subtitle_id and subtitle.video_hash and current_activity_hash and subtitle.video_hash != current_activity_hash %}
+                <form method="POST" action="{{ url_for('subtitles.mark_compatible_hash', subtitle_id=subtitle.id) }}" class="mt-1">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="target_video_hash" value="{{ current_activity_hash }}">
+                    <input type="hidden" name="activity_id" value="{{ activity_id }}">
+                    <button type="submit" class="btn btn-sm btn-outline-info w-100 mb-1" onclick="return confirm('Are you sure these subtitles also work for the current video version? This will create a new entry linked to the current video hash.')">
+                        <i class="fas fa-link me-1"></i>Mark as working
+                    </button>
+                </form>
+                {% endif %}
+
                 {% if current_user.has_role('Admin') %}
-                <a href="{{ url_for('subtitles.download_subtitle', subtitle_id=subtitle.id) }}" class="btn btn-sm btn-outline-secondary">
+                <a href="{{ url_for('subtitles.download_subtitle', subtitle_id=subtitle.id) }}" class="btn btn-sm btn-outline-secondary w-100 mb-1">
                     <i class="fas fa-download me-1"></i>Download
                 </a>
                 {% endif %}
