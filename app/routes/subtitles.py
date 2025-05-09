@@ -130,7 +130,8 @@ def addon_stream(manifest_token: str, content_type: str, content_id: str, params
         download_url = url_for('subtitles.unified_download',
                                manifest_token=manifest_token,
                                download_identifier=download_identifier,
-                               _external=True)
+                               _external=True,
+                               _scheme=current_app.config['PREFERRED_URL_SCHEME'])
         stremio_sub_id = f"comm_{download_identifier}"
         subtitles_list.append({
             'id': stremio_sub_id,
