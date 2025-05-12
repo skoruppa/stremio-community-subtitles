@@ -119,6 +119,26 @@ def addon_stream(manifest_token: str, content_type: str, content_id: str, params
             current_app.logger.info(
                 f"Created new UserActivity for user {user.id}, content {content_id}, hash {video_hash}, size {video_size}, filename {video_filename}")
 
+        # Limit UserActivity entries per user based on config
+        max_activities = current_app.config.get('MAX_USER_ACTIVITIES', 15) # Fallback to 15 if not in config
+        activity_count = UserActivity.query.filter_by(user_id=user.id).count()
+        
+        if activity_count > max_activities:
+            num_to_delete = activity_count - max_activities
+            # Ensure num_to_delete is at least 1 if we are over limit,
+
+            current_persisted_count = UserActivity.query.filter_by(user_id=user.id).count()
+            effective_count_after_commit = current_persisted_count
+            if not activity_found_and_updated: # A new activity was added to the session
+                effective_count_after_commit +=1
+            
+            if effective_count_after_commit > max_activities:
+                num_to_delete = effective_count_after_commit - max_activities
+                oldest_activities = UserActivity.query.filter_by(user_id=user.id).order_by(UserActivity.timestamp.asc()).limit(num_to_delete).all()
+                for old_activity in oldest_activities:
+                    db.session.delete(old_activity)
+                    current_app.logger.info(f"Deleted oldest UserActivity ID {old_activity.id} for user {user.id} to maintain limit of {max_activities}.")
+        
         db.session.commit()
     except Exception as e:
         db.session.rollback()

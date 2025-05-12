@@ -26,7 +26,7 @@ def dashboard():
     # Fetch recent activity for the current user
     recent_activity = UserActivity.query.filter_by(user_id=current_user.id) \
         .order_by(UserActivity.timestamp.desc()) \
-        .limit(20).all()
+        .limit(current_app.config.get('MAX_USER_ACTIVITIES', 15)).all()
 
     # Fetch metadata for each activity item
     activity_metadata = {}

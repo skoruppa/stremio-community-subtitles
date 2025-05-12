@@ -70,6 +70,8 @@ class Config:
     # CACHE_DIR = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'instance/cache')
     CACHE_DEFAULT_TIMEOUT = 300
 
+    MAX_USER_ACTIVITIES = int(os.environ.get('MAX_USER_ACTIVITIES') or '15')
+
 
 class DevelopmentConfig(Config):
     """Development configuration."""
