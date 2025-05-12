@@ -45,6 +45,10 @@ def addon_stream(manifest_token: str, content_type: str, content_id: str, params
 
     # --- Parameter Extraction ---
     content_id = unquote(content_id)
+    if "mal:" in content_id:
+        current_app.logger.info(f"Ignoring as those are probably from the Docchi extension with hardcoded subs")
+        return respond_with({'subtitles': []})
+
     try:
         param_string_to_parse = request.query_string.decode() if request.query_string else params
         parsed_params = {k: v[0] for k, v in parse_qs(param_string_to_parse).items() if v}
