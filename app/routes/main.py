@@ -44,10 +44,13 @@ def dashboard():
                 title = f"{title} ({meta['year']})"
             meta['display_title'] = title  # Add a pre-formatted title for the template
 
+    max_activities_to_display = current_app.config.get('MAX_USER_ACTIVITIES', 15)
+
     # Pass activities and their metadata to the template
     return render_template('main/dashboard.html',
                            activities=recent_activity,
-                           metadata_map=activity_metadata)
+                           metadata_map=activity_metadata,
+                           max_activities=max_activities_to_display)
 
 
 @main_bp.route('/content/<uuid:activity_id>')
@@ -253,3 +256,35 @@ def account_settings():
             flash('Failed to update language.', 'danger')
 
     return render_template('main/account_settings.html', form=form)
+
+
+@main_bp.route('/delete_activity/<uuid:activity_id>', methods=['POST'])
+@login_required
+def delete_activity(activity_id):
+    """Deletes a specific user activity item, ensuring ownership."""
+    activity_to_delete = UserActivity.query.get(activity_id) # Efficiently get by primary key
+
+    if not activity_to_delete:
+        flash('Activity record not found.', 'warning')
+        return redirect(url_for('main.dashboard'))
+
+    if activity_to_delete.user_id != current_user.id:
+        # Log this attempt, as it might be malicious or a bug
+        current_app.logger.warning(
+            f"User {current_user.id} ({current_user.username}) "
+            f"attempted to delete activity {activity_id} "
+            f"belonging to user {activity_to_delete.user_id}."
+        )
+        flash('You do not have permission to delete this activity record.', 'danger')
+        return redirect(url_for('main.dashboard'))
+        
+    try:
+        db.session.delete(activity_to_delete)
+        db.session.commit()
+        flash('Activity record deleted successfully.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Error deleting activity {activity_id} for user {current_user.id}: {e}")
+        flash('Error deleting activity record. Please try again.', 'danger')
+        
+    return redirect(url_for('main.dashboard'))

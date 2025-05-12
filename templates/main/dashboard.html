@@ -19,40 +19,55 @@
                 <h5 class="mb-0">Recent Activity</h5>
                 <span class="badge bg-primary">{{ activities|length }} items</span>
             </div>
-            <div class="card-body p-0">
+            <div class="card-body">
+                <p class="text-muted small mb-3">We store only your last {{ max_activities }} activities.</p>
                 {% if activities %}
                 <div class="list-group list-group-flush">
                     {% for activity in activities %}
-                    <a href="{{ url_for('main.content_detail', activity_id=activity.id) }}" class="list-group-item list-group-item-action">
-                        <div class="d-flex">
-                            {% if activity.id in metadata_map and metadata_map[activity.id].poster_url %}
-                            <div class="me-3">
-                                <img src="{{ metadata_map[activity.id].poster_url }}" alt="Poster" class="img-thumbnail" style="height: 80px; width: auto; max-width: fit-content;">
-                            </div>
-                            {% endif %}
-                            <div class="flex-grow-1">
-                                <div class="d-flex w-100 justify-content-between">
-                                    <h5 class="mb-1">
-                                        {% if activity.id in metadata_map and metadata_map[activity.id].display_title %}
-                                            {{ metadata_map[activity.id].display_title }}
-                                        {% else %}
-                                            {{ activity.content_id }}
-                                        {% endif %}
-                                    </h5>
-                                    <small class="text-muted">{{ activity.timestamp.strftime('%Y-%m-%d %H:%M') }}</small>
-                                </div>
-                                <p class="mb-1">
-                                    <span class="badge {% if activity.content_type == 'movie' %}bg-info{% else %}bg-warning{% endif %}">
-                                        {{ activity.content_type|capitalize }}
-                                    </span>
-                                    {% if activity.video_hash %}
-                                    <span class="badge bg-secondary">Hash: {{ activity.video_hash }}</span>
+                    <div class="list-group-item">
+                        <div class="d-flex align-items-center">
+                            <a href="{{ url_for('main.content_detail', activity_id=activity.id) }}" class="flex-grow-1 text-decoration-none text-dark">
+                                <div class="d-flex">
+                                    {% if activity.id in metadata_map and metadata_map[activity.id].poster_url %}
+                                    <div class="me-3">
+                                        <img src="{{ metadata_map[activity.id].poster_url }}" alt="Poster" class="img-thumbnail" style="height: 80px; width: auto; max-width: fit-content;">
+                                    </div>
                                     {% endif %}
-                                    <span class="badge bg-dark">ID: {{ activity.content_id }}</span>
-                                </p>
-                            </div>
+                                    <div class="flex-grow-1">
+                                        <div class="d-flex w-100 justify-content-between">
+                                            <h5 class="mb-1">
+                                                {% if activity.id in metadata_map and metadata_map[activity.id].display_title %}
+                                                    {{ metadata_map[activity.id].display_title }}
+                                                {% else %}
+                                                    {{ activity.content_id }}
+                                                {% endif %}
+                                            </h5>
+                                            <small class="text-muted">{{ activity.timestamp.strftime('%Y-%m-%d %H:%M') }}</small>
+                                        </div>
+                                        <!-- New row for Badges (left) and Delete Button (right) -->
+                                        <div class="d-flex justify-content-between align-items-center mt-2">
+                                            <p class="mb-0 me-2"> <!-- Badges -->
+                                                <span class="badge {% if activity.content_type == 'movie' %}bg-info{% else %}bg-warning{% endif %}">
+                                                    {{ activity.content_type|capitalize }}
+                                                </span>
+                                                {% if activity.video_hash %}
+                                                <span class="badge bg-secondary">Hash: {{ activity.video_hash }}</span>
+                                                {% endif %}
+                                                <span class="badge bg-dark">ID: {{ activity.content_id }}</span>
+                                            </p>
+                                            <form action="{{ url_for('main.delete_activity', activity_id=activity.id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this activity record?');">
+                                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete Activity">
+                                                    <i class="fas fa-trash-alt"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+                            <!-- Original ms-2 div for delete button is removed as it's now inside the text block -->
                         </div>
-                    </a>
+                    </div>
                     {% endfor %}
                 </div>
                 {% else %}
