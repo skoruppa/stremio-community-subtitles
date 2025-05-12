@@ -61,6 +61,7 @@ class Config:
     }
     
     TMDB_KEY = os.environ.get('TMDB_API_KEY')
+    OPEN_SUBTITLES_API_KEY = os.environ.get('OPEN_SUBTITLES_API_KEY')
     
     UPLOAD_FOLDER = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'uploads')
     
