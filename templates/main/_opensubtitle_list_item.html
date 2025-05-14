@@ -1,0 +1,71 @@
+{% macro render_opensubtitle_item(activity, opensub_item, current_user_lang, active_opensubtitle_details) %}
+{#
+    Renders a single OpenSubtitle item.
+    - activity: The UserActivity object for context (activity_id, video_hash).
+    - opensub_item: A dictionary representing one item from the OpenSubtitles API 'data' array.
+      Expected structure: opensub_item.attributes contains fields like:
+        - language
+        - files (array, usually one item): files[0].file_id, files[0].file_name
+        - uploader.name
+        - feature_details.title, feature_details.year (useful for context, not directly displayed per sub)
+        - moviehash_match (boolean)
+        - ai_translated (boolean)
+        - machine_translated (boolean)
+        - ratings (float), votes (int)
+        - url (link to opensubtitles page for this subtitle)
+    - current_user_lang: The current user's preferred language code (e.g., 'en').
+    - active_opensubtitle_details: The JSON details of the currently active OpenSubtitle, if any.
+#}
+{% set sub_attr = opensub_item.attributes %}
+{% set sub_file = sub_attr.files[0] if sub_attr.files else None %}
+
+{% if sub_file %}
+    <div class="list-group-item list-group-item-action {% if active_opensubtitle_details and active_opensubtitle_details.file_id == sub_file.file_id %}active{% endif %}">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h6 class="mb-1">
+                    {{ sub_file.file_name | truncate(80) if sub_file.file_name else 'N/A' }}
+                    <span class="badge bg-secondary">{{ sub_attr.language | upper }}</span>
+                </h6>
+                <small class="text-muted">
+                    Uploader: {{ sub_attr.uploader.name if sub_attr.uploader else 'N/A' }}
+                    {% if sub_attr.ratings is not none %}
+                        | Rating: {{ "%.1f"|format(sub_attr.ratings) }}/10 ({{ sub_attr.votes }} votes)
+                    {% endif %}
+                </small>
+                <div>
+                    {% if sub_attr.moviehash_match %}
+                        <span class="badge bg-success mt-1">Hash Match</span>
+                    {% endif %}
+                    {% if sub_attr.ai_translated %}
+                        <span class="badge bg-warning mt-1">AI Translated</span>
+                    {% elif sub_attr.machine_translated %}
+                        <span class="badge bg-warning mt-1">Machine Translated</span>
+                    {% endif %}
+                     <a href="{{ sub_attr.url }}" class="badge bg-info text-decoration-none mt-1" target="_blank" rel="noopener noreferrer">View on OpenSubtitles</a>
+                </div>
+            </div>
+            <div class="col-md-4 text-end">
+                {% if active_opensubtitle_details and active_opensubtitle_details.file_id == sub_file.file_id %}
+                    <button class="btn btn-sm btn-success disabled" disabled><i class="fas fa-check-circle"></i> Selected</button>
+                {% else %}
+                    <form action="{{ url_for('main.select_opensubtitle', activity_id=activity.id, opensub_file_id=sub_file.file_id) }}" method="POST" class="d-inline">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        {# Pass necessary details for opensubtitle_details_json #}
+                        <input type="hidden" name="os_language" value="{{ sub_attr.language }}">
+                        <input type="hidden" name="os_release_name" value="{{ sub_file.file_name | truncate(250) if sub_file.file_name else 'N/A' }}">
+                        <input type="hidden" name="os_uploader" value="{{ sub_attr.uploader.name if sub_attr.uploader else 'N/A' }}">
+                        <input type="hidden" name="os_ai_translated" value="{{ 'true' if sub_attr.ai_translated or sub_attr.machine_translated else 'false' }}">
+                        <input type="hidden" name="os_hash_match" value="{{ 'true' if sub_attr.moviehash_match else 'false' }}">
+                        {# Add more fields if needed, like sub_attr.url #}
+                        
+                        <button type="submit" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-check"></i> Select
+                        </button>
+                    </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+{% endif %}
+{% endmacro %}

@@ -4,7 +4,8 @@ import secrets
 from time import time
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import UUID, JSONB
+from sqlalchemy.ext.mutable import MutableDict
 from .extensions import db, login_manager
 from flask import current_app
 
@@ -225,17 +226,24 @@ class Subtitle(db.Model):
     content_type = db.Column(db.String(20), nullable=False)
     video_hash = db.Column(db.String(50), nullable=True, index=True)
     language = db.Column(db.String(10), nullable=False, index=True)
-    file_path = db.Column(db.String(255), nullable=False)
+    file_path = db.Column(db.String(255), nullable=True) # Nullable now, for linked OpenSubtitles
     uploader_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     upload_timestamp = db.Column(db.DateTime, default=datetime.datetime.utcnow, index=True)
     votes = db.Column(db.Integer, default=0, index=True)
-    author = db.Column(db.String(100), nullable=True)
-    version_info = db.Column(db.Text, nullable=True)
+    author = db.Column(db.String(100), nullable=True) # For community subs, or OS uploader for linked
+    version_info = db.Column(db.Text, nullable=True) # For community subs, or OS release name for linked
+
+    # New fields for differentiating subtitle source and storing OS metadata
+    source_type = db.Column(db.String(50), nullable=False, default='community', index=True) # E.g., 'community', 'opensubtitles_link'
+    source_metadata = db.Column(MutableDict.as_mutable(JSONB), nullable=True) 
+    # For source_type='opensubtitles_link', this could store:
+    # { "original_file_id": ..., "original_uploader": ..., "original_release_name": ..., 
+    #   "original_url": ..., "ai_translated": ..., "moviehash_match_at_link_time": ... }
 
     uploader = db.relationship('User', backref=db.backref('uploaded_subtitles', lazy=True))
 
     def __repr__(self):
-        return f'<Subtitle id={self.id} lang={self.language} content={self.content_id} hash={self.video_hash}>'
+        return f'<Subtitle id={self.id} lang={self.language} content={self.content_id} hash={self.video_hash} source={self.source_type}>'
 
 
 class UserActivity(db.Model):
@@ -259,19 +267,46 @@ class UserSubtitleSelection(db.Model):
     __tablename__ = 'user_subtitle_selections'
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
-    content_id = db.Column(db.String(100), nullable=False, index=True)
-    video_hash = db.Column(db.String(50), nullable=True, index=True)
-    selected_subtitle_id = db.Column(UUID(as_uuid=True), db.ForeignKey('subtitles.id'), nullable=False)
+    content_id = db.Column(db.String(100), nullable=False, index=True) # e.g. imdb_id:season:episode or imdb_id
+    video_hash = db.Column(db.String(50), nullable=True, index=True) # OpenSubtitles hash or other video file hash
+
+    # Fields for selecting a subtitle from our own database
+    selected_subtitle_id = db.Column(UUID(as_uuid=True), db.ForeignKey('subtitles.id'), nullable=True)
+    
+    # Fields for selecting a subtitle from OpenSubtitles
+    # This is the 'file_id' from OpenSubtitles API (attributes.files[].file_id)
+    selected_opensubtitle_file_id = db.Column(db.Integer, nullable=True, index=True) 
+    
+    # Store relevant details of the selected OpenSubtitle to avoid re-fetching constantly for display
+    # e.g., { "filename": "...", "language": "en", "ai_translated": false, "moviehash_match": true, "uploader": "...", "url": "opensubtitles_page_url" }
+    opensubtitle_details_json = db.Column(MutableDict.as_mutable(JSONB), nullable=True)
+
     timestamp = db.Column(db.DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
 
     user = db.relationship('User', backref=db.backref('selections', lazy='dynamic'))
-    selected_subtitle = db.relationship('Subtitle')
+    selected_subtitle = db.relationship('Subtitle') # For locally hosted subtitles
+
+    # Ensure that for a given user, content_id, and video_hash, only one selection type is active.
+    # This can be enforced by application logic: when setting one type, nullify the other.
+    # A database-level check constraint could also be added if the DB supports it well with nullable fields.
+    # Example check constraint (PostgreSQL syntax, might need adjustment):
+    # CHECK (
+    #    (selected_subtitle_id IS NOT NULL AND selected_opensubtitle_file_id IS NULL) OR
+    #    (selected_subtitle_id IS NULL AND selected_opensubtitle_file_id IS NOT NULL) OR
+    #    (selected_subtitle_id IS NULL AND selected_opensubtitle_file_id IS NULL) -- Allows no selection
+    # )
+    # For simplicity, we'll rely on application logic for now.
 
     __table_args__ = (
-    db.UniqueConstraint('user_id', 'content_id', 'video_hash', name='uq_user_content_hash_selection'),)
+        db.UniqueConstraint('user_id', 'content_id', 'video_hash', name='uq_user_content_hash_selection'),
+    )
 
     def __repr__(self):
-        return f'<UserSelection user={self.user_id} content={self.content_id} sub={self.selected_subtitle_id}>'
+        if self.selected_subtitle_id:
+            return f'<UserSelection user={self.user_id} content={self.content_id} local_sub_id={self.selected_subtitle_id}>'
+        elif self.selected_opensubtitle_file_id:
+            return f'<UserSelection user={self.user_id} content={self.content_id} opensub_file_id={self.selected_opensubtitle_file_id}>'
+        return f'<UserSelection user={self.user_id} content={self.content_id} (no selection)>'
 
 
 class SubtitleVote(db.Model):

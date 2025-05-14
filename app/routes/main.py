@@ -5,7 +5,8 @@ from sqlalchemy import func
 from ..models import UserActivity, Subtitle, UserSubtitleSelection, SubtitleVote
 from ..forms import LanguagePreferenceForm
 from ..extensions import db
-from ..lib.metadata import get_metadata  # Changed to absolute import
+from ..lib.metadata import get_metadata
+from ..lib import opensubtitles_client  # Import the new client
 from ..languages import LANGUAGES, LANGUAGE_DICT
 
 main_bp = Blueprint('main', __name__)
@@ -16,6 +17,138 @@ def index():
     """Main landing page: Shows login/register or dashboard if logged in."""
     if current_user.is_authenticated:
         return redirect(url_for('main.dashboard'))
+
+
+@main_bp.route('/link_opensubtitle/<uuid:activity_id>/<int:opensub_file_id>', methods=['POST'])
+@login_required
+def link_opensubtitle(activity_id, opensub_file_id):
+    """
+    Creates a new community Subtitle entry linked to an OpenSubtitle,
+    associating it with the current activity's video_hash.
+    """
+    activity = UserActivity.query.filter_by(id=activity_id, user_id=current_user.id).first_or_404()
+
+    if not activity.video_hash:
+        flash("Cannot link subtitle: the current video context does not have a hash.", "warning")
+        return redirect(url_for('main.content_detail', activity_id=activity_id))
+
+    # Retrieve details of the OpenSubtitle from the form
+    os_language = request.form.get("os_language")
+    os_release_name = request.form.get("os_release_name")
+    os_uploader_name = request.form.get("os_uploader")
+    os_ai_translated = request.form.get("os_ai_translated") == 'true'
+    # os_hash_match_at_link_time = request.form.get("os_hash_match") == 'true' # This was for the source, not for the new link
+    os_url = request.form.get("os_url")
+
+    if not all([os_language, os_release_name]):  # Basic validation
+        flash("Missing necessary OpenSubtitle details to create a link.", "danger")
+        return redirect(url_for('main.content_detail', activity_id=activity_id))
+
+    # Check if this exact OpenSubtitle (by original file_id) is already linked to this specific video_hash
+    existing_link = Subtitle.query.filter_by(
+        video_hash=activity.video_hash,
+        source_type='opensubtitles_community_link',
+        language=os_language
+    ).filter(Subtitle.source_metadata['original_file_id'].astext == str(opensub_file_id)).first()
+    # Note: JSON query depends on DB. Using .astext for PostgreSQL. For SQLite, it might be json_extract.
+
+    if existing_link:
+        flash("This OpenSubtitle is already linked to this video version.", "info")
+        # Optionally, select this existing link for the user
+        try:
+            selection = UserSubtitleSelection.query.filter_by(
+                user_id=current_user.id,
+                content_id=activity.content_id,
+                video_hash=activity.video_hash
+            ).first()
+            if selection:
+                selection.selected_subtitle_id = existing_link.id
+                selection.selected_opensubtitle_file_id = None
+                selection.opensubtitle_details_json = None
+            else:
+                selection = UserSubtitleSelection(
+                    user_id=current_user.id,
+                    content_id=activity.content_id,
+                    video_hash=activity.video_hash,
+                    selected_subtitle_id=existing_link.id
+                )
+                db.session.add(selection)
+            db.session.commit()
+        except Exception as e_sel:
+            db.session.rollback()
+            current_app.logger.error(f"Error auto-selecting existing linked OS sub: {e_sel}", exc_info=True)
+        return redirect(url_for('main.content_detail', activity_id=activity_id))
+
+    try:
+        new_linked_subtitle = Subtitle(
+            content_id=activity.content_id,
+            content_type=activity.content_type,
+            video_hash=activity.video_hash,  # Crucially, assign current video_hash
+            language=os_language,
+            file_path=None,  # No local file path
+            uploader_id=current_user.id,  # The user performing the linking action
+            author=os_uploader_name if os_uploader_name != 'N/A' else "OpenSubtitles",  # Original uploader
+            version_info=os_release_name,  # Original release name
+            source_type='opensubtitles_community_link',
+            source_metadata={
+                "original_file_id": opensub_file_id,
+                "original_uploader": os_uploader_name,
+                "original_release_name": os_release_name,
+                "original_url": os_url,
+                "ai_translated": os_ai_translated,
+                "linked_by_user_id": current_user.id
+            },
+            votes=1  # Initial vote from the linker
+        )
+        db.session.add(new_linked_subtitle)
+
+        # Add the initial vote
+        initial_vote = SubtitleVote(
+            user_id=current_user.id,
+            subtitle_id=new_linked_subtitle.id,  # Will be set after flush if using UUID from Python
+            vote_value=1
+        )
+        # If new_linked_subtitle.id is not available before commit (e.g. not UUID from Python),
+        # this needs to be handled carefully, perhaps by committing new_linked_subtitle first, then vote.
+        # For now, assume ID is available after add or will be handled by SQLAlchemy relationships.
+        # A safer way: commit subtitle, then create and commit vote.
+        # Let's do it in two steps for safety with ID.
+        db.session.flush()  # To get new_linked_subtitle.id if it's a sequence-generated UUID
+
+        initial_vote.subtitle_id = new_linked_subtitle.id
+        db.session.add(initial_vote)
+
+        # Update UserSubtitleSelection to point to this new local Subtitle record
+        selection = UserSubtitleSelection.query.filter_by(
+            user_id=current_user.id,
+            content_id=activity.content_id,
+            video_hash=activity.video_hash
+        ).first()
+
+        if selection:
+            selection.selected_subtitle_id = new_linked_subtitle.id
+            selection.selected_opensubtitle_file_id = None  # Clear direct OS selection
+            selection.opensubtitle_details_json = None
+            selection.timestamp = datetime.datetime.utcnow()
+        else:
+            new_user_selection = UserSubtitleSelection(
+                user_id=current_user.id,
+                content_id=activity.content_id,
+                video_hash=activity.video_hash,
+                selected_subtitle_id=new_linked_subtitle.id
+            )
+            db.session.add(new_user_selection)
+
+        db.session.commit()
+        flash('OpenSubtitle successfully linked to this video version and selected!', 'success')
+
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(
+            f"Error linking OpenSubtitle file_id {opensub_file_id} for user {current_user.id}: {e}", exc_info=True)
+        flash('Error linking OpenSubtitle. Please try again.', 'danger')
+
+    return redirect(url_for('main.content_detail', activity_id=activity_id))
     return render_template('main/index.html')
 
 
@@ -65,48 +198,42 @@ def content_detail(activity_id):
     episode = None
 
     # Determine Active Subtitle and User's Vote on it
-    active_subtitle = None
-    user_selection = None
-    user_vote_value = None  # Store user's vote on the active subtitle (None, 1, or -1)
+    active_subtitle = None  # This will hold a local Subtitle object if selected
+    active_opensubtitle_details = None  # This will hold JSON details if an OpenSubtitle is selected
+    user_selection = UserSubtitleSelection.query.filter_by(
+        user_id=current_user.id,
+        content_id=activity.content_id,
+        video_hash=activity.video_hash  # Always use hash if available for selection context
+    ).options(
+        joinedload(UserSubtitleSelection.selected_subtitle).joinedload(Subtitle.uploader)
+    ).first()
 
-    # 1. Check User Selection (hash specific)
-    if activity.video_hash:
-        user_selection_specific = UserSubtitleSelection.query.filter_by(
-            user_id=current_user.id, content_id=activity.content_id, video_hash=activity.video_hash
-        ).options(joinedload(UserSubtitleSelection.selected_subtitle).joinedload(Subtitle.uploader)).first()
+    user_vote_value = None  # Store user's vote on the active local subtitle
 
-        if user_selection_specific and user_selection_specific.selected_subtitle:
-            user_selection = user_selection_specific
+    if user_selection:
+        if user_selection.selected_subtitle_id:
             active_subtitle = user_selection.selected_subtitle
+            if active_subtitle:  # Get vote if local sub is active
+                user_vote = SubtitleVote.query.filter_by(
+                    user_id=current_user.id,
+                    subtitle_id=active_subtitle.id
+                ).first()
+                if user_vote:
+                    user_vote_value = user_vote.vote_value
+        elif user_selection.selected_opensubtitle_file_id and user_selection.opensubtitle_details_json:
+            active_opensubtitle_details = user_selection.opensubtitle_details_json
+            # No voting for OpenSubtitles for now
 
-    # 2. Check User Selection (general) only if no specific found and no hash from activity
-    if not active_subtitle and not activity.video_hash:
-        user_selection_general = UserSubtitleSelection.query.filter_by(
-            user_id=current_user.id, content_id=activity.content_id, video_hash=None
-        ).options(joinedload(UserSubtitleSelection.selected_subtitle).joinedload(Subtitle.uploader)).first()
-
-        if user_selection_general and user_selection_general.selected_subtitle:
-            user_selection = user_selection_general
-            active_subtitle = user_selection.selected_subtitle
-
-    # 3. If no user selection, perform default lookup
-    if not active_subtitle:
+    # 3. If no user selection, perform default lookup for local subtitles (existing logic)
+    if not active_subtitle and not active_opensubtitle_details:  # Check both types of active selections
         if activity.video_hash:
-            # Find best match by hash in user's preferred language
             active_subtitle = Subtitle.query.filter_by(
                 content_id=activity.content_id,
                 language=current_user.preferred_language,
                 video_hash=activity.video_hash
             ).order_by(Subtitle.votes.desc()).options(joinedload(Subtitle.uploader)).first()
-
-    # If an active subtitle was determined, get the user's vote on it
-    if active_subtitle:
-        user_vote = SubtitleVote.query.filter_by(
-            user_id=current_user.id,
-            subtitle_id=active_subtitle.id
-        ).first()
-        if user_vote:
-            user_vote_value = user_vote.vote_value
+            # Note: Auto-selection of OpenSubtitles with moviehash_match will be handled in unified_download for now.
+            # Displaying it as "active" here without explicit user selection might be confusing.
 
     # Fetch Available Subtitles
     query_lang = current_user.preferred_language
@@ -203,13 +330,55 @@ def content_detail(activity_id):
         'subs_other_hash': subs_other_hash,
         'subs_no_hash': subs_no_hash,
         'active_subtitle': active_subtitle,
-        'user_selection': user_selection,
+        'user_selection': user_selection,  # This now contains new fields
         'user_vote_value': user_vote_value,
-        'user_votes': user_votes,  # Add user votes dictionary
+        'user_votes': user_votes,
         'language_list': LANGUAGES,
         'LANGUAGE_DICT': LANGUAGE_DICT,
-        'metadata': metadata
+        'metadata': metadata,
+        'opensubtitles_results': [],  # Placeholder, will be populated next
+        'active_opensubtitle_details': active_opensubtitle_details
     }
+
+    # Fetch OpenSubtitles if API key is available
+    opensubtitles_api_key = current_app.config.get('OPEN_SUBTITLES_API_KEY')
+    if opensubtitles_api_key:
+        try:
+            search_params = {
+                'languages': current_user.preferred_language,
+                'moviehash': activity.video_hash if activity.video_hash else None,
+            }
+            # Extract IMDb ID if present in content_id (e.g., "tt123456" or "tt123456:1:2")
+            imdb_id_part = activity.content_id.split(':')[0]
+            if imdb_id_part.startswith("tt"):
+                search_params['imdb_id'] = imdb_id_part
+            else:  # Fallback to query if no IMDb ID and no hash
+                if not activity.video_hash and metadata and metadata.get('title'):
+                    search_params['query'] = metadata.get('title')
+
+            if activity.content_type == 'series':
+                search_params['type'] = 'episode'
+                if season: search_params['season_number'] = season
+                if episode: search_params['episode_number'] = episode
+            elif activity.content_type == 'movie':
+                search_params['type'] = 'movie'
+
+            if search_params.get('imdb_id') or search_params.get('query') or search_params.get('moviehash'):
+                current_app.logger.info(f"Querying OpenSubtitles with: {search_params}")
+                os_results = opensubtitles_client.search_subtitles(**search_params)
+                if os_results and os_results.get('data'):
+                    context['opensubtitles_results'] = os_results['data']
+                    current_app.logger.info(f"Found {len(os_results['data'])} results from OpenSubtitles.")
+            else:
+                current_app.logger.info("Not enough parameters to search OpenSubtitles.")
+
+        except opensubtitles_client.OpenSubtitlesError as e:
+            current_app.logger.error(f"Error fetching from OpenSubtitles: {e}")
+            flash(f"Could not fetch results from OpenSubtitles: {e}", "warning")
+        except Exception as e:
+            current_app.logger.error(f"Unexpected error during OpenSubtitles search: {e}", exc_info=True)
+            flash("An unexpected error occurred while searching OpenSubtitles.", "warning")
+
     return render_template('main/content_detail.html', **context)
 
 
@@ -258,11 +427,116 @@ def account_settings():
     return render_template('main/account_settings.html', form=form)
 
 
+@main_bp.route('/select_opensubtitle/<uuid:activity_id>/<int:opensub_file_id>', methods=['POST'])
+@login_required
+def select_opensubtitle(activity_id, opensub_file_id):
+    """Handles the selection of an OpenSubtitle for a given activity."""
+    activity = UserActivity.query.filter_by(id=activity_id, user_id=current_user.id).first_or_404()
+
+    # Extract details passed from the form (or re-fetch if necessary, but form is better)
+    # These details are needed to populate opensubtitle_details_json
+    # For simplicity, we assume these are sent via form.
+    # In a real scenario, you might want to fetch these from OpenSubtitles API again using file_id
+    # to ensure data integrity, or trust the client-submitted data for display purposes.
+
+    # For this example, we'll expect some data from the form.
+    # This data would have been part of the OpenSubtitle item displayed in the template.
+    # Example: file_name, language, ai_translated, moviehash_match, uploader_name
+
+    # The form in the template needs to submit these. For now, let's assume we get them.
+    # We'll construct a basic details dict.
+    # A more robust way is to fetch the specific subtitle attributes again using its ID if needed,
+    # or ensure all necessary data is passed from the search result to the selection form.
+
+    # For now, we'll just store the file_id and a minimal JSON.
+    # The frontend will need to pass these details when submitting the selection.
+    # This part needs to be fleshed out based on what data is available in the template loop for OpenSubtitles.
+
+    # Let's assume the form submits 'language', 'file_name', 'is_ai', 'is_hash_match'
+    # These would come from request.form.get(...)
+    # For now, we'll create a placeholder.
+    # This is a simplification. In a real app, you'd get these from the form submission
+    # which in turn got them from the OpenSubtitles search results.
+
+    # We need to find the specific subtitle details from a previous search or re-fetch.
+    # For now, let's assume the client will POST these details.
+    # This is a placeholder for how you'd get the details.
+    # You'd typically pass these in hidden fields in the selection form.
+
+    # Simplified: Fetch the specific subtitle details again to ensure accuracy
+    # This is not ideal as it's an extra API call. Better to pass from template.
+    # However, to ensure we have the correct data for opensubtitle_details_json:
+
+    # This is a conceptual placeholder. The actual data should be passed from the form
+    # which was populated from the search results.
+    # For now, we'll just store the ID and a basic language.
+    # The template will need to be designed to pass more.
+
+    # Let's assume the template form will pass these:
+    # - 'os_filename'
+    # - 'os_language'
+    # - 'os_ai_translated' (as 'true'/'false' string)
+    # - 'os_hash_match' (as 'true'/'false' string)
+    # - 'os_uploader'
+
+    # This is a simplified placeholder. The actual data should be passed from the form.
+    # For now, we'll just store the file_id. The JSON details should be populated
+    # with data from the OpenSubtitles search result that corresponds to this file_id.
+    # This requires passing that data through the form.
+
+    # For the purpose of this step, we'll assume the necessary details are available
+    # or can be minimally reconstructed. A full implementation would pass these via the form.
+
+    opensub_details = {
+        "file_id": opensub_file_id,
+        "language": request.form.get("os_language", current_user.preferred_language),  # Get from form
+        "release_name": request.form.get("os_release_name", "N/A"),  # Get from form
+        "uploader": request.form.get("os_uploader", "N/A"),  # Get from form
+        "ai_translated": request.form.get("os_ai_translated") == 'true',  # Get from form
+        "moviehash_match": request.form.get("os_hash_match") == 'true'  # Get from form
+        # Add other relevant fields like 'url' to the OpenSubtitles page for that sub, etc.
+    }
+
+    try:
+        selection = UserSubtitleSelection.query.filter_by(
+            user_id=current_user.id,
+            content_id=activity.content_id,
+            video_hash=activity.video_hash
+        ).first()
+
+        if selection:
+            selection.selected_subtitle_id = None  # Clear local selection
+            selection.selected_opensubtitle_file_id = opensub_file_id
+            selection.opensubtitle_details_json = opensub_details
+            selection.timestamp = datetime.datetime.utcnow()
+            flash('OpenSubtitle selected successfully.', 'success')
+        else:
+            new_selection = UserSubtitleSelection(
+                user_id=current_user.id,
+                content_id=activity.content_id,
+                video_hash=activity.video_hash,
+                selected_opensubtitle_file_id=opensub_file_id,
+                opensubtitle_details_json=opensub_details,
+                selected_subtitle_id=None
+            )
+            db.session.add(new_selection)
+            flash('OpenSubtitle selected successfully.', 'success')
+
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(
+            f"Error selecting OpenSubtitle file_id {opensub_file_id} for user {current_user.id}: {e}", exc_info=True)
+        flash('Error selecting OpenSubtitle. Please try again.', 'danger')
+
+    return redirect(url_for('main.content_detail', activity_id=activity_id))
+
+
 @main_bp.route('/delete_activity/<uuid:activity_id>', methods=['POST'])
 @login_required
 def delete_activity(activity_id):
     """Deletes a specific user activity item, ensuring ownership."""
-    activity_to_delete = UserActivity.query.get(activity_id) # Efficiently get by primary key
+    activity_to_delete = UserActivity.query.get(activity_id)  # Efficiently get by primary key
 
     if not activity_to_delete:
         flash('Activity record not found.', 'warning')
@@ -277,7 +551,7 @@ def delete_activity(activity_id):
         )
         flash('You do not have permission to delete this activity record.', 'danger')
         return redirect(url_for('main.dashboard'))
-        
+
     try:
         db.session.delete(activity_to_delete)
         db.session.commit()
@@ -286,5 +560,5 @@ def delete_activity(activity_id):
         db.session.rollback()
         current_app.logger.error(f"Error deleting activity {activity_id} for user {current_user.id}: {e}")
         flash('Error deleting activity record. Please try again.', 'danger')
-        
+
     return redirect(url_for('main.dashboard'))
