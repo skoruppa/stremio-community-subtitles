@@ -3,8 +3,10 @@ import datetime
 import json
 import base64
 import tempfile
+
+import pycountry
 import requests  # For fetching from Cloudinary URL
-from flask import Blueprint, url_for, Response, request, current_app
+from flask import Blueprint, url_for, Response, request, current_app, flash, redirect # Added redirect
 from flask_login import current_user, login_required
 from sqlalchemy.orm import Session
 
@@ -17,10 +19,10 @@ try:
 except ImportError:
     CLOUDINARY_AVAILABLE = False
 from ..extensions import db
-from ..models import User, Subtitle, UserActivity, UserSubtitleSelection
-from ..lib import opensubtitles_client # Import the OpenSubtitles client
-from ..lib.subtitles import convert_to_vtt # For converting downloaded OS subs if not VTT
-from .utils import respond_with
+from ..models import User, Subtitle, UserActivity, UserSubtitleSelection, SubtitleVote # Added SubtitleVote for consistency, though not directly used here
+from ..lib import opensubtitles_client
+from ..lib.subtitles import convert_to_vtt
+from .utils import respond_with, get_active_subtitle_details # Import the new utility function
 from urllib.parse import parse_qs, unquote
 import gzip
 import io
@@ -203,39 +205,41 @@ def unified_download(manifest_token: str, download_identifier: str):
     message_key = None
     vtt_content = None
 
-    user_selection = UserSubtitleSelection.query.filter_by(user_id=user.id, content_id=content_id, video_hash=video_hash).first()
-    if not user_selection and not video_hash:
-        user_selection = UserSubtitleSelection.query.filter_by(user_id=user.id, content_id=content_id, video_hash=None).first()
+    # Use the utility function to get active subtitle details
+    active_subtitle_info = get_active_subtitle_details(user, content_id, video_hash)
 
-    if user_selection:
-        if user_selection.selected_subtitle_id:
-            local_subtitle_to_serve = Subtitle.query.get(user_selection.selected_subtitle_id)
-            if local_subtitle_to_serve:
-                current_app.logger.info(f"Using user-selected local subtitle ID {local_subtitle_to_serve.id}")
-            else:
-                current_app.logger.error(f"User selection points to non-existent local sub ID {user_selection.selected_subtitle_id}")
-                user_selection = None 
-        elif user_selection.selected_opensubtitle_file_id and user_selection.opensubtitle_details_json:
-            opensubtitle_to_serve_details = {'file_id': user_selection.selected_opensubtitle_file_id, 'details': user_selection.opensubtitle_details_json}
-            current_app.logger.info(f"User selected OpenSubtitle file_id {opensubtitle_to_serve_details['file_id']}")
+    if active_subtitle_info['type'] == 'local':
+        local_subtitle_to_serve = active_subtitle_info['subtitle']
+        if local_subtitle_to_serve:
+            current_app.logger.info(f"Serving active local subtitle ID {local_subtitle_to_serve.id} (type: {active_subtitle_info['type']})")
+    elif active_subtitle_info['type'] == 'opensubtitles_selection':
+        # This case implies user.opensubtitles_active was true in the utility function
+        opensubtitle_to_serve_details = active_subtitle_info['details'] # This is the JSON details
+        # Ensure 'file_id' is at the top level for consistency with later OS fetching logic
+        if 'file_id' not in opensubtitle_to_serve_details and 'original_file_id' in opensubtitle_to_serve_details: # from community_link
+             opensubtitle_to_serve_details['file_id'] = opensubtitle_to_serve_details['original_file_id']
 
-    if not local_subtitle_to_serve and not opensubtitle_to_serve_details:
-        current_app.logger.info(f"No explicit user selection for {content_id}/{video_hash}. Attempting default local lookup.")
-        if preferred_lang:
-            base_query = Subtitle.query.filter_by(content_id=content_id, language=preferred_lang)
-            if video_hash:
-                local_subtitle_to_serve = base_query.filter_by(video_hash=video_hash).order_by(Subtitle.votes.desc()).first()
-            if not local_subtitle_to_serve and not video_hash:
-                local_subtitle_to_serve = base_query.filter(Subtitle.video_hash == None).order_by(Subtitle.votes.desc()).first()
-            if local_subtitle_to_serve:
-                current_app.logger.info(f"Found default local subtitle ID {local_subtitle_to_serve.id}")
-        else:
-            current_app.logger.warning(f"Cannot perform default local lookup without preferred_lang for {content_id}")
+        if opensubtitle_to_serve_details and 'file_id' in opensubtitle_to_serve_details:
+            current_app.logger.info(f"Serving user-selected OpenSubtitle file_id {opensubtitle_to_serve_details['file_id']}")
+        else: # Should not happen if type is 'opensubtitles_selection' from util
+            current_app.logger.error(f"OpenSubtitles selection details missing file_id: {opensubtitle_to_serve_details}")
+            opensubtitle_to_serve_details = None # Reset to avoid error
 
-    if not local_subtitle_to_serve and not opensubtitle_to_serve_details and current_app.config.get('OPEN_SUBTITLES_API_KEY') and video_hash:
-        current_app.logger.info(f"No local/selected subtitle. Attempting OpenSubtitles hash match for {content_id}/{video_hash}.")
+    # If no active subtitle found by utility, attempt OpenSubtitles hash match (existing fallback logic)
+    # This part is for auto-discovery if nothing is explicitly selected or defaulted by the utility.
+    if not local_subtitle_to_serve and not opensubtitle_to_serve_details and \
+       user.opensubtitles_active and user.opensubtitles_token and user.opensubtitles_base_url and \
+       current_app.config.get('OPEN_SUBTITLES_API_KEY') and video_hash:
+        current_app.logger.info(f"No active subtitle from utility. Attempting OpenSubtitles hash match for {content_id}/{video_hash}.")
         try:
-            os_search_params = {'moviehash': video_hash, 'languages': preferred_lang}
+            os_search_params = {
+                'moviehash': video_hash, 
+                'languages': pycountry.countries.get(alpha_3=preferred_lang).alpha_2p,
+                'user_token': user.opensubtitles_token, # Pass token for authenticated search
+                'user_base_url': user.opensubtitles_base_url # Pass base_url
+            }
+            
+            # Add IMDB ID, season, episode if available (similar to content_detail)
             imdb_id_part = content_id.split(':')[0]
             if imdb_id_part.startswith("tt"): os_search_params['imdb_id'] = imdb_id_part
             
@@ -248,37 +252,56 @@ def unified_download(manifest_token: str, download_identifier: str):
             elif content_type_from_context == 'movie':
                  os_search_params['type'] = 'movie'
 
-            if os_search_params.get('imdb_id') or os_search_params.get('moviehash'): # Ensure we have a primary identifier
+            # Ensure we have enough parameters for a meaningful search
+            if os_search_params.get('imdb_id') or os_search_params.get('moviehash') or os_search_params.get('query'):
                 os_results = opensubtitles_client.search_subtitles(**os_search_params)
                 if os_results and os_results.get('data'):
                     for item in os_results['data']:
                         attrs = item.get('attributes', {})
                         files = attrs.get('files', [])
+                        # Prioritize moviehash_match if available from search results
                         if attrs.get('moviehash_match') and files and files[0].get('file_id'):
-                            opensubtitle_to_serve_details = {'file_id': files[0].get('file_id'), 'details': {'release_name': files[0].get('file_name'), 'language': attrs.get('language'), 'moviehash_match': True, 'ai_translated': attrs.get('ai_translated') or attrs.get('machine_translated')}}
-                            current_app.logger.info(f"Found OpenSubtitle with hash match: file_id {opensubtitle_to_serve_details['file_id']}")
-                            break
+                            opensubtitle_to_serve_details = {
+                                'file_id': files[0].get('file_id'), 
+                                'details': { # Store more details for potential conversion/logging
+                                    'release_name': files[0].get('file_name'), 
+                                    'language': attrs.get('language'), 
+                                    'moviehash_match': True, 
+                                    'ai_translated': attrs.get('ai_translated') or attrs.get('machine_translated'),
+                                    'uploader': attrs.get('uploader', {}).get('name'),
+                                    'url': attrs.get('url')
+                                }
+                            }
+                            current_app.logger.info(f"Found OpenSubtitle with hash match (auto-lookup): file_id {opensubtitle_to_serve_details['file_id']}")
+                            break # Take the first hash match
             else:
-                current_app.logger.info("Not enough parameters for OpenSubtitles hash match search (moviehash is primary).")
-        except opensubtitles_client.OpenSubtitlesError as e: current_app.logger.error(f"OpenSubtitles API error during auto-lookup: {e}")
-        except Exception as e: current_app.logger.error(f"Unexpected error during OpenSubtitles auto-lookup: {e}", exc_info=True)
+                current_app.logger.info("Not enough parameters for OpenSubtitles hash match auto-lookup.")
+        except opensubtitles_client.OpenSubtitlesError as e: 
+            current_app.logger.error(f"OpenSubtitles API error during auto-lookup: {e}")
+        except Exception as e: 
+            current_app.logger.error(f"Unexpected error during OpenSubtitles auto-lookup: {e}", exc_info=True)
 
+    # Proceed with serving logic based on what was found
     if local_subtitle_to_serve:
-        if local_subtitle_to_serve.source_type == 'opensubtitles_community_link' and local_subtitle_to_serve.source_metadata:
-            os_file_id = local_subtitle_to_serve.source_metadata.get('original_file_id')
-            if os_file_id:
-                # This item is a linked OpenSubtitle, set it up for OS fetching
+        # If the local subtitle is actually a link to an OS sub, switch to OS serving logic
+        if local_subtitle_to_serve.source_type == 'opensubtitles_community_link' and \
+           local_subtitle_to_serve.source_metadata and \
+           local_subtitle_to_serve.source_metadata.get('original_file_id'):
+            
+            if user.opensubtitles_active and user.opensubtitles_token and user.opensubtitles_base_url:
+                os_file_id = local_subtitle_to_serve.source_metadata.get('original_file_id')
                 opensubtitle_to_serve_details = {
                     'file_id': os_file_id,
-                    'details': local_subtitle_to_serve.source_metadata  # Pass along all stored metadata
+                    'details': local_subtitle_to_serve.source_metadata 
                 }
-                current_app.logger.info(f"Identified user-selected linked OpenSubtitle (original OS file_id: {os_file_id}) via local Subtitle ID {local_subtitle_to_serve.id}. Will fetch from OpenSubtitles.")
-                local_subtitle_to_serve = None # Clear this so we proceed to OS fetching logic
+                current_app.logger.info(f"Identified linked OpenSubtitle (original OS file_id: {os_file_id}) via local Subtitle ID {local_subtitle_to_serve.id}. Will fetch from OpenSubtitles.")
+                local_subtitle_to_serve = None # Clear this to proceed to OS fetching
             else:
-                current_app.logger.error(f"Linked OpenSubtitle (local ID {local_subtitle_to_serve.id}) is missing 'original_file_id' in source_metadata.")
-                message_key = 'select_web' # Or a more specific error
+                current_app.logger.warning(f"User has a linked OpenSubtitle selected (local ID {local_subtitle_to_serve.id}) but OS integration is not active. Cannot fetch.")
+                message_key = 'os_integration_inactive' # New message key
                 local_subtitle_to_serve = None # Cannot serve this
-        elif local_subtitle_to_serve.file_path: # This is a standard community-uploaded subtitle
+            
+        elif local_subtitle_to_serve.file_path: # Standard community-uploaded subtitle
             db_file_path = local_subtitle_to_serve.file_path
             current_app.logger.info(f"Serving community subtitle ID {local_subtitle_to_serve.id} (Path: {db_file_path})")
             try:
@@ -296,72 +319,85 @@ def unified_download(manifest_token: str, download_identifier: str):
                     with open(local_full_path, 'r', encoding='utf-8') as f: vtt_content = f.read()
             except Exception as e:
                 current_app.logger.error(f"Error reading local subtitle ID {local_subtitle_to_serve.id}: {e}", exc_info=True)
-                message_key = 'select_web'
+                message_key = 'select_web' # Generic error, user might need to reselect or upload
         else:
              current_app.logger.error(f"Local subtitle ID {local_subtitle_to_serve.id} (type: {local_subtitle_to_serve.source_type}) has no file_path.")
              message_key = 'select_web'
 
+
+    # This block now handles OS subs found either by direct selection (via utility) or auto-lookup
     if opensubtitle_to_serve_details and opensubtitle_to_serve_details.get('file_id') and not vtt_content:
         os_file_id = opensubtitle_to_serve_details['file_id']
-        current_app.logger.info(f"Attempting to serve OpenSubtitle file_id: {os_file_id}")
-        try:
-            download_info = opensubtitles_client.request_download_link(file_id=os_file_id)
-            if download_info and download_info.get('link'):
-                subtitle_direct_url = download_info['link']
-                remaining_downloads = download_info.get('remaining')
-                if remaining_downloads is not None and int(remaining_downloads) <= 10 :
-                     current_app.logger.warning(f"OpenSubtitles API downloads remaining: {remaining_downloads}")
+        
+        if not user.opensubtitles_active or not user.opensubtitles_token or not user.opensubtitles_base_url:
+            current_app.logger.warning(f"Attempting to serve OpenSubtitle file_id {os_file_id}, but user's OS integration is not active or token/base_url is missing.")
+            message_key = 'os_integration_inactive'
+        else:
+            current_app.logger.info(f"Attempting to serve OpenSubtitle file_id: {os_file_id} using user's token and base_url.")
+            try:
+                download_info = opensubtitles_client.request_download_link(
+                    file_id=os_file_id,
+                    user_token=user.opensubtitles_token,
+                    user_base_url=user.opensubtitles_base_url
+                )
+                if download_info and download_info.get('link'):
+                    subtitle_direct_url = download_info['link']
+                    remaining_downloads = download_info.get('remaining')
+                    if remaining_downloads is not None and int(remaining_downloads) <= 10 :
+                         current_app.logger.warning(f"OpenSubtitles API downloads remaining for user {user.username}: {remaining_downloads}")
 
-                sub_response = requests.get(subtitle_direct_url, timeout=20, headers={'Accept-Encoding': 'gzip, deflate'})
-                sub_response.raise_for_status()
-                content_to_process = sub_response.content
-                
-                if sub_response.headers.get('Content-Encoding') == 'gzip':
-                    current_app.logger.info("Decompressing gzipped OpenSubtitle content.")
-                    compressed_file = io.BytesIO(content_to_process)
-                    decompressed_file = gzip.GzipFile(fileobj=compressed_file)
-                    content_to_process = decompressed_file.read()
-                
-                try:
-                    decoded_content = content_to_process.decode('utf-8')
-                except UnicodeDecodeError:
-                    current_app.logger.warning("UTF-8 decode failed for OpenSubtitle, trying latin-1.")
+                    sub_response = requests.get(subtitle_direct_url, timeout=20, headers={'Accept-Encoding': 'gzip, deflate'})
+                    sub_response.raise_for_status()
+                    content_to_process = sub_response.content
+                    
+                    if sub_response.headers.get('Content-Encoding') == 'gzip':
+                        current_app.logger.info("Decompressing gzipped OpenSubtitle content.")
+                        compressed_file = io.BytesIO(content_to_process)
+                        decompressed_file = gzip.GzipFile(fileobj=compressed_file)
+                        content_to_process = decompressed_file.read()
+                    
                     try:
-                        decoded_content = content_to_process.decode('latin-1')
+                        decoded_content = content_to_process.decode('utf-8')
                     except UnicodeDecodeError:
-                        current_app.logger.error("OpenSubtitle content encoding issue after trying UTF-8 and latin-1.")
-                        raise opensubtitles_client.OpenSubtitlesError("Subtitle content encoding issue.")
-                
-                if not decoded_content.strip().upper().startswith("WEBVTT"):
-                    current_app.logger.info(f"OpenSubtitle file_id {os_file_id} is not VTT. Attempting conversion.")
-                    # Assuming the original extension might be .srt if not VTT. This is a guess.
-                    # The OpenSubtitles API response (search) includes `file_name` which might have an extension.
-                    # For now, we'll default to trying .srt conversion.
-                    original_filename = opensubtitle_to_serve_details.get('details', {}).get('release_name', '.srt')
-                    _, original_ext = os.path.splitext(original_filename)
-                    if not original_ext: original_ext = ".srt" # Default if no extension found
+                        current_app.logger.warning("UTF-8 decode failed for OpenSubtitle, trying latin-1.")
+                        try:
+                            decoded_content = content_to_process.decode('latin-1')
+                        except UnicodeDecodeError:
+                            current_app.logger.error("OpenSubtitle content encoding issue after trying UTF-8 and latin-1.")
+                            raise opensubtitles_client.OpenSubtitlesError("Subtitle content encoding issue.")
+                    
+                    if not decoded_content.strip().upper().startswith("WEBVTT"):
+                        current_app.logger.info(f"OpenSubtitle file_id {os_file_id} is not VTT. Attempting conversion.")
+                        # Use 'release_name' from 'details' if available, otherwise default to .srt
+                        original_filename = opensubtitle_to_serve_details.get('details', {}).get('release_name', '.srt')
+                        _, original_ext = os.path.splitext(original_filename)
+                        if not original_ext: original_ext = ".srt"
 
-                    vtt_content = convert_to_vtt(content_to_process, original_ext, detected_encoding=sub_response.encoding)
+                        vtt_content = convert_to_vtt(content_to_process, original_ext, detected_encoding=sub_response.encoding)
+                    else:
+                        vtt_content = decoded_content
+                    current_app.logger.info(f"Successfully fetched and processed OpenSubtitle file_id {os_file_id}")
                 else:
-                    vtt_content = decoded_content
-                current_app.logger.info(f"Successfully fetched and processed OpenSubtitle file_id {os_file_id}")
-            else:
-                current_app.logger.error(f"Failed to get download link for OpenSubtitle file_id {os_file_id}. Response: {download_info}")
-                message_key = 'select_web'
-        except opensubtitles_client.OpenSubtitlesError as e:
-            current_app.logger.error(f"OpenSubtitles API error while serving file_id {os_file_id}: {e}")
-            message_key = 'select_web'
-        except Exception as e:
-            current_app.logger.error(f"Unexpected error serving OpenSubtitle file_id {os_file_id}: {e}", exc_info=True)
-            message_key = 'select_web'
+                    current_app.logger.error(f"Failed to get download link for OpenSubtitle file_id {os_file_id}. Response: {download_info}")
+                    message_key = 'select_web' # Or a more specific "OS download failed"
+            except opensubtitles_client.OpenSubtitlesError as e:
+                current_app.logger.error(f"OpenSubtitles API error while serving file_id {os_file_id} for user {user.username}: {e}")
+                message_key = 'os_error_contact_support' # More specific error
+            except Exception as e:
+                current_app.logger.error(f"Unexpected error serving OpenSubtitle file_id {os_file_id} for user {user.username}: {e}", exc_info=True)
+                message_key = 'select_web' # Generic error
 
     if vtt_content:
         if not vtt_content.strip().upper().startswith("WEBVTT"): 
+            # This case should ideally not happen if conversion to VTT is successful
+            current_app.logger.warning("Content served is not VTT, serving as plain text. This might indicate a conversion issue.")
             return Response(vtt_content, mimetype='text/plain')
         return Response(vtt_content, mimetype='text/vtt')
     else:
-        if not message_key:
+        # Fallback messages
+        if not message_key: # If no specific error message_key was set
             message_key = 'no_subs_found' if preferred_lang else 'select_web'
+            # If no hash, 'no_subs_found' is fine. If hash but still no subs, 'select_web' is better.
             if video_hash and message_key == 'no_subs_found': 
                 message_key = 'select_web'
         
@@ -369,6 +405,8 @@ def unified_download(manifest_token: str, download_identifier: str):
             'no_subs_found': "No Subtitles Found: Upload or select from the web interface.",
             'no_hash_select_web': "Video hash not present or mismatch: Please select subtitles from the web interface.",
             'select_web': "No automatic match found. Please select subtitles from the web interface.",
+            'os_integration_inactive': "OpenSubtitles integration is inactive. Please activate it in account settings to use this feature.",
+            'os_error_contact_support': "Error fetching from OpenSubtitles. Please try again later or check your account on OpenSubtitles.com."
         }
         message_text = messages.get(message_key, "An error occurred or subtitles need selection.")
         current_app.logger.info(f"Serving placeholder message (key: '{message_key}') for context: {context}")
@@ -655,7 +693,30 @@ def download_subtitle(subtitle_id):
             current_app.logger.error(f"Linked OS subtitle {subtitle.id} missing original_file_id for download.")
             abort(404)
         try:
-            download_info = opensubtitles_client.request_download_link(file_id=os_file_id)
+            # For admin download, should we use admin API key or user's token if available?
+            # Using user's token if OS active, else admin key for broader access.
+            # The request_download_link was modified to require user token and base_url.
+            # This admin download might need a different path if it's to bypass user context.
+            # For now, let's assume if user is admin, they might be testing their own OS integration or a general one.
+            # This part needs clarification on how admin downloads of OS-linked subs should work.
+            # Reverting to use the generic API key for admin download for now, assuming request_download_link can handle it.
+            # This conflicts with my earlier change to request_download_link.
+            # For now, this admin download of OS-linked subs will likely fail if request_download_link strictly requires user token.
+            # Let's assume for admin, we might need a separate OS client call or adjust request_download_link.
+            # For quick fix, I'll assume request_download_link can work with just API key if no token/base_url.
+            # THIS IS A POTENTIAL ISSUE based on previous changes to opensubtitles_client.
+            # For now, I will assume the client was updated to allow API-key only for some admin functions,
+            # or this admin download will only work if the admin user *also* has OS configured.
+            # Given the client changes, this will require user token.
+            if not current_user.opensubtitles_active or not current_user.opensubtitles_token or not current_user.opensubtitles_base_url:
+                 flash("Admin's OpenSubtitles account is not configured/active; cannot download this OS-linked subtitle.", "warning")
+                 return redirect(request.referrer or url_for('main.dashboard'))
+
+            download_info = opensubtitles_client.request_download_link(
+                file_id=os_file_id,
+                user_token=current_user.opensubtitles_token,
+                user_base_url=current_user.opensubtitles_base_url
+            )
             if download_info and download_info.get('link'):
                 sub_url = download_info['link']
                 sub_response = requests.get(sub_url, timeout=20, headers={'Accept-Encoding': 'gzip, deflate'})
@@ -667,7 +728,6 @@ def download_subtitle(subtitle_id):
                     decompressed_file = gzip.GzipFile(fileobj=compressed_file)
                     content_to_process = decompressed_file.read()
                 
-                # Try to decode and convert if not VTT
                 try:
                     decoded_content = content_to_process.decode('utf-8')
                 except UnicodeDecodeError:

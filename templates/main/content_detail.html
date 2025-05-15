@@ -102,15 +102,20 @@
                     <div class="list-group list-group-flush">
                         <div class="list-group-item active-subtitle">
                             <div class="d-flex justify-content-between align-items-center mb-2">
-                                <h5 class="mb-0">Currently Selected (Community)</h5>
+                                <h5 class="mb-0">Currently Selected</h5>
                                 <div>
+                                    {% if auto_selected %}
+                                    <span class="badge bg-info">Auto Selected</span>
+                                    {% else %}
                                     <span class="badge bg-success">User Selected</span>
+                                    
                                     <form method="POST" action="{{ url_for('subtitles.reset_selection', activity_id=activity.id) }}" class="d-inline ms-2">
                                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                         <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure you want to reset your subtitle selection?')">
                                             <i class="fas fa-times me-1"></i>Reset Selection
                                         </button>
                                     </form>
+                                    {% endif %}
                                 </div>
                             </div>
                             {{ render_subtitle_item(active_subtitle, user_votes, user_selection, activity.id, activity.video_hash, current_user, LANGUAGE_DICT) }}
@@ -120,9 +125,9 @@
                     <div class="list-group list-group-flush">
                         <div class="list-group-item active-subtitle"> {# Use same styling for active OpenSubtitle #}
                             <div class="d-flex justify-content-between align-items-center mb-2">
-                                <h5 class="mb-0">Currently Selected (OpenSubtitles)</h5>
+                                <h5 class="mb-0">Currently Selected</h5>
                                 <div>
-                                    <span class="badge bg-success">User Selected</span>
+                                    <span class="badge bg-primary">Open Subtitles</span> <span class="badge bg-success">User Selected</span>
                                      <form method="POST" action="{{ url_for('subtitles.reset_selection', activity_id=activity.id) }}" class="d-inline ms-2">
                                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                         <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure you want to reset your subtitle selection?')">
@@ -226,7 +231,6 @@
         </div>
 
         {# OpenSubtitles Section #}
-        {% if opensubtitles_api_key %}
         <div class="card shadow-sm mb-4">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">OpenSubtitles Results <small class="text-muted">({{ LANGUAGE_DICT.get(current_user.preferred_language, current_user.preferred_language) }})</small></h5>
@@ -247,7 +251,6 @@
                 {% endif %}
             </div>
         </div>
-        {% endif %}
 
     </div>
 </div>

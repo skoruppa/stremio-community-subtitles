@@ -40,6 +40,11 @@ class User(UserMixin, db.Model):
     email_confirmed = db.Column(db.Boolean, default=False)
     email_confirmed_at = db.Column(db.DateTime, nullable=True)
 
+    # OpenSubtitles Integration Fields
+    opensubtitles_token = db.Column(db.String(1024), nullable=True)  # Assuming token can be long
+    opensubtitles_base_url = db.Column(db.String(255), nullable=True)
+    opensubtitles_active = db.Column(db.Boolean, default=False, nullable=False)
+
     last_login_at = db.Column(db.DateTime)
     current_login_at = db.Column(db.DateTime)
     last_login_ip = db.Column(db.String(100))

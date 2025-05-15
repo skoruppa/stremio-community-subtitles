@@ -1,7 +1,7 @@
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileAllowed, FileRequired
 from wtforms import StringField, PasswordField, BooleanField, SubmitField, SelectField, TextAreaField
-from wtforms.validators import DataRequired, Email, EqualTo, Length, ValidationError
+from wtforms.validators import DataRequired, Email, EqualTo, Length, ValidationError, Optional
 from .models import User
 
 
@@ -68,3 +68,18 @@ class ResetPasswordForm(FlaskForm):
 class LanguagePreferenceForm(FlaskForm):
     preferred_language = SelectField('Preferred Subtitle Language', validators=[DataRequired()])
     submit = SubmitField('Update Preference')
+
+
+class OpenSubtitlesLoginForm(FlaskForm):
+    use_opensubtitles = BooleanField('Use OpenSubtitles Integration')
+    opensubtitles_username = StringField(
+        'OpenSubtitles Username', 
+        validators=[Optional(), Length(max=255)], 
+        render_kw={'placeholder': 'Your OpenSubtitles.com Username'}
+    )
+    opensubtitles_password = PasswordField(
+        'OpenSubtitles Password', 
+        validators=[Optional(), Length(min=0, max=255)], 
+        render_kw={'placeholder': 'Your OpenSubtitles.com Password'}
+    ) # min=0 to allow empty if not checked
+    submit = SubmitField('Save OpenSubtitles Settings')
