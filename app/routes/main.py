@@ -68,8 +68,8 @@ def link_opensubtitle(activity_id, opensub_file_id):
             ).first()
             if selection:
                 selection.selected_subtitle_id = existing_link.id
-                selection.selected_opensubtitle_file_id = None
-                selection.opensubtitle_details_json = None
+                selection.selected_external_file_id = None
+                selection.external_details_json = None
             else:
                 selection = UserSubtitleSelection(
                     user_id=current_user.id,
@@ -103,7 +103,7 @@ def link_opensubtitle(activity_id, opensub_file_id):
                 "ai_translated": os_ai_translated,
                 "linked_by_user_id": current_user.id
             },
-            votes=1  # Initial vote from the linker
+            votes=1
         )
         db.session.add(new_linked_subtitle)
 
@@ -113,12 +113,7 @@ def link_opensubtitle(activity_id, opensub_file_id):
             subtitle_id=new_linked_subtitle.id,  # Will be set after flush if using UUID from Python
             vote_value=1
         )
-        # If new_linked_subtitle.id is not available before commit (e.g. not UUID from Python),
-        # this needs to be handled carefully, perhaps by committing new_linked_subtitle first, then vote.
-        # For now, assume ID is available after add or will be handled by SQLAlchemy relationships.
-        # A safer way: commit subtitle, then create and commit vote.
-        # Let's do it in two steps for safety with ID.
-        db.session.flush()  # To get new_linked_subtitle.id if it's a sequence-generated UUID
+        db.session.flush()
 
         initial_vote.subtitle_id = new_linked_subtitle.id
         db.session.add(initial_vote)
@@ -132,8 +127,8 @@ def link_opensubtitle(activity_id, opensub_file_id):
 
         if selection:
             selection.selected_subtitle_id = new_linked_subtitle.id
-            selection.selected_opensubtitle_file_id = None  # Clear direct OS selection
-            selection.opensubtitle_details_json = None
+            selection.selected_external_file_id = None  # Clear direct OS selection
+            selection.external_details_json = None
             selection.timestamp = datetime.datetime.utcnow()
         else:
             new_user_selection = UserSubtitleSelection(
@@ -327,16 +322,12 @@ def content_detail(activity_id):
     }
 
     # Fetch OpenSubtitles if API key is available and user has integration active
-    opensubtitles_api_key = current_app.config.get('OPEN_SUBTITLES_API_KEY')
-    if opensubtitles_api_key and current_user.is_authenticated and \
-       current_user.opensubtitles_active and current_user.opensubtitles_token and \
-       current_user.opensubtitles_base_url:
+    if current_user.opensubtitles_active:
         try:
             search_params = {
                 'languages': pycountry.countries.get(alpha_3=current_user.preferred_language).alpha_2,
                 'moviehash': activity.video_hash if activity.video_hash else None,
-                'user_token': current_user.opensubtitles_token,
-                'user_base_url': current_user.opensubtitles_base_url
+                'user': current_user
             }
             # Extract IMDb ID if present in content_id (e.g., "tt123456" or "tt123456:1:2")
             imdb_id_part = activity.content_id.split(':')[0]
@@ -426,7 +417,7 @@ def account_settings():
         # We don't pre-fill username/password for security and simplicity.
         # If opensubtitles_active is true, template will show "logged in" state.
 
-    if lang_form.validate_on_submit() and lang_form.submit.data:
+    if lang_form.submit_language.data and lang_form.validate():
         try:
             current_user.preferred_language = lang_form.preferred_language.data
             db.session.commit()
@@ -437,35 +428,24 @@ def account_settings():
             current_app.logger.error(f"Failed to update language for user {current_user.id}: {e}")
             flash('Failed to update language.', 'danger')
 
-    if os_form.validate_on_submit() and os_form.submit.data:
+    if os_form.submit_opensubtitles.data and os_form.validate():
         os_username = os_form.opensubtitles_username.data
         os_password = os_form.opensubtitles_password.data
-        os_api_key = os_form.opensubtitles_api_key.data # Get the personal API key
+        os_api_key = os_form.opensubtitles_api_key.data 
 
-        # Manually check for required fields if integration is desired
+        # Save the personal API key if provided (only editable when logged out)
+        if not current_user.opensubtitles_token:
+             current_user.opensubtitles_api_key = os_api_key
+        elif os_api_key and os_api_key != current_user.opensubtitles_api_key:
+             flash('Please log out from OpenSubtitles before changing your personal API key.', 'warning')
+
         if os_form.use_opensubtitles.data:
-            if not os_username:
-                os_form.opensubtitles_username.errors.append('Username is required to activate OpenSubtitles integration.')
-            if not os_password:
-                os_form.opensubtitles_password.errors.append('Password is required to activate OpenSubtitles integration.')
-
-            # If there are validation errors after manual check, re-render the template
-            if os_form.errors:
-                 # Need to re-fetch opensubtitles_has_token as it's used in the template logic
-                 opensubtitles_has_token = current_user.opensubtitles_token is not None
-                 return render_template('main/account_settings.html', 
-                                       lang_form=lang_form, 
-                                       os_form=os_form,
-                                       opensubtitles_active=current_user.opensubtitles_active,
-                                       opensubtitles_has_token=opensubtitles_has_token,
-                                       LANGUAGE_DICT=LANGUAGE_DICT)
-
-
-            # Attempt login with username/password if provided, regardless of API key
+            # User wants to enable or keep enabled
             if os_username and os_password:
                 try:
                     current_app.logger.info(f"User {current_user.username} attempting to login/re-login to OpenSubtitles with username {os_username}.")
-                    login_data = opensubtitles_client.login(os_username, os_password)
+                    # Pass the user object to login to use their personal API key
+                    login_data = opensubtitles_client.login(os_username, os_password, user=current_user)
                     
                     current_user.opensubtitles_token = login_data['token']
                     current_user.opensubtitles_base_url = login_data['base_url']
@@ -480,14 +460,6 @@ def account_settings():
                     if not current_user.opensubtitles_token:
                         current_user.opensubtitles_active = False 
                         db.session.commit()
-                    # Re-render the template with errors
-                    opensubtitles_has_token = current_user.opensubtitles_token is not None
-                    return render_template('main/account_settings.html', 
-                                           lang_form=lang_form, 
-                                           os_form=os_form,
-                                           opensubtitles_active=current_user.opensubtitles_active,
-                                           opensubtitles_has_token=opensubtitles_has_token,
-                                           LANGUAGE_DICT=LANGUAGE_DICT)
                 except Exception as e:
                     db.session.rollback()
                     current_app.logger.error(f"Unexpected error during OpenSubtitles login for {current_user.username}: {e}", exc_info=True)
@@ -495,24 +467,13 @@ def account_settings():
                     if not current_user.opensubtitles_token:
                         current_user.opensubtitles_active = False
                         db.session.commit()
-                    # Re-render the template with errors
-                    opensubtitles_has_token = current_user.opensubtitles_token is not None
-                    return render_template('main/account_settings.html', 
-                                           lang_form=lang_form, 
-                                           os_form=os_form,
-                                           opensubtitles_active=current_user.opensubtitles_active,
-                                           opensubtitles_has_token=opensubtitles_has_token,
-                                           LANGUAGE_DICT=LANGUAGE_DICT)
             elif current_user.opensubtitles_token:
                  # If no username/password provided but a token exists, just ensure integration is active
                  if not current_user.opensubtitles_active:
                     current_user.opensubtitles_active = True
                     flash('OpenSubtitles integration (using existing session) has been activated.', 'info')
                  else:
-                    flash('OpenSubtitles integration remains active.', 'info') # No change
-            else:
-                 # This case should ideally be caught by form validation now, but keep as fallback
-                 flash('OpenSubtitles username and password are required to activate integration.', 'warning')
+                    flash('OpenSubtitles integration remains active.', 'info')
 
         else:
             # User wants to disable OpenSubtitles integration (use_opensubtitles is unchecked)
@@ -520,21 +481,8 @@ def account_settings():
                 current_user.opensubtitles_active = False
                 flash('OpenSubtitles integration has been locally deactivated. Your OpenSubtitles session details and API key are kept if you wish to re-activate.', 'info')
             else:
-                flash('OpenSubtitles integration is already inactive.', 'info') # No change
+                flash('OpenSubtitles integration is already inactive.', 'info') 
         
-        # Only update the personal API key if the user is not currently logged in
-        os_api_key = os_form.opensubtitles_api_key.data # Get the personal API key again after potential rollback
-        if not current_user.opensubtitles_token:
-             current_user.opensubtitles_api_key = os_api_key
-        elif os_api_key and os_api_key != current_user.opensubtitles_api_key:
-             # If user is logged in and provides a *different* API key,
-             # this implies they want to switch. We should probably log them out first.
-             # For now, we'll just prevent updating the key while logged in.
-             flash('Please log out from OpenSubtitles before changing your personal API key.', 'warning')
-             # No need to revert os_api_key here, as we only save if not logged in.
-
-
-        # Commit changes after handling all cases
         try:
             db.session.commit()
         except Exception as e:
@@ -563,7 +511,7 @@ def opensubtitles_logout():
 
     try:
         current_app.logger.info(f"User {current_user.username} attempting to logout from OpenSubtitles.")
-        opensubtitles_client.logout(current_user.opensubtitles_token, current_user.opensubtitles_base_url)
+        opensubtitles_client.logout(current_user.opensubtitles_token, user=current_user) # Pass user object
         
         # Clear OS-related fields from User model
         current_user.opensubtitles_token = None
@@ -575,9 +523,6 @@ def opensubtitles_logout():
         current_app.logger.info(f"User {current_user.username} successfully logged out from OpenSubtitles.")
     except OpenSubtitlesError as e:
         db.session.rollback()
-        # Even if OS logout fails, we should probably still deactivate locally if that's the user's intent.
-        # However, the requirement is to clear fields upon successful OS logout.
-        # If OS logout fails, we keep the token to allow user to retry or for admin to inspect.
         current_app.logger.error(f"OpenSubtitles logout API call failed for user {current_user.username}: {e}")
         flash(f'OpenSubtitles logout failed: {e}. Your local integration status may be unchanged.', 'danger')
     except Exception as e:
@@ -593,57 +538,6 @@ def opensubtitles_logout():
 def select_opensubtitle(activity_id, opensub_file_id):
     """Handles the selection of an OpenSubtitle for a given activity."""
     activity = UserActivity.query.filter_by(id=activity_id, user_id=current_user.id).first_or_404()
-
-    # Extract details passed from the form (or re-fetch if necessary, but form is better)
-    # These details are needed to populate opensubtitle_details_json
-    # For simplicity, we assume these are sent via form.
-    # In a real scenario, you might want to fetch these from OpenSubtitles API again using file_id
-    # to ensure data integrity, or trust the client-submitted data for display purposes.
-
-    # For this example, we'll expect some data from the form.
-    # This data would have been part of the OpenSubtitle item displayed in the template.
-    # Example: file_name, language, ai_translated, moviehash_match, uploader_name
-
-    # The form in the template needs to submit these. For now, let's assume we get them.
-    # We'll construct a basic details dict.
-    # A more robust way is to fetch the specific subtitle attributes again using its ID if needed,
-    # or ensure all necessary data is passed from the search result to the selection form.
-
-    # For now, we'll just store the file_id and a minimal JSON.
-    # The frontend will need to pass these details when submitting the selection.
-    # This part needs to be fleshed out based on what data is available in the template loop for OpenSubtitles.
-
-    # Let's assume the form submits 'language', 'file_name', 'is_ai', 'is_hash_match'
-    # These would come from request.form.get(...)
-    # For now, we'll create a placeholder.
-    # This is a simplification. In a real app, you'd get these from the form submission
-    # which in turn got them from the OpenSubtitles search results.
-
-    # We need to find the specific subtitle details from a previous search or re-fetch.
-    # For now, let's assume the client will POST these details.
-    # This is a placeholder for how you'd get the details.
-    # You'd typically pass these in hidden fields in the selection form.
-
-    # Simplified: Fetch the specific subtitle details again to ensure accuracy
-    # This is not ideal as it's an extra API call. Better to pass from template.
-    # However, to ensure we have the correct data for opensubtitle_details_json:
-
-    # This is a conceptual placeholder. The actual data should be passed from the form
-    # which was populated from the search results.
-    # For now, we'll just store the ID and a basic language.
-    # The template will need to be designed to pass more.
-
-    # Let's assume the template form will pass these:
-    # - 'os_filename'
-    # - 'os_language'
-    # - 'os_ai_translated' (as 'true'/'false' string)
-    # - 'os_hash_match' (as 'true'/'false' string)
-    # - 'os_uploader'
-
-    # This is a simplified placeholder. The actual data should be passed from the form.
-    # For now, we'll just store the file_id. The JSON details should be populated
-    # with data from the OpenSubtitles search result that corresponds to this file_id.
-    # This requires passing that data through the form.
 
     opensub_details = {
         "file_id": opensub_file_id,
@@ -664,8 +558,8 @@ def select_opensubtitle(activity_id, opensub_file_id):
 
         if selection:
             selection.selected_subtitle_id = None  # Clear local selection
-            selection.selected_opensubtitle_file_id = opensub_file_id
-            selection.opensubtitle_details_json = opensub_details
+            selection.selected_external_file_id = opensub_file_id
+            selection.external_details_json = opensub_details
             selection.timestamp = datetime.datetime.utcnow()
             flash('OpenSubtitle selected successfully.', 'success')
         else:
@@ -673,8 +567,8 @@ def select_opensubtitle(activity_id, opensub_file_id):
                 user_id=current_user.id,
                 content_id=activity.content_id,
                 video_hash=activity.video_hash,
-                selected_opensubtitle_file_id=opensub_file_id,
-                opensubtitle_details_json=opensub_details,
+                selected_external_file_id=opensub_file_id,
+                external_details_json=opensub_details,
                 selected_subtitle_id=None
             )
             db.session.add(new_selection)

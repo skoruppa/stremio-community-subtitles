@@ -23,13 +23,9 @@ def _get_api_key(user=None):
         current_app.logger.debug(f"Using personal OpenSubtitles API key for user: {user.username}")
         return user.opensubtitles_api_key
         
-    api_key = current_app.config.get('OPEN_SUBTITLES_API_KEY')
-    if not api_key:
-        current_app.logger.error("OpenSubtitles API key is not configured (neither personal nor global).")
-        raise OpenSubtitlesError("OpenSubtitles API key is missing in configuration.")
-        
-    current_app.logger.debug("Using global OpenSubtitles API key.")
-    return api_key
+    # Global API key is no longer used as a fallback
+    current_app.logger.error("OpenSubtitles API key is not configured for the user.")
+    raise OpenSubtitlesError("Personal OpenSubtitles API key is missing in configuration.")
 
 
 def login(username, password, user=None):
@@ -107,14 +103,13 @@ def login(username, password, user=None):
         raise OpenSubtitlesError(f"Failed to decode API response during login: {e}")
 
 
-def logout(token, user_base_url, user=None):
+def logout(token, user):
     """
-    Logs out from OpenSubtitles using the user-specific token and base_url.
+    Logs out from OpenSubtitles using the user-specific token and base_url from the user object.
     API Documentation: Uses the base_url from login response.
     Args:
         token (str): User's OpenSubtitles JWT token.
-        base_url (str): User's OpenSubtitles base API URL.
-        user (User, optional): The user object. If provided, the user's personal API key will be prioritized.
+        user (User): The user object containing the base_url and API key.
     Returns:
         dict: JSON response from the API, or True if successful with no body.
     Raises:
@@ -125,21 +120,20 @@ def logout(token, user_base_url, user=None):
     except OpenSubtitlesError:
         raise
 
-    if not token or not user_base_url:
-        current_app.logger.error("OpenSubtitles logout: Token and base_url are required.")
-        raise OpenSubtitlesError("Token and base_url are required for logout.")
+    if not token or not user or not user.opensubtitles_base_url:
+        current_app.logger.error("OpenSubtitles logout: Token, user object, and user's base_url are required.")
+        raise OpenSubtitlesError("Token, user object, and user's base_url are required for logout.")
 
     headers = {
         'Api-Key': api_key,
         'Authorization': f'Bearer {token}',
         'Accept': 'application/json',
         'User-Agent': USER_AGENT
-        # Content-Type might not be needed if no JSON body is sent for logout
     }
 
     try:
-        current_app.logger.info(f"Attempting OpenSubtitles logout using base_url: {user_base_url}")
-        response = requests.delete(f"https://{user_base_url}/api/v1/logout", headers=headers,
+        current_app.logger.info(f"Attempting OpenSubtitles logout using base_url: {user.opensubtitles_base_url}")
+        response = requests.delete(f"https://{user.opensubtitles_base_url}/api/v1/logout", headers=headers,
                                  timeout=15)  # No JSON body for logout
         response.raise_for_status()
         current_app.logger.info("OpenSubtitles logout successful.")
@@ -162,8 +156,7 @@ def logout(token, user_base_url, user=None):
 
 
 def search_subtitles(imdb_id=None, query=None, languages=None, moviehash=None,
-                     season_number=None, episode_number=None, type=None,
-                     user_token=None, user_base_url=None, user=None):
+                     season_number=None, episode_number=None, type=None, user=None):
     """
     Searches for subtitles on OpenSubtitles. Requires user authentication.
     Args:
@@ -174,21 +167,20 @@ def search_subtitles(imdb_id=None, query=None, languages=None, moviehash=None,
         season_number (int, optional): Season number for TV shows.
         episode_number (int, optional): Episode number for TV shows.
         type (str, optional): Content type ('movie' or 'episode').
-        user_token (str, optional): User's OpenSubtitles JWT token. Required for authenticated search.
-        user_base_url (str, optional): User's OpenSubtitles base API URL. Required for authenticated search.
-        user (User, optional): The user object. If provided, the user's personal API key will be prioritized.
+        user (User): The user object containing the token, base_url, and API key.
     """
     try:
         api_key = _get_api_key(user=user)
     except OpenSubtitlesError:
         raise
 
-    if not user_token or not user_base_url:
-        current_app.logger.error("OpenSubtitles search: user_token and user_base_url are required.")
-        raise OpenSubtitlesError("User authentication (token and base_url) is required for searching subtitles.")
+    if not user or not user.opensubtitles_token or not user.opensubtitles_base_url:
+        current_app.logger.error("OpenSubtitles search: user object with token and base_url is required.")
+        raise OpenSubtitlesError("User authentication (user object with token and base_url) is required for searching subtitles.")
 
     headers = {
         'Api-Key': api_key,
+        'Authorization': f'Bearer {user.opensubtitles_token}', # Read token from user object
         'Accept': '*/*',
         'User-Agent': USER_AGENT
     }
@@ -210,8 +202,8 @@ def search_subtitles(imdb_id=None, query=None, languages=None, moviehash=None,
 
     try:
         current_app.logger.info(
-            f"Searching OpenSubtitles (authenticated) at {user_base_url}/api/v1/subtitles with params: {params}")
-        response = requests.get(f"https://{user_base_url}/api/v1/subtitles", headers=headers, params=params, timeout=15)
+            f"Searching OpenSubtitles (authenticated) at {user.opensubtitles_base_url}/api/v1/subtitles with params: {params}")
+        response = requests.get(f"https://{user.opensubtitles_base_url}/api/v1/subtitles", headers=headers, params=params, timeout=15)
         response.raise_for_status()
         return response.json()
     except requests.exceptions.HTTPError as e:
@@ -231,40 +223,39 @@ def search_subtitles(imdb_id=None, query=None, languages=None, moviehash=None,
         raise OpenSubtitlesError(f"Failed to decode API response during authenticated search: {e}")
 
 
-def request_download_link(file_id, user_token=None, user_base_url=None, user=None):
+def request_download_link(file_id, user=None):
     """
     Requests a download link for a specific subtitle file_id. Requires user authentication.
     Args:
         file_id (int): The OpenSubtitles file ID.
-        user_token (str, optional): User's OpenSubtitles JWT token. Required for authenticated download.
-        user_base_url (str, optional): User's OpenSubtitles base API URL. Required for authenticated download.
-        user (User, optional): The user object. If provided, the user's personal API key will be prioritized.
+        user (User): The user object containing the base_url and API key.
     """
     try:
         api_key = _get_api_key(user=user)
     except OpenSubtitlesError:
         raise
 
-    if not user_token or not user_base_url:
-        current_app.logger.error("OpenSubtitles download request: user_token and user_base_url are required.")
-        raise OpenSubtitlesError("User authentication (token and base_url) is required for download requests.")
+    if not user or not user.opensubtitles_token or not user.opensubtitles_base_url:
+        current_app.logger.error("OpenSubtitles download request: user object with token and base_url is required.")
+        raise OpenSubtitlesError("User authentication (user object with token and base_url) is required for searching subtitles.")
 
     headers = {
         'Api-Key': api_key,
-        'Authorization': f'Bearer {user_token}',
+        'Authorization': f'Bearer {user.opensubtitles_token}',
         'Content-Type': 'application/json',
         'Accept': '*/*',
         'User-Agent': USER_AGENT
     }
 
     payload = {
-        'file_id': file_id
+        'file_id': file_id,
+        'sub_format': 'webvtt'
     }
 
     try:
         current_app.logger.info(
-            f"Requesting OpenSubtitles download link (authenticated) for file_id: {file_id} at {user_base_url}/api/v1/download")
-        response = requests.post(f"https://{user_base_url}/api/v1/download", headers=headers, json=payload, timeout=15)
+            f"Requesting OpenSubtitles download link (authenticated) for file_id: {file_id} at {user.opensubtitles_base_url}/api/v1/download")
+        response = requests.post(f"https://{user.opensubtitles_base_url}/api/v1/download", headers=headers, json=payload, timeout=15)
         response.raise_for_status()
         return response.json()
     except requests.exceptions.HTTPError as e:

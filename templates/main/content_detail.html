@@ -32,7 +32,7 @@
                     {% if activity.video_hash %}
                     <li class="list-group-item">
                         <strong>Video Hash:</strong> 
-                        <span class="text-monospace">{{ activity.video_hash[:12] }}...</span>
+                        <span class="text-monospace">{{ activity.video_hash }}</span>
                     </li>
                     {% endif %}
                     {% if season is not none %}
@@ -170,14 +170,16 @@
                 {% endif %}
                 
                 {% if subs_matching_hash %}
-                <div class="mt-3">
-                    <h6 class="border-bottom pb-2">Subtitles Matching Video Hash</h6>
+                <div class="card shadow-sm mt-3 mx-2"> {# Added card and mx-2 #}
+                    <div class="card-header"> {# Added card-header #}
+                        <h6 class="mb-0">Subtitles Matching Video Hash</h6> {# Changed h6 to mb-0 #}
+                    </div> {# Closed card-header #}
                     <div class="list-group list-group-flush">
                         {% for subtitle in subs_matching_hash %}
                             {{ render_subtitle_item(subtitle, user_votes, user_selection, activity.id, activity.video_hash, current_user, LANGUAGE_DICT) }} {# Pass activity.id #}
                         {% endfor %}
                     </div>
-                </div>
+                </div> {# Closed card #}
                 {% endif %}
                 
                 {% if subs_no_hash %}
@@ -192,14 +194,16 @@
                 {% endif %}
                 
                 {% if subs_other_hash %}
-                <div class="mt-3">
-                    <h6 class="border-bottom pb-2">Other Subtitles (Different Hash)</h6>
+                <div class="card shadow-sm mt-3 mx-2"> {# Added card and mx-2 #}
+                    <div class="card-header"> {# Added card-header #}
+                        <h6 class="mb-0">Other Subtitles (Different Hash)</h6> {# Changed h6 to mb-0 #}
+                    </div> {# Closed card-header #}
                     <div class="list-group list-group-flush">
                         {% for subtitle in subs_other_hash %}
                             {{ render_subtitle_item(subtitle, user_votes, user_selection, activity.id, activity.video_hash, current_user, LANGUAGE_DICT) }} {# Pass activity.id #}
                         {% endfor %}
                     </div>
-                </div>
+                </div> {# Closed card #}
                 {% endif %}
                 
                 {% if not active_subtitle and not active_opensubtitle_details and not subs_matching_hash and not subs_no_hash and not subs_other_hash and not opensubtitles_results %}
@@ -220,7 +224,12 @@
                 {# Optionally add a refresh button or language selector here later #}
             </div>
             <div class="card-body p-0">
-                {% if opensubtitles_results %}
+                {% if current_user.is_authenticated and not current_user.opensubtitles_active %} {# Check if user is logged in but integration is inactive #}
+                    <div class="p-3 text-center text-muted">
+                        <p class="mb-0">OpenSubtitles integration is not active.</p>
+                        <p class="mb-0"><a href="{{ url_for('main.account_settings') }}">Activate OpenSubtitles integration in your account settings</a> to see results here.</p>
+                    </div>
+                {% elif opensubtitles_results %}
                     <div class="list-group list-group-flush">
                         {% for os_item in opensubtitles_results %}
                             {{ render_opensubtitle_item(activity, os_item, current_user.preferred_language, active_opensubtitle_details, LANGUAGE_DICT, is_active_selection=false) }} {# Pass LANGUAGE_DICT and is_active_selection=false #}

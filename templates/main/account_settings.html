@@ -27,10 +27,10 @@
                     
                     <div class="alert alert-info">
                         <i class="fas fa-info-circle me-2"></i>
-                        This setting determines which language subtitles will be preferred when watching content in Stremio.
+                        This setting determines which language will be used to search subtitles by the addon.
                     </div>
                     
-                    {{ render_submit_button(lang_form.submit) }}
+                    {{ render_submit_button(lang_form.submit_language) }}
                 </form>
             </div>
         </div>
@@ -53,7 +53,7 @@
                         {% endif %}
                         {{ render_checkbox_field(os_form.use_opensubtitles) }}
                         <div class="d-grid gap-2 mt-3">
-                            <input type="submit" name="{{ os_form.submit.name }}" value="Update Integration Status" class="btn btn-primary">
+                            <input type="submit" name="{{ os_form.submit_opensubtitles.name }}" value="Update Integration Status" class="btn btn-primary">
                         </div>
                     {% else %} {# No token stored, user needs to login or provide API key to activate #}
                         <p>Connect your OpenSubtitles.com account to enhance subtitle search and download capabilities.</p>
@@ -66,11 +66,11 @@
                             {{ render_field(os_form.opensubtitles_api_key) }} {# API key field is now inside this block #}
                             <div class="alert alert-secondary mt-2">
                                 <i class="fas fa-info-circle me-2"></i>
-                                Provide your OpenSubtitles.com username and password to log in and activate the integration. You may also provide a personal API key, which will be used for API calls if available, instead of the session token obtained from login. Your credentials are sent directly to OpenSubtitles.com for login and are not stored on our servers beyond the session token.
+                                Provide your OpenSubtitles.com username, password and personal API ke to log in and activate the integration. Your credentials are sent directly to OpenSubtitles.com for login and are not stored on our servers beyond the session token.
                             </div>
                         </div>
                         
-                        {{ render_submit_button(os_form.submit) }} {# Button text "Save OpenSubtitles Settings" from form definition #}
+                        {{ render_submit_button(os_form.submit_opensubtitles) }} {# Button text "Save OpenSubtitles Settings" from form definition #}
                     {% endif %}
                 </form>
 
@@ -122,7 +122,7 @@
                         <strong>Current Language:</strong> 
                         {% for code, name_tuple in LANGUAGE_DICT.items() %}
                             {% if code == current_user.preferred_language %}
-                                {{ name_tuple[0] }} ({{ name_tuple[1] }})
+                                {{ name_tuple }}
                             {% endif %}
                         {% endfor %}
                     </li>

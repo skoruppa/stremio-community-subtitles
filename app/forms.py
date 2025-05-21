@@ -67,24 +67,24 @@ class ResetPasswordForm(FlaskForm):
 
 class LanguagePreferenceForm(FlaskForm):
     preferred_language = SelectField('Preferred Subtitle Language', validators=[DataRequired()])
-    submit = SubmitField('Update Preference')
+    submit_language = SubmitField('Update Preference')
 
 
 class OpenSubtitlesLoginForm(FlaskForm):
     use_opensubtitles = BooleanField('Use OpenSubtitles Integration')
     opensubtitles_username = StringField(
         'OpenSubtitles Username', 
-        validators=[Optional(), Length(max=255)], 
+        validators=[DataRequired(), Length(max=255)],
         render_kw={'placeholder': 'Your OpenSubtitles.com Username'}
     )
     opensubtitles_password = PasswordField(
         'OpenSubtitles Password', 
-        validators=[Optional(), Length(min=0, max=255)], 
+        validators=[DataRequired(), Length(max=255)],
         render_kw={'placeholder': 'Your OpenSubtitles.com Password'}
-    ) # min=0 to allow empty if not checked
+    )
     opensubtitles_api_key = StringField(
         'Personal OpenSubtitles API Key',
-        validators=[Optional(), Length(max=255)],
+        validators=[DataRequired(), Length(max=255)],
         render_kw={'placeholder': 'Your Personal OpenSubtitles.com API Key'}
     )
-    submit = SubmitField('Save OpenSubtitles Settings')
+    submit_opensubtitles = SubmitField('Save OpenSubtitles Settings')  

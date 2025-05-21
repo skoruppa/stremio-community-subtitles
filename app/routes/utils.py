@@ -79,10 +79,10 @@ def get_active_subtitle_details(user, content_id, video_hash=None):
                     active_details['user_vote_value'] = user_vote.vote_value
             return active_details
 
-        if user.opensubtitles_active and user_selection.selected_opensubtitle_file_id and user_selection.opensubtitle_details_json:
+        if user.opensubtitles_active and user_selection.selected_external_file_id and user_selection.external_details_json:
             # Only consider OpenSubtitles selection if integration is active for the user
             active_details['type'] = 'opensubtitles_selection'
-            active_details['details'] = user_selection.opensubtitle_details_json
+            active_details['details'] = user_selection.external_details_json
             return active_details
 
     # 2. If no explicit user selection, or if OS selection is ignored due to inactive integration,
