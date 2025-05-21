@@ -22,6 +22,8 @@ def index():
     """Main landing page: Shows login/register or dashboard if logged in."""
     if current_user.is_authenticated:
         return redirect(url_for('main.dashboard'))
+    else:
+        return render_template('main/index.html')
 
 
 @main_bp.route('/link_opensubtitle/<uuid:activity_id>/<int:opensub_file_id>', methods=['POST'])
