@@ -82,4 +82,9 @@ class OpenSubtitlesLoginForm(FlaskForm):
         validators=[Optional(), Length(min=0, max=255)], 
         render_kw={'placeholder': 'Your OpenSubtitles.com Password'}
     ) # min=0 to allow empty if not checked
+    opensubtitles_api_key = StringField(
+        'Personal OpenSubtitles API Key',
+        validators=[Optional(), Length(max=255)],
+        render_kw={'placeholder': 'Your Personal OpenSubtitles.com API Key'}
+    )
     submit = SubmitField('Save OpenSubtitles Settings')

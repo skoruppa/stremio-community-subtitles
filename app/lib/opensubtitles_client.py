@@ -14,26 +14,39 @@ class OpenSubtitlesError(Exception):
         self.status_code = status_code
 
 
-def _get_api_key():
-    """Retrieves the OpenSubtitles API key from app config."""
+def _get_api_key(user=None):
+    """
+    Retrieves the OpenSubtitles API key, prioritizing user's personal key if provided.
+    Falls back to the global app config key if no user key is available.
+    """
+    if user and user.opensubtitles_api_key:
+        current_app.logger.debug(f"Using personal OpenSubtitles API key for user: {user.username}")
+        return user.opensubtitles_api_key
+        
     api_key = current_app.config.get('OPEN_SUBTITLES_API_KEY')
     if not api_key:
-        current_app.logger.error("OpenSubtitles API key is not configured.")
+        current_app.logger.error("OpenSubtitles API key is not configured (neither personal nor global).")
         raise OpenSubtitlesError("OpenSubtitles API key is missing in configuration.")
+        
+    current_app.logger.debug("Using global OpenSubtitles API key.")
     return api_key
 
 
-def login(username, password):
+def login(username, password, user=None):
     """
     Logs in to OpenSubtitles.
     API Documentation: https://opensubtitles.stoplight.io/docs/opensubtitles-api/c2NoOjQ4MTA4NzYz-login
+    Args:
+        username (str): OpenSubtitles username.
+        password (str): OpenSubtitles password.
+        user (User, optional): The user object. If provided, the user's personal API key will be prioritized.
     Returns:
         dict: Contains token, user info, and base_url from OpenSubtitles.
     Raises:
         OpenSubtitlesError: If API key is missing, login fails, or API returns an error.
     """
     try:
-        api_key = _get_api_key()
+        api_key = _get_api_key(user=user)
     except OpenSubtitlesError:
         raise
 
@@ -94,20 +107,21 @@ def login(username, password):
         raise OpenSubtitlesError(f"Failed to decode API response during login: {e}")
 
 
-def logout(token, user_base_url):
+def logout(token, user_base_url, user=None):
     """
     Logs out from OpenSubtitles using the user-specific token and base_url.
     API Documentation: Uses the base_url from login response.
     Args:
         token (str): User's OpenSubtitles JWT token.
         base_url (str): User's OpenSubtitles base API URL.
+        user (User, optional): The user object. If provided, the user's personal API key will be prioritized.
     Returns:
         dict: JSON response from the API, or True if successful with no body.
     Raises:
         OpenSubtitlesError: If API key, token, or base_url are missing/invalid, or API returns an error.
     """
     try:
-        api_key = _get_api_key()
+        api_key = _get_api_key(user=user)
     except OpenSubtitlesError:
         raise
 
@@ -149,12 +163,23 @@ def logout(token, user_base_url):
 
 def search_subtitles(imdb_id=None, query=None, languages=None, moviehash=None,
                      season_number=None, episode_number=None, type=None,
-                     user_token=None, user_base_url=None):
+                     user_token=None, user_base_url=None, user=None):
     """
     Searches for subtitles on OpenSubtitles. Requires user authentication.
+    Args:
+        imdb_id (int, optional): IMDb ID of the content.
+        query (str, optional): Search query.
+        languages (str, optional): Comma-separated language codes (e.g., "en,fr").
+        moviehash (str, optional): Movie hash for file-based matching.
+        season_number (int, optional): Season number for TV shows.
+        episode_number (int, optional): Episode number for TV shows.
+        type (str, optional): Content type ('movie' or 'episode').
+        user_token (str, optional): User's OpenSubtitles JWT token. Required for authenticated search.
+        user_base_url (str, optional): User's OpenSubtitles base API URL. Required for authenticated search.
+        user (User, optional): The user object. If provided, the user's personal API key will be prioritized.
     """
     try:
-        api_key = _get_api_key()
+        api_key = _get_api_key(user=user)
     except OpenSubtitlesError:
         raise
 
@@ -206,12 +231,17 @@ def search_subtitles(imdb_id=None, query=None, languages=None, moviehash=None,
         raise OpenSubtitlesError(f"Failed to decode API response during authenticated search: {e}")
 
 
-def request_download_link(file_id, user_token=None, user_base_url=None):
+def request_download_link(file_id, user_token=None, user_base_url=None, user=None):
     """
     Requests a download link for a specific subtitle file_id. Requires user authentication.
+    Args:
+        file_id (int): The OpenSubtitles file ID.
+        user_token (str, optional): User's OpenSubtitles JWT token. Required for authenticated download.
+        user_base_url (str, optional): User's OpenSubtitles base API URL. Required for authenticated download.
+        user (User, optional): The user object. If provided, the user's personal API key will be prioritized.
     """
     try:
-        api_key = _get_api_key()
+        api_key = _get_api_key(user=user)
     except OpenSubtitlesError:
         raise
 

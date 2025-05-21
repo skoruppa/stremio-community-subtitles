@@ -55,20 +55,21 @@
                         <div class="d-grid gap-2 mt-3">
                             <input type="submit" name="{{ os_form.submit.name }}" value="Update Integration Status" class="btn btn-primary">
                         </div>
-                    {% else %} {# No token stored, user needs to login to activate #}
+                    {% else %} {# No token stored, user needs to login or provide API key to activate #}
                         <p>Connect your OpenSubtitles.com account to enhance subtitle search and download capabilities.</p>
                         {{ render_checkbox_field(os_form.use_opensubtitles) }}
                         
                         {# Credentials div is shown/hidden by JS based on the checkbox state #}
-                        <div id="opensubtitles-credentials"> 
+                        <div id="opensubtitles-credentials">
                             {{ render_field(os_form.opensubtitles_username) }}
                             {{ render_field(os_form.opensubtitles_password) }}
+                            {{ render_field(os_form.opensubtitles_api_key) }} {# API key field is now inside this block #}
+                            <div class="alert alert-secondary mt-2">
+                                <i class="fas fa-info-circle me-2"></i>
+                                Provide your OpenSubtitles.com username and password to log in and activate the integration. You may also provide a personal API key, which will be used for API calls if available, instead of the session token obtained from login. Your credentials are sent directly to OpenSubtitles.com for login and are not stored on our servers beyond the session token.
+                            </div>
                         </div>
                         
-                        <div class="alert alert-secondary mt-2">
-                            <i class="fas fa-info-circle me-2"></i>
-                            Your OpenSubtitles credentials are sent directly to OpenSubtitles.com for login and are not stored on our servers beyond the session token.
-                        </div>
                         {{ render_submit_button(os_form.submit) }} {# Button text "Save OpenSubtitles Settings" from form definition #}
                     {% endif %}
                 </form>
@@ -167,7 +168,9 @@ document.addEventListener('DOMContentLoaded', function () {
     const credentialsDiv = document.getElementById('opensubtitles-credentials'); // This div only exists if opensubtitles_has_token is false
     const usernameField = document.getElementById('os_form-opensubtitles_username');
     const passwordField = document.getElementById('os_form-opensubtitles_password');
+    const apiKeyField = document.getElementById('os_form-opensubtitles_api_key'); // Get the new API key field
     
+    // Safely get the hasToken value, ensuring it's treated as a boolean
     const hasToken = {{ opensubtitles_has_token|tojson }};
 
     function toggleCredentialsDisplay() {
@@ -176,8 +179,14 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!hasToken && useOpenSubtitlesCheckbox && credentialsDiv) {
             if (useOpenSubtitlesCheckbox.checked) {
                 credentialsDiv.style.display = 'block';
-                if (usernameField) usernameField.required = true;
-                if (passwordField) passwordField.required = true;
+                // Only require username/password if API key is NOT provided
+                if (usernameField && passwordField && apiKeyField && !apiKeyField.value) {
+                    usernameField.required = true;
+                    passwordField.required = true;
+                } else {
+                     if (usernameField) usernameField.required = false;
+                     if (passwordField) passwordField.required = false;
+                }
             } else {
                 credentialsDiv.style.display = 'none';
                 if (usernameField) usernameField.required = false;
@@ -200,6 +209,21 @@ document.addEventListener('DOMContentLoaded', function () {
         // Add event listener regardless, as the checkbox itself is always there.
         // The toggleCredentialsDisplay function will internally check `hasToken`.
         useOpenSubtitlesCheckbox.addEventListener('change', toggleCredentialsDisplay);
+        
+        // Add event listener to API key field to adjust username/password required status
+        if (apiKeyField && usernameField && passwordField) {
+            apiKeyField.addEventListener('input', function() {
+                if (useOpenSubtitlesCheckbox.checked) {
+                    if (apiKeyField.value) {
+                        usernameField.required = false;
+                        passwordField.required = false;
+                    } else {
+                        usernameField.required = true;
+                        passwordField.required = true;
+                    }
+                }
+            });
+        }
     }
 });
 </script>

@@ -118,7 +118,7 @@
                                     {% endif %}
                                 </div>
                             </div>
-                            {{ render_subtitle_item(active_subtitle, user_votes, user_selection, activity.id, activity.video_hash, current_user, LANGUAGE_DICT) }}
+                            {{ render_subtitle_item(active_subtitle, user_votes, user_selection, activity.id, activity.video_hash, current_user, LANGUAGE_DICT) }} {# Pass activity.id #}
                         </div>
                     </div>
                 {% elif active_opensubtitle_details %}
@@ -127,56 +127,39 @@
                             <div class="d-flex justify-content-between align-items-center mb-2">
                                 <h5 class="mb-0">Currently Selected</h5>
                                 <div>
-                                    <span class="badge bg-primary">Open Subtitles</span> <span class="badge bg-success">User Selected</span>
-                                     <form method="POST" action="{{ url_for('subtitles.reset_selection', activity_id=activity.id) }}" class="d-inline ms-2">
+                                    {% if auto_selected %}
+                                    <span class="badge bg-info">Auto Selected</span>
+                                    {% else %}
+                                    <span class="badge bg-success">User Selected</span>
+                                    
+                                    <form method="POST" action="{{ url_for('subtitles.reset_selection', activity_id=activity.id) }}" class="d-inline ms-2">
                                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                         <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure you want to reset your subtitle selection?')">
                                             <i class="fas fa-times me-1"></i>Reset Selection
                                         </button>
                                     </form>
+                                    {% endif %}
                                 </div>
                             </div>
-                            {# Simplified display for active OpenSubtitle - assumes active_opensubtitle_details has what we need #}
-                            <div class="row align-items-center">
-                                <div class="col-md-8">
-                                    <h6 class="mb-1">
-                                        {{ active_opensubtitle_details.release_name | truncate(80) if active_opensubtitle_details.release_name else 'N/A' }}
-                                        <span class="badge bg-secondary">{{ active_opensubtitle_details.language | upper if active_opensubtitle_details.language else 'N/A' }}</span>
-                                    </h6>
-                                    <small class="text-muted">
-                                        Uploader: {{ active_opensubtitle_details.uploader if active_opensubtitle_details.uploader else 'N/A' }}
-                                    </small>
-                                    <div>
-                                        {% if active_opensubtitle_details.moviehash_match %}
-                                            <span class="badge bg-success mt-1">Hash Match</span>
-                                        {% else %}
-                                            <span class="badge bg-secondary mt-1">No Hash Match</span>
-                                        {% endif %}
-                                        {% if active_opensubtitle_details.ai_translated %}
-                                            <span class="badge bg-warning mt-1">AI Translated</span>
-                                        {% endif %}
-                                    </div>
-                                </div>
-                                <div class="col-md-4 text-end">
-                                     <button class="btn btn-sm btn-success disabled" disabled><i class="fas fa-check-circle"></i> Selected</button>
-                                     {# Add "Link to this version" button if no hash match and video_hash exists #}
-                                     {% if activity.video_hash and active_opensubtitle_details and not active_opensubtitle_details.moviehash_match %}
-                                     <form action="{{ url_for('main.link_opensubtitle', activity_id=activity.id, opensub_file_id=active_opensubtitle_details.file_id) }}" method="POST" class="d-inline ms-2">
-                                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                         {# Pass necessary details for creating the Subtitle entry #}
-                                         <input type="hidden" name="os_language" value="{{ active_opensubtitle_details.language }}">
-                                         <input type="hidden" name="os_release_name" value="{{ active_opensubtitle_details.release_name }}">
-                                         <input type="hidden" name="os_uploader" value="{{ active_opensubtitle_details.uploader }}">
-                                         <input type="hidden" name="os_ai_translated" value="{{ 'true' if active_opensubtitle_details.ai_translated else 'false' }}">
-                                         <input type="hidden" name="os_url" value="{{ active_opensubtitle_details.url if active_opensubtitle_details.url else '' }}"> {# Assuming URL is stored #}
-                                         
-                                         <button type="submit" class="btn btn-sm btn-info" title="Create a community entry for this subtitle, linked to the current video version.">
-                                             <i class="fas fa-link"></i> Link to this Version
-                                         </button>
-                                     </form>
-                                     {% endif %}
-                                </div>
-                            </div>
+                            {# Use the macro to render the active OpenSubtitle details #}
+                            {# The macro expects opensub_item structure, so we need to adapt active_opensubtitle_details #}
+                            {# active_opensubtitle_details is a JSON dict, not the full OS item structure #}
+                            {# We need to construct a minimal opensub_item-like dict for the macro #}
+                            {% set active_os_item_for_macro = {
+                                'attributes': {
+                                    'language': active_opensubtitle_details.language, 
+                                    'language_3letter': active_opensubtitle_details.language, 
+                                    'files': [{'file_id': active_opensubtitle_details.file_id, 'file_name': active_opensubtitle_details.release_name}],
+                                    'uploader': {'name': active_opensubtitle_details.uploader},
+                                    'moviehash_match': active_opensubtitle_details.moviehash_match,
+                                    'ai_translated': active_opensubtitle_details.ai_translated,
+                                    'machine_translated': false, 
+                                    'ratings': None, 
+                                    'votes': None, 
+                                    'url': active_opensubtitle_details.url
+                                }
+                            } %}
+                            {{ render_opensubtitle_item(activity, active_os_item_for_macro, current_user.preferred_language, active_opensubtitle_details, LANGUAGE_DICT, is_active_selection=true) }} {# Pass LANGUAGE_DICT and is_active_selection=true #}
                         </div>
                     </div>
                 {% elif not user_selection and not active_subtitle %} {# No explicit user selection and no auto-selected local sub #}
@@ -191,7 +174,7 @@
                     <h6 class="border-bottom pb-2">Subtitles Matching Video Hash</h6>
                     <div class="list-group list-group-flush">
                         {% for subtitle in subs_matching_hash %}
-                            {{ render_subtitle_item(subtitle, user_votes, user_selection, activity.id, activity.video_hash, current_user, LANGUAGE_DICT) }}
+                            {{ render_subtitle_item(subtitle, user_votes, user_selection, activity.id, activity.video_hash, current_user, LANGUAGE_DICT) }} {# Pass activity.id #}
                         {% endfor %}
                     </div>
                 </div>
@@ -202,7 +185,7 @@
                     <h6 class="border-bottom pb-2">General Subtitles (No Hash)</h6>
                     <div class="list-group list-group-flush">
                         {% for subtitle in subs_no_hash %}
-                            {{ render_subtitle_item(subtitle, user_votes, user_selection, activity.id, activity.video_hash, current_user, LANGUAGE_DICT) }}
+                            {{ render_subtitle_item(subtitle, user_votes, user_selection, activity.id, activity.video_hash, current_user, LANGUAGE_DICT) }} {# Pass activity.id #}
                         {% endfor %}
                     </div>
                 </div>
@@ -213,7 +196,7 @@
                     <h6 class="border-bottom pb-2">Other Subtitles (Different Hash)</h6>
                     <div class="list-group list-group-flush">
                         {% for subtitle in subs_other_hash %}
-                            {{ render_subtitle_item(subtitle, user_votes, user_selection, activity.id, activity.video_hash, current_user, LANGUAGE_DICT) }}
+                            {{ render_subtitle_item(subtitle, user_votes, user_selection, activity.id, activity.video_hash, current_user, LANGUAGE_DICT) }} {# Pass activity.id #}
                         {% endfor %}
                     </div>
                 </div>
@@ -240,7 +223,7 @@
                 {% if opensubtitles_results %}
                     <div class="list-group list-group-flush">
                         {% for os_item in opensubtitles_results %}
-                            {{ render_opensubtitle_item(activity, os_item, current_user.preferred_language, active_opensubtitle_details) }}
+                            {{ render_opensubtitle_item(activity, os_item, current_user.preferred_language, active_opensubtitle_details, LANGUAGE_DICT, is_active_selection=false) }} {# Pass LANGUAGE_DICT and is_active_selection=false #}
                         {% endfor %}
                     </div>
                 {% else %}

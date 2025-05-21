@@ -44,6 +44,7 @@ class User(UserMixin, db.Model):
     opensubtitles_token = db.Column(db.String(1024), nullable=True)  # Assuming token can be long
     opensubtitles_base_url = db.Column(db.String(255), nullable=True)
     opensubtitles_active = db.Column(db.Boolean, default=False, nullable=False)
+    opensubtitles_api_key = db.Column(db.String(255), nullable=True) # Personal API key
 
     last_login_at = db.Column(db.DateTime)
     current_login_at = db.Column(db.DateTime)
