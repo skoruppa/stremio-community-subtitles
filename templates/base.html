@@ -54,6 +54,13 @@
             max-height: 300px;
             object-fit: contain;
         }
+        /* Toast Container for Flash Messages */
+        .toast-container {
+            position: fixed;
+            top: 70px; /* Adjust based on navbar height */
+            right: 20px;
+            z-index: 1050; /* Ensure it's above most other elements */
+        }
     </style>
     {% block extra_css %}{% endblock %}
 </head>
@@ -105,24 +112,26 @@
 
     <!-- Main Content -->
     <main class="container">
-        <!-- Flash Messages -->
-        {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-        <div class="row mt-3">
-            <div class="col">
+        <!-- Flash Messages as Toasts -->
+        <div class="toast-container">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
                 {% for category, message in messages %}
-                <div class="alert alert-{{ category if category != 'message' else 'info' }} alert-dismissible fade show">
-                    {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                <div class="toast align-items-center text-white bg-{{ category if category != 'message' else 'info' }} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                    <div class="d-flex">
+                        <div class="toast-body">
+                            {{ message }}
+                        </div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                    </div>
                 </div>
                 {% endfor %}
-            </div>
+            {% endif %}
+            {% endwith %}
         </div>
-        {% endif %}
-        {% endwith %}
 
         <!-- Page Content -->
-        {% block content %}{% endblock %}
+        {% block content %}{% endblock %} {# Corrected syntax #}
     </main>
 
     <!-- Footer -->
@@ -142,6 +151,13 @@
             var tooltipList = tooltipTriggerList.map(function(tooltipTriggerEl) {
                 return new bootstrap.Tooltip(tooltipTriggerEl);
             });
+
+            // Initialize and show toasts
+            var toastElList = [].slice.call(document.querySelectorAll('.toast'));
+            var toastList = toastElList.map(function(toastEl) {
+                return new bootstrap.Toast(toastEl);
+            });
+            toastList.forEach(toast => toast.show());
         });
     </script>
     {% endblock %}

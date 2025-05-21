@@ -6,6 +6,7 @@ from waitress import serve
 # Create the Flask app instance using the factory
 app = create_app()
 
+
 @app.cli.command("init-db")
 def init_db_command():
     """Clear existing data and create database tables."""
@@ -14,6 +15,7 @@ def init_db_command():
     click.echo("Creating all tables...")
     db.create_all()
     click.echo("Initialized the database!")
+
 
 @app.cli.command("create-roles")
 def create_roles_command():
@@ -24,22 +26,23 @@ def create_roles_command():
         # Check if roles already exist
         admin_role = Role.query.filter_by(name='Admin').first()
         user_role = Role.query.filter_by(name='User').first()
-        
+
         if not admin_role:
             admin_role = Role(name='Admin', description='Administrator')
             db.session.add(admin_role)
             click.echo("Created 'Admin' role")
-        
+
         if not user_role:
             user_role = Role(name='User', description='Standard user')
             db.session.add(user_role)
             click.echo("Created 'User' role")
-        
+
         db.session.commit()
         click.echo("Roles created successfully")
     except Exception as e:
         db.session.rollback()
         click.echo(f"Error creating roles: {e}")
+
 
 @app.cli.command("create-admin")
 @click.argument("email")
@@ -55,19 +58,19 @@ def create_admin_command(email, username, password):
         if user:
             click.echo(f"User with email {email} or username {username} already exists")
             return
-        
+
         # Create new user
         user = User(email=email, username=username, active=True)
         user.set_password(password)
         user.generate_manifest_token()
-        
+
         # Add admin role
         admin_role = Role.query.filter_by(name='Admin').first()
         if not admin_role:
             click.echo("Admin role not found. Creating it...")
             admin_role = Role(name='Admin', description='Administrator')
             db.session.add(admin_role)
-        
+
         user.roles.append(admin_role)
         db.session.add(user)
         db.session.commit()
@@ -75,6 +78,7 @@ def create_admin_command(email, username, password):
     except Exception as e:
         db.session.rollback()
         click.echo(f"Error creating admin user: {e}")
+
 
 if __name__ == '__main__':
     # Get host and port from environment variables or use defaults
