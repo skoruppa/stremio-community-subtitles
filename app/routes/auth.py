@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app
+from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app, session
 from flask_login import login_user, logout_user, current_user, login_required
 from urllib.parse import urlparse
 from datetime import datetime
@@ -15,6 +15,9 @@ auth_bp = Blueprint('auth', __name__)
 def login():
     if current_user.is_authenticated:
         return redirect(url_for('main.index'))
+
+    if request.method == 'GET' and request.args.get('next'):
+        session['next_url'] = request.args.get('next')
     
     form = LoginForm()
     if form.validate_on_submit():
@@ -37,8 +40,8 @@ def login():
         
         login_user(user, remember=form.remember_me.data)
         current_app.logger.info(f"User {user.username} logged in")
-        
-        next_page = request.args.get('next')
+
+        next_page = session.pop('next_url', None) or request.args.get('next')
         if not next_page or urlparse(next_page).netloc != '':
             next_page = url_for('main.dashboard')
         return redirect(next_page)
