@@ -28,11 +28,19 @@
                         <div class="d-flex align-items-center">
                             <a href="{{ url_for('main.content_detail', activity_id=activity.id) }}" class="flex-grow-1 text-decoration-none text-dark">
                                 <div class="d-flex">
-                                    {% if activity.id in metadata_map and metadata_map[activity.id].poster_url %}
+
                                     <div class="me-3">
-                                        <img src="{{ metadata_map[activity.id].poster_url }}" alt="Poster" class="img-thumbnail" style="height: 80px; width: auto; max-width: fit-content;">
+                                        <div class="poster-wrapper"
+                                             data-poster="{{ metadata_map[activity.id].poster_url or '' }}"
+                                             style="height: 80px; width: 57px;">
+                                            <img class="poster-image img-thumbnail"
+                                                 style="height: 80px; width: auto; max-width: fit-content;">
+                                            <div class="poster-fallback">
+                                                <i class="fa fa-film"></i>
+                                            </div>
+                                        </div>
                                     </div>
-                                    {% endif %}
+
                                     <div class="flex-grow-1">
                                         <div class="d-flex w-100 justify-content-between">
                                             <h5 class="mb-1">
@@ -113,4 +121,28 @@
         </div>
     </div>
 </div>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.poster-wrapper').forEach(function(wrapper) {
+        const img = wrapper.querySelector('.poster-image');
+        const fallback = wrapper.querySelector('.poster-fallback');
+        const posterUrl = wrapper.dataset.poster;
+
+        if (posterUrl) {
+            img.src = posterUrl;
+
+            img.onload = function() {
+                this.classList.add('loaded');
+                fallback.classList.add('hidden');
+            };
+
+            img.onerror = function() {
+                this.style.display = 'none';
+            };
+        } else {
+            img.style.display = 'none';
+        }
+    });
+});
+</script>
 {% endblock %}

@@ -8,11 +8,15 @@
 {% block content %}
 <div class="row mb-4">
     <div class="col-md-4">
-        {% if metadata and metadata.poster_url %}
         <div class="card shadow-sm mb-4">
-            <img src="{{ metadata.poster_url }}" alt="Poster" class="card-img-top poster-img">
+            <div class="poster-wrapper poster-wrapper-card"
+                 data-poster="{{ metadata.poster_url or '' }}">
+                <img class="poster-image card-img-top poster-img">
+                <div class="poster-fallback poster-fallback-card">
+                    <i class="fa fa-film"></i>
+                </div>
+            </div>
         </div>
-        {% endif %}
         
         <div class="card shadow-sm">
             <div class="card-header bg-primary text-white">
@@ -247,4 +251,28 @@
 
     </div>
 </div>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.poster-wrapper').forEach(function(wrapper) {
+        const img = wrapper.querySelector('.poster-image');
+        const fallback = wrapper.querySelector('.poster-fallback');
+        const posterUrl = wrapper.dataset.poster;
+
+        if (posterUrl) {
+            img.src = posterUrl;
+
+            img.onload = function() {
+                this.classList.add('loaded');
+                fallback.classList.add('hidden');
+            };
+
+            img.onerror = function() {
+                this.style.display = 'none';
+            };
+        } else {
+            img.style.display = 'none';
+        }
+    });
+});
+</script>
 {% endblock %}

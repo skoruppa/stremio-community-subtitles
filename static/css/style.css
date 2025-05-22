@@ -1,0 +1,151 @@
+body {
+    padding-top: 4.5rem;
+    padding-bottom: 2rem;
+    background-color: #f8f9fa;
+}
+.navbar-brand {
+    font-weight: 700;
+}
+.footer {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    height: 40px;
+    line-height: 40px;
+    background-color: #f5f5f5;
+    text-align: center;
+}
+.card {
+    margin-bottom: 20px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+.subtitle-card {
+    transition: transform 0.2s;
+}
+.subtitle-card:hover {
+    transform: translateY(-5px);
+}
+.active-subtitle {
+    border: 2px solid #198754;
+}
+.vote-buttons .btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}
+.vote-count {
+    font-weight: bold;
+    min-width: 30px;
+    display: inline-block;
+    text-align: center;
+}
+.poster-img {
+    max-height: 300px;
+    object-fit: contain;
+}
+
+.toast-container {
+    position: fixed;
+    top: 70px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1050;
+}
+
+.poster-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.poster-image {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 2;
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+}
+
+.poster-image.loaded {
+    opacity: 1;
+}
+
+.poster-fallback {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    z-index: 1;
+    opacity: 1;
+    transition: opacity 0.3s ease-in-out;
+}
+
+.poster-fallback i {
+    font-size: 2rem;
+    color: #6c757d;
+    animation: pulse 2s infinite;
+}
+
+.poster-fallback.hidden {
+    opacity: 0;
+}
+
+@keyframes pulse {
+    0% { opacity: 0.6; }
+    50% { opacity: 1; }
+    100% { opacity: 0.6; }
+}
+.poster-wrapper-card {
+    position: relative;
+    width: 100%;
+    height: 300px;
+    min-height: 200px;
+    overflow: hidden;
+}
+
+.poster-wrapper-card .poster-image {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 2;
+    opacity: 0;
+    transform: scale(1.05);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.poster-wrapper-card .poster-image.loaded {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.poster-fallback-card {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    z-index: 1;
+    opacity: 1;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.poster-fallback-card i {
+    font-size: 4rem;
+    color: #6c757d;
+    animation: fadeInOut 2s ease-in-out infinite;
+}
+
+.poster-fallback-card.hidden {
+    opacity: 0;
+    transform: scale(0.95);
+}
