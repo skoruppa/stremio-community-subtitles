@@ -325,9 +325,13 @@ def content_detail(activity_id):
 
     # Fetch OpenSubtitles if API key is available and user has integration active
     if current_user.opensubtitles_active:
+        if current_user.preferred_language == 'eng':
+            os_language = 'en'
+        else:
+            os_language = pycountry.countries.get(alpha_3=current_user.preferred_language).alpha_2,
         try:
             search_params = {
-                'languages': pycountry.countries.get(alpha_3=current_user.preferred_language).alpha_2,
+                'languages': os_language,
                 'moviehash': activity.video_hash if activity.video_hash else None,
                 'user': current_user
             }
