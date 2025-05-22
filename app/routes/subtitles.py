@@ -426,11 +426,11 @@ def unified_download(manifest_token: str, download_identifier: str):
                 message_key = 'select_web'
 
         messages = {
-            'no_subs_found': "No Subtitles Found: Upload or select from the web interface.",
-            'no_hash_select_web': "Video hash not present or mismatch: Please select subtitles from the web interface.",
-            'select_web': "No automatic match found. Please select subtitles from the web interface.",
-            'os_integration_inactive': "OpenSubtitles integration is inactive. Please activate it in account settings to use this feature.",
-            'os_error_contact_support': "Error fetching from OpenSubtitles. Please try again later or check your account on OpenSubtitles.com."
+            'no_subs_found': "SCS: No Subtitles Found: Upload or select from the web interface.",
+            'no_hash_select_web': "SCS: Video hash not present or mismatch: Please select subtitles from the web interface.",
+            'select_web': "SCS: No automatic match found. Please select subtitles from the web interface.",
+            'os_integration_inactive': "SCS: OpenSubtitles integration is inactive. Please activate it in account settings to use this feature.",
+            'os_error_contact_support': "SCS: Error fetching from OpenSubtitles. Please try again later or check your account on OpenSubtitles.com."
         }
         message_text = messages.get(message_key, "An error occurred or subtitles need selection.")
         current_app.logger.info(f"Serving placeholder message (key: '{message_key}') for context: {context}")
