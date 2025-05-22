@@ -327,6 +327,8 @@ def content_detail(activity_id):
     if current_user.opensubtitles_active:
         if current_user.preferred_language == 'eng':
             os_language = 'en'
+        elif current_user.preferred_language == 'msa':
+            os_language = 'ar'
         else:
             os_language = pycountry.countries.get(alpha_3=current_user.preferred_language).alpha_2,
         try:
