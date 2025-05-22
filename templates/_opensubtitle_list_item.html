@@ -24,7 +24,7 @@
 {% set sub_file = sub_attr.files[0] if sub_attr.files else None %}
 
 {% if sub_file %}
-    <div class="list-group-item list-group-item-action {% if active_opensubtitle_details and active_opensubtitle_details.file_id == sub_file.file_id %}active{% endif %}">
+    <div class="list-group-item list-group-item-action {% if active_opensubtitle_details and active_opensubtitle_details.file_id == sub_file.file_id %}bg-info{% endif %}">
         <div class="row align-items-center">
             <div class="col-md-8">
                 <h6 class="mb-1">
@@ -47,7 +47,7 @@
                     {% elif sub_attr.machine_translated %}
                         <span class="badge bg-warning mt-1">Machine Translated</span>
                     {% endif %}
-                     <a href="{{ sub_attr.url }}" class="badge bg-info text-decoration-none mt-1" target="_blank" rel="noopener noreferrer">View on OpenSubtitles</a>
+                     <a href="{{ sub_attr.url }}" class="badge bg-secondary text-decoration-none mt-1" target="_blank" rel="noopener noreferrer">View on OpenSubtitles</a>
                 </div>
             </div>
             <div class="col-md-4 text-end">
@@ -64,7 +64,7 @@
                             <input type="hidden" name="os_ai_translated" value="{{ 'true' if sub_attr.ai_translated or sub_attr.machine_translated else 'false' }}">
                             <input type="hidden" name="os_url" value="{{ sub_attr.url }}"> {# Pass URL #}
                             
-                            <button type="submit" class="btn btn-sm btn-outline-info" title="Create a community entry for this subtitle, linked to the current video version.">
+                            <button type="submit" class="btn btn-sm btn-outline-secondary" title="Create a community entry for this subtitle, linked to the current video version.">
                                 <i class="fas fa-link"></i> Link
                             </button>
                         </form>

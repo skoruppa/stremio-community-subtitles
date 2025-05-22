@@ -763,20 +763,14 @@ def download_subtitle(subtitle_id):
 
             download_info = opensubtitles_client.request_download_link(
                 file_id=os_file_id,
-                user_token=current_user.opensubtitles_token,
-                user_base_url=current_user.opensubtitles_base_url,
-                user=current_user  # Pass the current_user object
+                user=current_user
             )
             if download_info and download_info.get('link'):
                 sub_url = download_info['link']
-                sub_response = requests.get(sub_url, timeout=20, headers={'Accept-Encoding': 'gzip, deflate'})
+                sub_response = requests.get(sub_url, timeout=20)
                 sub_response.raise_for_status()
 
                 content_to_process = sub_response.content
-                if sub_response.headers.get('Content-Encoding') == 'gzip':
-                    compressed_file = io.BytesIO(content_to_process)
-                    decompressed_file = gzip.GzipFile(fileobj=compressed_file)
-                    content_to_process = decompressed_file.read()
 
                 try:
                     decoded_content = content_to_process.decode('utf-8')

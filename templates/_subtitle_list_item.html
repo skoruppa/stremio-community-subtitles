@@ -9,7 +9,7 @@
     - current_user_obj: The current logged-in user object.
     - lang_dict: Dictionary mapping language codes to names.
 #}
-<div class="list-group-item list-group-item-action {% if user_selection and user_selection.selected_subtitle_id == subtitle.id %}active{% endif %}">
+<div class="list-group-item list-group-item-action {% if user_selection and user_selection.selected_subtitle_id == subtitle.id %}bg-info{% endif %}">
     <div class="row align-items-center">
         <div class="col-md-7 col-lg-8">
             <h6 class="mb-1">
@@ -20,7 +20,7 @@
                 {% endif %}
                 <span class="badge bg-secondary">{{ lang_dict.get(subtitle.language, subtitle.language) }}</span> {# Display full language name #}
                 {% if subtitle.source_type == 'opensubtitles_community_link' %}
-                    <span class="badge bg-info" title="Sourced from OpenSubtitles by {{ subtitle.uploader.username if subtitle.uploader else 'Unknown User' }}">OpenSubtitles Sourced</span>
+                    <span class="badge bg-warning" title="Sourced from OpenSubtitles by {{ subtitle.uploader.username if subtitle.uploader else 'Unknown User' }}">OpenSubtitles Sourced</span>
                 {% endif %}
             </h6>
             <small class="text-muted">
@@ -79,15 +79,22 @@
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <input type="hidden" name="target_video_hash" value="{{ current_video_hash }}">
                     <input type="hidden" name="activity_id" value="{{ activity_id }}"> {# Pass activity_id explicitly #}
-                    <button type="submit" class="btn btn-sm btn-outline-info" title="Mark this subtitle as compatible with the current video version ({{ current_video_hash[:8] }}...)">
+                    <button type="submit" class="btn btn-sm btn-outline-secondary" title="Mark this subtitle as compatible with the current video version ({{ current_video_hash[:8] }}...)">
                         <i class="fas fa-link"></i> Link
                     </button>
                 </form>
             {% endif %}
+
+           {# Download Button #}
+           {% if subtitle.uploader_id == current_user_obj.id or current_user_obj.has_role('Admin') %}
+                <a href="{{ url_for('subtitles.download_subtitle', subtitle_id=subtitle.id) }}" class="btn btn-sm btn-outline-secondary">
+                    <i class="fas fa-download me-1"></i>
+                </a>
+            {% endif %}
             
             {# Delete Button - only for uploader or admin #}
             {% if subtitle.uploader_id == current_user_obj.id or current_user_obj.has_role('Admin') %}
-            <form action="{{ url_for('subtitles.delete_subtitle', subtitle_id=subtitle.id) }}" method="POST" class="d-inline ms-1" onsubmit="return confirm('Are you sure you want to delete this subtitle? This action cannot be undone.');">
+            <form action="{{ url_for('subtitles.delete_subtitle', subtitle_id=subtitle.id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this subtitle? This action cannot be undone.');">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <input type="hidden" name="activity_id" value="{{ activity_id }}"> {# Pass activity_id explicitly #}
                 <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete Subtitle">
