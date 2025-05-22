@@ -322,7 +322,7 @@ def unified_download(manifest_token: str, download_identifier: str):
                 current_app.logger.warning(
                     f"User has a linked OpenSubtitle selected (local ID {local_subtitle_to_serve.id}) but OS integration is not active. Cannot fetch.")
                 message_key = 'os_integration_inactive'  # New message key
-                local_subtitle_to_serve = None  # Cannot serve this
+                local_subtitle_to_serve = None
 
         elif local_subtitle_to_serve.file_path:  # Standard community-uploaded subtitle
             db_file_path = local_subtitle_to_serve.file_path
@@ -375,16 +375,9 @@ def unified_download(manifest_token: str, download_identifier: str):
                         current_app.logger.warning(
                             f"OpenSubtitles API downloads remaining for user {user.username}: {remaining_downloads}")
 
-                    sub_response = requests.get(subtitle_direct_url, timeout=20,
-                                                headers={'Accept-Encoding': 'gzip, deflate'})
+                    sub_response = requests.get(subtitle_direct_url, timeout=20)
                     sub_response.raise_for_status()
                     content_to_process = sub_response.content
-
-                    if sub_response.headers.get('Content-Encoding') == 'gzip':
-                        current_app.logger.info("Decompressing gzipped OpenSubtitle content.")
-                        compressed_file = io.BytesIO(content_to_process)
-                        decompressed_file = gzip.GzipFile(fileobj=compressed_file)
-                        content_to_process = decompressed_file.read()
 
                     try:
                         decoded_content = content_to_process.decode('utf-8')
@@ -740,21 +733,6 @@ def download_subtitle(subtitle_id):
             current_app.logger.error(f"Linked OS subtitle {subtitle.id} missing original_file_id for download.")
             abort(404)
         try:
-            # For admin download, should we use admin API key or user's token if available?
-            # Using user's token if OS active, else admin key for broader access.
-            # The request_download_link was modified to require user token and base_url.
-            # This admin download might need a different path if it's to bypass user context.
-            # For now, let's assume if user is admin, they might be testing their own OS integration or a general one.
-            # This part needs clarification on how admin downloads of OS-linked subs should work.
-            # Reverting to use the generic API key for admin download for now, assuming request_download_link can handle it.
-            # This conflicts with my earlier change to request_download_link.
-            # For now, this admin download of OS-linked subs will likely fail if request_download_link strictly requires user token.
-            # Let's assume for admin, we might need a separate OS client call or adjust request_download_link.
-            # For quick fix, I'll assume request_download_link can work with just API key if no token/base_url.
-            # THIS IS A POTENTIAL ISSUE based on previous changes to opensubtitles_client.
-            # For now, I will assume the client was updated to allow API-key only for some admin functions,
-            # or this admin download will only work if the admin user *also* has OS configured.
-            # Given the client changes, this will require user token.
             if not current_user.opensubtitles_active or not current_user.opensubtitles_token or not current_user.opensubtitles_base_url:
                 flash(
                     "Admin's OpenSubtitles account is not configured/active; cannot download this OS-linked subtitle.",
