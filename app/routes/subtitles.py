@@ -251,12 +251,12 @@ def unified_download(manifest_token: str, download_identifier: str):
             video_hash:  # Removed check for global API key
         current_app.logger.info(
             f"No active subtitle from utility. Attempting OpenSubtitles hash match for {content_id}/{video_hash}.")
-        if current_user.preferred_language == 'eng':
+        if user.preferred_language == 'eng':
             os_language = 'en'
-        elif current_user.preferred_language == 'msa':
+        elif user.preferred_language == 'msa':
             os_language = 'ar'
         else:
-            os_language = pycountry.countries.get(alpha_3=current_user.preferred_language).alpha_2,
+            os_language = pycountry.countries.get(alpha_3=user.preferred_language).alpha_2,
         try:
             os_search_params = {
                 'moviehash': video_hash,
