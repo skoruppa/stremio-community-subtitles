@@ -112,12 +112,12 @@ def addon_stream(manifest_token: str, content_type: str, content_id: str, params
                     f"Updated existing UserActivity ID {existing_activity.id} (match by hash/size) for user {user.id}, hash {video_hash}, size {video_size}")
                 activity_found_and_updated = True
 
-        elif video_hash is None and video_size is None:
+        elif video_hash is None:
             existing_activity = UserActivity.query.filter_by(
                 user_id=user.id,
                 content_id=content_id,
                 video_hash=None,
-                video_size=None,
+                video_size=video_size,
                 video_filename=video_filename
             ).first()
             if existing_activity:
