@@ -501,7 +501,7 @@ def upload_subtitle(activity_id):
                     vtt_content_data = convert_to_vtt(file_data, file_extension, encoding=encoding, fps=fps)
                     current_app.logger.info(f"Successfully converted '{original_filename}' to VTT format in memory.")
                 except UnicodeDecodeError as ude:
-                    current_app.logger.error(
+                    current_app.logger.warning(
                         f"UnicodeDecodeError processing subtitle '{original_filename}' with encoding '{encoding}': {ude}",
                         exc_info=True
                     )
