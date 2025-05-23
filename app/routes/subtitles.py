@@ -260,9 +260,7 @@ def unified_download(manifest_token: str, download_identifier: str):
         try:
             os_search_params = {
                 'moviehash': video_hash,
-                'languages': os_language,
-                'user_token': user.opensubtitles_token,  # Pass token for authenticated search
-                'user_base_url': user.opensubtitles_base_url  # Pass base_url
+                'languages': os_language
             }
 
             # Add IMDB ID, season, episode if available (similar to content_detail)
