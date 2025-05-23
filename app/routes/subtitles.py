@@ -139,7 +139,7 @@ def addon_stream(manifest_token: str, content_type: str, content_id: str, params
             current_app.logger.info(
                 f"Created new UserActivity for user {user.id}, content {content_id}, hash {video_hash}, size {video_size}, filename {video_filename}")
 
-        max_activities = current_app.config.get('MAX_USER_ACTIVITIES', 15)
+        max_activities = current_app.config.get('MAX_USER_ACTIVITIES', 15)+1
 
         current_persisted_count = UserActivity.query.filter_by(user_id=user.id).count()
         effective_count_after_commit = current_persisted_count
