@@ -497,8 +497,21 @@ def upload_subtitle(activity_id):
             try:
                 with open(temp_file_path, 'rb') as f:
                     file_data = f.read()
-                vtt_content_data = convert_to_vtt(file_data, file_extension, encoding=encoding, fps=fps)
-                current_app.logger.info(f"Successfully converted '{original_filename}' to VTT format in memory.")
+                try:
+                    vtt_content_data = convert_to_vtt(file_data, file_extension, encoding=encoding, fps=fps)
+                    current_app.logger.info(f"Successfully converted '{original_filename}' to VTT format in memory.")
+                except UnicodeDecodeError as ude:
+                    current_app.logger.error(
+                        f"UnicodeDecodeError processing subtitle '{original_filename}' with encoding '{encoding}': {ude}",
+                        exc_info=True
+                    )
+                    flash(
+                        "Failed to decode the uploaded subtitle file. This usually means it's not UTF-8 encoded or "
+                        "the selected encoding is incorrect. If you are unsure about the encoding, "
+                        "please try using the 'auto' option.",
+                        'danger'
+                    )
+                    return redirect(url_for('main.content_detail', activity_id=activity_id))
 
                 if current_app.config['STORAGE_BACKEND'] == 'cloudinary':
                     if not CLOUDINARY_AVAILABLE or not cloudinary.config().api_key:
