@@ -1,18 +1,18 @@
-import datetime # Added for UserSubtitleSelection timestamp
+import datetime  # Added for UserSubtitleSelection timestamp
 
-import pycountry
 from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app
 from flask_login import login_required, current_user
 from sqlalchemy.orm import joinedload
 from sqlalchemy import func
-from ..models import User, UserActivity, Subtitle, UserSubtitleSelection, SubtitleVote # Added User
-from ..forms import LanguagePreferenceForm, OpenSubtitlesLoginForm # Added OpenSubtitlesLoginForm
+from ..models import User, UserActivity, Subtitle, UserSubtitleSelection, SubtitleVote  # Added User
+from iso639 import Lang
+from ..forms import LanguagePreferenceForm, OpenSubtitlesLoginForm  # Added OpenSubtitlesLoginForm
 from ..extensions import db
 from ..lib.metadata import get_metadata
 from ..lib import opensubtitles_client
 from ..lib.opensubtitles_client import OpenSubtitlesError
 from ..languages import LANGUAGES, LANGUAGE_DICT
-from .utils import get_active_subtitle_details # Import the new utility function
+from .utils import get_active_subtitle_details  # Import the new utility function
 
 main_bp = Blueprint('main', __name__)
 
@@ -202,11 +202,11 @@ def content_detail(activity_id):
 
     # Determine Active Subtitle using the utility function
     active_subtitle_info = get_active_subtitle_details(current_user, activity.content_id, activity.video_hash)
-    
+
     active_subtitle = None
     active_opensubtitle_details = None
     user_vote_value = None
-    user_selection = active_subtitle_info.get('user_selection_record') # Get the raw selection record
+    user_selection = active_subtitle_info.get('user_selection_record')  # Get the raw selection record
 
     if active_subtitle_info:
         auto_selected = active_subtitle_info['auto']
@@ -216,7 +216,7 @@ def content_detail(activity_id):
         user_vote_value = active_subtitle_info['user_vote_value']
     elif active_subtitle_info['type'] == 'opensubtitles_selection':
         active_opensubtitle_details = active_subtitle_info['details']
-    
+
     # Fetch Available Subtitles (excluding the active one if it's local)
     query_lang = current_user.preferred_language
     available_subs_query = Subtitle.query.filter_by(
@@ -325,12 +325,8 @@ def content_detail(activity_id):
 
     # Fetch OpenSubtitles if API key is available and user has integration active
     if current_user.opensubtitles_active:
-        if current_user.preferred_language == 'eng':
-            os_language = 'en'
-        elif current_user.preferred_language == 'msa':
-            os_language = 'ar'
-        else:
-            os_language = pycountry.countries.get(alpha_3=current_user.preferred_language).alpha_2,
+        os_language = Lang(current_user.preferred_language).pt1
+
         try:
             search_params = {
                 'languages': os_language,
@@ -360,17 +356,14 @@ def content_detail(activity_id):
                     for item in os_results['data']:
                         if 'attributes' in item and 'language' in item['attributes']:
                             try:
-                                # pycountry uses ISO 639-1 (2-letter) and ISO 639-2 (3-letter)
                                 # OpenSubtitles API returns ISO 639-1 (2-letter)
                                 lang_2letter = item['attributes']['language']
-                                country = pycountry.languages.get(alpha_2=lang_2letter)
-                                if country:
-                                    item['attributes']['language_3letter'] = country.alpha_3
-                                else:
-                                    item['attributes']['language_3letter'] = lang_2letter # Fallback
-                            except Exception as e:
-                                current_app.logger.warning(f"Could not convert 2-letter language code {lang_2letter} to 3-letter: {e}")
-                                item['attributes']['language_3letter'] = lang_2letter # Fallback
+                                lang_obj = Lang(lang_2letter)
+                                item['attributes']['language_3letter'] = lang_obj.pt3
+                            except KeyError:
+                                current_app.logger.warning(
+                                    f"Could not convert 2-letter language code {lang_2letter} to 3-letter using iso639-lang.")
+                                item['attributes']['language_3letter'] = lang_2letter  # Fallback
 
                     context['opensubtitles_results'] = os_results['data']
                     current_app.logger.info(f"Found {len(os_results['data'])} results from OpenSubtitles.")
@@ -381,11 +374,11 @@ def content_detail(activity_id):
             current_app.logger.error(f"Error fetching from OpenSubtitles: {e}")
             flash(f"Could not fetch results from OpenSubtitles: {e}", "warning")
         except Exception as e:
-            db.session.rollback() # Ensure rollback on unexpected errors
+            db.session.rollback()  # Ensure rollback on unexpected errors
             current_app.logger.error(f"Unexpected error during OpenSubtitles search: {e}", exc_info=True)
             flash("An unexpected error occurred while searching OpenSubtitles.", "warning")
 
-    return render_template('main/content_detail.html', **context) # Rely on **context to pass activity
+    return render_template('main/content_detail.html', **context)  # Rely on **context to pass activity
 
 
 @main_bp.route('/configure')
@@ -430,7 +423,7 @@ def account_settings():
             current_user.preferred_language = lang_form.preferred_language.data
             db.session.commit()
             flash('Preferred language updated successfully!', 'success')
-            return redirect(url_for('main.account_settings')) # Redirect to avoid re-POST
+            return redirect(url_for('main.account_settings'))  # Redirect to avoid re-POST
         except Exception as e:
             db.session.rollback()
             current_app.logger.error(f"Failed to update language for user {current_user.id}: {e}")
@@ -439,22 +432,23 @@ def account_settings():
     if os_form.submit_opensubtitles.data and os_form.validate():
         os_username = os_form.opensubtitles_username.data
         os_password = os_form.opensubtitles_password.data
-        os_api_key = os_form.opensubtitles_api_key.data 
+        os_api_key = os_form.opensubtitles_api_key.data
 
         # Save the personal API key if provided (only editable when logged out)
         if not current_user.opensubtitles_token:
-             current_user.opensubtitles_api_key = os_api_key
+            current_user.opensubtitles_api_key = os_api_key
         elif os_api_key and os_api_key != current_user.opensubtitles_api_key:
-             flash('Please log out from OpenSubtitles before changing your personal API key.', 'warning')
+            flash('Please log out from OpenSubtitles before changing your personal API key.', 'warning')
 
         if os_form.use_opensubtitles.data:
             # User wants to enable or keep enabled
             if os_username and os_password:
                 try:
-                    current_app.logger.info(f"User {current_user.username} attempting to login/re-login to OpenSubtitles with username {os_username}.")
+                    current_app.logger.info(
+                        f"User {current_user.username} attempting to login/re-login to OpenSubtitles with username {os_username}.")
                     # Pass the user object to login to use their personal API key
                     login_data = opensubtitles_client.login(os_username, os_password, user=current_user)
-                    
+
                     current_user.opensubtitles_token = login_data['token']
                     current_user.opensubtitles_base_url = login_data['base_url']
                     current_user.opensubtitles_active = True
@@ -462,35 +456,39 @@ def account_settings():
                     current_app.logger.info(f"User {current_user.username} successfully logged into OpenSubtitles.")
                 except OpenSubtitlesError as e:
                     db.session.rollback()
-                    current_app.logger.error(f"OpenSubtitles login failed for user {current_user.username} (OS username: {os_username}): {e}")
+                    current_app.logger.error(
+                        f"OpenSubtitles login failed for user {current_user.username} (OS username: {os_username}): {e}")
                     flash(f'OpenSubtitles login failed: {e}', 'danger')
                     # Ensure opensubtitles_active is false if login fails and there was no prior token
                     if not current_user.opensubtitles_token:
-                        current_user.opensubtitles_active = False 
+                        current_user.opensubtitles_active = False
                         db.session.commit()
                 except Exception as e:
                     db.session.rollback()
-                    current_app.logger.error(f"Unexpected error during OpenSubtitles login for {current_user.username}: {e}", exc_info=True)
+                    current_app.logger.error(
+                        f"Unexpected error during OpenSubtitles login for {current_user.username}: {e}", exc_info=True)
                     flash('An unexpected error occurred during OpenSubtitles login.', 'danger')
                     if not current_user.opensubtitles_token:
                         current_user.opensubtitles_active = False
                         db.session.commit()
             elif current_user.opensubtitles_token:
-                 # If no username/password provided but a token exists, just ensure integration is active
-                 if not current_user.opensubtitles_active:
+                # If no username/password provided but a token exists, just ensure integration is active
+                if not current_user.opensubtitles_active:
                     current_user.opensubtitles_active = True
                     flash('OpenSubtitles integration (using existing session) has been activated.', 'info')
-                 else:
+                else:
                     flash('OpenSubtitles integration remains active.', 'info')
 
         else:
             # User wants to disable OpenSubtitles integration (use_opensubtitles is unchecked)
             if current_user.opensubtitles_active:
                 current_user.opensubtitles_active = False
-                flash('OpenSubtitles integration has been locally deactivated. Your OpenSubtitles session details and API key are kept if you wish to re-activate.', 'info')
+                flash(
+                    'OpenSubtitles integration has been locally deactivated. Your OpenSubtitles session details and API key are kept if you wish to re-activate.',
+                    'info')
             else:
-                flash('OpenSubtitles integration is already inactive.', 'info') 
-        
+                flash('OpenSubtitles integration is already inactive.', 'info')
+
         try:
             db.session.commit()
         except Exception as e:
@@ -501,8 +499,8 @@ def account_settings():
         return redirect(url_for('main.account_settings'))
 
     opensubtitles_has_token = current_user.opensubtitles_token is not None
-    return render_template('main/account_settings.html', 
-                           lang_form=lang_form, 
+    return render_template('main/account_settings.html',
+                           lang_form=lang_form,
                            os_form=os_form,
                            opensubtitles_active=current_user.opensubtitles_active,
                            opensubtitles_has_token=opensubtitles_has_token,
@@ -519,14 +517,14 @@ def opensubtitles_logout():
 
     try:
         current_app.logger.info(f"User {current_user.username} attempting to logout from OpenSubtitles.")
-        opensubtitles_client.logout(current_user.opensubtitles_token, user=current_user) # Pass user object
-        
+        opensubtitles_client.logout(current_user.opensubtitles_token, user=current_user)  # Pass user object
+
         # Clear OS-related fields from User model
         current_user.opensubtitles_token = None
         current_user.opensubtitles_base_url = None
         current_user.opensubtitles_active = False
         db.session.commit()
-        
+
         flash('Successfully logged out from OpenSubtitles.', 'success')
         current_app.logger.info(f"User {current_user.username} successfully logged out from OpenSubtitles.")
     except OpenSubtitlesError as e:
@@ -535,9 +533,10 @@ def opensubtitles_logout():
         flash(f'OpenSubtitles logout failed: {e}. Your local integration status may be unchanged.', 'danger')
     except Exception as e:
         db.session.rollback()
-        current_app.logger.error(f"Unexpected error during OpenSubtitles logout for {current_user.username}: {e}", exc_info=True)
+        current_app.logger.error(f"Unexpected error during OpenSubtitles logout for {current_user.username}: {e}",
+                                 exc_info=True)
         flash('An unexpected error occurred during OpenSubtitles logout.', 'danger')
-        
+
     return redirect(url_for('main.account_settings'))
 
 
@@ -554,7 +553,7 @@ def select_opensubtitle(activity_id, opensub_file_id):
         "uploader": request.form.get("os_uploader", "N/A"),
         "ai_translated": request.form.get("os_ai_translated") == 'true',
         "moviehash_match": request.form.get("os_hash_match") == 'true',
-        "url": request.form.get("os_url", None) # Capture URL if provided
+        "url": request.form.get("os_url", None)  # Capture URL if provided
     }
 
     try:

@@ -32,7 +32,7 @@ flask-mail = "*"
 jwt = "*"
 chardet = "*"
 "kitsu.py" = "*"
-pycountry = "*"
+iso639-lang = "*"
 cloudinary = "*"
 
 [dev-packages]

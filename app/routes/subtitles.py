@@ -4,11 +4,11 @@ import json
 import base64
 import tempfile
 
-import pycountry
 import requests  # For fetching from Cloudinary URL
 from flask import Blueprint, url_for, Response, request, current_app, flash, redirect  # Added redirect
 from flask_login import current_user, login_required
 from sqlalchemy.orm import Session
+from iso639 import Lang
 
 try:
     import cloudinary
@@ -251,12 +251,9 @@ def unified_download(manifest_token: str, download_identifier: str):
             video_hash:  # Removed check for global API key
         current_app.logger.info(
             f"No active subtitle from utility. Attempting OpenSubtitles hash match for {content_id}/{video_hash}.")
-        if user.preferred_language == 'eng':
-            os_language = 'en'
-        elif user.preferred_language == 'msa':
-            os_language = 'ar'
-        else:
-            os_language = pycountry.countries.get(alpha_3=user.preferred_language).alpha_2,
+
+        os_language = Lang(user.preferred_language).pt1
+
         try:
             os_search_params = {
                 'moviehash': video_hash,
@@ -703,9 +700,9 @@ def delete_subtitle(subtitle_id):
                 if os.path.exists(local_file_full_path):
                     try:
                         os.remove(local_file_full_path)
-                        current_app.logger.info(f"Deleted local file: {local_full_path}")
+                        current_app.logger.info(f"Deleted local file: {local_file_full_path}")
                     except Exception as e:
-                        current_app.logger.error(f"Error deleting local file {local_full_path}: {e}")
+                        current_app.logger.error(f"Error deleting local file {local_file_full_path}: {e}")
 
         db.session.delete(subtitle)
         db.session.commit()
