@@ -78,7 +78,8 @@ def register():
             best_match_3 = None
             for browser_pref in browser_prefs:
                 try:
-                    lang_obj = Lang(browser_pref)
+                    lang_code = browser_pref.split('-')[0].strip()
+                    lang_obj = Lang(lang_code)
                     if lang_obj.pt3 in LANGUAGE_DICT:
                          best_match_3 = lang_obj.pt3
                          break # Take the first match
