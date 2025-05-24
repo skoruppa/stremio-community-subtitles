@@ -144,7 +144,14 @@ async def _get_kitsu_metadata(content_id): # Changed to async def
             current_app.logger.warning(f"Kitsu anime not found for ID: {kitsu_anime_id}")
             return None
 
-        metadata['title'] = anime.canonical_title # Corrected indentation
+        if anime.canonical_title:
+            metadata['title'] = anime.canonical_title
+        elif anime.title:
+            if anime.title.en_jp:
+                metadata['title'] = anime.title.en_jp
+            elif anime.title.en:
+                metadata['title'] = anime.title.en
+
         if anime.poster_image("large"):
             metadata['poster_url'] = anime.poster_image("large")
         elif anime.poster_image("original"):
