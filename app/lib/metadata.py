@@ -172,13 +172,16 @@ async def _get_kitsu_metadata(content_id): # Changed to async def
             if episodes_data:
                 episode_data = next((item for item in episodes_data if item.episode_number == episode_num), None)
                 ep_title = None
-                if episode_data.canonical_title:
-                    ep_title = episode_data.canonical_title
-                elif episode_data.title:
-                    if episode_data.title.en_jp:
-                        ep_title = episode_data.title.en_jp
-                    elif episode_data.title.en:
-                        ep_title = episode_data.title.en
+                if not episode_data:
+                    ep_title = ''
+                else:
+                    if episode_data.canonical_title:
+                        ep_title = episode_data.canonical_title
+                    elif episode_data.title:
+                        if episode_data.title.en_jp:
+                            ep_title = episode_data.title.en_jp
+                        elif episode_data.title.en:
+                            ep_title = episode_data.title.en
 
                 if ep_title and ep_title.lower() != metadata['title'].lower():
                     metadata['title'] = f"{metadata['title']} - Ep {episode_num} - {ep_title}"
