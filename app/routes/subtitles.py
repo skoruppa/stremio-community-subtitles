@@ -178,17 +178,12 @@ def addon_stream(manifest_token: str, content_type: str, content_id: str, params
 
     subtitles_list = []
     try:
-        tmp_ud = unified_download(manifest_token=manifest_token, download_identifier=download_identifier)
-        if isinstance(tmp_ud, str) and tmp_ud.startswith("http"):
-            download_url = tmp_ud
-            stremio_sub_id = f"comm_os_{download_identifier}"
-        else:
-            download_url = url_for('subtitles.unified_download',
-                                   manifest_token=manifest_token,
-                                   download_identifier=download_identifier,
-                                   _external=True,
-                                   _scheme=current_app.config['PREFERRED_URL_SCHEME'])
-            stremio_sub_id = f"comm_{download_identifier}"
+        download_url = url_for('subtitles.unified_download',
+                               manifest_token=manifest_token,
+                               download_identifier=download_identifier,
+                               _external=True,
+                               _scheme=current_app.config['PREFERRED_URL_SCHEME'])
+        stremio_sub_id = f"comm_{download_identifier}"
         subtitles_list.append({
             'id': stremio_sub_id,
             'url': download_url,
@@ -364,6 +359,7 @@ def unified_download(manifest_token: str, download_identifier: str):
                 f"Local subtitle ID {local_subtitle_to_serve.id} (type: {local_subtitle_to_serve.source_type}) has no file_path.")
             message_key = 'select_web'
 
+    os_subtitle_direct_url = None
     if opensubtitle_to_serve_details and opensubtitle_to_serve_details.get('file_id') and not vtt_content:
         os_file_id = opensubtitle_to_serve_details['file_id']
 
@@ -380,14 +376,13 @@ def unified_download(manifest_token: str, download_identifier: str):
                     user=user
                 )
                 if download_info and download_info.get('link'):
-                    subtitle_direct_url = download_info['link']
+                    os_subtitle_direct_url = download_info['link']
                     remaining_downloads = download_info.get('remaining')
                     if remaining_downloads is not None and int(remaining_downloads) <= 10:
                         current_app.logger.warning(
                             f"OpenSubtitles API downloads remaining for user {user.username}: {remaining_downloads}")
 
                     current_app.logger.info(f"Serving OpenSubtitles direct url to omit 503 errors")
-                    return subtitle_direct_url
 
             except opensubtitles_client.OpenSubtitlesError as e:
                 current_app.logger.error(
@@ -398,7 +393,8 @@ def unified_download(manifest_token: str, download_identifier: str):
                     f"Unexpected error serving OpenSubtitle file_id {os_file_id} for user {user.username}: {e}",
                     exc_info=True)
                 message_key = 'select_web'  # Generic error
-
+    if os_subtitle_direct_url:
+        return redirect(os_subtitle_direct_url, code=302)
     if vtt_content:
         if not vtt_content.strip().upper().startswith("WEBVTT"):
             # This case should ideally not happen if conversion to VTT is successful
