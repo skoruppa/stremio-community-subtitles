@@ -469,6 +469,7 @@ def upload_subtitle(activity_id):
 
     if request.method == 'GET':
         form.language.data = current_user.preferred_language
+        form.version_info.data = activity.video_filename.rsplit('.', 1)[0] if activity.video_filename else None
 
     if form.validate_on_submit():
         try:
