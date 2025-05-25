@@ -1,4 +1,5 @@
 import requests
+import time
 from flask import current_app
 
 # Global base URL for non-authenticated or initial calls like login
@@ -22,10 +23,65 @@ def _get_api_key(user=None):
     if user and user.opensubtitles_api_key:
         current_app.logger.debug(f"Using personal OpenSubtitles API key for user: {user.username}")
         return user.opensubtitles_api_key
-        
+
     # Global API key is no longer used as a fallback
     current_app.logger.error("OpenSubtitles API key is not configured for the user.")
     raise OpenSubtitlesError("Personal OpenSubtitles API key is missing in configuration.")
+
+
+def _make_request_with_retry(request_func, max_retries=2, retry_delay=1.0):
+    """
+    Makes an HTTP request with retry logic for 5xx server errors.
+
+    Args:
+        request_func (callable): Function that makes the HTTP request (should return requests.Response)
+        max_retries (int): Maximum number of retry attempts (default: 2)
+        retry_delay (float): Delay in seconds between retries (default: 1.0)
+
+    Returns:
+        requests.Response: The successful response
+
+    Raises:
+        requests.exceptions.HTTPError: For non-5xx HTTP errors or after max retries
+        requests.exceptions.RequestException: For other request errors
+    """
+    last_exception = None
+
+    for attempt in range(max_retries + 1):  # +1 for initial attempt
+        try:
+            response = request_func()
+
+            # If we get a 5xx server error, retry (unless we've exhausted attempts)
+            if 500 <= response.status_code < 600 and attempt < max_retries:
+                current_app.logger.warning(
+                    f"OpenSubtitles API returned {response.status_code} server error "
+                    f"(attempt {attempt + 1}/{max_retries + 1}). "
+                    f"Retrying in {retry_delay} seconds..."
+                )
+                time.sleep(retry_delay)
+                continue
+
+            # For any other status code (including success or client errors), return the response
+            # The caller will handle raising exceptions for HTTP errors
+            return response
+
+        except requests.exceptions.RequestException as e:
+            last_exception = e
+            # For network errors, also retry
+            if attempt < max_retries:
+                current_app.logger.warning(
+                    f"OpenSubtitles API request failed (attempt {attempt + 1}/{max_retries + 1}): {e}. "
+                    f"Retrying in {retry_delay} seconds..."
+                )
+                time.sleep(retry_delay)
+                continue
+            else:
+                # Re-raise the last exception if we've exhausted retries
+                raise
+
+    # This should never be reached, but just in case
+    if last_exception:
+        raise last_exception
 
 
 def login(username, password, user=None):
@@ -57,9 +113,12 @@ def login(username, password, user=None):
         'password': password
     }
 
+    def make_request():
+        return requests.post(f"{GLOBAL_OS_BASE_URL}/login", headers=headers, json=payload, timeout=15)
+
     try:
         current_app.logger.info(f"Attempting OpenSubtitles login for user: {username}")
-        response = requests.post(f"{GLOBAL_OS_BASE_URL}/login", headers=headers, json=payload, timeout=15)
+        response = _make_request_with_retry(make_request)
         response.raise_for_status()
         data = response.json()
 
@@ -131,10 +190,12 @@ def logout(token, user):
         'User-Agent': USER_AGENT
     }
 
+    def make_request():
+        return requests.delete(f"https://{user.opensubtitles_base_url}/api/v1/logout", headers=headers, timeout=15)
+
     try:
         current_app.logger.info(f"Attempting OpenSubtitles logout using base_url: {user.opensubtitles_base_url}")
-        response = requests.delete(f"https://{user.opensubtitles_base_url}/api/v1/logout", headers=headers,
-                                 timeout=15)  # No JSON body for logout
+        response = _make_request_with_retry(make_request)
         response.raise_for_status()
         current_app.logger.info("OpenSubtitles logout successful.")
         try:
@@ -176,11 +237,12 @@ def search_subtitles(imdb_id=None, query=None, languages=None, moviehash=None,
 
     if not user or not user.opensubtitles_token or not user.opensubtitles_base_url:
         current_app.logger.error("OpenSubtitles search: user object with token and base_url is required.")
-        raise OpenSubtitlesError("User authentication (user object with token and base_url) is required for searching subtitles.")
+        raise OpenSubtitlesError(
+            "User authentication (user object with token and base_url) is required for searching subtitles.")
 
     headers = {
         'Api-Key': api_key,
-        'Authorization': f'Bearer {user.opensubtitles_token}', # Read token from user object
+        'Authorization': f'Bearer {user.opensubtitles_token}',  # Read token from user object
         'Accept': '*/*',
         'User-Agent': USER_AGENT
     }
@@ -189,7 +251,7 @@ def search_subtitles(imdb_id=None, query=None, languages=None, moviehash=None,
     if imdb_id: params['imdb_id'] = imdb_id
     if query: params['query'] = query
     if languages: params['languages'] = languages
-    if moviehash: 
+    if moviehash:
         params['moviehash'] = moviehash
         params['moviehash_match'] = 'include'
     if season_number is not None: params['season_number'] = season_number
@@ -200,10 +262,14 @@ def search_subtitles(imdb_id=None, query=None, languages=None, moviehash=None,
         current_app.logger.warning("OpenSubtitles search called with no effective search parameters.")
         raise OpenSubtitlesError("No search criteria provided for subtitle search.")
 
+    def make_request():
+        return requests.get(f"https://{user.opensubtitles_base_url}/api/v1/subtitles", headers=headers, params=params,
+                            timeout=15)
+
     try:
         current_app.logger.info(
             f"Searching OpenSubtitles (authenticated) at {user.opensubtitles_base_url}/api/v1/subtitles with params: {params}")
-        response = requests.get(f"https://{user.opensubtitles_base_url}/api/v1/subtitles", headers=headers, params=params, timeout=15)
+        response = _make_request_with_retry(make_request)
         response.raise_for_status()
         return response.json()
     except requests.exceptions.HTTPError as e:
@@ -237,7 +303,8 @@ def request_download_link(file_id, user=None):
 
     if not user or not user.opensubtitles_token or not user.opensubtitles_base_url:
         current_app.logger.error("OpenSubtitles download request: user object with token and base_url is required.")
-        raise OpenSubtitlesError("User authentication (user object with token and base_url) is required for searching subtitles.")
+        raise OpenSubtitlesError(
+            "User authentication (user object with token and base_url) is required for searching subtitles.")
 
     headers = {
         'Api-Key': api_key,
@@ -252,10 +319,14 @@ def request_download_link(file_id, user=None):
         'sub_format': 'webvtt'
     }
 
+    def make_request():
+        return requests.post(f"https://{user.opensubtitles_base_url}/api/v1/download", headers=headers, json=payload,
+                             timeout=15)
+
     try:
         current_app.logger.info(
             f"Requesting OpenSubtitles download link (authenticated) for file_id: {file_id} at {user.opensubtitles_base_url}/api/v1/download")
-        response = requests.post(f"https://{user.opensubtitles_base_url}/api/v1/download", headers=headers, json=payload, timeout=15)
+        response = _make_request_with_retry(make_request)
         response.raise_for_status()
         return response.json()
     except requests.exceptions.HTTPError as e:
