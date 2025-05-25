@@ -381,7 +381,9 @@ def unified_download(manifest_token: str, download_identifier: str):
                         current_app.logger.warning(
                             f"OpenSubtitles API downloads remaining for user {user.username}: {remaining_downloads}")
 
-                    sub_response = requests.get(subtitle_direct_url, timeout=20)
+                    def dowm_os_subs_request():
+                        return requests.get(subtitle_direct_url, timeout=20)
+                    sub_response = opensubtitles_client.make_request_with_retry(dowm_os_subs_request)
                     sub_response.raise_for_status()
                     content_to_process = sub_response.content
 

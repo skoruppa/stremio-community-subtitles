@@ -29,7 +29,7 @@ def _get_api_key(user=None):
     raise OpenSubtitlesError("Personal OpenSubtitles API key is missing in configuration.")
 
 
-def _make_request_with_retry(request_func, max_retries=2, retry_delay=1.0):
+def make_request_with_retry(request_func, max_retries=2, retry_delay=1.0):
     """
     Makes an HTTP request with retry logic for 5xx server errors.
 
@@ -118,7 +118,7 @@ def login(username, password, user=None):
 
     try:
         current_app.logger.info(f"Attempting OpenSubtitles login for user: {username}")
-        response = _make_request_with_retry(make_request)
+        response = make_request_with_retry(make_request)
         response.raise_for_status()
         data = response.json()
 
@@ -195,7 +195,7 @@ def logout(token, user):
 
     try:
         current_app.logger.info(f"Attempting OpenSubtitles logout using base_url: {user.opensubtitles_base_url}")
-        response = _make_request_with_retry(make_request)
+        response = make_request_with_retry(make_request)
         response.raise_for_status()
         current_app.logger.info("OpenSubtitles logout successful.")
         try:
@@ -269,7 +269,7 @@ def search_subtitles(imdb_id=None, query=None, languages=None, moviehash=None,
     try:
         current_app.logger.info(
             f"Searching OpenSubtitles (authenticated) at {user.opensubtitles_base_url}/api/v1/subtitles with params: {params}")
-        response = _make_request_with_retry(make_request)
+        response = make_request_with_retry(make_request)
         response.raise_for_status()
         return response.json()
     except requests.exceptions.HTTPError as e:
@@ -326,7 +326,7 @@ def request_download_link(file_id, user=None):
     try:
         current_app.logger.info(
             f"Requesting OpenSubtitles download link (authenticated) for file_id: {file_id} at {user.opensubtitles_base_url}/api/v1/download")
-        response = _make_request_with_retry(make_request)
+        response = make_request_with_retry(make_request)
         response.raise_for_status()
         return response.json()
     except requests.exceptions.HTTPError as e:
