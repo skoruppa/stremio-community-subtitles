@@ -8,6 +8,7 @@ LANGUAGES = [
     ('deu', 'German'),
     ('ita', 'Italian'),
     ('por', 'Portuguese'),
+    ('pob', 'Portuguese Brazil'),
     ('rus', 'Russian'),
     ('jpn', 'Japanese'),
     ('zho', 'Chinese'),  # ISO 639-2/T for Chinese

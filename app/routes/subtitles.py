@@ -252,7 +252,12 @@ def unified_download(manifest_token: str, download_identifier: str):
         current_app.logger.info(
             f"No active subtitle from utility. Attempting OpenSubtitles hash match for {content_id}/{video_hash}.")
 
-        os_language = Lang(user.preferred_language).pt1
+        if user.preferred_language == 'pob':
+            os_language = 'pt-br'
+        elif user.preferred_language == 'pob':
+            os_language = 'pt-pt'
+        else:
+            os_language = Lang(user.preferred_language).pt1
 
         try:
             os_search_params = {

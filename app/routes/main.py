@@ -325,7 +325,12 @@ def content_detail(activity_id):
 
     # Fetch OpenSubtitles if API key is available and user has integration active
     if current_user.opensubtitles_active:
-        os_language = Lang(current_user.preferred_language).pt1
+        if current_user.preferred_language == 'pob':
+            os_language = 'pt-br'
+        elif current_user.preferred_language == 'pob':
+            os_language = 'pt-pt'
+        else:
+            os_language = Lang(current_user.preferred_language).pt1
 
         try:
             search_params = {
@@ -357,9 +362,14 @@ def content_detail(activity_id):
                         if 'attributes' in item and 'language' in item['attributes']:
                             try:
                                 # OpenSubtitles API returns ISO 639-1 (2-letter)
-                                lang_2letter = item['attributes']['language']
-                                lang_obj = Lang(lang_2letter)
-                                item['attributes']['language_3letter'] = lang_obj.pt3
+                                if item['attributes']['language'].lower() == 'pt-pt':
+                                    item['attributes']['language_3letter'] = 'por'
+                                elif item['attributes']['language'].lower() == 'pt-br':
+                                    item['attributes']['language_3letter'] = 'pob'
+                                else:
+                                    lang_2letter = item['attributes']['language']
+                                    lang_obj = Lang(lang_2letter)
+                                    item['attributes']['language_3letter'] = lang_obj.pt3
                             except KeyError:
                                 current_app.logger.warning(
                                     f"Could not convert 2-letter language code {lang_2letter} to 3-letter using iso639-lang.")
