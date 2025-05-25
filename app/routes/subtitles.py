@@ -178,11 +178,15 @@ def addon_stream(manifest_token: str, content_type: str, content_id: str, params
 
     subtitles_list = []
     try:
-        download_url = url_for('subtitles.unified_download',
-                               manifest_token=manifest_token,
-                               download_identifier=download_identifier,
-                               _external=True,
-                               _scheme=current_app.config['PREFERRED_URL_SCHEME'])
+        tmp_ud = unified_download(manifest_token=manifest_token, download_identifier=download_identifier)
+        if isinstance(tmp_ud, str) and tmp_ud.startswith("http"):
+            download_url = tmp_ud
+        else:
+            download_url = url_for('subtitles.unified_download',
+                                   manifest_token=manifest_token,
+                                   download_identifier=download_identifier,
+                                   _external=True,
+                                   _scheme=current_app.config['PREFERRED_URL_SCHEME'])
         stremio_sub_id = f"comm_{download_identifier}"
         subtitles_list.append({
             'id': stremio_sub_id,
@@ -381,33 +385,9 @@ def unified_download(manifest_token: str, download_identifier: str):
                         current_app.logger.warning(
                             f"OpenSubtitles API downloads remaining for user {user.username}: {remaining_downloads}")
 
-                    def dowm_os_subs_request():
-                        return requests.get(subtitle_direct_url, timeout=20)
-                    sub_response = opensubtitles_client.make_request_with_retry(dowm_os_subs_request)
-                    sub_response.raise_for_status()
-                    content_to_process = sub_response.content
+                    current_app.logger.info(f"Serving OpenSubtitles direct url to omit 503 errors")
+                    return subtitle_direct_url
 
-                    try:
-                        decoded_content = content_to_process.decode('utf-8')
-                    except UnicodeDecodeError:
-                        current_app.logger.warning("UTF-8 decode failed for OpenSubtitle, trying latin-1.")
-                        try:
-                            decoded_content = content_to_process.decode('latin-1')
-                        except UnicodeDecodeError:
-                            current_app.logger.error("OpenSubtitle content encoding issue after trying UTF-8 and latin-1.")
-                            raise opensubtitles_client.OpenSubtitlesError("Subtitle content encoding issue.")
-
-                    if not decoded_content.strip().upper().startswith("WEBVTT"):
-                        current_app.logger.info(f"OpenSubtitle file_id {os_file_id} is not VTT. Attempting conversion.")
-                        # Use 'release_name' from 'details' if available, otherwise default to .srt
-                        original_filename = opensubtitle_to_serve_details.get('details', {}).get('release_name', '.srt')
-                        _, original_ext = os.path.splitext(original_filename)
-                        if not original_ext: original_ext = ".srt"
-
-                        vtt_content = convert_to_vtt(content_to_process, original_ext, encoding=sub_response.encoding)
-                    else:
-                        vtt_content = decoded_content
-                    current_app.logger.info(f"Successfully fetched and processed OpenSubtitle file_id {os_file_id}")
             except opensubtitles_client.OpenSubtitlesError as e:
                 current_app.logger.error(
                     f"OpenSubtitles API error while serving file_id {os_file_id} for user {user.username}: {e}")
