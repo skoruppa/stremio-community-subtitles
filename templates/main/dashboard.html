@@ -31,7 +31,7 @@
 
                                     <div class="me-3">
                                         <div class="poster-wrapper"
-                                             data-poster="{{ metadata_map[activity.id].poster_url or '' }}"
+                                             data-poster="{% if activity.id in metadata_map and metadata_map[activity.id].poster_url %}{{ metadata_map[activity.id].poster_url }}{% endif %}"
                                              style="height: 80px; width: 57px;">
                                             <img class="poster-image img-thumbnail"
                                                  style="height: 80px; width: auto; max-width: fit-content;">
