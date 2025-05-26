@@ -67,8 +67,11 @@ def register():
         supported_iso_639_1_codes = []
         for code_639_2, _ in LANGUAGES:
             try:
-                lang = Lang(code_639_2)
-                supported_iso_639_1_codes.append(lang.pt3)  # iso639-lang uses pt3 for ISO 639-3
+                if code_639_2 == 'pob':
+                    supported_iso_639_1_codes.append('por')
+                else:
+                    lang = Lang(code_639_2)
+                    supported_iso_639_1_codes.append(lang.pt3)  # iso639-lang uses pt3 for ISO 639-3
             except KeyError:
                 current_app.logger.warning(f"iso639-lang could not find ISO 639-3 for supported language {code_639_2}.")
 
