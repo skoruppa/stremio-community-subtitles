@@ -30,25 +30,13 @@ To install the addon:
 
 To enable OpenSubtitles integration for access to a broader subtitle database:
 
-### Step 1: Create OpenSubtitles API Consumer
 1. Register and login at [OpenSubtitles.com](https://www.opensubtitles.com/)
-2. Go to your account menu and select **"API Consumer"** - [https://www.opensubtitles.com/en/consumers](https://www.opensubtitles.com/en/consumers)
-3. Click **"NEW CONSUMER"** button
-4. Enter any name for your consumer
-5. **Uncheck** "Allow anonymous downloads"
-6. Click **"SAVE"**
-7. Copy your generated API key
-
-### Step 2: Configure Integration
-1. Login to your [addon account settings](https://stremio-community-subtitles.top/account)
-2. Check **"Use OpenSubtitles Integration"**
-3. Enter your OpenSubtitles username, password, and API key
-4. Save your settings
+2. Login to your [addon account settings](https://stremio-community-subtitles.top/account)
+3. Check **"Use OpenSubtitles Integration"**
+4. Enter your OpenSubtitles username, password, and API key
+5. Save your settings
 
 Once configured, you can manually select any OpenSubtitles subtitle for your videos, and link them to specific video files so other users get perfectly synchronized subtitles.
-
-### Why API Key is Required
-The personal API key bypasses OpenSubtitles' free API limitations (5 requests per second per IP). With your own API key, you get dedicated rate limits and improved subtitle search performance. See [OpenSubtitles API pricing](https://opensubtitles.stoplight.io/docs/opensubtitles-api/f65bc8dd4aef7-api-subscription-prices) for more details.
 
 ## 📱 Usage
 
