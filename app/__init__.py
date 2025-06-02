@@ -54,11 +54,15 @@ def create_app():
     from .routes.main import main_bp
     from .routes.manifest import manifest_bp
     from .routes.subtitles import subtitles_bp
+    from .routes.opensubtitles import opensubtitles_bp
+    from .routes.content import content_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(main_bp)
     app.register_blueprint(manifest_bp)
     app.register_blueprint(subtitles_bp)
+    app.register_blueprint(opensubtitles_bp)
+    app.register_blueprint(content_bp)
 
     # Create upload directory if it doesn't exist
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)

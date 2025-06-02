@@ -55,7 +55,7 @@
                     <button class="btn btn-sm btn-success disabled" disabled><i class="fas fa-check-circle"></i> Selected</button>
                     {# Add "Link to this version" button if no hash match and video_hash exists #}
                     {% if activity.video_hash and sub_attr.moviehash_match is not none and not sub_attr.moviehash_match %} {# Check moviehash_match from OS data #}
-                        <form action="{{ url_for('main.link_opensubtitle', activity_id=activity.id, opensub_file_id=sub_file.file_id) }}" method="POST" class="d-inline ms-2">
+                        <form action="{{ url_for('opensubtitles.link_opensubtitle', activity_id=activity.id, opensub_file_id=sub_file.file_id) }}" method="POST" class="d-inline ms-2">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             {# Pass necessary details for creating the Subtitle entry #}
                             <input type="hidden" name="os_language" value="{{ sub_attr.language_3letter }}"> {# Pass 3-letter code #}
@@ -71,7 +71,7 @@
                     {% endif %}
                    
                 {% else %} {# Show list item options #}
-                    <form action="{{ url_for('main.select_opensubtitle', activity_id=activity.id, opensub_file_id=sub_file.file_id) }}" method="POST" class="d-inline">
+                    <form action="{{ url_for('opensubtitles.select_opensubtitle', activity_id=activity.id, opensub_file_id=sub_file.file_id) }}" method="POST" class="d-inline">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         {# Pass necessary details for opensubtitle_details_json #}
                         <input type="hidden" name="os_language" value="{{ sub_attr.language_3letter }}"> {# Pass 3-letter code #}
@@ -80,10 +80,13 @@
                         <input type="hidden" name="os_ai_translated" value="{{ 'true' if sub_attr.ai_translated or sub_attr.machine_translated else 'false' }}">
                         <input type="hidden" name="os_hash_match" value="{{ 'true' if sub_attr.moviehash_match else 'false' }}">
                         <input type="hidden" name="os_url" value="{{ sub_attr.url }}"> {# Pass URL #}
-                        
+                        {% if active_opensubtitle_details and active_opensubtitle_details.file_id == sub_file.file_id %}
+                        <button class="btn btn-sm btn-success disabled" disabled><i class="fas fa-check-circle"></i> Selected</button>
+                        {% else %}
                         <button type="submit" class="btn btn-sm btn-outline-primary">
                             <i class="fas fa-check"></i> Select
                         </button>
+                        {% endif %}
                     </form>
                 {% endif %}
             </div>

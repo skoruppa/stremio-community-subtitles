@@ -3,12 +3,18 @@ import datetime
 import json
 import base64
 import tempfile
+import uuid
 
 import requests  # For fetching from Cloudinary URL
-from flask import Blueprint, url_for, Response, request, current_app, flash, redirect  # Added redirect
+from flask import Blueprint, url_for, Response, request, current_app, flash, redirect, render_template  # Added redirect
 from flask_login import current_user, login_required
 from sqlalchemy.orm import Session
 from iso639 import Lang
+
+from ..forms import SubtitleUploadForm
+from ..languages import LANGUAGES
+from ..lib import opensubtitles_client
+from ..lib.metadata import get_metadata
 
 try:
     import cloudinary
@@ -19,16 +25,43 @@ try:
 except ImportError:
     CLOUDINARY_AVAILABLE = False
 from ..extensions import db
-from ..models import User, Subtitle, UserActivity, UserSubtitleSelection, \
-    SubtitleVote  # Added SubtitleVote for consistency, though not directly used here
-from ..lib import opensubtitles_client
+from ..models import User, Subtitle, UserActivity, UserSubtitleSelection, SubtitleVote  
 from ..lib.subtitles import convert_to_vtt
-from .utils import respond_with, get_active_subtitle_details  # Import the new utility function
+from .utils import respond_with, get_active_subtitle_details 
 from urllib.parse import parse_qs, unquote
 import gzip
 import io
 
 subtitles_bp = Blueprint('subtitles', __name__)
+
+
+def _get_vtt_content(subtitle):
+    """
+    Helper function to get VTT content for a given subtitle.
+    Handles both Cloudinary and local storage.
+    """
+    if not subtitle.file_path:
+        raise ValueError("Subtitle has no file_path")
+
+    if current_app.config['STORAGE_BACKEND'] == 'cloudinary':
+        if not CLOUDINARY_AVAILABLE or not cloudinary.config().api_key:
+            raise Exception("Cloudinary not configured/available")
+        
+        generated_url_info = cloudinary.utils.cloudinary_url(subtitle.file_path, resource_type="raw", secure=True)
+        cloudinary_url = generated_url_info[0] if isinstance(generated_url_info, tuple) else generated_url_info
+        if not cloudinary_url: 
+            raise Exception("Cloudinary URL generation failed")
+        
+        r = requests.get(cloudinary_url, timeout=10)
+        r.raise_for_status()
+        return r.text
+    else:
+        local_full_path = os.path.join(current_app.config['UPLOAD_FOLDER'], subtitle.file_path)
+        if not os.path.exists(local_full_path):
+            raise FileNotFoundError("Local subtitle file not found")
+        
+        with open(local_full_path, 'r', encoding='utf-8') as f:
+            return f.read()
 
 
 def generate_vtt_message(message: str) -> str:
@@ -52,7 +85,6 @@ def addon_stream(manifest_token: str, content_type: str, content_id: str, params
 
     # Ensure user has a personal API key if OS integration is active
     # The _get_api_key function will now raise an error if no user key is present
-    # and no global key is available (global key is no longer a fallback).
     # We can rely on the OS client functions to handle the missing key error.
     # However, a check here provides a more immediate response to Stremio.
     if user.opensubtitles_active and not user.opensubtitles_api_key:
@@ -213,104 +245,43 @@ def unified_download(manifest_token: str, download_identifier: str):
         content_id = context.get('content_id')
         preferred_lang = context.get('lang')
         video_hash = context.get('v_hash')
-        if not content_id: raise ValueError("Missing content_id in decoded context")
+        video_filename = context.get('v_fname')
+        content_type = context.get('content_type', '')
+        if not content_id:
+            raise ValueError("Missing content_id in decoded context")
     except Exception as e:
         current_app.logger.error(f"Failed to decode download identifier '{download_identifier}': {e}")
         return Response(generate_vtt_message("Invalid download link."), status=400, mimetype='text/vtt')
+
+    # Use the utility function to get active subtitle details (now with OpenSubtitles fallback)
+    active_subtitle_info = get_active_subtitle_details(user, content_id, video_hash, content_type, video_filename)
 
     local_subtitle_to_serve = None
     opensubtitle_to_serve_details = None
     message_key = None
     vtt_content = None
 
-    # Use the utility function to get active subtitle details
-    active_subtitle_info = get_active_subtitle_details(user, content_id, video_hash)
-
     if active_subtitle_info['type'] == 'local':
         local_subtitle_to_serve = active_subtitle_info['subtitle']
         if local_subtitle_to_serve:
             current_app.logger.info(
-                f"Serving active local subtitle ID {local_subtitle_to_serve.id} (type: {active_subtitle_info['type']})")
-    elif active_subtitle_info['type'] == 'opensubtitles_selection':
-        opensubtitle_to_serve_details = active_subtitle_info['details']  # This is the JSON details
-        if 'file_id' not in opensubtitle_to_serve_details and 'original_file_id' in opensubtitle_to_serve_details:  # from community_link
+                f"Serving active local subtitle ID {local_subtitle_to_serve.id}")
+    elif active_subtitle_info['type'] in ['opensubtitles_selection', 'opensubtitles_auto']:
+        opensubtitle_to_serve_details = active_subtitle_info['details']
+        # Handle community_link compatibility
+        if 'file_id' not in opensubtitle_to_serve_details and 'original_file_id' in opensubtitle_to_serve_details:
             opensubtitle_to_serve_details['file_id'] = opensubtitle_to_serve_details['original_file_id']
 
         if opensubtitle_to_serve_details and 'file_id' in opensubtitle_to_serve_details:
             current_app.logger.info(
-                f"Serving user-selected OpenSubtitle file_id {opensubtitle_to_serve_details['file_id']}")
-        else:  # Should not happen if type is 'opensubtitles_selection' from util
-            current_app.logger.error(
-                f"OpenSubtitles selection details missing file_id: {opensubtitle_to_serve_details}")
-            opensubtitle_to_serve_details = None  # Reset to avoid error
-
-    # If no active subtitle found by utility, attempt OpenSubtitles hash match (existing fallback logic)
-    # This part is for auto-discovery if nothing is explicitly selected or defaulted by the utility.
-    if not local_subtitle_to_serve and not opensubtitle_to_serve_details and \
-            user.opensubtitles_active and user.opensubtitles_token and user.opensubtitles_base_url and \
-            video_hash:  # Removed check for global API key
-        current_app.logger.info(
-            f"No active subtitle from utility. Attempting OpenSubtitles hash match for {content_id}/{video_hash}.")
-
-        if user.preferred_language == 'pob':
-            os_language = 'pt-br'
-        elif user.preferred_language == 'pob':
-            os_language = 'pt-pt'
+                f"Serving OpenSubtitle file_id {opensubtitle_to_serve_details['file_id']} (type: {active_subtitle_info['type']})")
         else:
-            os_language = Lang(user.preferred_language).pt1
+            current_app.logger.error(f"OpenSubtitles details missing file_id: {opensubtitle_to_serve_details}")
+            opensubtitle_to_serve_details = None
 
-        try:
-            os_search_params = {
-                'moviehash': video_hash,
-                'languages': os_language
-            }
-
-            # Add IMDB ID, season, episode if available (similar to content_detail)
-            imdb_id_part = content_id.split(':')[0]
-            if imdb_id_part.startswith("tt"): os_search_params['imdb_id'] = imdb_id_part
-
-            content_type_from_context = context.get('content_type', '')
-            if ':' in content_id and (content_type_from_context == 'series' or 'episode' in content_type_from_context):
-                parts = content_id.split(':')
-                os_search_params['type'] = 'episode'
-                if len(parts) >= 2: os_search_params['season_number'] = parts[1]
-                if len(parts) >= 3: os_search_params['episode_number'] = parts[2]
-            elif content_type_from_context == 'movie':
-                os_search_params['type'] = 'movie'
-
-            # Ensure we have enough parameters for a meaningful search
-            if os_search_params.get('imdb_id') or os_search_params.get('moviehash') or os_search_params.get('query'):
-                os_results = opensubtitles_client.search_subtitles(**os_search_params, user=user)  # Pass user object
-                if os_results and os_results.get('data'):
-                    for item in os_results['data']:
-                        attrs = item.get('attributes', {})
-                        files = attrs.get('files', [])
-                        # Prioritize moviehash_match if available from search results
-                        if attrs.get('moviehash_match') and files and files[0].get('file_id'):
-                            opensubtitle_to_serve_details = {
-                                'file_id': files[0].get('file_id'),
-                                'details': {  # Store more details for potential conversion/logging
-                                    'release_name': files[0].get('file_name'),
-                                    'language': attrs.get('language'),
-                                    'moviehash_match': True,
-                                    'ai_translated': attrs.get('ai_translated') or attrs.get('machine_translated'),
-                                    'uploader': attrs.get('uploader', {}).get('name'),
-                                    'url': attrs.get('url')
-                                }
-                            }
-                            current_app.logger.info(
-                                f"Found OpenSubtitle with hash match (auto-lookup): file_id {opensubtitle_to_serve_details['file_id']}")
-                            break  # Take the first hash match
-            else:
-                current_app.logger.info("Not enough parameters for OpenSubtitles hash match auto-lookup.")
-        except opensubtitles_client.OpenSubtitlesError as e:
-            current_app.logger.error(f"OpenSubtitles API error during auto-lookup: {e}")
-        except Exception as e:
-            current_app.logger.error(f"Unexpected error during OpenSubtitles auto-lookup: {e}", exc_info=True)
-
-    # Proceed with serving logic based on what was found
+    # Serve local subtitle
     if local_subtitle_to_serve:
-        # If the local subtitle is actually a link to an OS sub, switch to OS serving logic
+        # Handle community_link case
         if local_subtitle_to_serve.source_type == 'opensubtitles_community_link' and \
                 local_subtitle_to_serve.source_metadata and \
                 local_subtitle_to_serve.source_metadata.get('original_file_id'):
@@ -322,54 +293,38 @@ def unified_download(manifest_token: str, download_identifier: str):
                     'details': local_subtitle_to_serve.source_metadata
                 }
                 current_app.logger.info(
-                    f"Identified linked OpenSubtitle (original OS file_id: {os_file_id}) via local Subtitle ID {local_subtitle_to_serve.id}. Will fetch from OpenSubtitles.")
-                local_subtitle_to_serve = None  # Clear this to proceed to OS fetching
+                    f"Identified linked OpenSubtitle (original OS file_id: {os_file_id}) via local Subtitle ID {local_subtitle_to_serve.id}")
+                local_subtitle_to_serve = None  # Switch to OS serving
             else:
                 current_app.logger.warning(
-                    f"User has a linked OpenSubtitle selected (local ID {local_subtitle_to_serve.id}) but OS integration is not active. Cannot fetch.")
-                message_key = 'os_integration_inactive'  # New message key
+                    f"User has a linked OpenSubtitle selected but OS integration is not active")
+                message_key = 'os_integration_inactive'
                 local_subtitle_to_serve = None
 
         elif local_subtitle_to_serve.file_path:  # Standard community-uploaded subtitle
-            db_file_path = local_subtitle_to_serve.file_path
-            current_app.logger.info(
-                f"Serving community subtitle ID {local_subtitle_to_serve.id} (Path: {db_file_path})")
+            current_app.logger.info(f"Serving community subtitle ID {local_subtitle_to_serve.id}")
             try:
-                if current_app.config['STORAGE_BACKEND'] == 'cloudinary':
-                    if not CLOUDINARY_AVAILABLE or not cloudinary.config().api_key: raise Exception(
-                        "Cloudinary not configured/available")
-                    generated_url_info = cloudinary.utils.cloudinary_url(db_file_path, resource_type="raw", secure=True)
-                    cloudinary_url = generated_url_info[0] if isinstance(generated_url_info,
-                                                                         tuple) else generated_url_info
-                    if not cloudinary_url: raise Exception("Cloudinary URL generation failed")
-                    r = requests.get(cloudinary_url, timeout=10)
-                    r.raise_for_status()
-                    vtt_content = r.text
-                else:
-                    local_full_path = os.path.join(current_app.config['UPLOAD_FOLDER'], db_file_path)
-                    if not os.path.exists(local_full_path): raise FileNotFoundError("Local subtitle file not found")
-                    with open(local_full_path, 'r', encoding='utf-8') as f:
-                        vtt_content = f.read()
+                vtt_content = _get_vtt_content(local_subtitle_to_serve)
             except Exception as e:
                 current_app.logger.error(f"Error reading local subtitle ID {local_subtitle_to_serve.id}: {e}",
                                          exc_info=True)
-                message_key = 'select_web'  # Generic error, user might need to reselect or upload
+                message_key = 'select_web'
         else:
             current_app.logger.error(
-                f"Local subtitle ID {local_subtitle_to_serve.id} (type: {local_subtitle_to_serve.source_type}) has no file_path.")
+                f"Local subtitle ID {local_subtitle_to_serve.id} has no file_path")
             message_key = 'select_web'
 
+    # Serve OpenSubtitles subtitle
     os_subtitle_direct_url = None
     if opensubtitle_to_serve_details and opensubtitle_to_serve_details.get('file_id') and not vtt_content:
         os_file_id = opensubtitle_to_serve_details['file_id']
 
         if not user.opensubtitles_active or not user.opensubtitles_token or not user.opensubtitles_base_url:
             current_app.logger.warning(
-                f"Attempting to serve OpenSubtitle file_id {os_file_id}, but user's OS integration is not active or token/base_url is missing.")
+                f"Attempting to serve OpenSubtitle file_id {os_file_id}, but user's OS integration is not active")
             message_key = 'os_integration_inactive'
         else:
-            current_app.logger.info(
-                f"Attempting to serve OpenSubtitle file_id: {os_file_id} using user's token and base_url.")
+            current_app.logger.info(f"Attempting to serve OpenSubtitle file_id: {os_file_id}")
             try:
                 download_info = opensubtitles_client.request_download_link(
                     file_id=os_file_id,
@@ -381,57 +336,48 @@ def unified_download(manifest_token: str, download_identifier: str):
                     if remaining_downloads is not None and int(remaining_downloads) <= 10:
                         current_app.logger.warning(
                             f"OpenSubtitles API downloads remaining for user {user.username}: {remaining_downloads}")
-
-                    current_app.logger.info(f"Serving OpenSubtitles direct url to omit 503 errors")
+                    current_app.logger.info(f"Serving OpenSubtitles direct url")
 
             except opensubtitles_client.OpenSubtitlesError as e:
-                current_app.logger.error(
-                    f"OpenSubtitles API error while serving file_id {os_file_id} for user {user.username}: {e}")
-                message_key = 'os_error_contact_support'  # More specific error
+                current_app.logger.error(f"OpenSubtitles API error while serving file_id {os_file_id}: {e}")
+                message_key = 'os_error_contact_support'
             except Exception as e:
-                current_app.logger.error(
-                    f"Unexpected error serving OpenSubtitle file_id {os_file_id} for user {user.username}: {e}",
-                    exc_info=True)
-                message_key = 'select_web'  # Generic error
-    if os_subtitle_direct_url:
-        return redirect(os_subtitle_direct_url, code=302)
-    if vtt_content:
-        if not vtt_content.strip().upper().startswith("WEBVTT"):
-            # This case should ideally not happen if conversion to VTT is successful
-            current_app.logger.warning(
-                "Content served is not VTT, serving as plain text. This might indicate a conversion issue.")
-            return Response(vtt_content, mimetype='text/plain')
-        return Response(vtt_content, mimetype='text/vtt')
-    else:
-        # Fallback messages
-        if not message_key:  # If no specific error message_key was set
-            message_key = 'no_subs_found' if preferred_lang else 'select_web'
-            # If no hash, 'no_subs_found' is fine. If hash but still no subs, 'select_web' is better.
-            if video_hash and message_key == 'no_subs_found':
+                current_app.logger.error(f"Unexpected error serving OpenSubtitle file_id {os_file_id}: {e}",
+                                         exc_info=True)
                 message_key = 'select_web'
 
-        messages = {
-            'no_subs_found': "SCS: No Subtitles Found: Upload or select from the web interface.",
-            'no_hash_select_web': "SCS: Video hash not present or mismatch: Please select subtitles from the web interface.",
-            'select_web': "SCS: No automatic match found. Please select subtitles from the web interface.",
-            'os_integration_inactive': "SCS: OpenSubtitles integration is inactive. Please activate it in account settings to use this feature.",
-            'os_error_contact_support': "SCS: Error fetching from OpenSubtitles. Please try again later or check your account on OpenSubtitles.com."
-        }
-        message_text = messages.get(message_key, "An error occurred or subtitles need selection.")
-        current_app.logger.info(f"Serving placeholder message (key: '{message_key}') for context: {context}")
-        return Response(generate_vtt_message(message_text), mimetype='text/vtt')
+    # Return responses
+    if os_subtitle_direct_url:
+        return redirect(os_subtitle_direct_url, code=302)
+
+    if vtt_content:
+        if not vtt_content.strip().upper().startswith("WEBVTT"):
+            current_app.logger.warning("Content served is not VTT, serving as plain text")
+            return Response(vtt_content, mimetype='text/plain')
+        return Response(vtt_content, mimetype='text/vtt')
+
+    # Fallback messages
+    if not message_key:
+        message_key = 'no_subs_found' if preferred_lang else 'select_web'
+        if video_hash and message_key == 'no_subs_found':
+            message_key = 'select_web'
+
+    messages = {
+        'no_subs_found': "SCS: No Subtitles Found: Upload or select from the web interface.",
+        'no_hash_select_web': "SCS: Video hash not present or mismatch: Please select subtitles from the web interface.",
+        'select_web': "SCS: No automatic match found. Please select subtitles from the web interface.",
+        'os_integration_inactive': "SCS: OpenSubtitles integration is inactive. Please activate it in account settings to use this feature.",
+        'os_error_contact_support': "SCS: Error fetching from OpenSubtitles. Please try again later or check your account on OpenSubtitles.com."
+    }
+    message_text = messages.get(message_key, "An error occurred or subtitles need selection.")
+    current_app.logger.info(f"Serving placeholder message (key: '{message_key}') for context: {context}")
+    return Response(generate_vtt_message(message_text), mimetype='text/vtt')
 
 
 @subtitles_bp.route('/content/<uuid:activity_id>/upload', methods=['GET', 'POST'])
 @login_required
 def upload_subtitle(activity_id):
     """Handle subtitle upload from the web interface."""
-    from flask import render_template, redirect, url_for, flash
-    from ..forms import SubtitleUploadForm
-    from ..languages import LANGUAGES
-    from ..lib.metadata import get_metadata
-    import uuid
-
     activity = UserActivity.query.filter_by(id=activity_id, user_id=current_user.id).first_or_404()
     season = None
     episode = None
@@ -496,12 +442,12 @@ def upload_subtitle(activity_id):
                         "please try using the 'auto' option.",
                         'danger'
                     )
-                    return redirect(url_for('main.content_detail', activity_id=activity_id))
+                    return redirect(url_for('content.content_detail', activity_id=activity_id))
 
                 if current_app.config['STORAGE_BACKEND'] == 'cloudinary':
                     if not CLOUDINARY_AVAILABLE or not cloudinary.config().api_key:
                         flash('Server error: Cloudinary storage is not properly configured.', 'danger')
-                        return redirect(url_for('main.content_detail', activity_id=activity_id))
+                        return redirect(url_for('content.content_detail', activity_id=activity_id))
 
                     cloudinary_folder = current_app.config.get('CLOUDINARY_SUBTITLES_FOLDER', 'community_subtitles')
                     cloudinary_public_id = f"{cloudinary_folder}/{content_id_safe_path}/{base_vtt_filename.replace('.vtt', '')}"
@@ -523,13 +469,13 @@ def upload_subtitle(activity_id):
                 current_app.logger.error(f"Error processing/uploading subtitle '{original_filename}': {e}",
                                          exc_info=True)
                 flash(f'Error processing/uploading subtitle: {str(e)}', 'danger')
-                return redirect(url_for('main.content_detail', activity_id=activity_id))
+                return redirect(url_for('content.content_detail', activity_id=activity_id))
             finally:
                 if os.path.exists(temp_file_path): os.unlink(temp_file_path)
 
             if not db_file_path:
                 flash('Internal error: Subtitle path not determined.', 'danger')
-                return redirect(url_for('main.content_detail', activity_id=activity_id))
+                return redirect(url_for('content.content_detail', activity_id=activity_id))
 
             new_subtitle = Subtitle(
                 id=uuid.uuid4(),
@@ -567,7 +513,7 @@ def upload_subtitle(activity_id):
                 db.session.rollback()
                 current_app.logger.error(f"Error auto-selecting uploaded subtitle: {sel_e}", exc_info=True)
                 flash('Subtitle uploaded, but failed to auto-select.', 'warning')
-            return redirect(url_for('main.content_detail', activity_id=activity_id))
+            return redirect(url_for('content.content_detail', activity_id=activity_id))
         except Exception as e:
             db.session.rollback()
             current_app.logger.error(f"Error in upload_subtitle route: {e}", exc_info=True)
@@ -605,13 +551,12 @@ def select_subtitle(activity_id, subtitle_id):
         db.session.rollback()
         current_app.logger.error(f"Error selecting subtitle: {e}", exc_info=True)
         flash('Error updating subtitle selection.', 'danger')
-    return redirect(url_for('main.content_detail', activity_id=activity_id))
+    return redirect(url_for('content.content_detail', activity_id=activity_id))
 
 
 @subtitles_bp.route('/vote/<uuid:subtitle_id>/<vote_type>', methods=['POST'])
 @login_required
 def vote_subtitle(subtitle_id, vote_type):
-    from ..models import SubtitleVote
     activity_id = request.form.get('activity_id')
     vote_value = 1 if vote_type == 'up' else -1
     subtitle = Subtitle.query.get_or_404(subtitle_id)
@@ -643,7 +588,7 @@ def vote_subtitle(subtitle_id, vote_type):
         current_app.logger.error(f"Error processing vote: {e}", exc_info=True)
         flash('Error processing vote.', 'danger')
 
-    if activity_id: return redirect(url_for('main.content_detail', activity_id=activity_id))
+    if activity_id: return redirect(url_for('content.content_detail', activity_id=activity_id))
     return redirect(url_for('main.dashboard'))
 
 
@@ -664,13 +609,12 @@ def reset_selection(activity_id):
             flash('Error resetting selection.', 'danger')
     else:
         flash('No selection to reset.', 'info')
-    return redirect(url_for('main.content_detail', activity_id=activity_id))
+    return redirect(url_for('content.content_detail', activity_id=activity_id))
 
 
 @subtitles_bp.route('/delete_subtitle/<uuid:subtitle_id>', methods=['POST'])
 @login_required
 def delete_subtitle(subtitle_id):
-    from ..models import SubtitleVote  # Already imported Subtitle, UserSubtitleSelection
     activity_id = request.form.get('activity_id')  # For redirect
     subtitle = Subtitle.query.get_or_404(subtitle_id)
 
@@ -710,7 +654,7 @@ def delete_subtitle(subtitle_id):
         current_app.logger.error(f"Error deleting subtitle {subtitle_id}: {e}", exc_info=True)
         flash('Error deleting subtitle.', 'danger')
 
-    if activity_id: return redirect(url_for('main.content_detail', activity_id=activity_id))
+    if activity_id: return redirect(url_for('content.content_detail', activity_id=activity_id))
     return redirect(url_for('main.dashboard'))
 
 
@@ -743,28 +687,15 @@ def download_subtitle(subtitle_id):
                 user=current_user
             )
             if download_info and download_info.get('link'):
-                sub_url = download_info['link']
-                sub_response = requests.get(sub_url, timeout=20)
-                sub_response.raise_for_status()
+                os_subtitle_direct_url = download_info['link']
+                remaining_downloads = download_info.get('remaining')
+                if remaining_downloads is not None and int(remaining_downloads) <= 10:
+                    current_app.logger.warning(
+                        f"OpenSubtitles API downloads remaining for user {current_user.username}: {remaining_downloads}")
 
-                content_to_process = sub_response.content
+                current_app.logger.info(f"Serving OpenSubtitles direct url to omit 503 errors")
 
-                try:
-                    decoded_content = content_to_process.decode('utf-8')
-                except UnicodeDecodeError:
-                    decoded_content = content_to_process.decode('latin-1', errors='ignore')
-
-                if not decoded_content.strip().upper().startswith("WEBVTT"):
-                    original_filename = subtitle.source_metadata.get('original_release_name', '.srt')
-                    _, original_ext = os.path.splitext(original_filename)
-                    if not original_ext: original_ext = ".srt"
-                    vtt_data_for_download = convert_to_vtt(content_to_process, original_ext,
-                                                           detected_encoding=sub_response.encoding)
-                else:
-                    vtt_data_for_download = decoded_content
-
-                return Response(vtt_data_for_download, mimetype='text/vtt',
-                                headers={"Content-Disposition": f"attachment;filename={download_filename}"})
+                return redirect(os_subtitle_direct_url, code=302)
             else:
                 flash("Could not retrieve download link from OpenSubtitles.", "danger")
                 abort(500)
@@ -773,24 +704,13 @@ def download_subtitle(subtitle_id):
             abort(500)
 
     elif subtitle.file_path:  # Community subtitle (local or cloudinary)
-        if current_app.config['STORAGE_BACKEND'] == 'cloudinary':
-            if not CLOUDINARY_AVAILABLE or not cloudinary.config().api_key: abort(500)
-            try:
-                generated_url_info = cloudinary.utils.cloudinary_url(subtitle.file_path, resource_type="raw",
-                                                                     secure=True)
-                cloudinary_url = generated_url_info[0] if isinstance(generated_url_info, tuple) else generated_url_info
-                if not cloudinary_url: raise Exception("Cloudinary URL generation failed")
-                r = requests.get(cloudinary_url, timeout=10)
-                r.raise_for_status()
-                return Response(r.content, mimetype='text/vtt',
-                                headers={"Content-Disposition": f"attachment;filename={download_filename}"})
-            except Exception as e:
-                current_app.logger.error(f"Error downloading Cloudinary file {subtitle.file_path}: {e}", exc_info=True)
-                abort(500)
-        else:  # Local storage
-            local_full_path = os.path.join(current_app.config['UPLOAD_FOLDER'], subtitle.file_path)
-            if not os.path.exists(local_full_path): abort(404)
-            return send_file(local_full_path, as_attachment=True, download_name=download_filename, mimetype='text/vtt')
+        try:
+            vtt_content = _get_vtt_content(subtitle)
+            return Response(vtt_content, mimetype='text/vtt',
+                            headers={"Content-Disposition": f"attachment;filename={download_filename}"})
+        except Exception as e:
+            current_app.logger.error(f"Error downloading subtitle file {subtitle.file_path}: {e}", exc_info=True)
+            abort(500)
     else:
         current_app.logger.error(f"Subtitle {subtitle.id} has no file_path and is not a valid OS link.")
         abort(404)
@@ -799,9 +719,6 @@ def download_subtitle(subtitle_id):
 @subtitles_bp.route('/mark_compatible_hash/<uuid:subtitle_id>', methods=['POST'])
 @login_required
 def mark_compatible_hash(subtitle_id):
-    from ..models import Subtitle, UserSubtitleSelection  # Already imported
-    import uuid  # Already imported
-
     target_video_hash = request.form.get('target_video_hash')
     activity_id_str = request.form.get('activity_id')
 
@@ -823,16 +740,16 @@ def mark_compatible_hash(subtitle_id):
 
     if activity.content_id != original_subtitle.content_id:
         flash('Content ID mismatch between subtitle and activity.', 'danger')
-        return redirect(url_for('main.content_detail', activity_id=activity.id))
+        return redirect(url_for('content.content_detail', activity_id=activity.id))
 
     # Cannot mark an OpenSubtitles-linked entry as compatible for a *different* hash this way
     # This feature is for community uploads primarily.
     if original_subtitle.source_type == 'opensubtitles_community_link':
         flash('This operation is not applicable to OpenSubtitles-linked entries in this manner.', 'warning')
-        return redirect(url_for('main.content_detail', activity_id=activity.id))
+        return redirect(url_for('content.content_detail', activity_id=activity.id))
     if not original_subtitle.file_path:  # Should not happen for community subs
         flash('Original subtitle does not have a file path, cannot mark as compatible.', 'danger')
-        return redirect(url_for('main.content_detail', activity_id=activity.id))
+        return redirect(url_for('content.content_detail', activity_id=activity.id))
 
     existing_compatible_sub = Subtitle.query.filter_by(
         content_id=original_subtitle.content_id,
@@ -897,4 +814,4 @@ def mark_compatible_hash(subtitle_id):
         current_app.logger.error(f"Error in mark_compatible_hash: {e}", exc_info=True)
         flash('An error occurred.', 'danger')
 
-    return redirect(url_for('main.content_detail', activity_id=activity.id))
+    return redirect(url_for('content.content_detail', activity_id=activity.id))

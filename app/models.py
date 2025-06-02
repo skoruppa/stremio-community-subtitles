@@ -2,9 +2,13 @@ import datetime
 import uuid
 import secrets
 from time import time
+
+from sqlalchemy import TypeDecorator
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin
-from sqlalchemy.dialects.postgresql import UUID, JSONB
+from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.dialects.postgresql import UUID as PG_UUID
+from sqlalchemy.types import TypeDecorator, CHAR
 from sqlalchemy.ext.mutable import MutableDict
 from .extensions import db, login_manager
 from flask import current_app
@@ -15,6 +19,38 @@ roles_users = db.Table(
     db.Column('user_id', db.Integer, db.ForeignKey('users.id')),
     db.Column('role_id', db.Integer, db.ForeignKey('roles.id'))
 )
+
+
+class GUID(TypeDecorator):
+    """Platform-independent GUID type.
+
+    Uses PostgreSQL's UUID type, otherwise uses CHAR(36), storing UUID as string.
+
+    """
+
+    impl = CHAR
+
+    def load_dialect_impl(self, dialect):
+        if dialect.name == 'postgresql':
+            return dialect.type_descriptor(PG_UUID())
+        else:
+            return dialect.type_descriptor(CHAR(36))  # dla MySQL i innych
+
+    def process_bind_param(self, value, dialect):
+        if value is None:
+            return value
+        if not isinstance(value, uuid.UUID):
+            value = uuid.UUID(str(value))
+        if dialect.name == 'postgresql':
+            return value
+        else:
+            # dla MySQL konwertujemy do stringa 36 znaków
+            return str(value)
+
+    def process_result_value(self, value, dialect):
+        if value is None:
+            return value
+        return uuid.UUID(value)
 
 
 class Role(db.Model):
@@ -227,7 +263,7 @@ class User(UserMixin, db.Model):
 
 class Subtitle(db.Model):
     __tablename__ = 'subtitles'
-    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = db.Column(GUID(), primary_key=True, default=uuid.uuid4)
     content_id = db.Column(db.String(100), nullable=False, index=True)
     content_type = db.Column(db.String(20), nullable=False)
     video_hash = db.Column(db.String(50), nullable=True, index=True)
@@ -250,7 +286,7 @@ class Subtitle(db.Model):
 
 class UserActivity(db.Model):
     __tablename__ = 'user_activity'
-    id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = db.Column(GUID(), primary_key=True, default=uuid.uuid4)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
     content_id = db.Column(db.String(100), nullable=False, index=True)
     content_type = db.Column(db.String(20), nullable=False)
@@ -273,7 +309,7 @@ class UserSubtitleSelection(db.Model):
     video_hash = db.Column(db.String(50), nullable=True, index=True) # OpenSubtitles hash or other video file hash
 
     # Fields for selecting a subtitle from our own database
-    selected_subtitle_id = db.Column(UUID(as_uuid=True), db.ForeignKey('subtitles.id'), nullable=True)
+    selected_subtitle_id = db.Column(GUID(), db.ForeignKey('subtitles.id'), nullable=True)
     
     # Fields for selecting a subtitle from OpenSubtitles
     # This is the 'file_id' from OpenSubtitles API (attributes.files[].file_id)
@@ -305,7 +341,7 @@ class SubtitleVote(db.Model):
     __tablename__ = 'subtitle_votes'
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
-    subtitle_id = db.Column(UUID(as_uuid=True), db.ForeignKey('subtitles.id'), nullable=False, index=True)
+    subtitle_id = db.Column(GUID(), db.ForeignKey('subtitles.id'), nullable=False, index=True)
     vote_value = db.Column(db.SmallInteger, nullable=False)
     timestamp = db.Column(db.DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
 

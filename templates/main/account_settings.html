@@ -77,7 +77,7 @@
                 {% if opensubtitles_has_token %}
                     <hr class="my-4">
                     <p>To completely log out from your OpenSubtitles session and clear stored details from this addon:</p>
-                    <form method="POST" action="{{ url_for('main.opensubtitles_logout') }}" novalidate>
+                    <form method="POST" action="{{ url_for('opensubtitles.opensubtitles_logout') }}" novalidate>
                         {{ os_form.hidden_tag() }}
                         <button type="submit" class="btn btn-danger">
                             <i class="fas fa-sign-out-alt me-2"></i>Logout from OpenSubtitles & Clear Stored Session
