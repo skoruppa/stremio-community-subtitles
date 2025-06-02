@@ -87,8 +87,8 @@ def addon_stream(manifest_token: str, content_type: str, content_id: str, params
     # The _get_api_key function will now raise an error if no user key is present
     # We can rely on the OS client functions to handle the missing key error.
     # However, a check here provides a more immediate response to Stremio.
-    if user.opensubtitles_active and not user.opensubtitles_api_key:
-        current_app.logger.error(f"User {user.username} has OS integration active but no personal API key.")
+    if user.opensubtitles_active and not user.opensubtitles_token:
+        current_app.logger.error(f"User {user.username} has OS integration active but no token.")
         # Respond with an empty list or an error message subtitle
         # Generating a VTT error message might be better for the user experience in Stremio
         return respond_with({'subtitles': [{'id': 'error',
