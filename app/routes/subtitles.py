@@ -344,7 +344,7 @@ def unified_download(manifest_token: str, download_identifier: str):
             except Exception as e:
                 current_app.logger.error(f"Unexpected error serving OpenSubtitle file_id {os_file_id}: {e}",
                                          exc_info=True)
-                message_key = 'error'
+                message_key = 'os_error_contact_support'
 
     # Return responses
     if os_subtitle_direct_url:
@@ -358,14 +358,11 @@ def unified_download(manifest_token: str, download_identifier: str):
 
     # Fallback messages
     if not message_key:
-        message_key = 'no_subs_found' if preferred_lang else 'select_web'
-        if video_hash and message_key == 'no_subs_found':
-            message_key = 'error'
+        message_key = 'no_subs_found'
 
     messages = {
-        'no_subs_found': "SCS: No Subtitles Found: Upload or select from the web interface.",
-        'no_hash_select_web': "SCS: Video hash not present or mismatch: Please select subtitles from the web interface.",
-        'error': "An error occurred, please try again in a short period",
+        'no_subs_found': "SCS: No Subtitles Found: Upload your own through the web interface.",
+        'error': "SCS: An error occurred, please try again in a short period",
         'os_integration_inactive': "SCS: OpenSubtitles integration is inactive. Please activate it in account settings to use this feature.",
         'os_error_contact_support': "SCS: Error fetching from OpenSubtitles. Please try again later or check your account on OpenSubtitles.com."
     }
