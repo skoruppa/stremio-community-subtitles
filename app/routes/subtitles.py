@@ -308,11 +308,11 @@ def unified_download(manifest_token: str, download_identifier: str):
             except Exception as e:
                 current_app.logger.error(f"Error reading local subtitle ID {local_subtitle_to_serve.id}: {e}",
                                          exc_info=True)
-                message_key = 'select_web'
+                message_key = 'error'
         else:
             current_app.logger.error(
                 f"Local subtitle ID {local_subtitle_to_serve.id} has no file_path")
-            message_key = 'select_web'
+            message_key = 'error'
 
     # Serve OpenSubtitles subtitle
     os_subtitle_direct_url = None
@@ -344,7 +344,7 @@ def unified_download(manifest_token: str, download_identifier: str):
             except Exception as e:
                 current_app.logger.error(f"Unexpected error serving OpenSubtitle file_id {os_file_id}: {e}",
                                          exc_info=True)
-                message_key = 'select_web'
+                message_key = 'error'
 
     # Return responses
     if os_subtitle_direct_url:
@@ -360,12 +360,12 @@ def unified_download(manifest_token: str, download_identifier: str):
     if not message_key:
         message_key = 'no_subs_found' if preferred_lang else 'select_web'
         if video_hash and message_key == 'no_subs_found':
-            message_key = 'select_web'
+            message_key = 'error'
 
     messages = {
         'no_subs_found': "SCS: No Subtitles Found: Upload or select from the web interface.",
         'no_hash_select_web': "SCS: Video hash not present or mismatch: Please select subtitles from the web interface.",
-        'select_web': "SCS: No automatic match found. Please select subtitles from the web interface.",
+        'error': "An error occurred, please try again in a short period",
         'os_integration_inactive': "SCS: OpenSubtitles integration is inactive. Please activate it in account settings to use this feature.",
         'os_error_contact_support': "SCS: Error fetching from OpenSubtitles. Please try again later or check your account on OpenSubtitles.com."
     }
