@@ -17,19 +17,30 @@
 </div>
 {% endmacro %}
 
-{% macro render_checkbox_field(field) %}
+{% macro render_checkbox_field(field, disabled=False) %}
 <div class="mb-3 form-check">
+    {% if disabled %}
+        {% set input_class = "form-check-input" %}
+        {% if field.errors %}
+            {% set input_class = input_class + " is-invalid" %}
+        {% endif %}
+        {{ field(class=input_class, disabled="disabled") }}
+    {% else %}
+        {% if field.errors %}
+            {{ field(class="form-check-input is-invalid") }}
+        {% else %}
+            {{ field(class="form-check-input") }}
+        {% endif %}
+    {% endif %}
+
+    {{ field.label(class="form-check-label") }}
+
     {% if field.errors %}
-        {{ field(class="form-check-input is-invalid") }}
-        {{ field.label(class="form-check-label") }}
         <div class="invalid-feedback">
             {% for error in field.errors %}
                 {{ error }}
             {% endfor %}
         </div>
-    {% else %}
-        {{ field(class="form-check-input") }}
-        {{ field.label(class="form-check-label") }}
     {% endif %}
     {% if field.description %}
         <small class="form-text text-muted">{{ field.description }}</small>

@@ -1,6 +1,7 @@
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileAllowed, FileRequired
 from wtforms import StringField, PasswordField, BooleanField, SubmitField, SelectField, TextAreaField
+from wtforms.fields.numeric import IntegerField
 from wtforms.validators import DataRequired, Email, EqualTo, Length, ValidationError, Optional
 from .models import User
 
@@ -32,6 +33,7 @@ class RegistrationForm(FlaskForm):
 
 
 class SubtitleUploadForm(FlaskForm):
+    # Basic fields (always present)
     subtitle_file = FileField('Subtitle File (.srt, .sub, .txt, .ass, .ssa)', validators=[
         FileRequired(),
         FileAllowed(['srt', 'sub', 'txt', 'ass', 'ssa'], 'Only .srt, .sub, .txt, .ass, .ssa files allowed!')
@@ -44,7 +46,36 @@ class SubtitleUploadForm(FlaskForm):
                       validators=[])
     author = StringField('Author (Optional)', validators=[Length(max=100)])
     version_info = TextAreaField('Version/Sync Info (Optional)', validators=[Length(max=500)])
+
+    # Advanced upload fields (only shown for advanced upload)
+    content_id = StringField('Content ID',
+                             validators=[Optional()],
+                             description='IMDB ID (e.g., tt1234567) or Kitsu ID (e.g., kitsu:12345)')
+    content_type = SelectField('Content Type',
+                               choices=[('movie', 'Movie'), ('series', 'TV Series')],
+                               validators=[Optional()])
+    season_number = IntegerField('Season Number',
+                                 validators=[Optional()],
+                                 description='Required for TV series (default: 1)')
+    episode_number = IntegerField('Episode Number',
+                                  validators=[Optional()],
+                                  description='Required for TV series')
+
     submit = SubmitField('Upload Subtitle')
+
+    def validate_content_id(self, field):
+        """Custom validation for content_id field"""
+        if field.data:
+            content_id = field.data.strip()
+            if not (content_id.startswith('tt') or content_id.startswith('kitsu:')):
+                raise ValidationError(
+                    'Content ID must be either IMDB ID (starting with "tt") or Kitsu ID (format "kitsu:12345")')
+
+    def validate_episode_number(self, field):
+        """Custom validation for episode_number - required when content_type is series"""
+        if hasattr(self, 'content_type') and self.content_type.data == 'series':
+            if not field.data:
+                raise ValidationError('Episode number is required for TV series')
 
 
 class ChangePasswordForm(FlaskForm):
@@ -81,10 +112,5 @@ class OpenSubtitlesLoginForm(FlaskForm):
         'OpenSubtitles Password', 
         validators=[DataRequired(), Length(max=255)],
         render_kw={'placeholder': 'Your OpenSubtitles.com Password'}
-    )
-    opensubtitles_api_key = StringField(
-        'Personal OpenSubtitles API Key',
-        validators=[DataRequired(), Length(max=255)],
-        render_kw={'placeholder': 'Your Personal OpenSubtitles.com API Key'}
     )
     submit_opensubtitles = SubmitField('Save OpenSubtitles Settings')  

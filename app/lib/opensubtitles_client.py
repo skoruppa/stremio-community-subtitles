@@ -7,26 +7,20 @@ GLOBAL_OS_BASE_URL = "https://api.opensubtitles.com/api/v1"
 USER_AGENT = "StremioCommunitySubtitlesAddon/1.0.0"  # As required by OpenSubtitles API
 
 
+def _get_api_key():
+    """Safely get API key with proper error handling"""
+    api_key = current_app.config.get('OPENSUBTITLES_API_KEY')
+    if not api_key:
+        raise ValueError("OPENSUBTITLES_API_KEY not found in configuration")
+    return api_key
+
+
 class OpenSubtitlesError(Exception):
     """Custom exception for OpenSubtitles API errors."""
 
     def __init__(self, message, status_code=None):
         super().__init__(message)
         self.status_code = status_code
-
-
-def _get_api_key(user=None):
-    """
-    Retrieves the OpenSubtitles API key, prioritizing user's personal key if provided.
-    Falls back to the global app config key if no user key is available.
-    """
-    if user and user.opensubtitles_api_key:
-        current_app.logger.debug(f"Using personal OpenSubtitles API key for user: {user.username}")
-        return user.opensubtitles_api_key
-
-    # Global API key is no longer used as a fallback
-    current_app.logger.error("OpenSubtitles API key is not configured for the user.")
-    raise OpenSubtitlesError("Personal OpenSubtitles API key is missing in configuration.")
 
 
 def _make_request_with_retry(request_func, max_retries=2, retry_delay=1.0):
@@ -97,10 +91,14 @@ def login(username, password, user=None):
     Raises:
         OpenSubtitlesError: If API key is missing, login fails, or API returns an error.
     """
+    if not username or not password:
+        raise OpenSubtitlesError("Username and password are required for login.")
+
     try:
-        api_key = _get_api_key(user=user)
-    except OpenSubtitlesError:
-        raise
+        api_key = _get_api_key()
+    except (ValueError, RuntimeError) as e:
+        current_app.logger.error(f"API key error: {e}")
+        raise OpenSubtitlesError(f"Configuration error: {e}")
 
     headers = {
         'Api-Key': api_key,
@@ -174,14 +172,15 @@ def logout(token, user):
     Raises:
         OpenSubtitlesError: If API key, token, or base_url are missing/invalid, or API returns an error.
     """
-    try:
-        api_key = _get_api_key(user=user)
-    except OpenSubtitlesError:
-        raise
-
-    if not token or not user or not user.opensubtitles_base_url:
+    if not token or not user or not hasattr(user, 'opensubtitles_base_url') or not user.opensubtitles_base_url:
         current_app.logger.error("OpenSubtitles logout: Token, user object, and user's base_url are required.")
         raise OpenSubtitlesError("Token, user object, and user's base_url are required for logout.")
+
+    try:
+        api_key = _get_api_key()
+    except (ValueError, RuntimeError) as e:
+        current_app.logger.error(f"API key error: {e}")
+        raise OpenSubtitlesError(f"Configuration error: {e}")
 
     headers = {
         'Api-Key': api_key,
@@ -230,15 +229,17 @@ def search_subtitles(imdb_id=None, query=None, languages=None, moviehash=None,
         type (str, optional): Content type ('movie' or 'episode').
         user (User): The user object containing the token, base_url, and API key.
     """
-    try:
-        api_key = _get_api_key(user=user)
-    except OpenSubtitlesError:
-        raise
-
-    if not user or not user.opensubtitles_token or not user.opensubtitles_base_url:
+    if not user or not hasattr(user, 'opensubtitles_token') or not user.opensubtitles_token or \
+            not hasattr(user, 'opensubtitles_base_url') or not user.opensubtitles_base_url:
         current_app.logger.error("OpenSubtitles search: user object with token and base_url is required.")
         raise OpenSubtitlesError(
             "User authentication (user object with token and base_url) is required for searching subtitles.")
+
+    try:
+        api_key = _get_api_key()
+    except (ValueError, RuntimeError) as e:
+        current_app.logger.error(f"API key error: {e}")
+        raise OpenSubtitlesError(f"Configuration error: {e}")
 
     headers = {
         'Api-Key': api_key,
@@ -296,15 +297,20 @@ def request_download_link(file_id, user=None):
         file_id (int): The OpenSubtitles file ID.
         user (User): The user object containing the base_url and API key.
     """
-    try:
-        api_key = _get_api_key(user=user)
-    except OpenSubtitlesError:
-        raise
+    if not file_id:
+        raise OpenSubtitlesError("file_id is required for download request.")
 
-    if not user or not user.opensubtitles_token or not user.opensubtitles_base_url:
+    if not user or not hasattr(user, 'opensubtitles_token') or not user.opensubtitles_token or \
+            not hasattr(user, 'opensubtitles_base_url') or not user.opensubtitles_base_url:
         current_app.logger.error("OpenSubtitles download request: user object with token and base_url is required.")
         raise OpenSubtitlesError(
-            "User authentication (user object with token and base_url) is required for searching subtitles.")
+            "User authentication (user object with token and base_url) is required for download request.")
+
+    try:
+        api_key = _get_api_key()
+    except (ValueError, RuntimeError) as e:
+        current_app.logger.error(f"API key error: {e}")
+        raise OpenSubtitlesError(f"Configuration error: {e}")
 
     headers = {
         'Api-Key': api_key,

@@ -6,15 +6,30 @@
 {% block content %}
 <div class="row mb-4">
     <div class="col">
-        <h1 class="mb-3">Upload Subtitle</h1>
-        <p class="lead">
-            Upload a subtitle file for 
-            {% if metadata and metadata.title %}
-                <strong>{{ metadata.title }}</strong>
-            {% else %}
-                <strong>{{ activity.content_id }}</strong>
-            {% endif %}
-        </p>
+        {% if is_advanced_upload %}
+            <h1 class="mb-3">
+                Upload Subtitle
+                <span class="badge bg-warning text-dark ms-2">Advanced Users</span>
+            </h1>
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>
+                <strong>Advanced Upload Mode:</strong> This feature is for experienced users who want to upload
+                subtitles without having an activity entry in their dashboard.
+                <br><br>
+                You'll need to provide the Content ID manually. To upload subtitles for what you are watching right now,
+                open the activity entry for it from the <a href="{{ url_for('main.dashboard') }}">Dashboard</a>.
+            </div>
+        {% else %}
+            <h1 class="mb-3">Upload Subtitle</h1>
+            <p class="lead">
+                Upload a subtitle file for
+                {% if metadata and metadata.title %}
+                    <strong>{{ metadata.title }}</strong>
+                {% else %}
+                    <strong>{{ activity.content_id }}</strong>
+                {% endif %}
+            </p>
+        {% endif %}
     </div>
 </div>
 
@@ -22,78 +37,150 @@
     <div class="col-lg-8">
         <div class="card shadow-sm">
             <div class="card-header bg-primary text-white">
-                <h5 class="mb-0">Subtitle Information</h5>
+                <h5 class="mb-0">
+                    <i class="fas fa-file-upload me-2"></i>Subtitle Information
+                </h5>
             </div>
             <div class="card-body">
                 <form method="POST" enctype="multipart/form-data" novalidate>
                     {{ form.hidden_tag() }}
-                    
+
+                    {% if is_advanced_upload %}
+                        <!-- Advanced upload fields -->
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <div class="alert alert-warning">
+                                    <h6><i class="fas fa-exclamation-triangle me-2"></i>Content Identification</h6>
+                                    <p class="mb-2">Provide the Content ID and type for the content you want to upload subtitles for:</p>
+                                    <ul class="mb-0">
+                                        <li><strong>IMDB ID:</strong> Format like <code>tt1234567</code> (for movies and TV series)</li>
+                                        <li><strong>Kitsu ID:</strong> Format like <code>kitsu:12345</code> (for anime)</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-8">
+                                {{ render_field_with_info(form.content_id, "Enter IMDB ID (tt1234567) or Kitsu ID (kitsu:12345)") }}
+                            </div>
+                            <div class="col-md-4">
+                                {{ render_field(form.content_type) }}
+                            </div>
+                        </div>
+
+                        <div class="row" id="series-fields" style="display: none;">
+                            <div class="col-md-6">
+                                {{ render_field_with_info(form.season_number, "Season number (default: 1). Ignore for kitsu") }}
+                            </div>
+                            <div class="col-md-6">
+                                {{ render_field_with_info(form.episode_number, "Episode number (required for series)") }}
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+                    {% endif %}
+
+                    <!-- Common subtitle upload fields -->
                     {{ render_field(form.subtitle_file) }}
                     {{ render_field(form.language) }}
                     {{ render_field_with_info(form.encoding, "Enter 'utf8' (default), 'auto' for automatic detection, or a specific encoding like 'cp1250', 'latin1', etc.") }}
                     {{ render_field_with_info(form.fps, "Select FPS only for subtitle formats that use frames. Leave as 'Auto' if unsure.") }}
                     {{ render_field(form.author) }}
                     {{ render_field(form.version_info) }}
-                    
+
                     {{ render_submit_button(form.submit) }}
                 </form>
             </div>
         </div>
     </div>
-    
+
     <div class="col-lg-4">
-        <div class="card shadow-sm mb-4">
-            <div class="card-header bg-info text-white">
-                <h5 class="mb-0">Content Information</h5>
-            </div>
-            <div class="card-body">
-                <ul class="list-group list-group-flush">
-                    <li class="list-group-item">
-                        <strong>Title:</strong> 
-                        {% if metadata and metadata.title %}
-                            {{ metadata.title }}
-                        {% else %}
-                            {{ activity.content_id }}
-                        {% endif %}
-                    </li>
-                    <li class="list-group-item">
-                        <strong>Type:</strong> 
-                        <span class="badge {% if activity.content_type == 'movie' %}bg-info{% else %}bg-warning{% endif %}">
-                            {{ activity.content_type|capitalize }}
-                        </span>
-                    </li>
-                    <li class="list-group-item">
-                        <strong>ID:</strong> {{ activity.content_id }}
-                    </li>
-                    {% if activity.video_hash %}
-                    <li class="list-group-item">
-                        <strong>Video Hash:</strong> 
-                        <span class="text-monospace">{{ activity.video_hash }}</span>
-                    </li>
-                    {% endif %}
-                    {% if season is not none %}
-                    <li class="list-group-item">
-                        <strong>Season:</strong> {{ season }}
-                    </li>
-                    {% endif %}
-                    {% if episode is not none %}
-                    <li class="list-group-item">
-                        <strong>Episode:</strong> {{ episode }}
-                    </li>
-                    {% endif %}
-                </ul>
-                
-                {% if metadata and metadata.poster_url %}
-                <div class="mt-3 text-center">
-                    <img src="{{ metadata.poster_url }}" alt="Poster" class="img-thumbnail" style="max-height: 200px;">
+        {% if not is_advanced_upload %}
+            <!-- Regular upload - show content info -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-info-circle me-2"></i>Content Information
+                    </h5>
                 </div>
-                {% endif %}
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item">
+                            <strong>Title:</strong>
+                            {% if metadata and metadata.title %}
+                                {{ metadata.title }}
+                            {% else %}
+                                {{ activity.content_id }}
+                            {% endif %}
+                        </li>
+                        <li class="list-group-item">
+                            <strong>Type:</strong>
+                            <span class="badge {% if activity.content_type == 'movie' %}bg-info{% else %}bg-warning{% endif %}">
+                                {{ activity.content_type|capitalize }}
+                            </span>
+                        </li>
+                        <li class="list-group-item">
+                            <strong>ID:</strong> {{ activity.content_id }}
+                        </li>
+                        {% if activity.video_hash %}
+                        <li class="list-group-item">
+                            <strong>Video Hash:</strong>
+                            <span class="text-monospace">{{ activity.video_hash }}</span>
+                        </li>
+                        {% endif %}
+                        {% if season is not none %}
+                        <li class="list-group-item">
+                            <strong>Season:</strong> {{ season }}
+                        </li>
+                        {% endif %}
+                        {% if episode is not none %}
+                        <li class="list-group-item">
+                            <strong>Episode:</strong> {{ episode }}
+                        </li>
+                        {% endif %}
+                    </ul>
+
+                    {% if metadata and metadata.poster_url %}
+                    <div class="mt-3 text-center">
+                        <img src="{{ metadata.poster_url }}" alt="Poster" class="img-thumbnail" style="max-height: 200px;">
+                    </div>
+                    {% endif %}
+                </div>
             </div>
-        </div>
-        
+        {% else %}
+            <!-- Advanced upload - show help info -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-lightbulb me-2"></i>How to Find Content IDs
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <h6>IMDB ID (Movies & TV Shows):</h6>
+                    <ol class="small">
+                        <li>Go to <a href="https://www.imdb.com" target="_blank">imdb.com</a></li>
+                        <li>Search for your content</li>
+                        <li>Copy the ID from URL (e.g., <code>tt1234567</code>)</li>
+                    </ol>
+
+                    <h6 class="mt-3">Kitsu ID (Anime):</h6>
+                    <ol class="small">
+                        <li>Go to <a href="https://kitsu.app" target="_blank">kitsu.app</a></li>
+                        <li>Search for your anime</li>
+                        <li>Investigate url of the thumbnail</li>
+                        <li>Copy the ID from thumbnail's <strong>data-src</strong> and add <code>kitsu:</code> prefix</li>
+                        <li>Example: <code>kitsu:12345</code></li>
+                    </ol>
+                </div>
+            </div>
+        {% endif %}
+
         <div class="card shadow-sm">
             <div class="card-header bg-warning text-dark">
-                <h5 class="mb-0">Subtitle Guidelines</h5>
+                <h5 class="mb-0">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Subtitle Guidelines
+                </h5>
             </div>
             <div class="card-body">
                 <ul class="mb-0">
@@ -102,6 +189,9 @@
                     <li>Ensure proper timing and formatting</li>
                     <li>Avoid hardcoded advertisements</li>
                     <li>Respect copyright and intellectual property</li>
+                    {% if is_advanced_upload %}
+                    <li><strong>Advanced:</strong> No video hash association</li>
+                    {% endif %}
                 </ul>
             </div>
         </div>
@@ -110,9 +200,43 @@
 
 <div class="row mt-3">
     <div class="col text-center">
-        <a href="{{ url_for('content.content_detail', activity_id=activity.id) }}" class="btn btn-outline-secondary">
-            <i class="fas fa-arrow-left me-2"></i>Back to Content
-        </a>
+        {% if is_advanced_upload %}
+            <a href="{{ url_for('main.index') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-home me-2"></i>Back to Home
+            </a>
+        {% else %}
+            <a href="{{ url_for('content.content_detail', activity_id=activity.id) }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Back to Content
+            </a>
+        {% endif %}
     </div>
 </div>
+
+{% if is_advanced_upload %}
+<script>
+// Show/hide series fields based on content type selection
+document.getElementById('content_type').addEventListener('change', function() {
+    const seriesFields = document.getElementById('series-fields');
+    if (this.value === 'series') {
+        seriesFields.style.display = 'block';
+        // Set default season to 1 if empty
+        const seasonField = document.getElementById('season_number');
+        if (!seasonField.value) {
+            seasonField.value = 1;
+        }
+    } else {
+        seriesFields.style.display = 'none';
+    }
+});
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    const contentType = document.getElementById('content_type');
+    if (contentType.value === 'series') {
+        document.getElementById('series-fields').style.display = 'block';
+    }
+});
+</script>
+{% endif %}
+
 {% endblock %}

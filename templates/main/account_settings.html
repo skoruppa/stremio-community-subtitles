@@ -43,34 +43,28 @@
             <div class="card-body">
                 <form method="POST" action="{{ url_for('main.account_settings') }}" novalidate id="opensubtitles-settings-form">
                     {{ os_form.hidden_tag() }}
-                    
+
                     {% if opensubtitles_has_token %}
-                        <p>An OpenSubtitles session is currently stored for your account.</p>
-                        {% if opensubtitles_active %}
-                            <p>The integration is <strong>active</strong>. Uncheck below to deactivate it locally (this will not log you out from OpenSubtitles.com).</p>
-                        {% else %}
-                            <p>The integration is currently <strong>inactive</strong>. Check below to re-activate using your stored OpenSubtitles session.</p>
-                        {% endif %}
-                        {{ render_checkbox_field(os_form.use_opensubtitles) }}
-                        <div class="d-grid gap-2 mt-3">
-                            <input type="submit" name="{{ os_form.submit_opensubtitles.name }}" value="Update Integration Status" class="btn btn-primary">
-                        </div>
-                    {% else %} {# No token stored, user needs to login or provide API key to activate #}
+
+                            <p>The integration is <strong>active</strong>.</p>
+                        {{ render_checkbox_field(os_form.use_opensubtitles, disabled=True) }}
+                    {% else %}
                         <p>Connect your OpenSubtitles.com account to enhance subtitle search and download capabilities.</p>
                         {{ render_checkbox_field(os_form.use_opensubtitles) }}
-                        
-                        {# Credentials div is shown/hidden by JS based on the checkbox state #}
-                        <div id="opensubtitles-credentials">
-                            {{ render_field(os_form.opensubtitles_username) }}
-                            {{ render_field(os_form.opensubtitles_password) }}
-                            {{ render_field(os_form.opensubtitles_api_key) }} {# API key field is now inside this block #}
-                            <div class="alert alert-secondary mt-2">
-                                <i class="fas fa-info-circle me-2"></i>
-                                Provide your OpenSubtitles.com username, password and personal API ke to log in and activate the integration. Your credentials are sent directly to OpenSubtitles.com for login and are not stored on our servers beyond the session token.
-                            </div>
+                    {% endif %}
+
+                    {# This div is always rendered, hidden with d-none if user has token #}
+                    <div id="opensubtitles-credentials" class="{% if opensubtitles_has_token %}d-none{% endif %}">
+                        {{ render_field(os_form.opensubtitles_username) }}
+                        {{ render_field(os_form.opensubtitles_password) }}
+                        <div class="alert alert-secondary mt-2">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Provide your OpenSubtitles.com username and password to log in and activate the integration. Your credentials are sent directly to OpenSubtitles.com for login and are not stored on our servers beyond the session token.
                         </div>
-                        
-                        {{ render_submit_button(os_form.submit_opensubtitles) }} {# Button text "Save OpenSubtitles Settings" from form definition #}
+                    </div>
+
+                    {% if not opensubtitles_has_token %}
+                    {{ render_submit_button(os_form.submit_opensubtitles) }}
                     {% endif %}
                 </form>
 
@@ -86,7 +80,7 @@
                 {% endif %}
             </div>
         </div>
-        
+
         <div class="card shadow-sm">
             <div class="card-header bg-warning text-dark">
                 <h5 class="mb-0">Security</h5>
@@ -101,7 +95,7 @@
             </div>
         </div>
     </div>
-    
+
     <div class="col-lg-4">
         <div class="card shadow-sm mb-4">
             <div class="card-header bg-info text-white">
@@ -119,7 +113,7 @@
                         <strong>Member Since:</strong> {{ current_user.created_at.strftime('%Y-%m-%d') }}
                     </li>
                     <li class="list-group-item">
-                        <strong>Current Language:</strong> 
+                        <strong>Current Language:</strong>
                         {% for code, name_tuple in LANGUAGE_DICT.items() %}
                             {% if code == current_user.preferred_language %}
                                 {{ name_tuple }}
@@ -127,25 +121,17 @@
                         {% endfor %}
                     </li>
                     <li class="list-group-item">
-                        <strong>OpenSubtitles Active:</strong> 
+                        <strong>OpenSubtitles Active:</strong>
                         {% if opensubtitles_active %}
                             <span class="badge bg-success">Yes</span>
                         {% else %}
                             <span class="badge bg-secondary">No</span>
                         {% endif %}
                     </li>
-                     <li class="list-group-item">
-                        <strong>OpenSubtitles Session:</strong> 
-                        {% if opensubtitles_has_token %}
-                            <span class="badge bg-success">Stored</span>
-                        {% else %}
-                            <span class="badge bg-secondary">Not Stored</span>
-                        {% endif %}
-                    </li>
                 </ul>
             </div>
         </div>
-        
+
         <div class="card shadow-sm">
             <div class="card-header bg-success text-white">
                 <h5 class="mb-0">Addon Installation</h5>
@@ -157,7 +143,6 @@
         </div>
     </div>
 </div>
-
 {% endblock %}
 
 {% block scripts %}
@@ -165,36 +150,23 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const useOpenSubtitlesCheckbox = document.getElementById('os_form-use_opensubtitles');
-    const credentialsDiv = document.getElementById('opensubtitles-credentials'); // This div only exists if opensubtitles_has_token is false
+    const credentialsDiv = document.getElementById('opensubtitles-credentials');
     const usernameField = document.getElementById('os_form-opensubtitles_username');
     const passwordField = document.getElementById('os_form-opensubtitles_password');
-    const apiKeyField = document.getElementById('os_form-opensubtitles_api_key'); // Get the new API key field
-    
-    // Safely get the hasToken value, ensuring it's treated as a boolean
     const hasToken = {{ opensubtitles_has_token|tojson }};
 
     function toggleCredentialsDisplay() {
-        // This function is only relevant when there is NO token, 
-        // and credentialsDiv is part of the DOM.
-        if (!hasToken && useOpenSubtitlesCheckbox && credentialsDiv) {
+        if (!hasToken && credentialsDiv) {
             if (useOpenSubtitlesCheckbox.checked) {
                 credentialsDiv.style.display = 'block';
-                // Only require username/password if API key is NOT provided
-                if (usernameField && passwordField && apiKeyField && !apiKeyField.value) {
-                    usernameField.required = true;
-                    passwordField.required = true;
-                } else {
-                     if (usernameField) usernameField.required = false;
-                     if (passwordField) passwordField.required = false;
-                }
+                if (usernameField) usernameField.required = true;
+                if (passwordField) passwordField.required = true;
             } else {
                 credentialsDiv.style.display = 'none';
                 if (usernameField) usernameField.required = false;
                 if (passwordField) passwordField.required = false;
             }
-        } else if (credentialsDiv) { 
-            // If hasToken is true, Jinja should not render credentialsDiv.
-            // This is a fallback: if it somehow exists when hasToken is true, hide it.
+        } else if (credentialsDiv) {
             credentialsDiv.style.display = 'none';
             if (usernameField) usernameField.required = false;
             if (passwordField) passwordField.required = false;
@@ -202,27 +174,12 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     if (useOpenSubtitlesCheckbox) {
-        // Initial call to set display state, only if credentialsDiv exists (i.e., no token)
-        if (credentialsDiv) { 
-            toggleCredentialsDisplay();
-        }
-        // Add event listener regardless, as the checkbox itself is always there.
-        // The toggleCredentialsDisplay function will internally check `hasToken`.
+        toggleCredentialsDisplay();
         useOpenSubtitlesCheckbox.addEventListener('change', toggleCredentialsDisplay);
-        
-        // Add event listener to API key field to adjust username/password required status
-        if (apiKeyField && usernameField && passwordField) {
-            apiKeyField.addEventListener('input', function() {
-                if (useOpenSubtitlesCheckbox.checked) {
-                    if (apiKeyField.value) {
-                        usernameField.required = false;
-                        passwordField.required = false;
-                    } else {
-                        usernameField.required = true;
-                        passwordField.required = true;
-                    }
-                }
-            });
+
+        if (usernameField && passwordField) {
+            usernameField.addEventListener('input', toggleCredentialsDisplay);
+            passwordField.addEventListener('input', toggleCredentialsDisplay);
         }
     }
 });

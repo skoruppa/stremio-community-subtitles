@@ -375,40 +375,123 @@ def unified_download(manifest_token: str, download_identifier: str):
 
 
 @subtitles_bp.route('/content/<uuid:activity_id>/upload', methods=['GET', 'POST'])
+@subtitles_bp.route('/content/upload', methods=['GET', 'POST'])
 @login_required
-def upload_subtitle(activity_id):
+def upload_subtitle(activity_id=None):
     """Handle subtitle upload from the web interface."""
-    activity = UserActivity.query.filter_by(id=activity_id, user_id=current_user.id).first_or_404()
+    activity = None
+    is_advanced_upload = activity_id is None
+
+    # For regular upload (with activity_id)
+    if not is_advanced_upload:
+        activity = UserActivity.query.filter_by(id=activity_id, user_id=current_user.id).first_or_404()
+
     season = None
     episode = None
-    if activity.content_type == 'series':
-        content_parts = activity.content_id.split(':')
-        try:
-            if len(content_parts) == 3:
-                season = int(content_parts[1])
-                episode = int(content_parts[2])
-            elif len(content_parts) == 2:
-                season = 1
-                episode = int(content_parts[1])
-        except ValueError:
-            current_app.logger.warning(f"Could not parse season/episode from content_id: {activity.content_id}")
+    content_id = None
+    content_type = None
+    video_hash = None
 
-    metadata = get_metadata(activity.content_id, activity.content_type)
+    if activity:
+        # Regular upload - get data from activity
+        content_id = activity.content_id
+        content_type = activity.content_type
+        video_hash = activity.video_hash
+
+        if activity.content_type == 'series':
+            content_parts = activity.content_id.split(':')
+            try:
+                if len(content_parts) == 3:
+                    season = int(content_parts[1])
+                    episode = int(content_parts[2])
+                elif len(content_parts) == 2:
+                    season = 1
+                    episode = int(content_parts[1])
+            except ValueError:
+                current_app.logger.warning(f"Could not parse season/episode from content_id: {activity.content_id}")
+
+    # Get metadata for display
+    try:
+        metadata = get_metadata(content_id, content_type)
+    except Exception as e:
+        current_app.logger.warning(f"Could not fetch metadata for {content_id}: {e}")
+        metadata = None
+
     form = SubtitleUploadForm()
     form.language.choices = LANGUAGES
 
+    # Add fields for advanced upload
+    if is_advanced_upload:
+        # You'll need to add these fields to your SubtitleUploadForm class
+        # Or create a new form class for advanced upload
+        if not hasattr(form, 'content_id'):
+            from wtforms import StringField, SelectField, IntegerField
+            from wtforms.validators import DataRequired, Optional
+
+            # Dynamically add fields if they don't exist
+            form.content_id = StringField('Content ID', validators=[DataRequired()])
+            form.content_type = SelectField('Content Type',
+                                            choices=[('movie', 'Movie'), ('series', 'Series')],
+                                            validators=[DataRequired()])
+            form.season_number = IntegerField('Season Number', validators=[Optional()])
+            form.episode_number = IntegerField('Episode Number', validators=[Optional()])
+
     if request.method == 'GET':
         form.language.data = current_user.preferred_language
-        form.version_info.data = activity.video_filename.rsplit('.', 1)[0] if activity.video_filename else None
+        if activity and activity.video_filename:
+            form.version_info.data = activity.video_filename.rsplit('.', 1)[0]
 
     if form.validate_on_submit():
         try:
+            # For advanced upload, construct content_id from form data
+            if is_advanced_upload:
+                base_content_id = form.content_id.data.strip()
+                content_type = form.content_type.data
+
+                # Validate content_id format
+                if not (base_content_id.startswith('tt') or base_content_id.startswith('kitsu:')):
+                    flash('Content ID must be either IMDB ID (starting with "tt") or Kitsu ID (format "kitsu:12345")',
+                          'danger')
+                    return render_template('main/upload_subtitle.html', form=form, activity=activity,
+                                           metadata=metadata, season=season, episode=episode,
+                                           is_advanced_upload=is_advanced_upload)
+
+                if content_type == 'series':
+                    season_num = form.season_number.data or 1
+                    episode_num = form.episode_number.data
+
+                    if not episode_num:
+                        flash('Episode number is required for series', 'danger')
+                        return render_template('main/upload_subtitle.html', form=form, activity=activity,
+                                               metadata=metadata, season=season, episode=episode,
+                                               is_advanced_upload=is_advanced_upload)
+
+                    # Construct content_id for series
+                    if base_content_id.startswith('tt'):
+                        content_id = f"{base_content_id}:{season_num}:{episode_num}"
+                    else:  # kitsu format
+                        content_id = f"{base_content_id}:{episode_num}"
+
+                    season = season_num
+                    episode = episode_num
+                else:
+                    # For movies, use content_id as is
+                    content_id = base_content_id
+
+                # Set video_hash to None for advanced uploads (no specific video file)
+                video_hash = None
+            else:
+                content_id = activity.content_id
+                content_type = activity.content_type
+                video_hash = activity.video_hash
+
             subtitle_file = form.subtitle_file.data
             original_filename = subtitle_file.filename
             file_extension = os.path.splitext(original_filename)[1].lower()
             encoding = form.encoding.data
             fps = form.fps.data
-            if encoding.lower() == 'auto': encoding = None
+            if encoding.lower() == 'auto':
+                encoding = None
             if not fps:
                 fps = None
             else:
@@ -418,7 +501,7 @@ def upload_subtitle(activity_id):
                     fps = None
 
             base_vtt_filename = f"{uuid.uuid4()}.vtt"
-            content_id_safe_path = activity.content_id.replace(':', '_')
+            content_id_safe_path = content_id.replace(':', '_')
 
             with tempfile.NamedTemporaryFile(delete=False, suffix=file_extension) as temp_file:
                 subtitle_file.save(temp_file.name)
@@ -442,12 +525,16 @@ def upload_subtitle(activity_id):
                         "please try using the 'auto' option.",
                         'danger'
                     )
-                    return redirect(url_for('content.content_detail', activity_id=activity_id))
+                    redirect_url = url_for('subtitles.upload_subtitle') if is_advanced_upload else url_for(
+                        'content.content_detail', activity_id=activity_id)
+                    return redirect(redirect_url)
 
                 if current_app.config['STORAGE_BACKEND'] == 'cloudinary':
                     if not CLOUDINARY_AVAILABLE or not cloudinary.config().api_key:
                         flash('Server error: Cloudinary storage is not properly configured.', 'danger')
-                        return redirect(url_for('content.content_detail', activity_id=activity_id))
+                        redirect_url = url_for('subtitles.upload_subtitle') if is_advanced_upload else url_for(
+                            'content.content_detail', activity_id=activity_id)
+                        return redirect(redirect_url)
 
                     cloudinary_folder = current_app.config.get('CLOUDINARY_SUBTITLES_FOLDER', 'community_subtitles')
                     cloudinary_public_id = f"{cloudinary_folder}/{content_id_safe_path}/{base_vtt_filename.replace('.vtt', '')}"
@@ -455,7 +542,8 @@ def upload_subtitle(activity_id):
                                                                public_id=cloudinary_public_id, resource_type="raw",
                                                                overwrite=True)
                     db_file_path = upload_result.get('public_id')
-                    if not db_file_path: raise Exception(f"Cloudinary upload failed: {upload_result}")
+                    if not db_file_path:
+                        raise Exception(f"Cloudinary upload failed: {upload_result}")
                     current_app.logger.info(f"Uploaded to Cloudinary. Public ID: {db_file_path}")
                 else:
                     local_content_dir = os.path.join(current_app.config['UPLOAD_FOLDER'], content_id_safe_path)
@@ -469,21 +557,26 @@ def upload_subtitle(activity_id):
                 current_app.logger.error(f"Error processing/uploading subtitle '{original_filename}': {e}",
                                          exc_info=True)
                 flash(f'Error processing/uploading subtitle: {str(e)}', 'danger')
-                return redirect(url_for('content.content_detail', activity_id=activity_id))
+                redirect_url = url_for('subtitles.upload_subtitle') if is_advanced_upload else url_for(
+                    'content.content_detail', activity_id=activity_id)
+                return redirect(redirect_url)
             finally:
-                if os.path.exists(temp_file_path): os.unlink(temp_file_path)
+                if os.path.exists(temp_file_path):
+                    os.unlink(temp_file_path)
 
             if not db_file_path:
                 flash('Internal error: Subtitle path not determined.', 'danger')
-                return redirect(url_for('content.content_detail', activity_id=activity_id))
+                redirect_url = url_for('subtitles.upload_subtitle') if is_advanced_upload else url_for(
+                    'content.content_detail', activity_id=activity_id)
+                return redirect(redirect_url)
 
             new_subtitle = Subtitle(
                 id=uuid.uuid4(),
-                content_id=activity.content_id,
-                content_type=activity.content_type,
+                content_id=content_id,
+                content_type=content_type,
                 language=form.language.data,
                 uploader_id=current_user.id,
-                video_hash=activity.video_hash,  # Assign current activity's hash
+                video_hash=video_hash,  # Will be None for advanced uploads
                 file_path=db_file_path,
                 source_type='community',  # Explicitly set source type
                 version_info=form.version_info.data if hasattr(form,
@@ -493,34 +586,44 @@ def upload_subtitle(activity_id):
             db.session.add(new_subtitle)
             db.session.commit()
 
-            try:
-                existing_selection = UserSubtitleSelection.query.filter_by(user_id=current_user.id,
-                                                                           content_id=activity.content_id,
-                                                                           video_hash=activity.video_hash).first()
-                if existing_selection:
-                    existing_selection.selected_subtitle_id = new_subtitle.id
-                    existing_selection.selected_external_file_id = None
-                    existing_selection.external_details_json = None
-                    existing_selection.timestamp = datetime.datetime.utcnow()
-                else:
-                    new_selection = UserSubtitleSelection(user_id=current_user.id, content_id=activity.content_id,
-                                                          video_hash=activity.video_hash,
-                                                          selected_subtitle_id=new_subtitle.id)
-                    db.session.add(new_selection)
-                db.session.commit()
-                flash('Subtitle uploaded and selected successfully!', 'success')
-            except Exception as sel_e:
-                db.session.rollback()
-                current_app.logger.error(f"Error auto-selecting uploaded subtitle: {sel_e}", exc_info=True)
-                flash('Subtitle uploaded, but failed to auto-select.', 'warning')
-            return redirect(url_for('content.content_detail', activity_id=activity_id))
+            # Auto-select subtitle only for regular uploads (not advanced)
+            if not is_advanced_upload:
+                try:
+                    existing_selection = UserSubtitleSelection.query.filter_by(user_id=current_user.id,
+                                                                               content_id=content_id,
+                                                                               video_hash=video_hash).first()
+                    if existing_selection:
+                        existing_selection.selected_subtitle_id = new_subtitle.id
+                        existing_selection.selected_external_file_id = None
+                        existing_selection.external_details_json = None
+                        existing_selection.timestamp = datetime.datetime.utcnow()
+                    else:
+                        new_selection = UserSubtitleSelection(user_id=current_user.id, content_id=content_id,
+                                                              video_hash=video_hash,
+                                                              selected_subtitle_id=new_subtitle.id)
+                        db.session.add(new_selection)
+                    db.session.commit()
+                    flash('Subtitle uploaded and selected successfully!', 'success')
+                except Exception as sel_e:
+                    db.session.rollback()
+                    current_app.logger.error(f"Error auto-selecting uploaded subtitle: {sel_e}", exc_info=True)
+                    flash('Subtitle uploaded, but failed to auto-select.', 'warning')
+            else:
+                flash('Subtitle uploaded successfully!', 'success')
+
+            # Redirect appropriately
+            if is_advanced_upload:
+                return redirect(url_for('subtitles.upload_subtitle'))
+            else:
+                return redirect(url_for('content.content_detail', activity_id=activity_id))
+
         except Exception as e:
             db.session.rollback()
             current_app.logger.error(f"Error in upload_subtitle route: {e}", exc_info=True)
             flash('Error uploading subtitle. Please try again.', 'danger')
 
-    return render_template('main/upload_subtitle.html', form=form, activity=activity, metadata=metadata, season=season,
-                           episode=episode)
+    return render_template('main/upload_subtitle.html', form=form, activity=activity, metadata=metadata,
+                           season=season, episode=episode, is_advanced_upload=is_advanced_upload)
 
 
 @subtitles_bp.route('/select_subtitle/<uuid:activity_id>/<uuid:subtitle_id>', methods=['POST'])

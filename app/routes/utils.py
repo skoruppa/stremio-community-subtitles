@@ -33,9 +33,11 @@ def normalize_release_name(name):
     name = re.sub(r'\.[a-zA-Z0-9]+$', '', name)
     # Replace common delimiters with space
     name = re.sub(r'[\.\_\-\s]+', ' ', name)
+
     # Remove content within brackets (often uploader tags or irrelevant info)
-    name = re.sub(r'\[.*?\]', '', name)
-    name = re.sub(r'\(.*?\)', '', name)
+    # name = re.sub(r'\[.*?\]', '', name)
+    # name = re.sub(r'\(.*?\)', '', name)
+
     # Remove common tags that might differ but don't define the core release
     common_tags = ['web-dl', 'webrip', 'bluray', 'hdrip', 'hdtv', 'x264', 'h264', 'x265', 'hevc',
                    'aac', 'ac3', 'dts', '1080p', '720p', '2160p', '4k', 'hdr', 'dv']

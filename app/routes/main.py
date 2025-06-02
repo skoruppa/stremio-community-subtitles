@@ -110,13 +110,6 @@ def account_settings():
     if os_form.submit_opensubtitles.data and os_form.validate():
         os_username = os_form.opensubtitles_username.data
         os_password = os_form.opensubtitles_password.data
-        os_api_key = os_form.opensubtitles_api_key.data
-
-        # Save the personal API key if provided (only editable when logged out)
-        if not current_user.opensubtitles_token:
-            current_user.opensubtitles_api_key = os_api_key
-        elif os_api_key and os_api_key != current_user.opensubtitles_api_key:
-            flash('Please log out from OpenSubtitles before changing your personal API key.', 'warning')
 
         if os_form.use_opensubtitles.data:
             # User wants to enable or keep enabled
