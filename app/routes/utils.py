@@ -5,6 +5,8 @@ from ..models import Subtitle, SubtitleVote, UserSubtitleSelection
 import os
 import re
 import requests
+import time
+from datetime import datetime
 
 try:
     import cloudinary
@@ -21,6 +23,49 @@ def respond_with(data) -> Response:
     resp.headers['Access-Control-Allow-Origin'] = "*"
     resp.headers['Access-Control-Allow-Headers'] = '*'
     return resp
+
+
+def respond_with_no_cache(data) -> Response:
+    """Create a JSON response with CORS headers."""
+    resp = jsonify(data)
+    resp.headers['Access-Control-Allow-Origin'] = "*"
+    resp.headers['Access-Control-Allow-Headers'] = '*'
+    resp.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate, private'
+    resp.headers['Pragma'] = 'no-cache'
+    resp.headers['Expires'] = '0'
+
+    resp.headers['CF-Cache-Status'] = 'BYPASS'
+    resp.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate, private, max-age=0'
+
+    return resp
+
+
+class NoCacheResponse(Response):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.add_no_cache_headers()
+
+    def add_no_cache_headers(self):
+        """Dodaje kompletny zestaw no-cache headers dla przeglądarek, Cloudflare i innych CDN"""
+
+        self.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate, private, max-age=0, s-maxage=0'
+        self.headers['Pragma'] = 'no-cache'
+        self.headers['Expires'] = '0'
+
+        self.headers['CF-Cache-Status'] = 'BYPASS'
+        self.headers['Surrogate-Control'] = 'no-store'
+        self.headers['Vary'] = '*'
+
+        self.headers['ETag'] = f'"{int(time.time() * 1000000)}"'
+
+        self.headers['Last-Modified'] = datetime.utcnow().strftime('%a, %d %b %Y %H:%M:%S GMT')
+
+
+def no_cache_redirect(location, code=302):
+    """Tworzy redirect z no-cache headers"""
+    response = NoCacheResponse('', status=code)
+    response.headers['Location'] = location
+    return response
 
 
 def normalize_release_name(name):

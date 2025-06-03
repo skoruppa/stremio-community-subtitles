@@ -27,7 +27,7 @@ except ImportError:
 from ..extensions import db
 from ..models import User, Subtitle, UserActivity, UserSubtitleSelection, SubtitleVote  
 from ..lib.subtitles import convert_to_vtt
-from .utils import respond_with, get_active_subtitle_details 
+from .utils import respond_with, get_active_subtitle_details, respond_with_no_cache, NoCacheResponse, no_cache_redirect
 from urllib.parse import parse_qs, unquote
 import gzip
 import io
@@ -226,7 +226,7 @@ def addon_stream(manifest_token: str, content_type: str, content_id: str, params
         current_app.logger.error(f"Error generating download URL for identifier {download_identifier}: {e}")
         return respond_with({'subtitles': []})
 
-    return respond_with({'subtitles': subtitles_list})
+    return respond_with_no_cache({'subtitles': subtitles_list})
 
 
 @subtitles_bp.route('/<manifest_token>/download/<download_identifier>.vtt')
@@ -234,7 +234,7 @@ def unified_download(manifest_token: str, download_identifier: str):
     user = User.get_by_manifest_token(manifest_token)
     if not user:
         current_app.logger.warning(f"Download request with invalid token: {manifest_token}")
-        return Response(generate_vtt_message("Invalid Access Token"), status=403, mimetype='text/vtt')
+        return NoCacheResponse(generate_vtt_message("Invalid Access Token"), status=403, mimetype='text/vtt')
 
     try:
         padding_needed = len(download_identifier) % 4
@@ -251,7 +251,7 @@ def unified_download(manifest_token: str, download_identifier: str):
             raise ValueError("Missing content_id in decoded context")
     except Exception as e:
         current_app.logger.error(f"Failed to decode download identifier '{download_identifier}': {e}")
-        return Response(generate_vtt_message("Invalid download link."), status=400, mimetype='text/vtt')
+        return NoCacheResponse(generate_vtt_message("Invalid download link."), status=400, mimetype='text/vtt')
 
     # Use the utility function to get active subtitle details (now with OpenSubtitles fallback)
     active_subtitle_info = get_active_subtitle_details(user, content_id, video_hash, content_type, video_filename)
@@ -348,13 +348,13 @@ def unified_download(manifest_token: str, download_identifier: str):
 
     # Return responses
     if os_subtitle_direct_url:
-        return redirect(os_subtitle_direct_url, code=302)
+        return no_cache_redirect(os_subtitle_direct_url, code=302)
 
     if vtt_content:
         if not vtt_content.strip().upper().startswith("WEBVTT"):
             current_app.logger.warning("Content served is not VTT, serving as plain text")
-            return Response(vtt_content, mimetype='text/plain')
-        return Response(vtt_content, mimetype='text/vtt')
+            return NoCacheResponse(vtt_content, mimetype='text/plain')
+        return NoCacheResponse(vtt_content, mimetype='text/vtt')
 
     # Fallback messages
     if not message_key:
@@ -368,7 +368,7 @@ def unified_download(manifest_token: str, download_identifier: str):
     }
     message_text = messages.get(message_key, "An error occurred or subtitles need selection.")
     current_app.logger.info(f"Serving placeholder message (key: '{message_key}') for context: {context}")
-    return Response(generate_vtt_message(message_text), mimetype='text/vtt')
+    return NoCacheResponse(generate_vtt_message(message_text), mimetype='text/vtt')
 
 
 @subtitles_bp.route('/content/<uuid:activity_id>/upload', methods=['GET', 'POST'])
