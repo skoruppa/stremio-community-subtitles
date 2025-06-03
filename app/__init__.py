@@ -1,6 +1,7 @@
 import os
 import logging
 from flask import Flask
+from flask_talisman import Talisman
 from .extensions import db, migrate, login_manager, csrf, compress, cache, cors, mail
 from config import get_config
 from . import models
@@ -12,6 +13,7 @@ def create_app():
                 instance_relative_config=True,
                 template_folder='../templates',
                 static_folder='../static')
+    Talisman(app, content_security_policy=None)
 
     app.config.from_object(get_config())
 
