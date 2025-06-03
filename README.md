@@ -6,7 +6,7 @@ Every subtitle you upload helps build a community database that benefits all use
 
 ## ✨ Features
 
-- **📱 Cross-Device Subtitle Support** – Use custom subtitles on mobile, TV, or desktop
+- **📱 Cross-Device Subtitle Support** – Use custom subtitles on web, mobile, TV, or desktop
 - **🌍 Community Database** – Your uploads help other users watching the same files
 - **🤖 Automatic Subtitle Selection** – Subtitles are now selected automatically based on your video file
 - **📤 Upload Without Watching** – Upload subtitles without needing to start playback
