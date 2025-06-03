@@ -492,7 +492,7 @@ def upload_subtitle(activity_id=None):
 
             subtitle_file = form.subtitle_file.data
             original_filename = subtitle_file.filename
-            file_extension = os.path.splitext(original_filename)[1].lower()
+            file_extension = os.path.splitext(original_filename)[1].lower()[1:]
             encoding = form.encoding.data
             fps = form.fps.data
             if encoding.lower() == 'auto':

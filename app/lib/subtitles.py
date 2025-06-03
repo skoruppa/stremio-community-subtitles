@@ -2,7 +2,7 @@ import zipfile
 import os
 import tempfile
 import chardet
-from pysubs2 import SSAFile, load
+from pysubs2 import SSAFile, load, FormatAutodetectionError
 import re
 import logging
 from ..lib.ass_to_vtt import convert_ass_file_to_vtt_string, convert_ass_string_to_vtt_string, AssParsingError, VttConversionError
@@ -57,7 +57,7 @@ def convert_to_vtt(file_data, file_extension, encoding=None, fps=None):
         temp_file_path = temp_file.name
     
     try:
-        if file_extension.lower() in ('.ass', '.ssa'):
+        if file_extension.lower() in ('ass', 'ssa'):
             # Use our custom ASS/SSA to VTT converter
             try:
                 vtt_content = convert_ass_file_to_vtt_string(temp_file_path, input_encoding=encoding)
@@ -69,7 +69,10 @@ def convert_to_vtt(file_data, file_extension, encoding=None, fps=None):
                 return subs.to_string('vtt')
         else:
             # For SRT, SUB, etc. use pysubs2
-            subs = load(temp_file_path, encoding=encoding, fps=fps)
+            try:
+                subs = load(temp_file_path, encoding=encoding, fps=fps)
+            except FormatAutodetectionError:
+                subs = load(temp_file_path, encoding=encoding, fps=fps, format_=file_extension)
             return subs.to_string('vtt')
     except Exception as e:
         logger.error(f"Error converting subtitle file: {e}")

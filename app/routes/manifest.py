@@ -45,7 +45,6 @@ def addon_manifest(manifest_token):
     else:
         manifest_data['behaviorHints'] = {}  # Create if it doesn't exist
 
-    manifest_data['behaviorHints']['configurable'] = False
     if 'configurationRequired' in manifest_data['behaviorHints']:
         del manifest_data['behaviorHints']['configurationRequired']
 

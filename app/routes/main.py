@@ -81,6 +81,13 @@ def configure():
                            stremio_manifest_url=stremio_manifest_url)
 
 
+@main_bp.route('/<manifest_token>/configure')
+@login_required
+def configure_redirect(manifest_token):
+    """Redirect to the addon "setting" - account settings."""
+    return redirect(url_for('main.account_settings'))
+
+
 @main_bp.route('/account', methods=['GET', 'POST'])
 @login_required
 def account_settings():
