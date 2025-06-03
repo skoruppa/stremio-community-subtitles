@@ -14,7 +14,7 @@ When you use the addon, we store a minimal amount of data necessary to provide i
   - Your email and username (required to log in).
   - Timestamps of when your account was created and when you last logged in.
 
-- **Viewing History*
+- **Viewing History**
   - If you have the addon installed in Stremio, we store the **5 most recent items** you've watched, to help you upload subtitles faster.
   - Older entries are automatically removed. You can also manually delete your history at any time.
 
