@@ -348,7 +348,13 @@ def unified_download(manifest_token: str, download_identifier: str):
 
     # Return responses
     if os_subtitle_direct_url:
-        return no_cache_redirect(os_subtitle_direct_url, code=302)
+        try:
+            vtt_content = requests.get(os_subtitle_direct_url, timeout=10).text  # Android app can't handle 302?
+            return NoCacheResponse(vtt_content, mimetype='text/vtt')
+        except Exception as e:
+            current_app.logger.error(f"Unexpected error forwarding OpenSubtitle file_id {os_subtitle_direct_url}: {e}",
+                                     exc_info=True)
+            message_key = 'error'
 
     if vtt_content:
         if not vtt_content.strip().upper().startswith("WEBVTT"):
