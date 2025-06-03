@@ -15,6 +15,7 @@ from ..forms import SubtitleUploadForm
 from ..languages import LANGUAGES
 from ..lib import opensubtitles_client
 from ..lib.metadata import get_metadata
+from ..lib.opensubtitles_client import make_request_with_retry
 
 try:
     import cloudinary
@@ -346,11 +347,12 @@ def unified_download(manifest_token: str, download_identifier: str):
                                          exc_info=True)
                 message_key = 'os_error_contact_support'
 
-    # Return responses
     if os_subtitle_direct_url:
+        def make_request():
+            return requests.get(os_subtitle_direct_url, timeout=10)
+
         try:
-            vtt_content = requests.get(os_subtitle_direct_url, timeout=10).text  # Android app can't handle 302?
-            return NoCacheResponse(vtt_content, mimetype='text/vtt')
+            vtt_content = make_request_with_retry(make_request).text
         except Exception as e:
             current_app.logger.error(f"Unexpected error forwarding OpenSubtitle file_id {os_subtitle_direct_url}: {e}",
                                      exc_info=True)
@@ -801,7 +803,7 @@ def download_subtitle(subtitle_id):
 
                 current_app.logger.info(f"Serving OpenSubtitles direct url to omit 503 errors")
 
-                return redirect(os_subtitle_direct_url, code=302)
+                return no_cache_redirect(os_subtitle_direct_url, code=302)
             else:
                 flash("Could not retrieve download link from OpenSubtitles.", "danger")
                 abort(500)
