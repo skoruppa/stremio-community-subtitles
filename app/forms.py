@@ -106,11 +106,13 @@ class OpenSubtitlesLoginForm(FlaskForm):
     opensubtitles_username = StringField(
         'OpenSubtitles Username', 
         validators=[DataRequired(), Length(max=255)],
-        render_kw={'placeholder': 'Your OpenSubtitles.com Username'}
+        render_kw={'placeholder': 'Your OpenSubtitles.com Username',
+                   'autocomplete': 'off'}
     )
     opensubtitles_password = PasswordField(
         'OpenSubtitles Password', 
         validators=[DataRequired(), Length(max=255)],
-        render_kw={'placeholder': 'Your OpenSubtitles.com Password'}
+        render_kw={'placeholder': 'Your OpenSubtitles.com Password',
+                   'autocomplete': 'off'}
     )
     submit_opensubtitles = SubmitField('Save OpenSubtitles Settings')  
