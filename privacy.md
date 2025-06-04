@@ -64,7 +64,7 @@ No trackers. No profiling.
 
 ## 🧹 Data Control
 
-- You can delete your uploaded subtitles and subtitle history from the website.
+- You can delete your uploaded subtitles and viewing history from the website.
 - If you'd like to delete your account and all associated data, please contact us directly.
 
 Concerned about privacy? You can always [self-host the addon](https://github.com/skoruppa/stremio-community-subtitles) and use your own local database and storage.
