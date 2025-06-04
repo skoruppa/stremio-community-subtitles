@@ -285,7 +285,7 @@ def get_active_subtitle_details(user, content_id, video_hash=None, content_type=
     if video_filename:
         current_app.logger.debug(f"Step 4: Checking by filename: {video_filename} for {content_id}")
         candidates = []
-        min_similarity_threshold = 0.3
+        min_similarity_threshold = 0.0
 
         # A. Local
         all_local_subs = Subtitle.query.filter_by(
@@ -341,8 +341,8 @@ def get_active_subtitle_details(user, content_id, video_hash=None, content_type=
                 })
             return active_details
 
-    # 5. Fallback: when no video_hash
-    if not video_hash:
+    # 5. Fallback: when no video_filename
+    if not video_filename:
         current_app.logger.debug(f"Step 5: Fallback (no hash) for {content_id}")
         # 5a. Local subtitles without video_hash
         local_no_hash_subs = (Subtitle.query.filter_by(content_id=content_id, language=user.preferred_language)
