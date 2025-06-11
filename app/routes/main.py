@@ -95,19 +95,19 @@ def account_settings():
     lang_form = LanguagePreferenceForm(prefix="lang_form")
     os_form = OpenSubtitlesLoginForm(prefix="os_form")
 
-    lang_form.preferred_language.choices = LANGUAGES
+    lang_form.preferred_languages.choices = LANGUAGES
 
     if request.method == 'GET':
-        lang_form.preferred_language.data = current_user.preferred_language
+        lang_form.preferred_languages.data = current_user.preferred_languages
         os_form.use_opensubtitles.data = current_user.opensubtitles_active
         # We don't pre-fill username/password for security and simplicity.
         # If opensubtitles_active is true, template will show "logged in" state.
 
     if lang_form.submit_language.data and lang_form.validate():
         try:
-            current_user.preferred_language = lang_form.preferred_language.data
+            current_user.preferred_languages = lang_form.preferred_languages.data
             db.session.commit()
-            flash('Preferred language updated successfully!', 'success')
+            flash('Preferred languages updated successfully!', 'success')
             return redirect(url_for('main.account_settings'))  # Redirect to avoid re-POST
         except Exception as e:
             db.session.rollback()
