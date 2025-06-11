@@ -151,6 +151,16 @@
 {{ super() }}
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    // Initialize Bootstrap-select for the preferred_languages field
+    var preferredLanguagesSelect = document.getElementById('lang_form-preferred_languages');
+    if (preferredLanguagesSelect) {
+        if (typeof $(preferredLanguagesSelect).selectpicker === 'function') {
+            $(preferredLanguagesSelect).selectpicker();
+        } else {
+            console.warn('Bootstrap-select library not loaded or selectpicker function not found.');
+        }
+    }
+
     const useOpenSubtitlesCheckbox = document.getElementById('os_form-use_opensubtitles');
     const credentialsDiv = document.getElementById('opensubtitles-credentials');
     const usernameField = document.getElementById('os_form-opensubtitles_username');

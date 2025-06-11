@@ -63,3 +63,22 @@
     </div>
 </div>
 {% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize Bootstrap-select for the preferred_languages field
+        // Ensure the select element has the ID 'preferred_languages'
+        var preferredLanguagesSelect = document.getElementById('preferred_languages');
+        if (preferredLanguagesSelect) {
+            // Check if selectpicker function exists (meaning the library loaded)
+            if (typeof $(preferredLanguagesSelect).selectpicker === 'function') {
+                $(preferredLanguagesSelect).selectpicker();
+            } else {
+                console.warn('Bootstrap-select library not loaded or selectpicker function not found.');
+            }
+        }
+    });
+</script>
+{% endblock %}

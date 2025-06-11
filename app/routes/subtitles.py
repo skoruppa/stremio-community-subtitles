@@ -122,7 +122,7 @@ def addon_stream(manifest_token: str, content_type: str, content_id: str, params
         except ValueError:
             current_app.logger.warning(f"Could not convert videoSize '{video_size_str}' to integer.")
 
-    preferred_lang = user.preferred_language
+    preferred_langs = user.preferred_languages
     current_app.logger.info(
         f"Subtitle request: User={user.username}, Lang={preferred_lang}, Content={content_type}/{content_id}, Hash={video_hash}, Size={video_size}, Filename={video_filename}")
 
@@ -194,38 +194,39 @@ def addon_stream(manifest_token: str, content_type: str, content_id: str, params
         db.session.rollback()
         current_app.logger.error(f"Failed to log or update user activity for user {user.id}: {e}", exc_info=True)
 
-    download_context = {
-        'content_type': content_type,
-        'content_id': content_id,
-        'lang': preferred_lang,
-        'v_hash': video_hash,
-        'v_size': video_size,
-        'v_fname': video_filename
-    }
-    try:
-        context_json = json.dumps(download_context, separators=(',', ':'))
-        download_identifier = base64.urlsafe_b64encode(context_json.encode('utf-8')).decode('utf-8').rstrip('=')
-    except Exception as e:
-        current_app.logger.error(f"Failed to encode download context: {e}")
-        return respond_with({'subtitles': []})
+    for preferred_lang in preferred_langs:
+        download_context = {
+            'content_type': content_type,
+            'content_id': content_id,
+            'lang': preferred_lang,
+            'v_hash': video_hash,
+            'v_size': video_size,
+            'v_fname': video_filename
+        }
+        try:
+            context_json = json.dumps(download_context, separators=(',', ':'))
+            download_identifier = base64.urlsafe_b64encode(context_json.encode('utf-8')).decode('utf-8').rstrip('=')
+        except Exception as e:
+            current_app.logger.error(f"Failed to encode download context: {e}")
+            return respond_with({'subtitles': []})
 
-    subtitles_list = []
-    try:
-        download_url = url_for('subtitles.unified_download',
-                               manifest_token=manifest_token,
-                               download_identifier=download_identifier,
-                               _external=True,
-                               _scheme=current_app.config['PREFERRED_URL_SCHEME'])
-        stremio_sub_id = f"comm_{download_identifier}"
-        subtitles_list.append({
-            'id': stremio_sub_id,
-            'url': download_url,
-            'lang': preferred_lang
-        })
-        current_app.logger.info(f"Generated download URL for context: {download_context}")
-    except Exception as e:
-        current_app.logger.error(f"Error generating download URL for identifier {download_identifier}: {e}")
-        return respond_with({'subtitles': []})
+        subtitles_list = []
+        try:
+            download_url = url_for('subtitles.unified_download',
+                                   manifest_token=manifest_token,
+                                   download_identifier=download_identifier,
+                                   _external=True,
+                                   _scheme=current_app.config['PREFERRED_URL_SCHEME'])
+            stremio_sub_id = f"comm_{download_identifier}"
+            subtitles_list.append({
+                'id': stremio_sub_id,
+                'url': download_url,
+                'lang': preferred_lang
+            })
+            current_app.logger.info(f"Generated download URL for context: {download_context}")
+        except Exception as e:
+            current_app.logger.error(f"Error generating download URL for identifier {download_identifier}: {e}")
+            return respond_with({'subtitles': []})
 
     return respond_with_no_cache({'subtitles': subtitles_list})
 
@@ -244,7 +245,7 @@ def unified_download(manifest_token: str, download_identifier: str):
         context_json = base64.urlsafe_b64decode(download_identifier.encode('utf-8')).decode('utf-8')
         context = json.loads(context_json)
         content_id = context.get('content_id')
-        preferred_lang = context.get('lang')
+        lang = context.get('lang')
         video_hash = context.get('v_hash')
         video_filename = context.get('v_fname')
         content_type = context.get('content_type', '')
@@ -255,7 +256,7 @@ def unified_download(manifest_token: str, download_identifier: str):
         return NoCacheResponse(generate_vtt_message("Invalid download link."), status=400, mimetype='text/vtt')
 
     # Use the utility function to get active subtitle details (now with OpenSubtitles fallback)
-    active_subtitle_info = get_active_subtitle_details(user, content_id, video_hash, content_type, video_filename)
+    active_subtitle_info = get_active_subtitle_details(user, content_id, video_hash, content_type, video_filename, lang)
 
     local_subtitle_to_serve = None
     opensubtitle_to_serve_details = None
@@ -638,8 +639,10 @@ def select_subtitle(activity_id, subtitle_id):
     subtitle_to_select = Subtitle.query.get_or_404(subtitle_id)
 
     try:
-        selection = UserSubtitleSelection.query.filter_by(user_id=current_user.id, content_id=activity.content_id,
-                                                          video_hash=activity.video_hash).first()
+        selection = UserSubtitleSelection.query.filter_by(user_id=current_user.id,
+                                                          content_id=activity.content_id,
+                                                          video_hash=activity.video_hash,
+                                                          language=subtitle_to_select.language).first()
         if selection:
             selection.selected_subtitle_id = subtitle_to_select.id
             selection.selected_external_file_id = None
@@ -650,7 +653,8 @@ def select_subtitle(activity_id, subtitle_id):
                 user_id=current_user.id,
                 content_id=activity.content_id,
                 video_hash=activity.video_hash,
-                selected_subtitle_id=subtitle_to_select.id
+                selected_subtitle_id=subtitle_to_select.id,
+                language=subtitle_to_select.language
             )
             db.session.add(selection)
         db.session.commit()

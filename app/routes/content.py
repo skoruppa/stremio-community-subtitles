@@ -20,7 +20,6 @@ def content_detail(activity_id):
     # Parse season/episode if applicable
     season = None
     episode = None
-    auto_selected = False
 
     # Fetch metadata using the helper
     metadata = get_metadata(activity.content_id, activity.content_type)
@@ -54,133 +53,141 @@ def content_detail(activity_id):
                 season = None
                 episode = None
 
-    # Determine Active Subtitle using the enhanced utility function
-    active_subtitle_info = get_active_subtitle_details(
-        current_user,
-        activity.content_id,
-        activity.video_hash,
-        activity.content_type,
-        activity.video_filename,
-        metadata
-    )
+    active_details_by_lang = {}
+    all_subs_matching_hash = []
+    all_subs_other_hash = []
+    all_subs_no_hash = []
+    opensubtitles_results_by_lang = {lang: [] for lang in current_user.preferred_languages}
+    all_subtitle_ids_for_voting = set() # Use a set to avoid duplicate IDs
 
-    active_subtitle = None
-    active_opensubtitle_details = None
-    user_vote_value = None
-    user_selection = active_subtitle_info.get('user_selection_record')
+    # Fetch all available local subtitles for all preferred languages in one query
+    all_local_subs = Subtitle.query.filter(
+        Subtitle.content_id == activity.content_id,
+        Subtitle.language.in_(current_user.preferred_languages)
+    ).options(joinedload(Subtitle.uploader)).all()
 
-    if active_subtitle_info:
-        auto_selected = active_subtitle_info['auto']
-
-    if active_subtitle_info['type'] == 'local':
-        active_subtitle = active_subtitle_info['subtitle']
-        user_vote_value = active_subtitle_info['user_vote_value']
-    elif active_subtitle_info['type'] in ['opensubtitles_selection', 'opensubtitles_auto']:
-        active_opensubtitle_details = active_subtitle_info['details']
-
-    # Fetch Available Local Subtitles (excluding the active one if it's local)
-    query_lang = current_user.preferred_language
-    available_subs_query = Subtitle.query.filter_by(
-        content_id=activity.content_id,
-        language=query_lang
-    ).options(joinedload(Subtitle.uploader))
-
-    # Exclude the active subtitle from the "available" list
-    if active_subtitle:
-        available_subs_query = available_subs_query.filter(Subtitle.id != active_subtitle.id)
-
-    all_available_subs_for_lang = available_subs_query.order_by(Subtitle.votes.desc()).all()
-
-    # Separate subtitles by hash match
-    subs_matching_hash = []
-    subs_other_hash = []
-    subs_no_hash = []
-
-    if activity.video_hash:
-        for sub in all_available_subs_for_lang:
-            if sub.video_hash == activity.video_hash:
-                subs_matching_hash.append(sub)
+    # Group local subtitles by language and hash, and also create aggregated lists
+    temp_grouped_local_subs = {lang: {'matching_hash': [], 'other_hash': [], 'no_hash': []} for lang in current_user.preferred_languages}
+    for sub in all_local_subs:
+        if sub.language in temp_grouped_local_subs:
+            if activity.video_hash and sub.video_hash == activity.video_hash:
+                temp_grouped_local_subs[sub.language]['matching_hash'].append(sub)
+                all_subs_matching_hash.append(sub)
             elif sub.video_hash is None:
-                subs_no_hash.append(sub)
+                temp_grouped_local_subs[sub.language]['no_hash'].append(sub)
+                all_subs_no_hash.append(sub)
             else:
-                subs_other_hash.append(sub)
-    else:
-        for sub in all_available_subs_for_lang:
-            if sub.video_hash is None:
-                subs_no_hash.append(sub)
-            else:
-                subs_other_hash.append(sub)
+                temp_grouped_local_subs[sub.language]['other_hash'].append(sub)
+                all_subs_other_hash.append(sub)
+        all_subtitle_ids_for_voting.add(sub.id)
 
-    # Get all subtitle IDs for voting
-    all_subtitle_ids = []
-    if active_subtitle:
-        all_subtitle_ids.append(active_subtitle.id)
-    all_subtitle_ids.extend([sub.id for sub in subs_matching_hash])
-    all_subtitle_ids.extend([sub.id for sub in subs_other_hash])
-    all_subtitle_ids.extend([sub.id for sub in subs_no_hash])
+    for lang_code in current_user.preferred_languages:
+        # Determine Active Subtitle for each language
+        active_subtitle_info = get_active_subtitle_details(
+            current_user,
+            activity.content_id,
+            activity.video_hash,
+            activity.content_type,
+            activity.video_filename,
+            metadata,
+            lang=lang_code # Pass the specific language
+        )
 
-    # Fetch all user votes for these subtitles
-    user_votes = {}
-    if all_subtitle_ids:
-        votes = SubtitleVote.query.filter(
-            SubtitleVote.user_id == current_user.id,
-            SubtitleVote.subtitle_id.in_(all_subtitle_ids)
-        ).all()
-        for vote in votes:
-            user_votes[vote.subtitle_id] = vote.vote_value
+        active_subtitle = None
+        active_opensubtitle_details = None
+        user_vote_value = None
+        user_selection = active_subtitle_info.get('user_selection_record')
+        auto_selected = False
 
-    # Get OpenSubtitles results using the new function
-    opensubtitles_results = []
-    if current_user.opensubtitles_active:
+        if active_subtitle_info:
+            auto_selected = active_subtitle_info['auto']
+
+        if active_subtitle_info['type'] == 'local':
+            active_subtitle = active_subtitle_info['subtitle']
+            user_vote_value = active_subtitle_info['user_vote_value']
+            if active_subtitle:
+                all_subtitle_ids_for_voting.add(active_subtitle.id)
+        elif active_subtitle_info['type'] in ['opensubtitles_selection', 'opensubtitles_auto']:
+            active_opensubtitle_details = active_subtitle_info['details']
+
+        active_details_by_lang[lang_code] = {
+            'active_subtitle': active_subtitle,
+            'active_opensubtitle_details': active_opensubtitle_details,
+            'user_selection': user_selection,
+            'user_vote_value': user_vote_value,
+            'auto_selected': auto_selected
+        }
+    
+    # Calculate has_any_user_selection
+    has_any_user_selection = any(details.get('user_selection') is not None for details in active_details_by_lang.values())
+
+    # Get OpenSubtitles results once for all preferred languages
+    if current_user.opensubtitles_active and current_user.preferred_languages:
         try:
-            os_results = search_opensubtitles(
+            os_results_all_langs = search_opensubtitles(
                 current_user,
                 activity.content_id,
                 activity.video_hash,
                 activity.content_type,
-                metadata
+                metadata,
+                lang=current_user.preferred_languages # Pass the list of languages
             )
 
-            # Convert 2-letter language codes to 3-letter codes for consistency
-            for item in os_results:
+            # Group OpenSubtitles results by language
+            for item in os_results_all_langs:
                 if 'attributes' in item and 'language' in item['attributes']:
                     try:
                         lang_2letter = item['attributes']['language']
                         if lang_2letter.lower() == 'pt-pt':
-                            item['attributes']['language_3letter'] = 'por'
+                            lang_3letter = 'por'
                         elif lang_2letter.lower() == 'pt-br':
-                            item['attributes']['language_3letter'] = 'pob'
+                            lang_3letter = 'pob'
                         else:
                             lang_obj = Lang(lang_2letter)
-                            item['attributes']['language_3letter'] = lang_obj.pt3
-                    except:
-                        current_app.logger.warning(f"Could not convert language code {lang_2letter}")
-                        item['attributes']['language_3letter'] = lang_2letter
-
-            opensubtitles_results = os_results
+                            lang_3letter = lang_obj.pt3
+                        
+                        item['attributes']['language_3letter'] = lang_3letter
+                        if lang_3letter in opensubtitles_results_by_lang:
+                            opensubtitles_results_by_lang[lang_3letter].append(item)
+                    except Exception as e:
+                        current_app.logger.warning(f"Could not convert language code {lang_2letter}: {e}")
+                        # If conversion fails, just log and skip if not in preferred_languages
+                        pass
 
         except Exception as e:
             current_app.logger.error(f"Error fetching OpenSubtitles results for display: {e}", exc_info=True)
             flash("An error occurred while searching OpenSubtitles.", "warning")
+
+    # Fetch all user votes for all collected subtitle IDs
+    user_votes = {}
+    if all_subtitle_ids_for_voting:
+        votes = SubtitleVote.query.filter(
+            SubtitleVote.user_id == current_user.id,
+            SubtitleVote.subtitle_id.in_(list(all_subtitle_ids_for_voting))
+        ).all()
+        for vote in votes:
+            user_votes[vote.subtitle_id] = vote.vote_value
+
+    # Calculate has_opensubtitles_results
+    has_opensubtitles_results = any(os_results for os_results in opensubtitles_results_by_lang.values())
 
     # Pass context to the template
     context = {
         'activity': activity,
         'season': season,
         'episode': episode,
-        'subs_matching_hash': subs_matching_hash,
-        'subs_other_hash': subs_other_hash,
-        'subs_no_hash': subs_no_hash,
-        'active_subtitle': active_subtitle,
-        'user_selection': user_selection,
-        'user_vote_value': user_vote_value,
+        'active_details_by_lang': active_details_by_lang,
+        'all_subs_matching_hash': all_subs_matching_hash,
+        'all_subs_other_hash': all_subs_other_hash,
+        'all_subs_no_hash': all_subs_no_hash,
         'user_votes': user_votes,
-        'language_list': LANGUAGES,
-        'LANGUAGE_DICT': LANGUAGE_DICT,
-        'auto_selected': auto_selected,
+        'language_list': LANGUAGES, # All available languages
+        'LANGUAGE_DICT': LANGUAGE_DICT, # Dictionary for language names
         'metadata': metadata,
-        'opensubtitles_results': opensubtitles_results,
-        'active_opensubtitle_details': active_opensubtitle_details
+        'opensubtitles_results_by_lang': opensubtitles_results_by_lang,
+        'preferred_languages': current_user.preferred_languages, # User's selected preferred languages
+        'has_any_user_selection': has_any_user_selection,
+        'has_opensubtitles_results': has_opensubtitles_results
     }
 
     return render_template('main/content_detail.html', **context)

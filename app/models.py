@@ -354,6 +354,7 @@ class UserSubtitleSelection(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
     content_id = db.Column(db.String(100), nullable=False, index=True) # e.g. imdb_id:season:episode or imdb_id
     video_hash = db.Column(db.String(50), nullable=True, index=True) # OpenSubtitles hash or other video file hash
+    language = db.Column(db.String(10), nullable=False, index=True) # Added language column
 
     # Fields for selecting a subtitle from our own database
     selected_subtitle_id = db.Column(GUID(), db.ForeignKey('subtitles.id'), nullable=True)
@@ -370,10 +371,9 @@ class UserSubtitleSelection(db.Model):
     user = db.relationship('User', backref=db.backref('selections', lazy='dynamic'))
     selected_subtitle = db.relationship('Subtitle') # For locally hosted subtitles
 
-    # Ensure that for a given user, content_id, and video_hash, only one selection type is active.
-
+    # Ensure that for a given user, content_id, video_hash, and language, only one selection type is active.
     __table_args__ = (
-        db.UniqueConstraint('user_id', 'content_id', 'video_hash', name='uq_user_content_hash_selection'),
+        db.UniqueConstraint('user_id', 'content_id', 'video_hash', 'language', name='uq_user_content_hash_language_selection'),
     )
 
     def __repr__(self):

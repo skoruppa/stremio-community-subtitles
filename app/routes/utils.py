@@ -109,7 +109,7 @@ def calculate_filename_similarity(video_filename, subtitle_release_name):
     return difflib.SequenceMatcher(None, norm_video_filename, norm_subtitle_release_name).ratio()
 
 
-def search_opensubtitles(user, content_id, video_hash=None, content_type=None, metadata=None):
+def search_opensubtitles(user, content_id, video_hash=None, content_type=None, metadata=None, lang=None):
     """
     Searches for subtitles on OpenSubtitles based on provided parameters.
 
@@ -131,18 +131,36 @@ def search_opensubtitles(user, content_id, video_hash=None, content_type=None, m
         current_app.logger.info(f"User {user.username} doesn't have active OpenSubtitles integration")
         return []
 
-    # Convert user language to OpenSubtitles format
-    if user.preferred_language == 'pob':
-        os_language = 'pt-br'
-    elif user.preferred_language == 'por':
-        os_language = 'pt-pt'
-    else:
-        os_language = Lang(user.preferred_language).pt1
+    # Convert language(s) to OpenSubtitles format
+    os_languages_list = []
+    if isinstance(lang, list):
+        for l in lang:
+            if l == 'pob':
+                os_languages_list.append('pt-br')
+            elif l == 'por':
+                os_languages_list.append('pt-pt')
+            else:
+                try:
+                    os_languages_list.append(Lang(l).pt1)
+                except KeyError:
+                    current_app.logger.warning(f"Could not convert language code {l} to ISO 639-1 for OpenSubtitles.")
+        os_language_param = ",".join(os_languages_list)
+    else: # Assume single language string
+        if lang == 'pob':
+            os_language_param = 'pt-br'
+        elif lang == 'por':
+            os_language_param = 'pt-pt'
+        else:
+            try:
+                os_language_param = Lang(lang).pt1
+            except KeyError:
+                current_app.logger.warning(f"Could not convert language code {lang} to ISO 639-1 for OpenSubtitles.")
+                os_language_param = lang # Fallback to original if conversion fails
 
     try:
         # Build search parameters
         os_search_params = {
-            'languages': os_language
+            'languages': os_language_param
         }
         if video_hash:
             os_search_params['moviehash'] = video_hash
@@ -199,7 +217,7 @@ def search_opensubtitles(user, content_id, video_hash=None, content_type=None, m
 
 
 def get_active_subtitle_details(user, content_id, video_hash=None, content_type=None, video_filename=None,
-                                metadata=None):
+                                metadata=None, lang=None):
     active_details = {'type': 'none', 'subtitle': None, 'details': None, 'user_vote_value': None,
                       'user_selection_record': None, 'auto': False}
 
@@ -211,7 +229,8 @@ def get_active_subtitle_details(user, content_id, video_hash=None, content_type=
     # 1. User selection
     user_selection_query = UserSubtitleSelection.query.filter_by(
         user_id=user.id,
-        content_id=content_id
+        content_id=content_id,
+        language=lang
     )
     if video_hash:
         user_selection_query = user_selection_query.filter_by(video_hash=video_hash)
@@ -250,7 +269,7 @@ def get_active_subtitle_details(user, content_id, video_hash=None, content_type=
         current_app.logger.debug(f"Step 2: Checking local by hash: {video_hash} for {content_id}")
         local_sub_by_hash = Subtitle.query.filter_by(
             content_id=content_id,
-            language=user.preferred_language,
+            language=lang,
             video_hash=video_hash
         ).order_by(Subtitle.votes.desc()).options(joinedload(Subtitle.uploader)).first()
 
@@ -264,7 +283,7 @@ def get_active_subtitle_details(user, content_id, video_hash=None, content_type=
     # 3. OpenSubtitles with matching video_hash
     if video_hash and user.opensubtitles_active:
         current_app.logger.debug(f"Step 3: Checking OS by hash: {video_hash} for {content_id}")
-        os_search_results = search_opensubtitles(user, content_id, video_hash, content_type, metadata)
+        os_search_results = search_opensubtitles(user, content_id, video_hash, content_type, metadata, lang)
         for item in os_search_results:
             attrs = item.get('attributes', {})
             files = attrs.get('files', [])
@@ -281,7 +300,7 @@ def get_active_subtitle_details(user, content_id, video_hash=None, content_type=
                 current_app.logger.info(f"Auto-selected OS (hash match): {files[0].get('file_id')} for {content_id}")
                 return active_details
 
-    # 4. Best Match (if `video_filename` is available)
+    # 4. Best Match
     if video_filename:
         current_app.logger.debug(f"Step 4: Checking by filename: {video_filename} for {content_id}")
         candidates = []
@@ -289,7 +308,7 @@ def get_active_subtitle_details(user, content_id, video_hash=None, content_type=
 
         # A. Local
         all_local_subs = Subtitle.query.filter_by(
-            content_id=content_id, language=user.preferred_language
+            content_id=content_id, language=lang
         ).options(joinedload(Subtitle.uploader)).all()
 
         for sub in all_local_subs:
@@ -301,7 +320,7 @@ def get_active_subtitle_details(user, content_id, video_hash=None, content_type=
         if user.opensubtitles_active:
             if os_search_results is None:
                 current_app.logger.debug("Step 4: Performing general OS search for filename matching.")
-                os_search_results = search_opensubtitles(user, content_id, None, content_type, metadata)
+                os_search_results = search_opensubtitles(user, content_id, None, content_type, metadata, lang)
 
             for item in os_search_results:
                 attrs = item.get('attributes', {})
@@ -334,7 +353,7 @@ def get_active_subtitle_details(user, content_id, video_hash=None, content_type=
                     'type': 'opensubtitles_auto',
                     'details': {
                         'file_id': files[0].get('file_id'), 'release_name': files[0].get('file_name'),
-                        'language': user.preferred_language, 'moviehash_match': attrs.get('moviehash_match', False),
+                        'language': lang, 'moviehash_match': attrs.get('moviehash_match', False),
                         'ai_translated': attrs.get('ai_translated') or attrs.get('machine_translated'),
                         'uploader': attrs.get('uploader', {}).get('name'), 'url': attrs.get('url')
                     }
@@ -345,7 +364,7 @@ def get_active_subtitle_details(user, content_id, video_hash=None, content_type=
     if not video_filename:
         current_app.logger.debug(f"Step 5: Fallback (no hash) for {content_id}")
         # 5a. Local subtitles without video_hash
-        local_no_hash_subs = (Subtitle.query.filter_by(content_id=content_id, language=user.preferred_language)
+        local_no_hash_subs = (Subtitle.query.filter_by(content_id=content_id, language=lang)
                               .filter(Subtitle.video_hash.is_(None)).order_by(Subtitle.votes.desc())
                               .options(joinedload(Subtitle.uploader)).all())
 
@@ -359,7 +378,7 @@ def get_active_subtitle_details(user, content_id, video_hash=None, content_type=
             return active_details
 
         # 5b. Any other local subtitles
-        all_local_subs_fallback = (Subtitle.query.filter_by(content_id=content_id, language=user.preferred_language)
+        all_local_subs_fallback = (Subtitle.query.filter_by(content_id=content_id, language=lang)
                                    .order_by(Subtitle.votes.desc()).options(joinedload(Subtitle.uploader)).first())
 
         if all_local_subs_fallback:
@@ -375,7 +394,7 @@ def get_active_subtitle_details(user, content_id, video_hash=None, content_type=
         current_app.logger.debug(f"Step 6: General OpenSubtitles fallback for {content_id}")
         if os_search_results is None:
             current_app.logger.debug("Step 6: Performing general OS search for final fallback.")
-            os_search_results = search_opensubtitles(user, content_id, None, content_type, metadata)
+            os_search_results = search_opensubtitles(user, content_id, None, content_type, metadata, lang)
 
         not_ai = []
         ai = []
@@ -385,7 +404,7 @@ def get_active_subtitle_details(user, content_id, video_hash=None, content_type=
             if not (files and files[0].get('file_id')): continue
             detail = {
                 'file_id': files[0].get('file_id'), 'release_name': files[0].get('file_name'),
-                'language': user.preferred_language, 'moviehash_match': attrs.get('moviehash_match', False),
+                'language': lang, 'moviehash_match': attrs.get('moviehash_match', False),
                 'ai_translated': attrs.get('ai_translated') or attrs.get('machine_translated'),
                 'uploader': attrs.get('uploader', {}).get('name'), 'url': attrs.get('url')
             }

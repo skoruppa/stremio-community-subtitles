@@ -96,7 +96,8 @@ def link_opensubtitle(activity_id, opensub_file_id):
             selection = UserSubtitleSelection.query.filter_by(
                 user_id=current_user.id,
                 content_id=activity.content_id,
-                video_hash=activity.video_hash
+                video_hash=activity.video_hash,
+                language=os_language
             ).first()
             if selection:
                 selection.selected_subtitle_id = existing_link.id
@@ -107,7 +108,8 @@ def link_opensubtitle(activity_id, opensub_file_id):
                     user_id=current_user.id,
                     content_id=activity.content_id,
                     video_hash=activity.video_hash,
-                    selected_subtitle_id=existing_link.id
+                    selected_subtitle_id=existing_link.id,
+                    language=os_language
                 )
                 db.session.add(selection)
             db.session.commit()
@@ -154,7 +156,8 @@ def link_opensubtitle(activity_id, opensub_file_id):
         selection = UserSubtitleSelection.query.filter_by(
             user_id=current_user.id,
             content_id=activity.content_id,
-            video_hash=activity.video_hash
+            video_hash=activity.video_hash,
+            language=os_language
         ).first()
 
         if selection:
@@ -167,7 +170,8 @@ def link_opensubtitle(activity_id, opensub_file_id):
                 user_id=current_user.id,
                 content_id=activity.content_id,
                 video_hash=activity.video_hash,
-                selected_subtitle_id=new_linked_subtitle.id
+                selected_subtitle_id=new_linked_subtitle.id,
+                language=os_language
             )
             db.session.add(new_user_selection)
 
@@ -188,10 +192,11 @@ def link_opensubtitle(activity_id, opensub_file_id):
 def select_opensubtitle(activity_id, opensub_file_id):
     """Handles the selection of an OpenSubtitle for a given activity."""
     activity = UserActivity.query.filter_by(id=activity_id, user_id=current_user.id).first_or_404()
+    language = request.form.get("os_language")
 
     opensub_details = {
         "file_id": opensub_file_id,
-        "language": request.form.get("os_language", current_user.preferred_language),
+        "language": language,
         "release_name": request.form.get("os_release_name", "N/A"),
         "uploader": request.form.get("os_uploader", "N/A"),
         "ai_translated": request.form.get("os_ai_translated") == 'true',
@@ -203,7 +208,8 @@ def select_opensubtitle(activity_id, opensub_file_id):
         selection = UserSubtitleSelection.query.filter_by(
             user_id=current_user.id,
             content_id=activity.content_id,
-            video_hash=activity.video_hash
+            video_hash=activity.video_hash,
+            language=language
         ).first()
 
         if selection:
@@ -219,7 +225,8 @@ def select_opensubtitle(activity_id, opensub_file_id):
                 video_hash=activity.video_hash,
                 selected_external_file_id=opensub_file_id,
                 external_details_json=opensub_details,
-                selected_subtitle_id=None
+                selected_subtitle_id=None,
+                language=language
             )
             db.session.add(new_selection)
             flash('OpenSubtitle selected successfully.', 'success')
