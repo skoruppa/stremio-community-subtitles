@@ -1,4 +1,4 @@
-{% macro render_subtitle_item(subtitle, user_votes, user_selection, activity_id, current_video_hash, current_user_obj, lang_dict) %}
+{% macro render_subtitle_item(subtitle, user_votes, user_selection, activity_id, current_video_hash, current_user_obj, lang_dict, is_active_subtitle=false) %}
 {#
     Renders a single community subtitle item (either uploaded or linked from OpenSubtitles).
     - subtitle: The Subtitle object from the database.
@@ -8,8 +8,9 @@
     - current_video_hash: The video_hash of the current UserActivity.
     - current_user_obj: The current logged-in user object.
     - lang_dict: Dictionary mapping language codes to names.
+    - is_active_subtitle (bool): True if this subtitle is the currently active selection for its language.
 #}
-<div class="list-group-item list-group-item-action {% if user_selection and user_selection.selected_subtitle_id == subtitle.id %}bg-info{% endif %}">
+<div class="list-group-item list-group-item-action {% if is_active_subtitle %}bg-info{% endif %}">
     <div class="row align-items-center">
         <div class="col-md-7 col-lg-8">
             <h6 class="mb-1">
@@ -33,16 +34,17 @@
             </small>
             <div>
                 {% if subtitle.video_hash %}
-                    <span class="badge {% if subtitle.video_hash == current_video_hash %}bg-success{% else %}bg-warning text-dark{% endif %} mt-1" title="Video Hash: {{ subtitle.video_hash }}">
+                    <span class="badge {% if subtitle.video_hash == current_video_hash %}bg-success{% else %}bg-warning text-dark{% endif %}" title="Video Hash: {{ subtitle.video_hash }}">
                         <i class="fas fa-fingerprint"></i> 
                         {% if subtitle.video_hash == current_video_hash %}Matches Current Video{% else %}Different Video Version{% endif %}
                     </span>
                 {% else %}
-                    <span class="badge bg-light text-dark mt-1">No Hash Specific</span>
+                    <span class="badge bg-light text-dark">No Hash Specific</span>
                 {% endif %}
             </div>
         </div>
         <div class="col-md-5 col-lg-4 text-end">
+            {% if is_active_subtitle %}
             {# Vote Buttons - Only show if subtitle is community or OS-linked AND matches current video hash #}
             {% if subtitle.source_type in ['community', 'opensubtitles_community_link'] and subtitle.video_hash == current_video_hash %}
             <form action="{{ url_for('subtitles.vote_subtitle', subtitle_id=subtitle.id, vote_type='up', activity_id=activity_id) }}" method="POST" class="d-inline"> {# Pass activity_id explicitly #}
@@ -60,9 +62,10 @@
                 </button>
             </form>
             {% endif %}
+            {% endif %}
 
             {# Select Button #}
-            {% if user_selection and user_selection.selected_subtitle_id == subtitle.id %}
+            {% if is_active_subtitle %}
                 <button class="btn btn-sm btn-success disabled ms-2" disabled><i class="fas fa-check-circle"></i> Selected</button>
             {% else %}
                 <form action="{{ url_for('subtitles.select_subtitle', activity_id=activity_id, subtitle_id=subtitle.id) }}" method="POST" class="d-inline ms-2"> {# Pass activity_id explicitly #}
@@ -74,7 +77,7 @@
             {% endif %}
 
             {# Mark Compatible Button - only for community uploads with a file_path #}
-            {% if user_selection and user_selection.selected_subtitle_id == subtitle.id and current_video_hash and subtitle.video_hash and subtitle.video_hash != current_video_hash and subtitle.source_type == 'community' and subtitle.file_path %}
+            {% if not is_active_subtitle and current_video_hash and subtitle.video_hash and subtitle.video_hash != current_video_hash and subtitle.source_type == 'community' and subtitle.file_path %}
                 <form action="{{ url_for('subtitles.mark_compatible_hash', subtitle_id=subtitle.id ) }}" method="POST" class="d-inline ms-1">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <input type="hidden" name="target_video_hash" value="{{ current_video_hash }}">
