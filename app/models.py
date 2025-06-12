@@ -316,6 +316,7 @@ class Subtitle(db.Model):
     video_hash = db.Column(db.String(50), nullable=True, index=True)
     language = db.Column(db.String(10), nullable=False, index=True)
     file_path = db.Column(db.String(255), nullable=True) # Nullable now, for linked OpenSubtitles
+    hash = db.Column(db.String(64), nullable=True, index=True) # SHA256 hash of the VTT content
     uploader_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     upload_timestamp = db.Column(db.DateTime, default=datetime.datetime.utcnow, index=True)
     votes = db.Column(db.Integer, default=0, index=True)
