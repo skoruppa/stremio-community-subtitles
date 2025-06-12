@@ -443,7 +443,28 @@ def upload_subtitle(activity_id=None):
             form.episode_number = IntegerField('Episode Number', validators=[Optional()])
 
     if request.method == 'GET':
-        form.language.data = current_user.preferred_language
+        # Set default language based on browser preference or first preferred language
+        selected_language = None
+        if current_user.preferred_languages:
+            browser_prefs = request.accept_languages.values()
+            for browser_pref in browser_prefs:
+                try:
+                    lang_code_browser = browser_pref.split('-')[0].strip()
+                    lang_obj_browser = Lang(lang_code_browser)
+                    # Check if browser's 3-letter code is in user's preferred languages
+                    if lang_obj_browser.pt3 in current_user.preferred_languages:
+                        selected_language = lang_obj_browser.pt3
+                        break
+                except KeyError:
+                    current_app.logger.warning(f"iso639-lang could not convert browser lang code {browser_pref} to ISO 639-3.")
+            
+            if selected_language:
+                form.language.data = selected_language
+            else:
+                form.language.data = current_user.preferred_languages[0] # Fallback to first preferred language
+        else:
+            form.language.data = 'eng' # Default to English if no preferred languages set
+
         if activity and activity.video_filename:
             form.version_info.data = activity.video_filename.rsplit('.', 1)[0]
 
@@ -597,7 +618,8 @@ def upload_subtitle(activity_id=None):
                 try:
                     existing_selection = UserSubtitleSelection.query.filter_by(user_id=current_user.id,
                                                                                content_id=content_id,
-                                                                               video_hash=video_hash).first()
+                                                                               video_hash=video_hash,
+                                                                               language=form.language.data).first()
                     if existing_selection:
                         existing_selection.selected_subtitle_id = new_subtitle.id
                         existing_selection.selected_external_file_id = None
@@ -606,7 +628,8 @@ def upload_subtitle(activity_id=None):
                     else:
                         new_selection = UserSubtitleSelection(user_id=current_user.id, content_id=content_id,
                                                               video_hash=video_hash,
-                                                              selected_subtitle_id=new_subtitle.id)
+                                                              selected_subtitle_id=new_subtitle.id,
+                                                              language=form.language.data)
                         db.session.add(new_selection)
                     db.session.commit()
                     flash('Subtitle uploaded and selected successfully!', 'success')

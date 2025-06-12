@@ -121,7 +121,7 @@
                     {% set user_vote_value = active_details.user_vote_value if active_details else none %}
                     {% set auto_selected = active_details.auto_selected if active_details else false %}
 
-                    <div class="list-group list-group-flush mt-2">
+                    <div class="list-group list-group-flush">
                         <h6 class="list-group-item bg-light d-flex justify-content-between align-items-center">
                             Currently Selected ({{ LANGUAGE_DICT.get(lang_code, lang_code) }})
                             <div>
@@ -186,8 +186,10 @@
                 {% endif %}
                 
                 {% if all_subs_no_hash %}
-                <div class="mt-3">
-                    <h6 class="border-bottom pb-2">General Subtitles (No Hash, All Languages)</h6>
+                <div class="card shadow-sm mt-3 mx-2">
+                    <div class="card-header">
+                        <h6 class="mb-0">General Subtitles (No Hash, All Languages)</h6>
+                     </div>
                     <div class="list-group list-group-flush">
                         {% for subtitle in all_subs_no_hash %}
                             {{ render_subtitle_item(subtitle, user_votes, user_selection, activity.id, activity.video_hash, current_user, LANGUAGE_DICT) }}
@@ -232,8 +234,11 @@
                         <p class="mb-0"><a href="{{ url_for('main.account_settings') }}">Activate OpenSubtitles integration in your account settings</a> to see results here.</p>
                     </div>
                 {% else %}
-                    <div class="list-group list-group-flush mt-3">
+                    <div class="list-group list-group-flush">
                     {% for lang_code, os_results in opensubtitles_results_by_lang.items() %}
+                         <h6 class="list-group-item bg-light d-flex justify-content-between align-items-center mb-0">
+                            {{ LANGUAGE_DICT.get(lang_code, lang_code) }}
+                        </h6>
                         {% if os_results %}
                                 {% for os_item in os_results %}
                                     {# Need to pass active_opensubtitle_details for the specific language #}
