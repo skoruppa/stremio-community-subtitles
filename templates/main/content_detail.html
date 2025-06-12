@@ -3,7 +3,7 @@
 {% block title %}{{ metadata.display_title if metadata else activity.content_id }} - {{ super() }}{% endblock %}
 
 {% from "_subtitle_list_item.html" import render_subtitle_item %}
-{% from "_opensubtitle_list_item.html" import render_opensubtitle_item %} {# Import the new macro #}
+{% from "_opensubtitle_list_item.html" import render_opensubtitle_item %}
 
 {% block content %}
 <div class="row mb-4">
@@ -93,125 +93,125 @@
             {% endif %}
         </div>
         
+        {# Community Subtitles Section #}
         <div class="card shadow-sm mb-4">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">Community Subtitles</h5>
-                <a href="{{ url_for('subtitles.upload_subtitle', activity_id=activity.id) }}" class="btn btn-sm btn-success">
-                    <i class="fas fa-upload me-1"></i>Upload New
-                </a>
+                <div>
+                    {% if has_any_user_selection %}
+                        <form method="POST" action="{{ url_for('subtitles.reset_selection', activity_id=activity.id) }}" class="d-inline-block me-2">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure you want to reset ALL your subtitle selections for this content?')">
+                                <i class="fas fa-times me-1"></i>Reset All Selections
+                            </button>
+                        </form>
+                    {% endif %}
+                    <a href="{{ url_for('subtitles.upload_subtitle', activity_id=activity.id) }}" class="btn btn-sm btn-success d-inline-block">
+                        <i class="fas fa-upload me-1"></i>Upload New
+                    </a>
+                </div>
             </div>
             <div class="card-body p-0">
-                {# Display Active Subtitle (either local or OpenSubtitle) #}
-                {% if active_subtitle %}
+                {# Display Active Subtitle (either local or OpenSubtitle) for each preferred language #}
+                {% for lang_code in preferred_languages %}
+                    {% set active_details = active_details_by_lang.get(lang_code) %}
+                    {% set active_subtitle = active_details.active_subtitle if active_details else none %}
+                    {% set active_opensubtitle_details = active_details.active_opensubtitle_details if active_details else none %}
+                    {% set user_selection = active_details.user_selection if active_details else none %}
+                    {% set user_vote_value = active_details.user_vote_value if active_details else none %}
+                    {% set auto_selected = active_details.auto_selected if active_details else false %}
+
                     <div class="list-group list-group-flush">
-                        <div class="list-group-item active-subtitle">
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <h5 class="mb-0">Currently Selected</h5>
-                                <div>
+                        <h6 class="list-group-item bg-light d-flex justify-content-between align-items-center">
+                            Currently Selected ({{ LANGUAGE_DICT.get(lang_code, lang_code) }})
+                            <div>
+                                {% if active_subtitle %}
                                     {% if auto_selected %}
-                                    <span class="badge bg-info">Auto Selected</span>
+                                    <span class="badge bg-info ms-1">Auto Selected</span>
                                     {% else %}
-                                    <span class="badge bg-success">User Selected</span>
-                                    
-                                    <form method="POST" action="{{ url_for('subtitles.reset_selection', activity_id=activity.id) }}" class="d-inline ms-2">
-                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                        <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure you want to reset your subtitle selection?')">
-                                            <i class="fas fa-times me-1"></i>Reset Selection
-                                        </button>
-                                    </form>
+                                    <span class="badge bg-success ms-1">User Selected</span>
                                     {% endif %}
-                                </div>
-                            </div>
-                            {{ render_subtitle_item(active_subtitle, user_votes, user_selection, activity.id, activity.video_hash, current_user, LANGUAGE_DICT) }} {# Pass activity.id #}
-                        </div>
-                    </div>
-                {% elif active_opensubtitle_details %}
-                    <div class="list-group list-group-flush">
-                        <div class="list-group-item active-subtitle"> {# Use same styling for active OpenSubtitle #}
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <h5 class="mb-0">Currently Selected</h5>
-                                <div>
-                                    <span class="badge bg-warning">OpenSubtitles</span>
+                                {% elif active_opensubtitle_details %}
+                                    <span class="badge bg-warning ms-1">OpenSubtitles</span>
                                     {% if auto_selected %}
-                                    <span class="badge bg-info">Auto Selected</span>
+                                    <span class="badge bg-info ms-1">Auto Selected</span>
                                     {% else %}
-                                    <span class="badge bg-success">User Selected</span>
-                                    
-                                    <form method="POST" action="{{ url_for('subtitles.reset_selection', activity_id=activity.id) }}" class="d-inline ms-2">
-                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                        <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure you want to reset your subtitle selection?')">
-                                            <i class="fas fa-times me-1"></i>Reset Selection
-                                        </button>
-                                    </form>
+                                    <span class="badge bg-success ms-1">User Selected</span>
                                     {% endif %}
-                                </div>
+                                {% endif %}
                             </div>
-                            {# Use the macro to render the active OpenSubtitle details #}
-                            {# The macro expects opensub_item structure, so we need to adapt active_opensubtitle_details #}
-                            {# active_opensubtitle_details is a JSON dict, not the full OS item structure #}
-                            {# We need to construct a minimal opensub_item-like dict for the macro #}
-                            {% set active_os_item_for_macro = {
-                                'attributes': {
-                                    'language': active_opensubtitle_details.language, 
-                                    'language_3letter': active_opensubtitle_details.language, 
-                                    'files': [{'file_id': active_opensubtitle_details.file_id, 'file_name': active_opensubtitle_details.release_name}],
-                                    'uploader': {'name': active_opensubtitle_details.uploader},
-                                    'moviehash_match': active_opensubtitle_details.moviehash_match,
-                                    'ai_translated': active_opensubtitle_details.ai_translated,
-                                    'machine_translated': false, 
-                                    'ratings': None, 
-                                    'votes': None, 
-                                    'url': active_opensubtitle_details.url
-                                }
-                            } %}
-                            {{ render_opensubtitle_item(activity, active_os_item_for_macro, current_user.preferred_language, active_opensubtitle_details, LANGUAGE_DICT, is_active_selection=true) }} {# Pass LANGUAGE_DICT and is_active_selection=true #}
-                        </div>
+                        </h6>
+                        {% if active_subtitle %}
+                            <div class="list-group-item active-subtitle">
+                                {{ render_subtitle_item(active_subtitle, user_votes, user_selection, activity.id, activity.video_hash, current_user, LANGUAGE_DICT, is_active_subtitle=true) }}
+                            </div>
+                        {% elif active_opensubtitle_details %}
+                            <div class="list-group-item active-subtitle">
+                                {% set active_os_item_for_macro = {
+                                    'attributes': {
+                                        'language': active_opensubtitle_details.language, 
+                                        'language_3letter': active_opensubtitle_details.language, 
+                                        'files': [{'file_id': active_opensubtitle_details.file_id, 'file_name': active_opensubtitle_details.release_name}],
+                                        'uploader': {'name': active_opensubtitle_details.uploader},
+                                        'moviehash_match': active_opensubtitle_details.moviehash_match,
+                                        'ai_translated': active_opensubtitle_details.ai_translated,
+                                        'machine_translated': false, 
+                                        'ratings': None, 
+                                        'votes': None, 
+                                        'url': active_opensubtitle_details.url
+                                    }
+                                } %}
+                                {{ render_opensubtitle_item(activity, active_os_item_for_macro, lang_code, active_opensubtitle_details, LANGUAGE_DICT, is_active_selection=true) }}
+                            </div>
+                        {% else %}
+                            <div class="p-3 text-muted">
+                                <small>No subtitle selected for this language.</small>
+                            </div>
+                        {% endif %}
                     </div>
-                {% elif not user_selection and not active_subtitle %} {# No explicit user selection and no auto-selected local sub #}
-                     {# Auto-selection of OpenSubtitles with moviehash_match will be handled by unified_download, not explicitly shown as "active" here unless selected by user #}
-                     <div class="p-3 text-muted">
-                        <small>No subtitle selected. The best match will be chosen automatically if available, or you can select one below.</small>
+                {% endfor %} {# End loop for preferred_languages for "Currently Selected" #}
+
+                {# Display aggregated available subtitles #}
+                {% if all_subs_matching_hash %}
+                <div class="card shadow-sm mt-3 mx-2">
+                    <div class="card-header">
+                        <h6 class="mb-0">Subtitles Matching Video Hash ({{ preferred_languages_display }})</h6>
                     </div>
-                {% endif %}
-                
-                {% if subs_matching_hash %}
-                <div class="card shadow-sm mt-3 mx-2"> {# Added card and mx-2 #}
-                    <div class="card-header"> {# Added card-header #}
-                        <h6 class="mb-0">Subtitles Matching Video Hash</h6> {# Changed h6 to mb-0 #}
-                    </div> {# Closed card-header #}
                     <div class="list-group list-group-flush">
-                        {% for subtitle in subs_matching_hash %}
-                            {{ render_subtitle_item(subtitle, user_votes, user_selection, activity.id, activity.video_hash, current_user, LANGUAGE_DICT) }} {# Pass activity.id #}
-                        {% endfor %}
-                    </div>
-                </div> {# Closed card #}
-                {% endif %}
-                
-                {% if subs_no_hash %}
-                <div class="mt-3">
-                    <h6 class="border-bottom pb-2">General Subtitles (No Hash)</h6>
-                    <div class="list-group list-group-flush">
-                        {% for subtitle in subs_no_hash %}
-                            {{ render_subtitle_item(subtitle, user_votes, user_selection, activity.id, activity.video_hash, current_user, LANGUAGE_DICT) }} {# Pass activity.id #}
+                        {% for subtitle in all_subs_matching_hash %}
+                            {{ render_subtitle_item(subtitle, user_votes, user_selection, activity.id, activity.video_hash, current_user, LANGUAGE_DICT, is_active_subtitle=(active_details_by_lang.get(subtitle.language) and active_details_by_lang.get(subtitle.language).active_subtitle and active_details_by_lang.get(subtitle.language).active_subtitle.id == subtitle.id)) }}
                         {% endfor %}
                     </div>
                 </div>
                 {% endif %}
                 
-                {% if subs_other_hash %}
-                <div class="card shadow-sm mt-3 mx-2"> {# Added card and mx-2 #}
-                    <div class="card-header"> {# Added card-header #}
-                        <h6 class="mb-0">Other Subtitles (Different Hash)</h6> {# Changed h6 to mb-0 #}
-                    </div> {# Closed card-header #}
+                {% if all_subs_no_hash %}
+                <div class="card shadow-sm mt-3 mx-2">
+                    <div class="card-header">
+                        <h6 class="mb-0">General Subtitles (No Hash, {{ preferred_languages_display }})</h6>
+                     </div>
                     <div class="list-group list-group-flush">
-                        {% for subtitle in subs_other_hash %}
-                            {{ render_subtitle_item(subtitle, user_votes, user_selection, activity.id, activity.video_hash, current_user, LANGUAGE_DICT) }} {# Pass activity.id #}
+                        {% for subtitle in all_subs_no_hash %}
+                            {{ render_subtitle_item(subtitle, user_votes, user_selection, activity.id, activity.video_hash, current_user, LANGUAGE_DICT, is_active_subtitle=(active_details_by_lang.get(subtitle.language) and active_details_by_lang.get(subtitle.language).active_subtitle and active_details_by_lang.get(subtitle.language).active_subtitle.id == subtitle.id)) }}
                         {% endfor %}
                     </div>
-                </div> {# Closed card #}
+                </div>
                 {% endif %}
                 
-                {% if not active_subtitle and not active_opensubtitle_details and not subs_matching_hash and not subs_no_hash and not subs_other_hash and not opensubtitles_results %}
+                {% if all_subs_other_hash %}
+                <div class="card shadow-sm mt-3 mx-2">
+                    <div class="card-header">
+                        <h6 class="mb-0">Other Subtitles (Different Hash, {{ preferred_languages_display }})</h6>
+                    </div>
+                    <div class="list-group list-group-flush">
+                        {% for subtitle in all_subs_other_hash %}
+                            {{ render_subtitle_item(subtitle, user_votes, user_selection, activity.id, activity.video_hash, current_user, LANGUAGE_DICT, is_active_subtitle=(active_details_by_lang.get(subtitle.language) and active_details_by_lang.get(subtitle.language).active_subtitle and active_details_by_lang.get(subtitle.language).active_subtitle.id == subtitle.id)) }}
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% if not active_details_by_lang and not all_subs_matching_hash and not all_subs_no_hash and not all_subs_other_hash and not opensubtitles_results_by_lang %}
                 <div class="p-4 text-center">
                     <p class="mb-3">No community subtitles available for this content yet.</p>
                     <a href="{{ url_for('subtitles.upload_subtitle', activity_id=activity.id) }}" class="btn btn-primary">
@@ -222,29 +222,37 @@
             </div>
         </div>
 
-        {# OpenSubtitles Section #}
+        {# OpenSubtitles Section - Displayed once for all languages #}
         <div class="card shadow-sm mb-4">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">OpenSubtitles Results <small class="text-muted">({{ LANGUAGE_DICT.get(current_user.preferred_language, current_user.preferred_language) }})</small></h5>
-                {# Optionally add a refresh button or language selector here later #}
+                <h5 class="mb-0">OpenSubtitles Results</h5>
             </div>
             <div class="card-body p-0">
-                {% if current_user.is_authenticated and not current_user.opensubtitles_active %} {# Check if user is logged in but integration is inactive #}
+                {% if current_user.is_authenticated and not current_user.opensubtitles_active %}
                     <div class="p-3 text-center text-muted">
                         <p class="mb-0">OpenSubtitles integration is not active.</p>
                         <p class="mb-0"><a href="{{ url_for('main.account_settings') }}">Activate OpenSubtitles integration in your account settings</a> to see results here.</p>
                     </div>
-                {% elif opensubtitles_results %}
-                    <div class="list-group list-group-flush">
-                        {% for os_item in opensubtitles_results %}
-                            {{ render_opensubtitle_item(activity, os_item, current_user.preferred_language, active_opensubtitle_details, LANGUAGE_DICT, is_active_selection=false) }} {# Pass LANGUAGE_DICT and is_active_selection=false #}
-                        {% endfor %}
-                    </div>
                 {% else %}
-                    <div class="p-3 text-center text-muted">
-                        <p class="mb-0">No subtitles found on OpenSubtitles for your criteria and language.</p>
-                        <small>(Searched for language: {{ LANGUAGE_DICT.get(current_user.preferred_language, current_user.preferred_language) }})</small>
+                    <div class="list-group list-group-flush">
+                    {% for lang_code, os_results in opensubtitles_results_by_lang.items() %}
+                        {% if os_results %}
+                            <h6 class="list-group-item bg-light mb-0">{{ LANGUAGE_DICT.get(lang_code, lang_code) }}</h6>
+                                {% for os_item in os_results %}
+                                    {# Need to pass active_opensubtitle_details for the specific language #}
+                                    {% set active_details = active_details_by_lang.get(lang_code) %}
+                                    {% set active_opensubtitle_details = active_details.active_opensubtitle_details if active_details else none %}
+                                    {{ render_opensubtitle_item(activity, os_item, lang_code, active_opensubtitle_details, LANGUAGE_DICT, is_active_selection=false) }}
+                                {% endfor %}
+
+                        {% endif %}
+                    {% endfor %}
                     </div>
+                    {% if not has_opensubtitles_results %}
+                        <div class="p-3 text-center text-muted">
+                            <p class="mb-0">No subtitles found on OpenSubtitles for your criteria and preferred languages.</p>
+                        </div>
+                    {% endif %}
                 {% endif %}
             </div>
         </div>
@@ -272,6 +280,36 @@
         } else {
             img.style.display = 'none';
         }
+    });
+
+    // Handle pulsating effect for matching subtitle pairs
+    document.querySelectorAll('.list-group-item[data-language]').forEach(item => {
+        item.addEventListener('mouseover', function() {
+            const hoveredLang = this.dataset.language;
+            const hoveredSubtitleId = this.dataset.subtitleId;
+            const hoveredOpensubFileId = this.dataset.opensubFileId;
+
+            document.querySelectorAll('.list-group-item[data-language]').forEach(potentialMatch => {
+                if (potentialMatch.dataset.language === hoveredLang) {
+                    let isMatch = false;
+                    if (hoveredSubtitleId && potentialMatch.dataset.subtitleId === hoveredSubtitleId) {
+                        isMatch = true;
+                    } else if (hoveredOpensubFileId && potentialMatch.dataset.opensubFileId === hoveredOpensubFileId) {
+                        isMatch = true;
+                    }
+
+                    if (isMatch) {
+                        potentialMatch.classList.add('highlighted');
+                    }
+                }
+            });
+        });
+
+        item.addEventListener('mouseout', function() {
+            document.querySelectorAll('.list-group-item.highlighted').forEach(highlightedItem => {
+                highlightedItem.classList.remove('highlighted');
+            });
+        });
     });
 });
 </script>

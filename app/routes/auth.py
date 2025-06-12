@@ -60,7 +60,7 @@ def register():
         return redirect(url_for('main.index'))
 
     form = RegistrationForm()
-    form.preferred_language.choices = LANGUAGES
+    form.preferred_languages.choices = LANGUAGES
 
     # Set default language based on browser preference
     if not form.is_submitted():
@@ -91,7 +91,7 @@ def register():
                         f"iso639-lang could not convert browser lang code {browser_pref} to ISO 639-3.")
 
             if best_match_3:
-                form.preferred_language.data = best_match_3
+                form.preferred_languages.data = [best_match_3]
             else:
                 current_app.logger.info("No supported language found matching browser preferences.")
         else:
@@ -111,7 +111,7 @@ def register():
             return render_template('auth/register.html', title='Register', form=form)
 
         user = User(username=form.username.data, email=form.email.data,
-                    preferred_language=form.preferred_language.data, active=False)
+                    preferred_languages=form.preferred_languages.data, active=False)
         user.set_password(form.password.data)
         user.generate_manifest_token()
 

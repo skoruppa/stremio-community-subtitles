@@ -1,15 +1,17 @@
 import datetime
 import uuid
 import secrets
+import json
 from time import time
 
-from sqlalchemy import TypeDecorator
+from sqlalchemy import TypeDecorator, Text
+from sqlalchemy.dialects.mysql import LONGTEXT
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.types import TypeDecorator, CHAR
-from sqlalchemy.ext.mutable import MutableDict
+from sqlalchemy.ext.mutable import MutableDict, MutableList
 from .extensions import db, login_manager
 from flask import current_app
 
@@ -54,6 +56,51 @@ class GUID(TypeDecorator):
         return uuid.UUID(value)
 
 
+class JSONType(TypeDecorator):
+    """Platform-independent JSON type.
+    
+    Uses PostgreSQL's JSONB type for better performance and indexing,
+    otherwise uses LONGTEXT and handles JSON serialization/deserialization manually.
+    """
+    
+    impl = Text
+    cache_ok = True
+    
+    def load_dialect_impl(self, dialect):
+        if dialect.name == 'postgresql':
+            return dialect.type_descriptor(JSONB())
+        elif dialect.name in ('mysql', 'mariadb'):
+            # Use LONGTEXT for MySQL/MariaDB to handle large JSON documents
+            return dialect.type_descriptor(LONGTEXT())
+        else:
+            # Fallback to regular Text for other databases
+            return dialect.type_descriptor(Text())
+    
+    def process_bind_param(self, value, dialect):
+        if value is None:
+            return value
+        if dialect.name == 'postgresql':
+            # PostgreSQL handles JSON natively
+            return value
+        else:
+            # For MySQL/MariaDB, serialize to JSON string
+            return json.dumps(value)
+    
+    def process_result_value(self, value, dialect):
+        if value is None:
+            return value
+        if dialect.name == 'postgresql':
+            # PostgreSQL returns already parsed JSON
+            return value
+        else:
+            # For MySQL/MariaDB, deserialize from JSON string
+            try:
+                return json.loads(value)
+            except (ValueError, TypeError):
+                # Handle case where value might not be valid JSON
+                return value
+
+
 class Role(db.Model):
     __tablename__ = 'roles'
     id = db.Column(db.Integer, primary_key=True)
@@ -70,7 +117,7 @@ class User(UserMixin, db.Model):
     username = db.Column(db.String(80), unique=True, nullable=False, index=True)
     email = db.Column(db.String(120), unique=True, nullable=False, index=True)
     password_hash = db.Column(db.String(255), nullable=False)
-    preferred_language = db.Column(db.String(10), nullable=False, default='en')
+    preferred_languages = db.Column(MutableList.as_mutable(JSONType), default=list)
     active = db.Column(db.Boolean, default=False)  # Changed to False by default until email is confirmed
     created_at = db.Column(db.DateTime, default=datetime.datetime.utcnow)
     manifest_token = db.Column(db.String(64), unique=True, nullable=True, index=True)
@@ -269,6 +316,7 @@ class Subtitle(db.Model):
     video_hash = db.Column(db.String(50), nullable=True, index=True)
     language = db.Column(db.String(10), nullable=False, index=True)
     file_path = db.Column(db.String(255), nullable=True) # Nullable now, for linked OpenSubtitles
+    hash = db.Column(db.String(64), nullable=True, index=True) # SHA256 hash of the VTT content
     uploader_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     upload_timestamp = db.Column(db.DateTime, default=datetime.datetime.utcnow, index=True)
     votes = db.Column(db.Integer, default=0, index=True)
@@ -276,7 +324,7 @@ class Subtitle(db.Model):
     version_info = db.Column(db.Text, nullable=True)
 
     source_type = db.Column(db.String(50), nullable=False, default='community', index=True) # E.g., 'community', 'opensubtitles_link'
-    source_metadata = db.Column(MutableDict.as_mutable(JSONB), nullable=True) 
+    source_metadata = db.Column(MutableDict.as_mutable(JSONType), nullable=True) 
 
     uploader = db.relationship('User', backref=db.backref('uploaded_subtitles', lazy=True))
 
@@ -307,6 +355,7 @@ class UserSubtitleSelection(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
     content_id = db.Column(db.String(100), nullable=False, index=True) # e.g. imdb_id:season:episode or imdb_id
     video_hash = db.Column(db.String(50), nullable=True, index=True) # OpenSubtitles hash or other video file hash
+    language = db.Column(db.String(10), nullable=False, index=True) # Added language column
 
     # Fields for selecting a subtitle from our own database
     selected_subtitle_id = db.Column(GUID(), db.ForeignKey('subtitles.id'), nullable=True)
@@ -316,17 +365,16 @@ class UserSubtitleSelection(db.Model):
     selected_external_file_id = db.Column(db.Integer, nullable=True, index=True)
     
     # Store relevant details of the selected OpenSubtitle to avoid re-fetching constantly for display
-    external_details_json = db.Column(MutableDict.as_mutable(JSONB), nullable=True)
+    external_details_json = db.Column(MutableDict.as_mutable(JSONType), nullable=True)
 
     timestamp = db.Column(db.DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
 
     user = db.relationship('User', backref=db.backref('selections', lazy='dynamic'))
     selected_subtitle = db.relationship('Subtitle') # For locally hosted subtitles
 
-    # Ensure that for a given user, content_id, and video_hash, only one selection type is active.
-
+    # Ensure that for a given user, content_id, video_hash, and language, only one selection type is active.
     __table_args__ = (
-        db.UniqueConstraint('user_id', 'content_id', 'video_hash', name='uq_user_content_hash_selection'),
+        db.UniqueConstraint('user_id', 'content_id', 'video_hash', 'language', name='uq_user_content_hash_language_selection'),
     )
 
     def __repr__(self):

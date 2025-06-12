@@ -18,7 +18,7 @@
                     {{ render_field(form.email) }}
                     {{ render_field(form.password) }}
                     {{ render_field(form.password2) }}
-                    {{ render_field(form.preferred_language) }}
+                    {{ render_field(form.preferred_languages) }}
                     
                     {{ render_submit_button(form.submit) }}
                 </form>
@@ -62,4 +62,23 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize Bootstrap-select for the preferred_languages field
+        // Ensure the select element has the ID 'preferred_languages'
+        var preferredLanguagesSelect = document.getElementById('preferred_languages');
+        if (preferredLanguagesSelect) {
+            // Check if selectpicker function exists (meaning the library loaded)
+            if (typeof $(preferredLanguagesSelect).selectpicker === 'function') {
+                $(preferredLanguagesSelect).selectpicker();
+            } else {
+                console.warn('Bootstrap-select library not loaded or selectpicker function not found.');
+            }
+        }
+    });
+</script>
 {% endblock %}

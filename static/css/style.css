@@ -150,3 +150,13 @@ body {
     opacity: 0;
     transform: scale(0.95);
 }
+
+
+.list-group-item.bg-info {
+    transition: filter 0.3s ease-in-out; 
+    filter: brightness(1); 
+}
+
+.list-group-item.bg-info.highlighted {
+    filter: brightness(0.9); 
+}
