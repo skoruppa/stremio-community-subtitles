@@ -109,7 +109,7 @@ def calculate_filename_similarity(video_filename, subtitle_release_name):
     return difflib.SequenceMatcher(None, norm_video_filename, norm_subtitle_release_name).ratio()
 
 
-def search_opensubtitles(user, content_id, video_hash=None, content_type=None, metadata=None, lang=None):
+def search_opensubtitles(user, content_id, video_hash=None, content_type=None, lang=None):
     """
     Searches for subtitles on OpenSubtitles based on provided parameters.
 
@@ -118,7 +118,6 @@ def search_opensubtitles(user, content_id, video_hash=None, content_type=None, m
         content_id (str): The content ID (e.g., IMDB ID, or IMDB_ID:S:E)
         video_hash (str, optional): The hash of the video file
         content_type (str, optional): 'movie', 'series', or 'episode'
-        metadata (dict, optional): Additional metadata with title, season, episode info
 
     Returns:
         list: List of OpenSubtitles search results, or empty list if no results/error
@@ -216,8 +215,7 @@ def search_opensubtitles(user, content_id, video_hash=None, content_type=None, m
         return []
 
 
-def get_active_subtitle_details(user, content_id, video_hash=None, content_type=None, video_filename=None,
-                                metadata=None, lang=None):
+def get_active_subtitle_details(user, content_id, video_hash=None, content_type=None, video_filename=None, lang=None):
     active_details = {'type': 'none', 'subtitle': None, 'details': None, 'user_vote_value': None,
                       'user_selection_record': None, 'auto': False}
 
@@ -283,7 +281,7 @@ def get_active_subtitle_details(user, content_id, video_hash=None, content_type=
     # 3. OpenSubtitles with matching video_hash
     if video_hash and user.opensubtitles_active:
         current_app.logger.debug(f"Step 3: Checking OS by hash: {video_hash} for {content_id}")
-        os_search_results = search_opensubtitles(user, content_id, video_hash, content_type, metadata, lang)
+        os_search_results = search_opensubtitles(user, content_id, video_hash, content_type, lang)
         for item in os_search_results:
             attrs = item.get('attributes', {})
             files = attrs.get('files', [])
@@ -320,7 +318,7 @@ def get_active_subtitle_details(user, content_id, video_hash=None, content_type=
         if user.opensubtitles_active:
             if os_search_results is None:
                 current_app.logger.debug("Step 4: Performing general OS search for filename matching.")
-                os_search_results = search_opensubtitles(user, content_id, None, content_type, metadata, lang)
+                os_search_results = search_opensubtitles(user, content_id, None, content_type, lang)
 
             for item in os_search_results:
                 attrs = item.get('attributes', {})
@@ -394,7 +392,7 @@ def get_active_subtitle_details(user, content_id, video_hash=None, content_type=
         current_app.logger.debug(f"Step 6: General OpenSubtitles fallback for {content_id}")
         if os_search_results is None:
             current_app.logger.debug("Step 6: Performing general OS search for final fallback.")
-            os_search_results = search_opensubtitles(user, content_id, None, content_type, metadata, lang)
+            os_search_results = search_opensubtitles(user, content_id, None, content_type, lang)
 
         not_ai = []
         ai = []

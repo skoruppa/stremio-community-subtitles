@@ -257,7 +257,7 @@ def unified_download(manifest_token: str, download_identifier: str):
         return NoCacheResponse(generate_vtt_message("Invalid download link."), status=400, mimetype='text/vtt')
 
     # Use the utility function to get active subtitle details (now with OpenSubtitles fallback)
-    active_subtitle_info = get_active_subtitle_details(user, content_id, video_hash, content_type, video_filename, None, lang)
+    active_subtitle_info = get_active_subtitle_details(user, content_id, video_hash, content_type, video_filename, lang)
 
     local_subtitle_to_serve = None
     opensubtitle_to_serve_details = None
