@@ -24,7 +24,9 @@
 {% set sub_file = sub_attr.files[0] if sub_attr.files else None %}
 
 {% if sub_file %}
-    <div class="list-group-item list-group-item-action {% if active_opensubtitle_details and active_opensubtitle_details.file_id == sub_file.file_id %}bg-info{% endif %}">
+    <div class="list-group-item list-group-item-action {% if active_opensubtitle_details and active_opensubtitle_details.file_id == sub_file.file_id %}bg-info active-selection-item{% else %}available-item{% endif %}"
+         data-opensub-file-id="{{ sub_file.file_id }}"
+         data-language="{{ sub_attr.language_3letter }}">
         <div class="row align-items-center">
             <div class="col-md-8">
                 <h6 class="mb-1">

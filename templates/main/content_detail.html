@@ -237,7 +237,7 @@
                     <div class="list-group list-group-flush">
                     {% for lang_code, os_results in opensubtitles_results_by_lang.items() %}
                         {% if os_results %}
-                            <h6 class="list-group-item bg-light">Language: {{ LANGUAGE_DICT.get(lang_code, lang_code) }}</h6>
+                            <h6 class="list-group-item bg-light mb-0">Language: {{ LANGUAGE_DICT.get(lang_code, lang_code) }}</h6>
                                 {% for os_item in os_results %}
                                     {# Need to pass active_opensubtitle_details for the specific language #}
                                     {% set active_details = active_details_by_lang.get(lang_code) %}
@@ -280,6 +280,36 @@
         } else {
             img.style.display = 'none';
         }
+    });
+
+    // Handle pulsating effect for matching subtitle pairs
+    document.querySelectorAll('.list-group-item[data-language]').forEach(item => {
+        item.addEventListener('mouseover', function() {
+            const hoveredLang = this.dataset.language;
+            const hoveredSubtitleId = this.dataset.subtitleId;
+            const hoveredOpensubFileId = this.dataset.opensubFileId;
+
+            document.querySelectorAll('.list-group-item[data-language]').forEach(potentialMatch => {
+                if (potentialMatch.dataset.language === hoveredLang) {
+                    let isMatch = false;
+                    if (hoveredSubtitleId && potentialMatch.dataset.subtitleId === hoveredSubtitleId) {
+                        isMatch = true;
+                    } else if (hoveredOpensubFileId && potentialMatch.dataset.opensubFileId === hoveredOpensubFileId) {
+                        isMatch = true;
+                    }
+
+                    if (isMatch) {
+                        potentialMatch.classList.add('highlighted');
+                    }
+                }
+            });
+        });
+
+        item.addEventListener('mouseout', function() {
+            document.querySelectorAll('.list-group-item.highlighted').forEach(highlightedItem => {
+                highlightedItem.classList.remove('highlighted');
+            });
+        });
     });
 });
 </script>

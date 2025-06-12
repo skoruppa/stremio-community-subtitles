@@ -10,7 +10,9 @@
     - lang_dict: Dictionary mapping language codes to names.
     - is_active_subtitle (bool): True if this subtitle is the currently active selection for its language.
 #}
-<div class="list-group-item list-group-item-action {% if is_active_subtitle %}bg-info{% endif %}">
+<div class="list-group-item list-group-item-action {% if is_active_subtitle %}bg-info active-selection-item{% else %}available-item{% endif %}"
+     data-subtitle-id="{{ subtitle.id }}"
+     data-language="{{ subtitle.language }}">
     <div class="row align-items-center">
         <div class="col-md-7 col-lg-8">
             <h6 class="mb-1">

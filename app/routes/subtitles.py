@@ -731,19 +731,25 @@ def vote_subtitle(subtitle_id, vote_type):
 @login_required
 def reset_selection(activity_id):
     activity = UserActivity.query.filter_by(id=activity_id, user_id=current_user.id).first_or_404()
-    selection = UserSubtitleSelection.query.filter_by(user_id=current_user.id, content_id=activity.content_id,
-                                                      video_hash=activity.video_hash).first()
-    if selection:
+    # Find all selections for this user and activity
+    selections_to_delete = UserSubtitleSelection.query.filter_by(
+        user_id=current_user.id,
+        content_id=activity.content_id,
+        video_hash=activity.video_hash
+    ).all() # Use .all() to get all matching records
+
+    if selections_to_delete:
         try:
-            db.session.delete(selection)
+            for selection in selections_to_delete:
+                db.session.delete(selection)
             db.session.commit()
-            flash('Subtitle selection reset.', 'success')
+            flash('All subtitle selections for this content have been reset.', 'success')
         except Exception as e:
             db.session.rollback()
-            current_app.logger.error(f"Error resetting selection: {e}", exc_info=True)
-            flash('Error resetting selection.', 'danger')
+            current_app.logger.error(f"Error resetting selections: {e}", exc_info=True)
+            flash('Error resetting selections.', 'danger')
     else:
-        flash('No selection to reset.', 'info')
+        flash('No selections to reset for this content.', 'info')
     return redirect(url_for('content.content_detail', activity_id=activity_id))
 
 
