@@ -151,12 +151,12 @@ body {
     transform: scale(0.95);
 }
 
-/* New CSS for active subtitle highlight effect */
+
 .list-group-item.bg-info {
-    transition: filter 0.3s ease-in-out; /* Smooth transition for brightness */
-    filter: brightness(1); /* Default brightness */
+    transition: filter 0.3s ease-in-out; 
+    filter: brightness(1); 
 }
 
 .list-group-item.bg-info.highlighted {
-    filter: brightness(0.9); /* Increased brightness on hover */
+    filter: brightness(0.9); 
 }
