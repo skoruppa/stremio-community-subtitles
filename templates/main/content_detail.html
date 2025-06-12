@@ -175,7 +175,7 @@
                 {% if all_subs_matching_hash %}
                 <div class="card shadow-sm mt-3 mx-2">
                     <div class="card-header">
-                        <h6 class="mb-0">Subtitles Matching Video Hash (All Languages)</h6>
+                        <h6 class="mb-0">Subtitles Matching Video Hash ({{ preferred_languages_display }})</h6>
                     </div>
                     <div class="list-group list-group-flush">
                         {% for subtitle in all_subs_matching_hash %}
@@ -188,7 +188,7 @@
                 {% if all_subs_no_hash %}
                 <div class="card shadow-sm mt-3 mx-2">
                     <div class="card-header">
-                        <h6 class="mb-0">General Subtitles (No Hash, All Languages)</h6>
+                        <h6 class="mb-0">General Subtitles (No Hash - {{ preferred_languages_display }})</h6>
                      </div>
                     <div class="list-group list-group-flush">
                         {% for subtitle in all_subs_no_hash %}
@@ -201,7 +201,7 @@
                 {% if all_subs_other_hash %}
                 <div class="card shadow-sm mt-3 mx-2">
                     <div class="card-header">
-                        <h6 class="mb-0">Other Subtitles (Different Hash, All Languages)</h6>
+                        <h6 class="mb-0">Other Subtitles (Different Hash, {{ preferred_languages_display }})</h6>
                     </div>
                     <div class="list-group list-group-flush">
                         {% for subtitle in all_subs_other_hash %}
@@ -236,10 +236,8 @@
                 {% else %}
                     <div class="list-group list-group-flush">
                     {% for lang_code, os_results in opensubtitles_results_by_lang.items() %}
-                         <h6 class="list-group-item bg-light d-flex justify-content-between align-items-center mb-0">
-                            {{ LANGUAGE_DICT.get(lang_code, lang_code) }}
-                        </h6>
                         {% if os_results %}
+                            <h6 class="list-group-item bg-light">Language: {{ LANGUAGE_DICT.get(lang_code, lang_code) }}</h6>
                                 {% for os_item in os_results %}
                                     {# Need to pass active_opensubtitle_details for the specific language #}
                                     {% set active_details = active_details_by_lang.get(lang_code) %}

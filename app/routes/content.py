@@ -171,6 +171,9 @@ def content_detail(activity_id):
     # Calculate has_opensubtitles_results
     has_opensubtitles_results = any(os_results for os_results in opensubtitles_results_by_lang.values())
 
+    # Prepare preferred languages for display
+    preferred_languages_display = ", ".join([LANGUAGE_DICT.get(lang_code, lang_code) for lang_code in current_user.preferred_languages])
+
     # Pass context to the template
     context = {
         'activity': activity,
@@ -187,7 +190,8 @@ def content_detail(activity_id):
         'opensubtitles_results_by_lang': opensubtitles_results_by_lang,
         'preferred_languages': current_user.preferred_languages, # User's selected preferred languages
         'has_any_user_selection': has_any_user_selection,
-        'has_opensubtitles_results': has_opensubtitles_results
+        'has_opensubtitles_results': has_opensubtitles_results,
+        'preferred_languages_display': preferred_languages_display
     }
 
     return render_template('main/content_detail.html', **context)
