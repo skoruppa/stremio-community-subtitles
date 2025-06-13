@@ -128,7 +128,6 @@ def content_detail(activity_id):
                 activity.content_id,
                 activity.video_hash,
                 activity.content_type,
-                metadata,
                 lang=current_user.preferred_languages # Pass the list of languages
             )
 
