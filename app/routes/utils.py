@@ -186,10 +186,6 @@ def search_opensubtitles(user, content_id, video_hash=None, content_type=None, l
         elif content_type == 'movie':
             os_search_params['type'] = 'movie'
 
-        # Add query as fallback if no IMDB ID and no hash
-        if not os_search_params.get('imdb_id') and not video_hash and metadata and metadata.get('title'):
-            os_search_params['query'] = metadata.get('title')
-
         # Ensure we have enough parameters for a meaningful search
         if not (os_search_params.get('imdb_id') or os_search_params.get('moviehash') or os_search_params.get('query')):
             current_app.logger.info("Not enough parameters for OpenSubtitles search")
