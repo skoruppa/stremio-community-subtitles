@@ -342,7 +342,8 @@ def unified_download(manifest_token: str, download_identifier: str):
                     current_app.logger.info(f"Serving OpenSubtitles direct url")
 
             except opensubtitles_client.OpenSubtitlesError as e:
-                current_app.logger.error(f"OpenSubtitles API error while serving file_id {os_file_id}: {e}")
+                current_app.logger.error(f"OpenSubtitles API error while serving file_id {os_file_id}: {e}. "
+                                         f"Try to relogin through the account's settings")
                 message_key = 'os_error_contact_support'
             except Exception as e:
                 current_app.logger.error(f"Unexpected error serving OpenSubtitle file_id {os_file_id}: {e}",
