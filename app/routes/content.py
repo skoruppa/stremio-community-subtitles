@@ -89,8 +89,7 @@ def content_detail(activity_id):
             activity.video_hash,
             activity.content_type,
             activity.video_filename,
-            metadata,
-            lang=lang_code # Pass the specific language
+            lang=lang_code  # Pass the specific language
         )
 
         active_subtitle = None
