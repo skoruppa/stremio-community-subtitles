@@ -31,27 +31,41 @@ def opensubtitles_logout():
         flash('OpenSubtitles integration is not active or session details are missing.', 'warning')
         return redirect(url_for('main.account_settings'))
 
-    try:
-        current_app.logger.info(f"User {current_user.username} attempting to logout from OpenSubtitles.")
-        opensubtitles_client.logout(current_user.opensubtitles_token, user=current_user)
+    current_app.logger.info(f"User {current_user.username} attempting to logout from OpenSubtitles.")
 
-        # Clear OS-related fields from User model
+    # Always clear local session data, regardless of API response
+    def clear_local_session():
         current_user.opensubtitles_token = None
         current_user.opensubtitles_base_url = None
         current_user.opensubtitles_active = False
         db.session.commit()
 
+    try:
+        opensubtitles_client.logout(current_user.opensubtitles_token, user=current_user)
+        clear_local_session()
         flash('Successfully logged out from OpenSubtitles.', 'success')
         current_app.logger.info(f"User {current_user.username} successfully logged out from OpenSubtitles.")
     except OpenSubtitlesError as e:
-        db.session.rollback()
-        current_app.logger.error(f"OpenSubtitles logout API call failed for user {current_user.username}: {e}")
-        flash(f'OpenSubtitles logout failed: {e}. Your local integration status may be unchanged.', 'danger')
+        # Check if it's a 401 or 500 error - still clear local session
+        if hasattr(e, 'status_code') and e.status_code in [401, 500]:
+            clear_local_session()
+            current_app.logger.warning(
+                f"OpenSubtitles API returned {e.status_code} for user {current_user.username}, but cleared local session: {e}")
+            flash(
+                f'OpenSubtitles service returned an error ({e.status_code}), but you have been logged out locally and can try logging in again.',
+                'warning')
+        else:
+            db.session.rollback()
+            current_app.logger.error(f"OpenSubtitles logout API call failed for user {current_user.username}: {e}")
+            flash(f'OpenSubtitles logout failed: {e}. Your local integration status may be unchanged.', 'danger')
     except Exception as e:
-        db.session.rollback()
+        # For any other unexpected errors, also clear local session to avoid stuck state
+        clear_local_session()
         current_app.logger.error(f"Unexpected error during OpenSubtitles logout for {current_user.username}: {e}",
                                  exc_info=True)
-        flash('An unexpected error occurred during OpenSubtitles logout.', 'danger')
+        flash(
+            'An unexpected error occurred during OpenSubtitles logout, but you have been logged out locally and can try logging in again.',
+            'warning')
 
     return redirect(url_for('main.account_settings'))
 
