@@ -101,7 +101,7 @@ def addon_stream(manifest_token: str, content_type: str, content_id: str, params
 
     # --- Parameter Extraction ---
     content_id = unquote(content_id)
-    if "mal:" in content_id:
+    if content_id.startswith("mal:"):
         current_app.logger.info(f"Ignoring as those are probably from the Docchi extension with hardcoded subs")
         return respond_with({'subtitles': []})
 
