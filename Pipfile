@@ -12,7 +12,7 @@ click = "==8.1.8"
 blinker = "==1.9.0"
 flask-sqlalchemy = "==3.1.1"
 sqlalchemy = "==2.0.40"
-psycopg2-binary = "==2.9.9"
+psycopg2-binary = "==2.9.10"
 flask-migrate = "==4.0.7"
 alembic = "==1.15.2"
 flask-login = "==0.6.3"
@@ -35,6 +35,7 @@ chardet = "*"
 iso639-lang = "*"
 cloudinary = "*"
 flask-talisman = "*"
+resend = "*"
 
 [dev-packages]
 

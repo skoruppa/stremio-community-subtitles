@@ -31,14 +31,8 @@ class Config:
     SESSION_COOKIE_SAMESITE = 'Lax'
     
     # Mail configuration
-    MAIL_SERVER = os.environ.get('MAIL_SERVER')
-    MAIL_PORT = int(os.environ.get('MAIL_PORT') or 587)
-    MAIL_USE_TLS = os.environ.get('MAIL_USE_TLS') is not None or True
-    MAIL_USE_SSL = os.environ.get('MAIL_USE_SSL') is not None or False
-    MAIL_USERNAME = os.environ.get('MAIL_USERNAME')
-    MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
-    MAIL_DEBUG = os.environ.get('MAIL_DEBUG') is not None or False
     MAIL_DEFAULT_SENDER = os.environ.get('MAIL_DEFAULT_SENDER')
+    RESEND_API_KEY = os.environ.get('RESEND_API_KEY')
     
     # Database configuration
     # Check if USE_SQLITE environment variable is set to a truthy value

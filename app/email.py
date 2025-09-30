@@ -1,43 +1,45 @@
 from flask import current_app, render_template
-from flask_mail import Message
 from threading import Thread
-from .extensions import mail
 import logging
+import resend
 
 logger = logging.getLogger(__name__)
 
-def send_async_email(app, msg):
-    """Send email asynchronously."""
+
+def send_async_email_with_resend(app, sender, recipients, subject, html_body):
     with app.app_context():
+        api_key = current_app.config.get('RESEND_API_KEY')
+        if not api_key:
+            logger.error("RESEND_API_KEY is not set. Cannot send email.")
+            return
+
+        resend.api_key = api_key
+
+        params = {
+            "from": sender,
+            "to": recipients,
+            "subject": subject,
+            "html": html_body,
+        }
+
         try:
-            logger.info("Attempting to send an email...")
-            logger.info(f"MAIL_SERVER: {current_app.config.get('MAIL_SERVER')}")
-            logger.info(f"MAIL_PORT: {current_app.config.get('MAIL_PORT')}")
-            logger.info(f"MAIL_USE_TLS: {current_app.config.get('MAIL_USE_TLS')}")
-            logger.info(f"MAIL_USE_SSL: {current_app.config.get('MAIL_USE_SSL')}")
-            logger.info(f"MAIL_USERNAME: {current_app.config.get('MAIL_USERNAME')}")
-
-            mail.send(msg)
-
-            logger.info("Email sent successfully!")
-
+            logger.info(f"Attempting to send email via Resend to: {recipients[0]}")
+            email = resend.Emails.send(params)
+            logger.info(f"Email sent successfully via Resend. Message ID: {email['id']}")
         except Exception as e:
-            logger.error(f"Failed to send email. Exception Type: {type(e).__name__}, Message: {e}", exc_info=True)
+            logger.error(f"Failed to send email via Resend API: {e}", exc_info=True)
 
 
 def send_email(subject, recipients, text_body, html_body, sender=None):
-    """Send an email."""
     app = current_app._get_current_object()
-    msg = Message(subject, recipients=recipients, sender=sender)
-    msg.body = text_body
-    msg.html = html_body
 
-    # Send email asynchronously
-    Thread(target=send_async_email, args=(app, msg)).start()
+    if sender is None:
+        sender = app.config['MAIL_DEFAULT_SENDER']
+
+    Thread(target=send_async_email_with_resend, args=(app, sender, recipients, subject, html_body)).start()
 
 
 def send_confirmation_email(user):
-    """Send an email confirmation to a user."""
     token = user.get_email_confirmation_token()
     send_email(
         subject='Stremio Community Subs - Confirm Your Email',
@@ -48,7 +50,6 @@ def send_confirmation_email(user):
 
 
 def send_password_reset_email(user):
-    """Send a password reset email to a user."""
     token = user.get_reset_password_token()
     send_email(
         subject='Stremio Community Subs - Reset Your Password',
