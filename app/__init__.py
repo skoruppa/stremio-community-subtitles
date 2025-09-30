@@ -2,7 +2,7 @@ import os
 import logging
 from flask import Flask
 from flask_talisman import Talisman
-from .extensions import db, migrate, login_manager, csrf, compress, cache, cors, mail
+from .extensions import db, migrate, login_manager, csrf, compress, cache, cors
 from config import get_config
 from . import models
 
@@ -50,7 +50,6 @@ def create_app():
     compress.init_app(app)
     cache.init_app(app)
     cors.init_app(app)
-    mail.init_app(app)
 
     from .routes.auth import auth_bp
     from .routes.main import main_bp

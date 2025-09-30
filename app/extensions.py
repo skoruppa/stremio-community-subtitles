@@ -5,7 +5,6 @@ from flask_wtf.csrf import CSRFProtect
 from flask_compress import Compress
 from flask_caching import Cache
 from flask_cors import CORS
-from flask_mail import Mail
 
 db = SQLAlchemy()
 migrate = Migrate()
@@ -14,7 +13,6 @@ csrf = CSRFProtect()
 compress = Compress()
 cache = Cache()
 cors = CORS()
-mail = Mail()
 
 # Configure login manager
 login_manager.login_view = 'auth.login'
