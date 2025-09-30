@@ -2,12 +2,27 @@ from flask import current_app, render_template
 from flask_mail import Message
 from threading import Thread
 from .extensions import mail
+import logging
 
+logger = logging.getLogger(__name__)
 
 def send_async_email(app, msg):
     """Send email asynchronously."""
     with app.app_context():
-        mail.send(msg)
+        try:
+            logger.info("Attempting to send an email...")
+            logger.info(f"MAIL_SERVER: {current_app.config.get('MAIL_SERVER')}")
+            logger.info(f"MAIL_PORT: {current_app.config.get('MAIL_PORT')}")
+            logger.info(f"MAIL_USE_TLS: {current_app.config.get('MAIL_USE_TLS')}")
+            logger.info(f"MAIL_USE_SSL: {current_app.config.get('MAIL_USE_SSL')}")
+            logger.info(f"MAIL_USERNAME: {current_app.config.get('MAIL_USERNAME')}")
+
+            mail.send(msg)
+
+            logger.info("Email sent successfully!")
+
+        except Exception as e:
+            logger.error(f"Failed to send email. Exception Type: {type(e).__name__}, Message: {e}", exc_info=True)
 
 
 def send_email(subject, recipients, text_body, html_body, sender=None):

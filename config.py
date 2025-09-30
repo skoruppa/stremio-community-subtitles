@@ -37,6 +37,7 @@ class Config:
     MAIL_USE_SSL = os.environ.get('MAIL_USE_SSL') is not None or False
     MAIL_USERNAME = os.environ.get('MAIL_USERNAME')
     MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
+    MAIL_DEBUG = os.environ.get('MAIL_DEBUG') is not None or False
     MAIL_DEFAULT_SENDER = os.environ.get('MAIL_DEFAULT_SENDER')
     
     # Database configuration
