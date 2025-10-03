@@ -1,5 +1,13 @@
 # Stremio Community Subtitles Addon
 
+![Version](https://img.shields.io/badge/version-0.3.2-blue.svg)
+![License](https://img.shields.io/badge/license-MIT-green.svg)
+![Status](https://img.shields.io/badge/status-Active-brightgreen.svg)
+
+<div align="center">
+  <img src="https://raw.githubusercontent.com/skoruppa/stremio-community-subtitles/refs/heads/main/static/logo.png" alt="SCS Logo" width="256">
+</div>
+
 A Stremio addon that enables you to use custom subtitles on any device – something normally only possible on desktop Stremio. Simply upload your subtitle files for the video you just started watching, and they'll be instantly available across all your devices through the addon.
 
 Every subtitle you upload helps build a community database that benefits all users. The OpenSubtitles integration allows manual selection of any available subtitles and linking them to specific video versions, ensuring perfectly synchronized subtitles for future viewers.
