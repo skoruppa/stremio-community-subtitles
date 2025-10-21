@@ -41,7 +41,8 @@ LANGUAGES = [
     ('lit', 'Lithuanian'),
     ('fas', 'Persian'),  # ISO 639-2/B for Persian (Farsi)
     ('urd', 'Urdu'),
-    ('ben', 'Bengali')
+    ('ben', 'Bengali'),
+    ('mya', 'Burmese') # ISO 639-2/T for Burmese
 ]
 
 # Dictionary for quick lookups
