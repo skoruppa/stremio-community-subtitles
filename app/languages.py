@@ -4,7 +4,7 @@ LANGUAGES = [
     ('eng', 'English'),
     ('pol', 'Polish'),
     ('spa', 'Spanish'),
-    ('fra', 'French'),
+    ('fre', 'French'),
     ('deu', 'German'),
     ('ita', 'Italian'),
     ('por', 'Portuguese'),
@@ -42,7 +42,12 @@ LANGUAGES = [
     ('fas', 'Persian'),  # ISO 639-2/B for Persian (Farsi)
     ('urd', 'Urdu'),
     ('ben', 'Bengali'),
-    ('mya', 'Burmese') # ISO 639-2/T for Burmese
+    ('mya', 'Burmese'), # ISO 639-2/T for Burmese
+    ('cat', 'Catalan'),
+    ('eus', 'Basque'),
+    ('epo', 'Esperanto'),
+    ('mkd', 'Macedonian'),
+    ('tel', 'Telugu')
 ]
 
 # Dictionary for quick lookups
