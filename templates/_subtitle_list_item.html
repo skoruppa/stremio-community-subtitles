@@ -45,7 +45,7 @@
                 {% endif %}
             </div>
         </div>
-        <div class="col-md-5 col-lg-4 text-end">
+        <div class="col-md-5 col-lg-4 text-end gap-1">
             {% if is_active_subtitle %}
             {# Vote Buttons - Only show if subtitle is community or OS-linked AND matches current video hash #}
             {% if subtitle.source_type in ['community', 'opensubtitles_community_link'] and subtitle.video_hash == current_video_hash %}

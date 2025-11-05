@@ -14,8 +14,13 @@
 </div>
 
 {% if subtitles %}
-<div class="card shadow-sm">
-    <div class="card-body p-0">
+<div class="row">
+    <div class="col">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">My Subtitles</h5>
+            </div>
+            <div class="card-body p-0">
         <div class="list-group list-group-flush">
             {% for subtitle in subtitles %}
             <div class="list-group-item">
@@ -32,13 +37,13 @@
                         </div>
                     </div>
                     <div class="flex-grow-1">
-                        <h6 class="mb-1">
+                        <h5 class="mb-1">
                             {% if subtitle.id in metadata_map and metadata_map[subtitle.id].display_title %}
                                 {{ metadata_map[subtitle.id].display_title }}
                             {% else %}
                                 {{ subtitle.content_id }}
                             {% endif %}
-                        </h6>
+                        </h5>
                         {% if subtitle.version_info %}
                         <p class="mb-1 small text-muted text-break">{{ subtitle.version_info | truncate(100) }}</p>
                         {% endif %}
@@ -61,7 +66,7 @@
                         </div>
                         <small class="text-muted">{{ subtitle.upload_timestamp.strftime('%Y-%m-%d %H:%M') }}</small>
                     </div>
-                    <div class="ms-2 text-nowrap" data-subtitle-id="{{ subtitle.id }}" data-current-vote="{{ user_votes.get(subtitle.id, 0) }}">
+                    <div class="ms-2 d-flex flex-column flex-sm-row gap-1 text-nowrap" data-subtitle-id="{{ subtitle.id }}" data-current-vote="{{ user_votes.get(subtitle.id, 0) }}">
                         <button type="button" class="btn btn-sm vote-btn {% if subtitle.id in user_votes and user_votes[subtitle.id] == 1 %}btn-success{% else %}btn-outline-success{% endif %}" data-vote-type="up" title="Upvote">
                             <i class="fas fa-thumbs-up"></i>
                         </button>
@@ -78,21 +83,26 @@
                 </div>
             </div>
             {% endfor %}
+            </div>
         </div>
+        {{ render_pagination(pagination, 'subtitles.my_subtitles') }}
     </div>
 </div>
-
-{{ render_pagination(pagination, 'subtitles.my_subtitles') }}
-
 {% else %}
-<div class="card shadow-sm">
-    <div class="card-body text-center py-5">
+<div class="row">
+    <div class="col">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">My Subtitles</h5>
+            </div>
+            <div class="card-body text-center py-5">
         <i class="fas fa-file-video fa-3x text-muted mb-3"></i>
         <h4>No Subtitles Yet</h4>
         <p class="text-muted">You haven't uploaded any subtitles yet.</p>
         <a href="{{ url_for('subtitles.upload_subtitle') }}" class="btn btn-primary">
             <i class="fas fa-upload me-1"></i>Upload Your First Subtitle
-        </a>
+            </a>
+        </div>
     </div>
 </div>
 {% endif %}
