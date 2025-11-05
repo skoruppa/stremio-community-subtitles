@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% from "_pagination.html" import render_pagination %}
+
+{% block title %}My Subtitles - {{ super() }}{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="mb-3">My Uploaded Subtitles</h1>
+        <p class="lead">
+            Manage all subtitles you've uploaded to the community.
+        </p>
+    </div>
+    <div class="col-auto">
+        <a href="{{ url_for('subtitles.upload_subtitle') }}" class="btn btn-success">
+            <i class="fas fa-upload me-1"></i>Upload New Subtitle
+        </a>
+    </div>
+</div>
+
+{% if subtitles %}
+<div class="card shadow-sm">
+    <div class="card-body p-0">
+        <div class="list-group list-group-flush">
+            {% for subtitle in subtitles %}
+            <div class="list-group-item">
+                <div class="d-flex align-items-center">
+                    <div class="me-3">
+                        <div class="poster-wrapper"
+                             data-poster="{% if subtitle.id in metadata_map and metadata_map[subtitle.id].poster_url %}{{ metadata_map[subtitle.id].poster_url }}{% endif %}"
+                             style="height: 80px; width: 57px;">
+                            <img class="poster-image img-thumbnail"
+                                 style="height: 80px; width: auto; max-width: fit-content;">
+                            <div class="poster-fallback">
+                                <i class="fa fa-film"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1">
+                        <h6 class="mb-1">
+                            {% if subtitle.id in metadata_map and metadata_map[subtitle.id].display_title %}
+                                {{ metadata_map[subtitle.id].display_title }}
+                            {% else %}
+                                {{ subtitle.content_id }}
+                            {% endif %}
+                        </h6>
+                        {% if subtitle.version_info %}
+                        <p class="mb-1 small text-muted">{{ subtitle.version_info | truncate(50) }}</p>
+                        {% endif %}
+                        <div class="mb-1">
+                            <span class="badge bg-secondary">{{ subtitle.language }}</span>
+                            {% if subtitle.source_type == 'opensubtitles_community_link' %}
+                            <span class="badge bg-warning">OS Linked</span>
+                            {% else %}
+                            <span class="badge bg-primary">Community</span>
+                            {% endif %}
+                            <span class="badge {% if subtitle.votes > 0 %}bg-success{% elif subtitle.votes < 0 %}bg-danger{% else %}bg-secondary{% endif %}">
+                                {{ subtitle.votes }} votes
+                            </span>
+                        </div>
+                        <small class="text-muted">{{ subtitle.upload_timestamp.strftime('%Y-%m-%d %H:%M') }}</small>
+                    </div>
+                    <div class="ms-2">
+                        <form action="{{ url_for('subtitles.delete_subtitle', subtitle_id=subtitle.id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this subtitle?');">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+{{ render_pagination(pagination, 'subtitles.my_subtitles') }}
+
+{% else %}
+<div class="card shadow-sm">
+    <div class="card-body text-center py-5">
+        <i class="fas fa-file-video fa-3x text-muted mb-3"></i>
+        <h4>No Subtitles Yet</h4>
+        <p class="text-muted">You haven't uploaded any subtitles yet.</p>
+        <a href="{{ url_for('subtitles.upload_subtitle') }}" class="btn btn-primary">
+            <i class="fas fa-upload me-1"></i>Upload Your First Subtitle
+        </a>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.poster-wrapper').forEach(function(wrapper) {
+            const img = wrapper.querySelector('.poster-image');
+            const fallback = wrapper.querySelector('.poster-fallback');
+            const posterUrl = wrapper.dataset.poster;
+
+            if (posterUrl) {
+                img.src = posterUrl;
+
+                img.onload = function() {
+                    this.classList.add('loaded');
+                    fallback.classList.add('hidden');
+                };
+
+                img.onerror = function() {
+                    this.style.display = 'none';
+                };
+            } else {
+                img.style.display = 'none';
+            }
+        });
+    });
+</script>
+{% endblock %}

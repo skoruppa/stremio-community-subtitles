@@ -784,6 +784,38 @@ def reset_selection(activity_id):
     return redirect(url_for('content.content_detail', activity_id=activity_id))
 
 
+@subtitles_bp.route('/my-subtitles')
+@login_required
+def my_subtitles():
+    """Display user's uploaded subtitles with pagination."""
+    page = request.args.get('page', 1, type=int)
+    per_page = 10
+    
+    pagination = Subtitle.query.filter_by(uploader_id=current_user.id).order_by(
+        Subtitle.upload_timestamp.desc()
+    ).paginate(page=page, per_page=per_page, error_out=False)
+    
+    # Fetch metadata for each subtitle
+    metadata_map = {}
+    for subtitle in pagination.items:
+        meta = get_metadata(subtitle.content_id, subtitle.content_type)
+        if meta:
+            metadata_map[subtitle.id] = meta
+            title = meta.get('title', subtitle.content_id)
+            if meta.get('season') is not None and meta.get('episode') is not None:
+                title = f"{title} S{meta['season']:02d}E{meta['episode']:02d}"
+            elif meta.get('season') is not None:
+                title = f"{title} S{meta['season']:02d}"
+            if meta.get('year'):
+                title = f"{title} ({meta['year']})"
+            meta['display_title'] = title
+    
+    return render_template('main/my_subtitles.html', 
+                         subtitles=pagination.items,
+                         pagination=pagination,
+                         metadata_map=metadata_map)
+
+
 @subtitles_bp.route('/delete_subtitle/<uuid:subtitle_id>', methods=['POST'])
 @login_required
 def delete_subtitle(subtitle_id):
@@ -837,8 +869,9 @@ def delete_subtitle(subtitle_id):
         current_app.logger.error(f"Error deleting subtitle {subtitle_id}: {e}", exc_info=True)
         flash('Error deleting subtitle.', 'danger')
 
-    if activity_id: return redirect(url_for('content.content_detail', activity_id=activity_id))
-    return redirect(url_for('main.dashboard'))
+    if activity_id: 
+        return redirect(url_for('content.content_detail', activity_id=activity_id))
+    return redirect(url_for('subtitles.my_subtitles'))
 
 
 @subtitles_bp.route('/download_subtitle/<uuid:subtitle_id>')
