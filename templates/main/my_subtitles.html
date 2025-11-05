@@ -40,7 +40,10 @@
                             {% endif %}
                         </h6>
                         {% if subtitle.version_info %}
-                        <p class="mb-1 small text-muted">{{ subtitle.version_info }}</p>
+                        <p class="mb-1 small text-muted text-break">{{ subtitle.version_info | truncate(100) }}</p>
+                        {% endif %}
+                        {% if subtitle.author %}
+                        <small class="text-muted d-block mb-1">Author: {{ subtitle.author }}</small>
                         {% endif %}
                         <div class="mb-1">
                             <span class="badge bg-secondary">{{ subtitle.language }}</span>
@@ -58,7 +61,7 @@
                         </div>
                         <small class="text-muted">{{ subtitle.upload_timestamp.strftime('%Y-%m-%d %H:%M') }}</small>
                     </div>
-                    <div class="ms-2" data-subtitle-id="{{ subtitle.id }}" data-current-vote="{{ user_votes.get(subtitle.id, 0) }}">
+                    <div class="ms-2 text-nowrap" data-subtitle-id="{{ subtitle.id }}" data-current-vote="{{ user_votes.get(subtitle.id, 0) }}">
                         <button type="button" class="btn btn-sm vote-btn {% if subtitle.id in user_votes and user_votes[subtitle.id] == 1 %}btn-success{% else %}btn-outline-success{% endif %}" data-vote-type="up" title="Upvote">
                             <i class="fas fa-thumbs-up"></i>
                         </button>

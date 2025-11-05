@@ -66,7 +66,7 @@
                         </div>
                         <small class="text-muted d-block mt-1">Voted: {{ vote.timestamp.strftime('%Y-%m-%d %H:%M') }}</small>
                     </div>
-                    <div class="ms-2">
+                    <div class="ms-2 text-nowrap">
                         <button type="button" class="btn btn-sm vote-btn {% if vote.vote_value == 1 %}btn-success{% else %}btn-outline-success{% endif %}" data-vote-type="up" title="Upvote">
                             <i class="fas fa-thumbs-up"></i>
                         </button>

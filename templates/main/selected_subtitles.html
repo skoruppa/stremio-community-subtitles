@@ -86,7 +86,7 @@
                         </div>
                         <small class="text-muted d-block mt-1">Selected: {{ selection.timestamp.strftime('%Y-%m-%d %H:%M') }}</small>
                     </div>
-                    <div class="ms-2">
+                    <div class="ms-2 text-nowrap">
                         {% if selection.selected_subtitle_id and selection.selected_subtitle and selection.selected_subtitle.source_type in ['community', 'opensubtitles_community_link'] %}
                         <span data-subtitle-id="{{ selection.selected_subtitle.id }}" data-current-vote="{{ user_votes.get(selection.selected_subtitle.id, 0) }}">
                             <button type="button" class="btn btn-sm vote-btn {% if user_votes.get(selection.selected_subtitle.id) == 1 %}btn-success{% else %}btn-outline-success{% endif %}" data-vote-type="up" title="Upvote">
