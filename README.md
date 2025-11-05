@@ -1,6 +1,6 @@
 # Stremio Community Subtitles Addon
 
-![Version](https://img.shields.io/badge/version-0.4.1-blue.svg)
+![Version](https://img.shields.io/badge/version-0.4.2-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Status](https://img.shields.io/badge/status-Active-brightgreen.svg)
 
@@ -22,10 +22,12 @@ Every subtitle you upload helps build a community database that benefits all use
 - **🔗 Link to Video Version** – You can “link” subtitles (including OpenSubtitles) to your video version for other users
 - **🧠 Viewing History Integration** – Manage your subtitles based on what you've watched
 - **🗳️ Voting System** – Vote for good or bad subs to help others find the best ones
+- **🧹 Manage Your Data (NEW!)** – You can now see and delete:
+  - your uploaded subtitles
+  - your manual subtitle selections
+  - your votes on subtitles
 
 ## 🚀 Installation
-
-To install the addon:
 
 1. Visit [The Addon Website](https://stremio-community-subtitles.top)
 2. Create an account and confirm your email
@@ -35,49 +37,49 @@ To install the addon:
 6. Open Stremio and paste it into the addon search box, or click "Install in Stremio"
 7. Done!
 
-## 🔐 OpenSubtitles Integration (Updated!)
-
-OpenSubtitles integration has changed (v0.3):
+## 🔐 OpenSubtitles Integration
 
 - You **no longer need your own API key**
 - Just log in with your OpenSubtitles account from the [account settings](https://stremio-community-subtitles.top/account)
-- ⚠️ **IMPORTANT:** Existing users must reconnect their account due to changes requested by OpenSubtitles team
+- ⚠️ Some older accounts must reconnect due to OS security changes
 
-Once connected, you can:
+Once connected:
 
-- Subs will be served automatically 
-- Change available OpenSubtitles for any video
-- Select and **link** subtitles to your version if you want help other users
+- Subtitles are fetched automatically
+- You can manually change OpenSubtitles for any video
+- You can **link** subtitles to your video version for the community
 
 ## 📱 Usage
 
-### Quick Start:
+### Quick Start
 
-1. **Start Watching** something in Stremio
-2. **Visit the Addon Website** – your current video will show on the homepage
-3. **Upload a subtitle** (or choose from OpenSubtitles)
-4. **Subtitle is available instantly** across your devices
+1. Start watching something in Stremio
+2. Visit the addon website – your current video will appear automatically
+3. Upload a subtitle or select one from OpenSubtitles
+4. The subtitle becomes available instantly across devices
 
-### New: Upload Without Playback
+### Upload Without Playback
 
-You can now upload subtitles **without starting a video**:
+- Provide a `contentId` (IMDb or Kitsu)
+- Upload subtitles even if you are not watching
+- Later, you can link them to a specific video hash once confirmed in sync
 
-- Provide a `contentId` (IMDb or Kitsu supported)
-- Subtitles are added to the database, but won't have a hash assigned
-- You can **link** them later to a video after confirming they are synced
-- A personal “uploaded subtitles” page is coming soon
+### Automatic Matching
 
-### New: Automatic Subtitle Matching
+- The addon selects the best subtitle for your file
+- Works with uploaded subs and OpenSubtitles
 
-- The addon now chooses the best subtitle automatically
-- Works with both your uploads and OpenSubtitles
-- Manual selection is still possible, but often unnecessary
+## 🧹 Manage Your Uploaded Data (NEW!)
+
+A new management panels allows you to view and delete:
+
+- Subtitles you uploaded
+- Subtitle selections you made
+- Your subtitle votes
+
+If a subtitle you uploaded is bad, outdated, or replaced by a better one, you can remove it with one click.
 
 ## 🎯 How It Works
-
-This addon solves a key problem: **Stremio mobile and TV apps don’t support external subtitles**.
-
-**How we fix it:**
 
 - Upload subtitles via the website while watching a video
 - They're matched by **video hash**
