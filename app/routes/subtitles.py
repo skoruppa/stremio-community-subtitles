@@ -739,17 +739,17 @@ def vote_subtitle(subtitle_id, vote_type):
     try:
         if existing_vote:
             if existing_vote.vote_value == vote_value:
-                db.session.query(Subtitle).filter_by(id=subtitle_id).update({'votes': Subtitle.votes - existing_vote.vote_value})
+                subtitle.votes -= existing_vote.vote_value
                 db.session.delete(existing_vote)
                 removed = True
                 flash('Vote removed.', 'info')
             else:
-                db.session.query(Subtitle).filter_by(id=subtitle_id).update({'votes': Subtitle.votes - existing_vote.vote_value + vote_value})
+                subtitle.votes = subtitle.votes - existing_vote.vote_value + vote_value
                 existing_vote.vote_value = vote_value
                 flash('Vote updated.', 'success')
         else:
             new_vote = SubtitleVote(user_id=current_user.id, subtitle_id=subtitle_id, vote_value=vote_value)
-            db.session.query(Subtitle).filter_by(id=subtitle_id).update({'votes': Subtitle.votes + vote_value})
+            subtitle.votes += vote_value
             db.session.add(new_vote)
             flash('Vote recorded.', 'success')
         db.session.commit()
