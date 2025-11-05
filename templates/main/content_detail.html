@@ -39,6 +39,12 @@
                         <span class="text-monospace">{{ activity.video_hash }}</span>
                     </li>
                     {% endif %}
+                    {% if activity.video_filename %}
+                    <li class="list-group-item">
+                        <strong>Filename:</strong> 
+                        <span class="text-break">{{ activity.video_filename }}</span>
+                    </li>
+                    {% endif %}
                     {% if season is not none %}
                     <li class="list-group-item">
                         <strong>Season:</strong> {{ season }}
@@ -259,6 +265,7 @@
 
     </div>
 </div>
+<script src="{{ url_for('static', filename='js/voting.js') }}"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.poster-wrapper').forEach(function(wrapper) {
@@ -311,6 +318,7 @@
             });
         });
     });
+        initVoting('{{ csrf_token() }}', '{{ url_for("subtitles.vote_subtitle", subtitle_id="SUBTITLE_ID", vote_type="VOTE_TYPE") }}');
 });
 </script>
 {% endblock %}

@@ -97,6 +97,7 @@
 
 {% block scripts %}
 {{ super() }}
+<script src="{{ url_for('static', filename='js/voting.js') }}"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         document.querySelectorAll('.poster-wrapper').forEach(function(wrapper) {
@@ -120,53 +121,7 @@
             }
         });
 
-        // Handle vote buttons
-        document.querySelectorAll('.vote-btn').forEach(function(btn) {
-            btn.addEventListener('click', function() {
-                const item = this.closest('.list-group-item');
-                const subtitleId = item.dataset.subtitleId;
-                const voteType = this.dataset.voteType;
-                const currentVote = parseInt(item.dataset.currentVote);
-                const newVote = voteType === 'up' ? 1 : -1;
-                const isRemoved = item.dataset.removed === 'true';
-                
-                fetch(`{{ url_for('subtitles.vote_subtitle', subtitle_id='SUBTITLE_ID', vote_type='VOTE_TYPE') }}`.replace('SUBTITLE_ID', subtitleId).replace('VOTE_TYPE', voteType), {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                        'X-Requested-With': 'XMLHttpRequest'
-                    },
-                    body: 'csrf_token={{ csrf_token() }}'
-                }).then(response => response.json())
-                .then(data => {
-                    if (data.removed) {
-                        // Vote removed - mark as removed but keep interactive
-                        item.style.opacity = '0.5';
-                        item.dataset.removed = 'true';
-                        item.dataset.currentVote = '0';
-                        const upBtn = item.querySelector('[data-vote-type="up"]');
-                        const downBtn = item.querySelector('[data-vote-type="down"]');
-                        upBtn.className = 'btn btn-sm vote-btn btn-outline-success';
-                        downBtn.className = 'btn btn-sm vote-btn btn-outline-danger';
-                    } else {
-                        // Vote added/changed - restore full opacity and update UI
-                        item.style.opacity = '1';
-                        item.dataset.removed = 'false';
-                        item.dataset.currentVote = newVote;
-                        const upBtn = item.querySelector('[data-vote-type="up"]');
-                        const downBtn = item.querySelector('[data-vote-type="down"]');
-                        
-                        if (newVote === 1) {
-                            upBtn.className = 'btn btn-sm vote-btn btn-success';
-                            downBtn.className = 'btn btn-sm vote-btn btn-outline-danger';
-                        } else {
-                            upBtn.className = 'btn btn-sm vote-btn btn-outline-success';
-                            downBtn.className = 'btn btn-sm vote-btn btn-danger';
-                        }
-                    }
-                });
-            });
-        });
+        initVoting('{{ csrf_token() }}', '{{ url_for('subtitles.vote_subtitle', subtitle_id='SUBTITLE_ID', vote_type='VOTE_TYPE') }}');
     });
 </script>
 {% endblock %}

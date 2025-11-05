@@ -49,20 +49,14 @@
             {% if is_active_subtitle %}
             {# Vote Buttons - Only show if subtitle is community or OS-linked AND matches current video hash #}
             {% if subtitle.source_type in ['community', 'opensubtitles_community_link'] and subtitle.video_hash == current_video_hash %}
-            <form action="{{ url_for('subtitles.vote_subtitle', subtitle_id=subtitle.id, vote_type='up', activity_id=activity_id) }}" method="POST" class="d-inline"> {# Pass activity_id explicitly #}
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <input type="hidden" name="activity_id" value="{{ activity_id }}">
-                <button type="submit" class="btn btn-sm {% if user_votes.get(subtitle.id) == 1 %}btn-success{% else %}btn-outline-success{% endif %}" title="Upvote">
+            <span data-subtitle-id="{{ subtitle.id }}" data-current-vote="{{ user_votes.get(subtitle.id, 0) }}">
+                <button type="button" class="btn btn-sm vote-btn {% if user_votes.get(subtitle.id) == 1 %}btn-success{% else %}btn-outline-success{% endif %}" data-vote-type="up" title="Upvote">
                     <i class="fas fa-thumbs-up"></i>
                 </button>
-            </form>
-            <form action="{{ url_for('subtitles.vote_subtitle', subtitle_id=subtitle.id, vote_type='down', activity_id=activity_id) }}" method="POST" class="d-inline"> {# Pass activity_id explicitly #}
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <input type="hidden" name="activity_id" value="{{ activity_id }}">
-                <button type="submit" class="btn btn-sm {% if user_votes.get(subtitle.id) == -1 %}btn-danger{% else %}btn-outline-danger{% endif %}" title="Downvote">
+                <button type="button" class="btn btn-sm vote-btn {% if user_votes.get(subtitle.id) == -1 %}btn-danger{% else %}btn-outline-danger{% endif %}" data-vote-type="down" title="Downvote">
                     <i class="fas fa-thumbs-down"></i>
                 </button>
-            </form>
+            </span>
             {% endif %}
             {% endif %}
 

@@ -742,16 +742,19 @@ def vote_subtitle(subtitle_id, vote_type):
                 subtitle.votes -= existing_vote.vote_value
                 db.session.delete(existing_vote)
                 removed = True
-                flash('Vote removed.', 'info')
+                if not is_ajax:
+                    flash('Vote removed.', 'info')
             else:
                 subtitle.votes = subtitle.votes - existing_vote.vote_value + vote_value
                 existing_vote.vote_value = vote_value
-                flash('Vote updated.', 'success')
+                if not is_ajax:
+                    flash('Vote updated.', 'success')
         else:
             new_vote = SubtitleVote(user_id=current_user.id, subtitle_id=subtitle_id, vote_value=vote_value)
             subtitle.votes += vote_value
             db.session.add(new_vote)
-            flash('Vote recorded.', 'success')
+            if not is_ajax:
+                flash('Vote recorded.', 'success')
         db.session.commit()
         
         if is_ajax:
@@ -761,7 +764,8 @@ def vote_subtitle(subtitle_id, vote_type):
         current_app.logger.error(f"Error processing vote: {e}", exc_info=True)
         if is_ajax:
             return jsonify({'error': 'Error processing vote'}), 500
-        flash('Error processing vote.', 'danger')
+        if not is_ajax:
+            flash('Error processing vote.', 'danger')
 
     if activity_id: 
         return redirect(url_for('content.content_detail', activity_id=activity_id))
@@ -866,8 +870,9 @@ def selected_subtitles():
         UserSubtitleSelection.timestamp.desc()
     ).paginate(page=page, per_page=per_page, error_out=False)
     
-    # Fetch metadata for each selection
+    # Fetch metadata and user votes for each selection
     metadata_map = {}
+    user_votes = {}
     for selection in pagination.items:
         # Determine content_type from content_id
         content_type = 'series' if ':' in selection.content_id else 'movie'
@@ -882,13 +887,18 @@ def selected_subtitles():
             if meta.get('year'):
                 title = f"{title} ({meta['year']})"
             meta['display_title'] = title
+        
+        # Get user vote for community subtitles
+        if selection.selected_subtitle_id and selection.selected_subtitle:
+            vote = SubtitleVote.query.filter_by(user_id=current_user.id, subtitle_id=selection.selected_subtitle.id).first()
+            if vote:
+                user_votes[selection.selected_subtitle.id] = vote.vote_value
     
     return render_template('main/selected_subtitles.html', 
                          selections=pagination.items,
                          pagination=pagination,
-                         metadata_map=metadata_map)
-
-
+                         metadata_map=metadata_map,
+                         user_votes=user_votes)
 @subtitles_bp.route('/my-subtitles')
 @login_required
 def my_subtitles():
@@ -900,8 +910,9 @@ def my_subtitles():
         Subtitle.upload_timestamp.desc()
     ).paginate(page=page, per_page=per_page, error_out=False)
     
-    # Fetch metadata for each subtitle
+    # Fetch metadata and user votes for each subtitle
     metadata_map = {}
+    user_votes = {}
     for subtitle in pagination.items:
         meta = get_metadata(subtitle.content_id, subtitle.content_type)
         if meta:
@@ -914,11 +925,16 @@ def my_subtitles():
             if meta.get('year'):
                 title = f"{title} ({meta['year']})"
             meta['display_title'] = title
+        
+        vote = SubtitleVote.query.filter_by(user_id=current_user.id, subtitle_id=subtitle.id).first()
+        if vote:
+            user_votes[subtitle.id] = vote.vote_value
     
     return render_template('main/my_subtitles.html', 
                          subtitles=pagination.items,
                          pagination=pagination,
-                         metadata_map=metadata_map)
+                         metadata_map=metadata_map,
+                         user_votes=user_votes)
 
 
 @subtitles_bp.route('/delete_subtitle/<uuid:subtitle_id>', methods=['POST'])
