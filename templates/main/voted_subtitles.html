@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+{% from "_pagination.html" import render_pagination %}
+
+{% block title %}Voted Subtitles - {{ super() }}{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="mb-3">My Voted Subtitles</h1>
+        <p class="lead">
+            Manage all your subtitle votes.
+        </p>
+    </div>
+</div>
+
+{% if votes %}
+<div class="card shadow-sm">
+    <div class="card-body p-0">
+        <div class="list-group list-group-flush">
+            {% for vote in votes %}
+            {% if vote.subtitle %}
+            <div class="list-group-item" data-vote-id="{{ vote.id }}" data-subtitle-id="{{ vote.subtitle.id }}" data-current-vote="{{ vote.vote_value }}" data-removed="false">
+                <div class="d-flex align-items-center">
+                    <div class="me-3">
+                        <div class="poster-wrapper"
+                             data-poster="{% if vote.id in metadata_map and metadata_map[vote.id].poster_url %}{{ metadata_map[vote.id].poster_url }}{% endif %}"
+                             style="height: 80px; width: 57px;">
+                            <img class="poster-image img-thumbnail"
+                                 style="height: 80px; width: auto; max-width: fit-content;">
+                            <div class="poster-fallback">
+                                <i class="fa fa-film"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1">
+                        <h6 class="mb-1">
+                            {% if vote.id in metadata_map and metadata_map[vote.id].display_title %}
+                                {{ metadata_map[vote.id].display_title }}
+                            {% else %}
+                                {{ vote.subtitle.content_id }}
+                            {% endif %}
+                        </h6>
+                        
+                        {% if vote.subtitle.version_info %}
+                        <p class="mb-1 small">{{ vote.subtitle.version_info | truncate(50) }}</p>
+                        {% endif %}
+                        
+                        <small class="text-muted">
+                            Uploader: {{ vote.subtitle.uploader.username if vote.subtitle.uploader else 'N/A' }}
+                            {% if vote.subtitle.author and vote.subtitle.author != (vote.subtitle.uploader.username if vote.subtitle.uploader else None) %}
+                                | Author: {{ vote.subtitle.author }}
+                            {% endif %}
+                            | Total Votes: <span class="fw-bold">{{ vote.subtitle.votes }}</span>
+                        </small>
+                        
+                        <div class="mt-1">
+                            <span class="badge bg-secondary">{{ vote.subtitle.language }}</span>
+                            {% if vote.subtitle.source_type == 'opensubtitles_community_link' %}
+                            <span class="badge bg-warning">OS Linked</span>
+                            {% else %}
+                            <span class="badge bg-primary">Community</span>
+                            {% endif %}
+                            <span class="badge {% if vote.vote_value == 1 %}bg-success{% else %}bg-danger{% endif %}">
+                                Your Vote: {% if vote.vote_value == 1 %}Upvote{% else %}Downvote{% endif %}
+                            </span>
+                        </div>
+                        <small class="text-muted d-block mt-1">Voted: {{ vote.timestamp.strftime('%Y-%m-%d %H:%M') }}</small>
+                    </div>
+                    <div class="ms-2">
+                        <button type="button" class="btn btn-sm vote-btn {% if vote.vote_value == 1 %}btn-success{% else %}btn-outline-success{% endif %}" data-vote-type="up" title="Upvote">
+                            <i class="fas fa-thumbs-up"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm vote-btn {% if vote.vote_value == -1 %}btn-danger{% else %}btn-outline-danger{% endif %}" data-vote-type="down" title="Downvote">
+                            <i class="fas fa-thumbs-down"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+{{ render_pagination(pagination, 'subtitles.voted_subtitles') }}
+
+{% else %}
+<div class="card shadow-sm">
+    <div class="card-body text-center py-5">
+        <i class="fas fa-vote-yea fa-3x text-muted mb-3"></i>
+        <h4>No Votes Yet</h4>
+        <p class="text-muted">You haven't voted on any subtitles yet.</p>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.poster-wrapper').forEach(function(wrapper) {
+            const img = wrapper.querySelector('.poster-image');
+            const fallback = wrapper.querySelector('.poster-fallback');
+            const posterUrl = wrapper.dataset.poster;
+
+            if (posterUrl) {
+                img.src = posterUrl;
+
+                img.onload = function() {
+                    this.classList.add('loaded');
+                    fallback.classList.add('hidden');
+                };
+
+                img.onerror = function() {
+                    this.style.display = 'none';
+                };
+            } else {
+                img.style.display = 'none';
+            }
+        });
+
+        // Handle vote buttons
+        document.querySelectorAll('.vote-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                const item = this.closest('.list-group-item');
+                const subtitleId = item.dataset.subtitleId;
+                const voteType = this.dataset.voteType;
+                const currentVote = parseInt(item.dataset.currentVote);
+                const newVote = voteType === 'up' ? 1 : -1;
+                const isRemoved = item.dataset.removed === 'true';
+                
+                fetch(`{{ url_for('subtitles.vote_subtitle', subtitle_id='SUBTITLE_ID', vote_type='VOTE_TYPE') }}`.replace('SUBTITLE_ID', subtitleId).replace('VOTE_TYPE', voteType), {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: 'csrf_token={{ csrf_token() }}'
+                }).then(response => response.json())
+                .then(data => {
+                    if (data.removed) {
+                        // Vote removed - mark as removed but keep interactive
+                        item.style.opacity = '0.5';
+                        item.dataset.removed = 'true';
+                        item.dataset.currentVote = '0';
+                        const upBtn = item.querySelector('[data-vote-type="up"]');
+                        const downBtn = item.querySelector('[data-vote-type="down"]');
+                        upBtn.className = 'btn btn-sm vote-btn btn-outline-success';
+                        downBtn.className = 'btn btn-sm vote-btn btn-outline-danger';
+                    } else {
+                        // Vote added/changed - restore full opacity and update UI
+                        item.style.opacity = '1';
+                        item.dataset.removed = 'false';
+                        item.dataset.currentVote = newVote;
+                        const upBtn = item.querySelector('[data-vote-type="up"]');
+                        const downBtn = item.querySelector('[data-vote-type="down"]');
+                        
+                        if (newVote === 1) {
+                            upBtn.className = 'btn btn-sm vote-btn btn-success';
+                            downBtn.className = 'btn btn-sm vote-btn btn-outline-danger';
+                        } else {
+                            upBtn.className = 'btn btn-sm vote-btn btn-outline-success';
+                            downBtn.className = 'btn btn-sm vote-btn btn-danger';
+                        }
+                    }
+                });
+            });
+        });
+    });
+</script>
+{% endblock %}

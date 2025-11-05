@@ -11,11 +11,6 @@
             Manage all subtitles you've uploaded to the community.
         </p>
     </div>
-    <div class="col-auto">
-        <a href="{{ url_for('subtitles.upload_subtitle') }}" class="btn btn-success">
-            <i class="fas fa-upload me-1"></i>Upload New Subtitle
-        </a>
-    </div>
 </div>
 
 {% if subtitles %}
@@ -57,6 +52,9 @@
                             <span class="badge {% if subtitle.votes > 0 %}bg-success{% elif subtitle.votes < 0 %}bg-danger{% else %}bg-secondary{% endif %}">
                                 {{ subtitle.votes }} votes
                             </span>
+                            {% if subtitle.video_hash %}
+                            <span class="badge bg-dark">Hash: {{ subtitle.video_hash }}</span>
+                            {% endif %}
                         </div>
                         <small class="text-muted">{{ subtitle.upload_timestamp.strftime('%Y-%m-%d %H:%M') }}</small>
                     </div>

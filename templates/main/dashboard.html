@@ -103,20 +103,20 @@
                 <h5 class="mb-0">Your Stats</h5>
             </div>
             <div class="card-body">
-                <ul class="list-group list-group-flush">
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        <a href="{{ url_for('subtitles.my_subtitles') }}" class="text-decoration-none text-dark">Uploaded Subtitles</a>
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('subtitles.my_subtitles') }}" class="btn btn-outline-primary d-flex justify-content-between align-items-center">
+                        <span>Uploaded Subtitles</span>
                         <span class="badge bg-primary rounded-pill">{{ current_user.uploaded_subtitles|length }}</span>
-                    </li>
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        Selected Subtitles
+                    </a>
+                    <a href="{{ url_for('subtitles.selected_subtitles') }}" class="btn btn-outline-primary d-flex justify-content-between align-items-center">
+                        <span>Selected Subtitles</span>
                         <span class="badge bg-primary rounded-pill">{{ current_user.selections.count() }}</span>
-                    </li>
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        Votes Cast
+                    </a>
+                    <a href="{{ url_for('subtitles.voted_subtitles') }}" class="btn btn-outline-primary d-flex justify-content-between align-items-center">
+                        <span>Votes Cast</span>
                         <span class="badge bg-primary rounded-pill">{{ current_user.votes.count() }}</span>
-                    </li>
-                </ul>
+                    </a>
+                </div>
             </div>
         </div>
     </div>
