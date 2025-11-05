@@ -6,7 +6,7 @@ import tempfile
 import uuid
 
 import requests  # For fetching from Cloudinary URL
-from flask import Blueprint, url_for, Response, request, current_app, flash, redirect, render_template  # Added redirect
+from flask import Blueprint, url_for, Response, request, current_app, flash, redirect, render_template, jsonify
 from flask_login import current_user, login_required
 from sqlalchemy.orm import Session
 from iso639 import Lang
@@ -726,36 +726,67 @@ def vote_subtitle(subtitle_id, vote_type):
     activity_id = request.form.get('activity_id')
     vote_value = 1 if vote_type == 'up' else -1
     subtitle = Subtitle.query.get_or_404(subtitle_id)
+    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
 
-    # Users can only vote on 'community' or 'opensubtitles_community_link' types
     if subtitle.source_type not in ['community', 'opensubtitles_community_link']:
+        if is_ajax:
+            return jsonify({'error': 'Voting not available'}), 400
         flash('Voting is not available for this type of subtitle.', 'warning')
         return redirect(request.referrer or url_for('main.dashboard'))
 
     existing_vote = SubtitleVote.query.filter_by(user_id=current_user.id, subtitle_id=subtitle_id).first()
+    removed = False
     try:
         if existing_vote:
-            if existing_vote.vote_value == vote_value:  # Undoing vote
+            if existing_vote.vote_value == vote_value:
                 subtitle.votes -= existing_vote.vote_value
                 db.session.delete(existing_vote)
+                removed = True
                 flash('Vote removed.', 'info')
-            else:  # Changing vote
+            else:
                 subtitle.votes = subtitle.votes - existing_vote.vote_value + vote_value
                 existing_vote.vote_value = vote_value
                 flash('Vote updated.', 'success')
-        else:  # New vote
+        else:
             new_vote = SubtitleVote(user_id=current_user.id, subtitle_id=subtitle_id, vote_value=vote_value)
             subtitle.votes += vote_value
             db.session.add(new_vote)
             flash('Vote recorded.', 'success')
         db.session.commit()
+        
+        if is_ajax:
+            return jsonify({'removed': removed})
     except Exception as e:
         db.session.rollback()
         current_app.logger.error(f"Error processing vote: {e}", exc_info=True)
+        if is_ajax:
+            return jsonify({'error': 'Error processing vote'}), 500
         flash('Error processing vote.', 'danger')
 
-    if activity_id: return redirect(url_for('content.content_detail', activity_id=activity_id))
-    return redirect(url_for('main.dashboard'))
+    if activity_id: 
+        return redirect(url_for('content.content_detail', activity_id=activity_id))
+    return redirect(url_for('subtitles.voted_subtitles'))
+
+
+@subtitles_bp.route('/delete_selection/<int:selection_id>', methods=['POST'])
+@login_required
+def delete_selection(selection_id):
+    selection = UserSubtitleSelection.query.get_or_404(selection_id)
+    
+    if selection.user_id != current_user.id:
+        flash('You do not have permission to delete this selection.', 'danger')
+        return redirect(url_for('subtitles.selected_subtitles'))
+    
+    try:
+        db.session.delete(selection)
+        db.session.commit()
+        flash('Selection deleted successfully.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Error deleting selection {selection_id}: {e}", exc_info=True)
+        flash('Error deleting selection.', 'danger')
+    
+    return redirect(url_for('subtitles.selected_subtitles'))
 
 
 @subtitles_bp.route('/reset_selection/<uuid:activity_id>', methods=['POST'])
@@ -782,6 +813,112 @@ def reset_selection(activity_id):
     else:
         flash('No selections to reset for this content.', 'info')
     return redirect(url_for('content.content_detail', activity_id=activity_id))
+
+
+@subtitles_bp.route('/voted-subtitles')
+@login_required
+def voted_subtitles():
+    """Display user's voted subtitles with pagination."""
+    from sqlalchemy.orm import joinedload
+    page = request.args.get('page', 1, type=int)
+    per_page = 10
+    
+    pagination = SubtitleVote.query.filter_by(user_id=current_user.id).options(
+        joinedload(SubtitleVote.subtitle).joinedload(Subtitle.uploader)
+    ).order_by(
+        SubtitleVote.timestamp.desc()
+    ).paginate(page=page, per_page=per_page, error_out=False)
+    
+    # Fetch metadata for each vote
+    metadata_map = {}
+    for vote in pagination.items:
+        if vote.subtitle:
+            content_type = 'series' if ':' in vote.subtitle.content_id else 'movie'
+            meta = get_metadata(vote.subtitle.content_id, content_type)
+            if meta:
+                metadata_map[vote.id] = meta
+                title = meta.get('title', vote.subtitle.content_id)
+                if meta.get('season') is not None and meta.get('episode') is not None:
+                    title = f"{title} S{meta['season']:02d}E{meta['episode']:02d}"
+                elif meta.get('season') is not None:
+                    title = f"{title} S{meta['season']:02d}"
+                if meta.get('year'):
+                    title = f"{title} ({meta['year']})"
+                meta['display_title'] = title
+    
+    return render_template('main/voted_subtitles.html', 
+                         votes=pagination.items,
+                         pagination=pagination,
+                         metadata_map=metadata_map)
+
+
+@subtitles_bp.route('/selected-subtitles')
+@login_required
+def selected_subtitles():
+    """Display user's selected subtitles with pagination."""
+    from sqlalchemy.orm import joinedload
+    page = request.args.get('page', 1, type=int)
+    per_page = 10
+    
+    pagination = UserSubtitleSelection.query.filter_by(user_id=current_user.id).options(
+        joinedload(UserSubtitleSelection.selected_subtitle).joinedload(Subtitle.uploader)
+    ).order_by(
+        UserSubtitleSelection.timestamp.desc()
+    ).paginate(page=page, per_page=per_page, error_out=False)
+    
+    # Fetch metadata for each selection
+    metadata_map = {}
+    for selection in pagination.items:
+        # Determine content_type from content_id
+        content_type = 'series' if ':' in selection.content_id else 'movie'
+        meta = get_metadata(selection.content_id, content_type)
+        if meta:
+            metadata_map[selection.id] = meta
+            title = meta.get('title', selection.content_id)
+            if meta.get('season') is not None and meta.get('episode') is not None:
+                title = f"{title} S{meta['season']:02d}E{meta['episode']:02d}"
+            elif meta.get('season') is not None:
+                title = f"{title} S{meta['season']:02d}"
+            if meta.get('year'):
+                title = f"{title} ({meta['year']})"
+            meta['display_title'] = title
+    
+    return render_template('main/selected_subtitles.html', 
+                         selections=pagination.items,
+                         pagination=pagination,
+                         metadata_map=metadata_map)
+
+
+@subtitles_bp.route('/my-subtitles')
+@login_required
+def my_subtitles():
+    """Display user's uploaded subtitles with pagination."""
+    page = request.args.get('page', 1, type=int)
+    per_page = 10
+    
+    pagination = Subtitle.query.filter_by(uploader_id=current_user.id).order_by(
+        Subtitle.upload_timestamp.desc()
+    ).paginate(page=page, per_page=per_page, error_out=False)
+    
+    # Fetch metadata for each subtitle
+    metadata_map = {}
+    for subtitle in pagination.items:
+        meta = get_metadata(subtitle.content_id, subtitle.content_type)
+        if meta:
+            metadata_map[subtitle.id] = meta
+            title = meta.get('title', subtitle.content_id)
+            if meta.get('season') is not None and meta.get('episode') is not None:
+                title = f"{title} S{meta['season']:02d}E{meta['episode']:02d}"
+            elif meta.get('season') is not None:
+                title = f"{title} S{meta['season']:02d}"
+            if meta.get('year'):
+                title = f"{title} ({meta['year']})"
+            meta['display_title'] = title
+    
+    return render_template('main/my_subtitles.html', 
+                         subtitles=pagination.items,
+                         pagination=pagination,
+                         metadata_map=metadata_map)
 
 
 @subtitles_bp.route('/delete_subtitle/<uuid:subtitle_id>', methods=['POST'])
@@ -837,8 +974,9 @@ def delete_subtitle(subtitle_id):
         current_app.logger.error(f"Error deleting subtitle {subtitle_id}: {e}", exc_info=True)
         flash('Error deleting subtitle.', 'danger')
 
-    if activity_id: return redirect(url_for('content.content_detail', activity_id=activity_id))
-    return redirect(url_for('main.dashboard'))
+    if activity_id: 
+        return redirect(url_for('content.content_detail', activity_id=activity_id))
+    return redirect(url_for('subtitles.my_subtitles'))
 
 
 @subtitles_bp.route('/download_subtitle/<uuid:subtitle_id>')

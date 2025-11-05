@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+{% from "_pagination.html" import render_pagination %}
+
+{% block title %}Selected Subtitles - {{ super() }}{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="mb-3">My Selected Subtitles</h1>
+        <p class="lead">
+            Manage all subtitle selections you've made.
+        </p>
+    </div>
+</div>
+
+{% if selections %}
+<div class="card shadow-sm">
+    <div class="card-body p-0">
+        <div class="list-group list-group-flush">
+            {% for selection in selections %}
+            <div class="list-group-item">
+                <div class="d-flex align-items-center">
+                    <div class="me-3">
+                        <div class="poster-wrapper"
+                             data-poster="{% if selection.id in metadata_map and metadata_map[selection.id].poster_url %}{{ metadata_map[selection.id].poster_url }}{% endif %}"
+                             style="height: 80px; width: 57px;">
+                            <img class="poster-image img-thumbnail"
+                                 style="height: 80px; width: auto; max-width: fit-content;">
+                            <div class="poster-fallback">
+                                <i class="fa fa-film"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1">
+                        <h6 class="mb-1">
+                            {% if selection.id in metadata_map and metadata_map[selection.id].display_title %}
+                                {{ metadata_map[selection.id].display_title }}
+                            {% else %}
+                                {{ selection.content_id }}
+                            {% endif %}
+                        </h6>
+                        
+                        {% if selection.selected_subtitle_id and selection.selected_subtitle %}
+                            {% set sub = selection.selected_subtitle %}
+                            <p class="mb-1 small">
+                                {% if sub.version_info %}
+                                    {{ sub.version_info | truncate(50) }}
+                                {% endif %}
+                            </p>
+                            <small class="text-muted">
+                                Uploader: {{ sub.uploader.username if sub.uploader else 'N/A' }}
+                                {% if sub.author and sub.author != (sub.uploader.username if sub.uploader else None) %}
+                                    | Author: {{ sub.author }}
+                                {% endif %}
+                                | Votes: <span class="fw-bold">{{ sub.votes }}</span>
+                            </small>
+                        {% elif selection.selected_external_file_id and selection.external_details_json %}
+                            {% set os_details = selection.external_details_json %}
+                            <p class="mb-1 small">
+                                {{ os_details.release_name | truncate(50) if os_details.release_name else 'N/A' }}
+                            </p>
+                            <small class="text-muted">
+                                Uploader: {{ os_details.uploader if os_details.uploader else 'N/A' }}
+                                {% if os_details.ai_translated %}
+                                    | <span class="text-warning">AI Translated</span>
+                                {% endif %}
+                            </small>
+                        {% endif %}
+                        
+                        <div class="mt-1">
+                            <span class="badge bg-secondary">{{ selection.language }}</span>
+                            {% if selection.selected_subtitle_id %}
+                            <span class="badge bg-primary">Community</span>
+                            {% elif selection.selected_external_file_id %}
+                            <span class="badge bg-warning">OpenSubtitles</span>
+                            {% endif %}
+                            {% if selection.video_hash %}
+                            <span class="badge bg-info" title="Video Hash: {{ selection.video_hash }}">
+                                <i class="fas fa-fingerprint"></i> Hash Match
+                            </span>
+                            {% endif %}
+                        </div>
+                        <small class="text-muted d-block mt-1">Selected: {{ selection.timestamp.strftime('%Y-%m-%d %H:%M') }}</small>
+                    </div>
+                    <div class="ms-2">
+                        <form action="{{ url_for('subtitles.delete_selection', selection_id=selection.id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this selection?');">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+{{ render_pagination(pagination, 'subtitles.selected_subtitles') }}
+
+{% else %}
+<div class="card shadow-sm">
+    <div class="card-body text-center py-5">
+        <i class="fas fa-check-circle fa-3x text-muted mb-3"></i>
+        <h4>No Selections Yet</h4>
+        <p class="text-muted">You haven't selected any subtitles yet.</p>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.poster-wrapper').forEach(function(wrapper) {
+            const img = wrapper.querySelector('.poster-image');
+            const fallback = wrapper.querySelector('.poster-fallback');
+            const posterUrl = wrapper.dataset.poster;
+
+            if (posterUrl) {
+                img.src = posterUrl;
+
+                img.onload = function() {
+                    this.classList.add('loaded');
+                    fallback.classList.add('hidden');
+                };
+
+                img.onerror = function() {
+                    this.style.display = 'none';
+                };
+            } else {
+                img.style.display = 'none';
+            }
+        });
+    });
+</script>
+{% endblock %}
