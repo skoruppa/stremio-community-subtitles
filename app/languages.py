@@ -47,7 +47,8 @@ LANGUAGES = [
     ('eus', 'Basque'),
     ('epo', 'Esperanto'),
     ('mkd', 'Macedonian'),
-    ('tel', 'Telugu')
+    ('tel', 'Telugu'), 
+    ('sqi', 'Albanian') 
 ]
 
 # Dictionary for quick lookups
