@@ -1,7 +1,8 @@
 // Voting functionality for subtitles
 function initVoting(csrfToken, voteUrlTemplate) {
     document.querySelectorAll('.vote-btn').forEach(function(btn) {
-        btn.addEventListener('click', function() {
+        btn.addEventListener('click', function(e) {
+            this.blur();
             const container = this.closest('[data-subtitle-id]') || this.closest('.list-group-item');
             const subtitleId = container.dataset.subtitleId;
             const voteType = this.dataset.voteType;
@@ -36,6 +37,8 @@ function initVoting(csrfToken, voteUrlTemplate) {
                     }
                     upBtn.className = 'btn btn-sm vote-btn btn-outline-success';
                     downBtn.className = 'btn btn-sm vote-btn btn-outline-danger';
+                    upBtn.blur();
+                    downBtn.blur();
                     showToast('Vote removed.', 'info');
                 } else {
                     // Vote added/changed
