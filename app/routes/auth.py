@@ -35,7 +35,13 @@ def login():
         user.last_login_at = user.current_login_at
         user.current_login_at = datetime.utcnow()
         user.last_login_ip = user.current_login_ip
-        user.current_login_ip = request.remote_addr
+        ip = (
+                request.headers.get('CF-Connecting-IP')
+                or request.headers.get('X-Forwarded-For', '').split(',')[0]
+                or request.headers.get('Client-IP')
+                or request.remote_addr
+        )
+        user.current_login_ip = ip
         user.login_count = user.login_count + 1 if user.login_count else 1
         db.session.commit()
         
