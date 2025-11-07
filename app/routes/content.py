@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, flash, current_app
+from flask import Blueprint, render_template, flash, current_app, url_for
 from flask_login import login_required, current_user
 from markupsafe import Markup
 from sqlalchemy.orm import joinedload
