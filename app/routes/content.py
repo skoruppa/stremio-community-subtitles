@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, flash, current_app
 from flask_login import login_required, current_user
+from markupsafe import Markup
 from sqlalchemy.orm import joinedload
 from ..models import UserActivity, Subtitle, UserSubtitleSelection, SubtitleVote
 from iso639 import Lang
@@ -171,6 +172,10 @@ def content_detail(activity_id):
 
     # Prepare preferred languages for display
     preferred_languages_display = ", ".join([LANGUAGE_DICT.get(lang_code, lang_code) for lang_code in current_user.preferred_languages])
+
+    # Check if OpenSubtitles is not active and show info message
+    if not current_user.opensubtitles_active:
+        flash(Markup('You don\'t have an active OpenSubtitles connection. To fully utilize the addon features, <a href="{}" class="alert-link">activate it in your account settings</a>.'.format(url_for('main.account_settings'))), 'info')
 
     # Pass context to the template
     context = {

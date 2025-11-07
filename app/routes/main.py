@@ -2,6 +2,7 @@ import datetime  # Added for UserSubtitleSelection timestamp
 
 from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app
 from flask_login import login_required, current_user
+from markupsafe import Markup
 from sqlalchemy.orm import joinedload
 from sqlalchemy import func
 
@@ -51,6 +52,10 @@ def dashboard():
             meta['display_title'] = title  # Add a pre-formatted title for the template
 
     max_activities_to_display = current_app.config.get('MAX_USER_ACTIVITIES', 15)
+
+    # Check if OpenSubtitles is not active and show info message
+    if not current_user.opensubtitles_active:
+        flash(Markup('You don\'t have an active OpenSubtitles connection. To fully utilize the addon features, <a href="{}" class="alert-link">activate it in your account settings</a>.'.format(url_for('main.account_settings'))), 'info')
 
     # Pass activities and their metadata to the template
     return render_template('main/dashboard.html',
