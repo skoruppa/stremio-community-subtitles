@@ -224,6 +224,19 @@ def addon_stream(manifest_token: str, content_type: str, content_id: str, params
                 'url': download_url,
                 'lang': preferred_lang
             })
+            
+            active_subtitle_info = get_active_subtitle_details(user, content_id, video_hash, content_type, video_filename, preferred_lang)
+            if active_subtitle_info['type'] == 'local' and active_subtitle_info['subtitle']:
+                active_sub = active_subtitle_info['subtitle']
+                if active_sub.source_metadata and active_sub.source_metadata.get('original_format') in ['ass', 'ssa']:
+                    ass_download_url = download_url.replace('.vtt', '.ass')
+                    subtitles_list.append({
+                        'id': f"{stremio_sub_id}_ass",
+                        'url': ass_download_url,
+                        'lang': preferred_lang
+                    })
+                    current_app.logger.info(f"Added ASS format subtitle for context: {download_context}")
+            
             current_app.logger.info(f"Generated download URL for context: {download_context}")
         except Exception as e:
             current_app.logger.error(f"Error generating download URL for identifier {download_identifier}: {e}")
@@ -232,12 +245,16 @@ def addon_stream(manifest_token: str, content_type: str, content_id: str, params
     return respond_with_no_cache({'subtitles': subtitles_list})
 
 
+@subtitles_bp.route('/<manifest_token>/download/<download_identifier>.ass')
 @subtitles_bp.route('/<manifest_token>/download/<download_identifier>.vtt')
 def unified_download(manifest_token: str, download_identifier: str):
     user = User.get_by_manifest_token(manifest_token)
     if not user:
         current_app.logger.warning(f"Download request with invalid token: {manifest_token}")
         return NoCacheResponse(generate_vtt_message("Invalid Access Token"), status=403, mimetype='text/vtt')
+
+    # Check if ASS format is requested from request path
+    is_ass_request = request.path.endswith('.ass')
 
     try:
         padding_needed = len(download_identifier) % 4
@@ -284,8 +301,37 @@ def unified_download(manifest_token: str, download_identifier: str):
 
     # Serve local subtitle
     if local_subtitle_to_serve:
+        # Handle ASS format request
+        if is_ass_request and local_subtitle_to_serve.source_metadata and local_subtitle_to_serve.source_metadata.get('original_format') in ['ass', 'ssa']:
+            original_ass_path = local_subtitle_to_serve.source_metadata.get('original_file_path')
+            if original_ass_path:
+                current_app.logger.info(f"Serving original ASS/SSA file for subtitle ID {local_subtitle_to_serve.id}")
+                try:
+                    if current_app.config['STORAGE_BACKEND'] == 'cloudinary':
+                        if not CLOUDINARY_AVAILABLE or not cloudinary.config().api_key:
+                            raise Exception("Cloudinary not configured/available")
+                        generated_url_info = cloudinary.utils.cloudinary_url(original_ass_path, resource_type="raw", secure=True)
+                        cloudinary_url = generated_url_info[0] if isinstance(generated_url_info, tuple) else generated_url_info
+                        if not cloudinary_url:
+                            raise Exception("Cloudinary URL generation failed")
+                        r = requests.get(cloudinary_url, timeout=10)
+                        r.raise_for_status()
+                        ass_content = r.text
+                    else:
+                        local_full_path = os.path.join(current_app.config['UPLOAD_FOLDER'], original_ass_path)
+                        if not os.path.exists(local_full_path):
+                            raise FileNotFoundError("Local ASS file not found")
+                        with open(local_full_path, 'r', encoding='utf-8') as f:
+                            ass_content = f.read()
+                    return NoCacheResponse(ass_content, mimetype='text/x-ssa')
+                except Exception as e:
+                    current_app.logger.error(f"Error reading ASS file for subtitle ID {local_subtitle_to_serve.id}: {e}", exc_info=True)
+                    message_key = 'error'
+            else:
+                current_app.logger.error(f"ASS format requested but no original_file_path for subtitle ID {local_subtitle_to_serve.id}")
+                message_key = 'error'
         # Handle community_link case
-        if local_subtitle_to_serve.source_type == 'opensubtitles_community_link' and \
+        elif local_subtitle_to_serve.source_type == 'opensubtitles_community_link' and \
                 local_subtitle_to_serve.source_metadata and \
                 local_subtitle_to_serve.source_metadata.get('original_file_id'):
 
@@ -537,6 +583,9 @@ def upload_subtitle(activity_id=None):
                 temp_file_path = temp_file.name
 
             db_file_path = None
+            original_ass_file_path = None
+            is_ass_format = file_extension in ['ass', 'ssa']
+            
             try:
                 with open(temp_file_path, 'rb') as f:
                     file_data = f.read()
@@ -584,6 +633,24 @@ def upload_subtitle(activity_id=None):
                         skip_file_upload = True
                         current_app.logger.info(f"Reusing existing subtitle file_path: {db_file_path} for new video_hash.")
                 
+                # Save original ASS/SSA file if applicable
+                if is_ass_format and not skip_file_upload:
+                    base_ass_filename = f"{uuid.uuid4()}.{file_extension}"
+                    if current_app.config['STORAGE_BACKEND'] == 'cloudinary':
+                        cloudinary_folder = current_app.config.get('CLOUDINARY_SUBTITLES_FOLDER', 'community_subtitles')
+                        cloudinary_public_id_ass = f"{cloudinary_folder}/{content_id_safe_path}/{base_ass_filename.replace(f'.{file_extension}', '')}"
+                        upload_result_ass = cloudinary.uploader.upload(file_data, public_id=cloudinary_public_id_ass, resource_type="raw", overwrite=True)
+                        original_ass_file_path = upload_result_ass.get('public_id')
+                        current_app.logger.info(f"Uploaded original ASS/SSA to Cloudinary: {original_ass_file_path}")
+                    else:
+                        local_content_dir = os.path.join(current_app.config['UPLOAD_FOLDER'], content_id_safe_path)
+                        os.makedirs(local_content_dir, exist_ok=True)
+                        local_ass_file_path_full = os.path.join(local_content_dir, base_ass_filename)
+                        with open(local_ass_file_path_full, 'wb') as f:
+                            f.write(file_data)
+                        original_ass_file_path = os.path.join(content_id_safe_path, base_ass_filename)
+                        current_app.logger.info(f"Saved original ASS/SSA to local storage: {local_ass_file_path_full}")
+                
                 if not skip_file_upload:
                     if current_app.config['STORAGE_BACKEND'] == 'cloudinary':
                         if not CLOUDINARY_AVAILABLE or not cloudinary.config().api_key:
@@ -627,6 +694,13 @@ def upload_subtitle(activity_id=None):
                     'content.content_detail', activity_id=activity_id)
                 return redirect(redirect_url)
 
+            source_metadata = None
+            if is_ass_format and original_ass_file_path:
+                source_metadata = {
+                    'original_format': file_extension,
+                    'original_file_path': original_ass_file_path
+                }
+            
             new_subtitle = Subtitle(
                 id=uuid.uuid4(),
                 content_id=content_id,
@@ -637,6 +711,7 @@ def upload_subtitle(activity_id=None):
                 file_path=db_file_path,
                 hash=vtt_hash, # Store the calculated hash
                 source_type='community',  # Explicitly set source type
+                source_metadata=source_metadata,
                 version_info=form.version_info.data if hasattr(form,
                                                                'version_info') and form.version_info.data else None,
                 author=form.author.data if hasattr(form, 'author') and form.author.data else None
@@ -979,6 +1054,25 @@ def delete_subtitle(subtitle_id):
                             current_app.logger.info(f"Deleted local file: {local_file_full_path}")
                         except Exception as e:
                             current_app.logger.error(f"Error deleting local file {local_file_full_path}: {e}")
+                
+                # Delete original ASS/SSA file if exists
+                if subtitle.source_metadata and subtitle.source_metadata.get('original_file_path'):
+                    original_ass_path = subtitle.source_metadata.get('original_file_path')
+                    if current_app.config['STORAGE_BACKEND'] == 'cloudinary':
+                        if CLOUDINARY_AVAILABLE and cloudinary.config().api_key:
+                            try:
+                                cloudinary.uploader.destroy(original_ass_path, resource_type="raw")
+                                current_app.logger.info(f"Deleted Cloudinary ASS resource: {original_ass_path}")
+                            except Exception as e:
+                                current_app.logger.error(f"Error deleting Cloudinary ASS resource {original_ass_path}: {e}")
+                    else:
+                        local_ass_full_path = os.path.join(current_app.config['UPLOAD_FOLDER'], original_ass_path)
+                        if os.path.exists(local_ass_full_path):
+                            try:
+                                os.remove(local_ass_full_path)
+                                current_app.logger.info(f"Deleted local ASS file: {local_ass_full_path}")
+                            except Exception as e:
+                                current_app.logger.error(f"Error deleting local ASS file {local_ass_full_path}: {e}")
             else:
                 current_app.logger.info(f"File {subtitle.file_path} not deleted as it's still used by other subtitles.")
 
