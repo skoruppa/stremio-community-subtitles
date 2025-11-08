@@ -358,18 +358,28 @@ class VttConverter:
             logger.error(f"Invalid ASS time format: {ass_time}. Error: {e}. Returning '00:00:00.000'.")
             return "00:00:00.000"
 
-    def _map_ass_alignment_to_vtt(self, alignment_code: Optional[str]) -> Tuple[str, str, Optional[float]]:
+    def _map_ass_alignment_to_vtt(self, alignment_code: Optional[str], style_margin_v: int = 0) -> Tuple[str, str, Optional[float]]:
         alignment_code = alignment_code or DEFAULT_ASS_ALIGNMENT
         vertical_anchor, text_align = ASS_ALIGNMENT_MAP.get(str(alignment_code),
                                                             ASS_ALIGNMENT_MAP[DEFAULT_ASS_ALIGNMENT])
         line_offset_val: Optional[float] = None
         line_anchor_val: str = 'start'
+        
+        # Calculate margin offset if PlayResY is available
+        margin_offset = 0.0
+        if style_margin_v > 0 and self.play_res_y > 0:
+            margin_offset = (style_margin_v / self.play_res_y) * 100
+        
         if vertical_anchor == 'start':
-            line_offset_val, line_anchor_val = 5.0, 'start'
+            # Top alignment - add margin from top
+            line_offset_val = max(2.0, margin_offset) if margin_offset > 0 else 2.0
+            line_anchor_val = 'start'
         elif vertical_anchor == 'middle':
-            line_offset_val, line_anchor_val = 50.0, 'middle'
+            line_offset_val, line_anchor_val = 50.0, 'center'
         elif vertical_anchor == 'end':
-            line_offset_val, line_anchor_val = 95.0, 'end'
+            # Bottom alignment - subtract margin from bottom
+            line_offset_val = 100.0 - max(10.0, margin_offset) if margin_offset > 0 else 90.0
+            line_anchor_val = 'end'
         return text_align, line_anchor_val, line_offset_val
 
     def _process_text_and_tags(self, text: str, style: Dict[str, Any], current_event_style_name: str) -> Tuple[
@@ -584,8 +594,9 @@ class VttConverter:
                 continue
             cue_settings: Dict[str, Any] = {}
             ass_style_alignment = style_props.get('Alignment')
+            style_margin_v = style_props.get('MarginV', 0)
             default_vtt_text_align, default_vtt_line_anchor, default_vtt_line_offset = self._map_ass_alignment_to_vtt(
-                ass_style_alignment)
+                ass_style_alignment, style_margin_v)
             cue_settings['align'] = default_vtt_text_align
             cue_settings['line'] = f"{default_vtt_line_offset}%" if default_vtt_line_offset is not None else 'auto'
             cue_settings['line-align'] = default_vtt_line_anchor
