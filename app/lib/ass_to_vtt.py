@@ -419,7 +419,10 @@ class VttConverter:
                         tag_key, tag_val_str = tag_content[0], tag_content[1:]
                     elif len(tag_content) > 2 and tag_content[2:].isdigit() and tag_content.startswith('an'):
                         tag_key, tag_val_str = tag_content[:2], tag_content[2:]
-                    if tag_key == 'b':
+                    if tag_key == 'q':
+                        if tag_val_str.isdigit():
+                            logger.debug(f"WrapStyle \\q{tag_val_str} detected (VTT has limited wrap control)")
+                    elif tag_key == 'b':
                         b_o = not tag_val_str or int(tag_val_str) > 0
                         (active_tags.add if b_o else active_tags.discard)('b')
                         is_bold = b_o
@@ -448,10 +451,22 @@ class VttConverter:
                             try:
                                 x, y = float(match.group(1)), float(match.group(2))
                                 pos_p, line_p = (x / self.play_res_x) * 100, (y / self.play_res_y) * 100
+                                
+                                # Determine position-align based on x position
+                                if pos_p < 33:
+                                    pos_align = 'start'
+                                    text_align = 'start'
+                                elif pos_p > 66:
+                                    pos_align = 'end'
+                                    text_align = 'end'
+                                else:
+                                    pos_align = 'center'
+                                    text_align = 'center'
+                                
                                 override_settings.update(
-                                    {'position': f"{pos_p:.2f}%", 'line': f"{line_p:.2f}%", 'align': 'start',
-                                     'line-align': 'start', 'position-align': 'start'})
-                                logger.debug(f"Tag \\{tag_content}: Set VTT position, line, and alignments.")
+                                    {'position': f"{pos_p:.2f}%", 'line': f"{line_p:.2f}%", 'align': text_align,
+                                     'line-align': 'start', 'position-align': pos_align})
+                                logger.debug(f"Tag \\{tag_content}: Set VTT position={pos_p:.2f}%, line={line_p:.2f}%, position-align={pos_align}")
                             except ValueError:
                                 logger.warning(f"Ignoring invalid values in tag \\{tag_content}")
                         else:
@@ -466,9 +481,23 @@ class VttConverter:
                         if is_underline: active_tags.add('u')
                         override_settings = {}
                         logger.debug("Applied style reset (\\r)")
+                    elif tag_key in ['c', '1c']:
+                        color_css = _convert_ass_color_to_css(tag_val_str if tag_val_str else tag_content[len(tag_key):])
+                        if color_css:
+                            logger.debug(f"Inline primary color change to {color_css} (not directly supported in VTT)")
+                    elif tag_key in ['2c', '3c', '4c']:
+                        logger.debug(f"Inline color tag \\{tag_content} (not supported in VTT)")
+                    elif tag_key == 'q':
+                        logger.debug(f"WrapStyle tag \\q{tag_val_str} (limited VTT support)")
+                    elif tag_content.startswith('fscx(') or tag_content.startswith('fscy('):
+                        logger.debug(f"Font scale tag \\{tag_content} (not supported in VTT)")
+                    elif tag_content.startswith('move('):
+                        logger.debug(f"Move animation tag \\{tag_content} (not supported in VTT)")
+                    elif tag_content.startswith('org('):
+                        logger.debug(f"Origin tag \\{tag_content} (not supported in VTT)")
                     elif any(tag_content.startswith(p) for p in
-                             ['c', '&H', '1c', '2c', '3c', '4c', 'alpha', '1a', '2a', '3a', '4a', 'fs', 'fn', 'bord',
-                              'shad', 'be', 'blur', 'move', 'fad', 'fade', 't', 'k', 'K', 'kf', 'ko']):
+                             ['&H', 'alpha', '1a', '2a', '3a', '4a', 'fs', 'fn', 'bord',
+                              'shad', 'be', 'blur', 'fad', 'fade', 't', 'k', 'K', 'kf', 'ko', 'fscx', 'fscy']):
                         logger.debug(f"Ignoring ASS/SSA tag (unsupported in VTT): \\{tag_content}")
                     else:
                         logger.debug(f"Ignoring unknown/unsupported ASS/SSA tag: \\{tag_content}")
