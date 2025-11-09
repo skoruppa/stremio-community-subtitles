@@ -16,16 +16,38 @@ Every subtitle you upload helps build a community database that benefits all use
 
 - **📱 Cross-Device Subtitle Support** – Use custom subtitles on web, mobile, TV, or desktop
 - **🌍 Community Database** – Your uploads help other users watching the same files
-- **🤖 Automatic Subtitle Selection** – Subtitles are now selected automatically based on your video file
-- **📤 Upload Without Watching** – Upload subtitles without needing to start playback
-- **🎯 Manual OpenSubtitles Selection** – Choose any available OpenSubtitles subtitle for specific video
-- **🔗 Link to Video Version** – You can “link” subtitles (including OpenSubtitles) to your video version for other users
-- **🧠 Viewing History Integration** – Manage your subtitles based on what you've watched
-- **🗳️ Voting System** – Vote for good or bad subs to help others find the best ones
-- **🧹 Manage Your Data (NEW!)** – You can now see and delete:
-  - your uploaded subtitles
-  - your manual subtitle selections
-  - your votes on subtitles
+- **🤖 Automatic Subtitle Selection** – Subtitles are selected automatically based on your video file
+- **📤 Upload Without Watching** – Upload subtitles without starting playback
+- **🎯 Manual OpenSubtitles Selection** – Choose any available OpenSubtitles subtitle for a specific video
+- **🔗 Link to Video Version** – Linked subtitles stay synced for future viewers
+- **🧠 Viewing History Integration**
+- **🗳️ Voting System**
+- **🧹 Manage Your Data**
+  - uploaded subtitles
+  - your OpenSubtitles selections
+  - your votes
+
+### ✅ New in 0.4.5 — Better ASS/SSA Support
+
+Until now, `.ass` / `.ssa` subtitles were always **converted** to `.vtt`.  
+This caused issues:
+
+- Stremio has inconsistent support for ASS depending on platform and playback engine
+- Converting to VTT caused loss of formatting
+- Some of the same rendering bugs happen in VTT  
+  ref: https://github.com/Stremio/stremio-bugs/issues/1404
+
+So starting from **0.4.5**:
+
+✅ The addon stores **both** versions:
+- original `.ass` / `.ssa`
+- converted `.vtt`
+
+✅ In Stremio, the user can **switch** between them  
+This allows choosing whichever works best on a given device.
+This way you can pick the "least broken" option for your platform.
+
+---
 
 ## 🚀 Installation
 
@@ -39,9 +61,7 @@ Every subtitle you upload helps build a community database that benefits all use
 
 ## 🔐 OpenSubtitles Integration
 
-- You **no longer need your own API key**
-- Just log in with your OpenSubtitles account from the [account settings](https://stremio-community-subtitles.top/account)
-- ⚠️ Some older accounts must reconnect due to OS security changes
+- Log in from the [account settings](https://stremio-community-subtitles.top/account)
 
 Once connected:
 
@@ -69,15 +89,17 @@ Once connected:
 - The addon selects the best subtitle for your file
 - Works with uploaded subs and OpenSubtitles
 
-## 🧹 Manage Your Uploaded Data (NEW!)
+## 🧹 Manage Your Uploaded Data
 
-A new management panels allows you to view and delete:
+Management panels allows you to view and delete:
+- your uploaded subtitles
+- your manual subtitle selections
+- your votes
 
-- Subtitles you uploaded
-- Subtitle selections you made
-- Your subtitle votes
+## 🔐 Privacy
 
-If a subtitle you uploaded is bad, outdated, or replaced by a better one, you can remove it with one click.
+Read the privacy policy here:  
+➡️ **[PRIVACY.md](https://github.com/skoruppa/stremio-community-subtitles/blob/main/privacy.md)**
 
 ## 🎯 How It Works
 
