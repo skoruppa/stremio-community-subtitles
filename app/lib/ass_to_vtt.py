@@ -525,14 +525,17 @@ class VttConverter:
             if primary_color: rules_for_style.append(f"color: {primary_color};")
 
             # ass_fontsize_val = style_props.get('Fontsize')
-            # if ass_fontsize_val is not None:
+            # if ass_fontsize_val is not None and self.play_res_y > 0:
             #     try:
             #         ass_fontsize = float(ass_fontsize_val)
-            #         if self.play_res_y > 0:
-            #             font_size_vh = round((ass_fontsize / self.play_res_y) * 100, 2)
-            #             if font_size_vh > 0: rules_for_style.append(f"font-size: {font_size_vh}vh;")
-            #         elif ass_fontsize > 0 : logger.warning(f"PlayResY not available for style '{style_name_norm}'. Skipping.")
-            #     except ValueError: logger.warning(f"Invalid Fontsize value '{ass_fontsize_val}' for style '{style_name_norm}'.")
+            #         font_size_percent = round((ass_fontsize / self.play_res_y) * 100, 2)
+            #         if 2 <= font_size_percent <= 10:
+            #             rules_for_style.append(f"font-size: {font_size_percent}%;")
+            #         else:
+            #             logger.debug(f"Font size {font_size_percent}% out of range for style '{style_name_norm}'")
+            #     except ValueError:
+            #         logger.warning(f"Invalid Fontsize value '{ass_fontsize_val}' for style '{style_name_norm}'.")
+
 
             outline_color_css = _convert_ass_color_to_css(style_props.get('OutlineColour'))
             outline_width_val = style_props.get('Outline')
