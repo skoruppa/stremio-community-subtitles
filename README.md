@@ -1,6 +1,6 @@
 # Stremio Community Subtitles Addon
 
-![Version](https://img.shields.io/badge/version-0.4.2-blue.svg)
+![Version](https://img.shields.io/badge/version-0.4.5-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Status](https://img.shields.io/badge/status-Active-brightgreen.svg)
 
