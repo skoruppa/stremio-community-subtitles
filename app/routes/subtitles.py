@@ -230,7 +230,7 @@ def addon_stream(manifest_token: str, content_type: str, content_id: str, params
                 active_sub = active_subtitle_info['subtitle']
                 if active_sub.source_metadata and active_sub.source_metadata.get('original_format') in ['ass', 'ssa']:
                     ass_download_url = download_url.replace('.vtt', '.ass')
-                    subtitles_list.append({
+                    subtitles_list.insert(-1, {
                         'id': f"{stremio_sub_id}_ass",
                         'url': ass_download_url,
                         'lang': preferred_lang
