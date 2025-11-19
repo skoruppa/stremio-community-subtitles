@@ -109,321 +109,254 @@ def calculate_filename_similarity(video_filename, subtitle_release_name):
     return difflib.SequenceMatcher(None, norm_video_filename, norm_subtitle_release_name).ratio()
 
 
-def search_opensubtitles(user, content_id, video_hash=None, content_type=None, lang=None):
-    """
-    Searches for subtitles on OpenSubtitles based on provided parameters.
 
-    Args:
-        user (User): The current user object with OpenSubtitles credentials
-        content_id (str): The content ID (e.g., IMDB ID, or IMDB_ID:S:E)
-        video_hash (str, optional): The hash of the video file
-        content_type (str, optional): 'movie', 'series', or 'episode'
-
-    Returns:
-        list: List of OpenSubtitles search results, or empty list if no results/error
-    """
-    from ..lib import opensubtitles_client
-    from iso639 import Lang
-
-    # Check if user has OpenSubtitles integration active
-    if not (user.opensubtitles_active and user.opensubtitles_token and user.opensubtitles_base_url):
-        current_app.logger.info(f"User {user.username} doesn't have active OpenSubtitles integration")
-        return []
-
-    # Convert language(s) to OpenSubtitles format
-    os_languages_list = []
-    if isinstance(lang, list):
-        for l in lang:
-            if l == 'pob':
-                os_languages_list.append('pt-br')
-            elif l == 'por':
-                os_languages_list.append('pt-pt')
-            else:
-                try:
-                    os_languages_list.append(Lang(l).pt1)
-                except KeyError:
-                    current_app.logger.warning(f"Could not convert language code {l} to ISO 639-1 for OpenSubtitles.")
-        os_language_param = ",".join(os_languages_list)
-    else: # Assume single language string
-        if lang == 'pob':
-            os_language_param = 'pt-br'
-        elif lang == 'por':
-            os_language_param = 'pt-pt'
-        else:
-            try:
-                os_language_param = Lang(lang).pt1
-            except KeyError:
-                current_app.logger.warning(f"Could not convert language code {lang} to ISO 639-1 for OpenSubtitles.")
-                os_language_param = lang # Fallback to original if conversion fails
-
-    try:
-        # Build search parameters
-        os_search_params = {
-            'languages': os_language_param
-        }
-        if video_hash:
-            os_search_params['moviehash'] = video_hash
-
-        # Add IMDB ID if available
-        imdb_id_part = content_id.split(':')[0]
-        if imdb_id_part.startswith("tt"):
-            os_search_params['imdb_id'] = imdb_id_part
-
-        # Determine content type and add season/episode info
-        if ':' in content_id and (content_type == 'series' or 'episode' in str(content_type)):
-            parts = content_id.split(':')
-            os_search_params['type'] = 'episode'
-            if len(parts) >= 2:
-                try:
-                    os_search_params['season_number'] = int(parts[1])
-                except ValueError:
-                    pass
-            if len(parts) >= 3:
-                try:
-                    os_search_params['episode_number'] = int(parts[2])
-                except ValueError:
-                    pass
-        elif content_type == 'movie':
-            os_search_params['type'] = 'movie'
-
-        # Ensure we have enough parameters for a meaningful search
-        if not (os_search_params.get('imdb_id') or os_search_params.get('moviehash') or os_search_params.get('query')):
-            current_app.logger.info("Not enough parameters for OpenSubtitles search")
-            return []
-
-        current_app.logger.info(f"Searching OpenSubtitles with params: {os_search_params}")
-
-        # Execute search
-        os_results = opensubtitles_client.search_subtitles(**os_search_params, user=user)
-
-        if os_results and os_results.get('data'):
-            current_app.logger.info(f"Found {len(os_results['data'])} OpenSubtitles results")
-            return os_results['data']
-        else:
-            current_app.logger.info("No OpenSubtitles results found")
-            return []
-
-    except opensubtitles_client.OpenSubtitlesError as e:
-        current_app.logger.error(f"OpenSubtitles API error during search: {e}")
-        return []
-    except Exception as e:
-        current_app.logger.error(f"Unexpected error during OpenSubtitles search: {e}", exc_info=True)
-        return []
 
 
 def get_active_subtitle_details(user, content_id, video_hash=None, content_type=None, video_filename=None, lang=None):
-    active_details = {'type': 'none', 'subtitle': None, 'details': None, 'user_vote_value': None,
-                      'user_selection_record': None, 'auto': False}
+    """Provider-agnostic subtitle selection logic"""
+    result = {
+        'type': 'none',
+        'subtitle': None,
+        'provider_name': None,
+        'provider_subtitle_id': None,
+        'provider_metadata': None,
+        'details': None,  # Backward compat
+        'auto': False,
+        'user_vote_value': None,
+        'user_selection_record': None
+    }
+    
+    # 1. User Selection
+    user_selection = _get_user_selection(user, content_id, video_hash, lang)
+    result['user_selection_record'] = user_selection
+    
+    if user_selection:
+        if user_selection.selected_subtitle_id:
+            result.update({
+                'type': 'local',
+                'subtitle': user_selection.selected_subtitle,
+                'user_vote_value': _get_user_vote(user, user_selection.selected_subtitle_id)
+            })
+            return result
+        
+        # Backward compat: old OpenSubtitles selection
+        if user_selection.selected_external_file_id:
+            result.update({
+                'type': 'opensubtitles_selection',
+                'provider_name': 'opensubtitles',
+                'provider_subtitle_id': str(user_selection.selected_external_file_id),
+                'provider_metadata': user_selection.external_details_json,
+                'details': user_selection.external_details_json
+            })
+            return result
+    
+    # 2. Local by hash
+    if video_hash:
+        local_sub = _find_local_by_hash(content_id, video_hash, lang)
+        if local_sub:
+            result.update({
+                'type': 'local',
+                'subtitle': local_sub,
+                'auto': True,
+                'user_vote_value': _get_user_vote(user, local_sub.id)
+            })
+            return result
+    
+    # 3. Providers by hash
+    if video_hash:
+        provider_result = _search_providers_by_hash(user, content_id, video_hash, content_type, lang)
+        if provider_result:
+            result.update(provider_result)
+            result['auto'] = True
+            return result
+    
+    # 4. Best match by filename
+    if video_filename:
+        best_match = _find_best_match_by_filename(user, content_id, video_filename, content_type, lang)
+        if best_match:
+            result.update(best_match)
+            result['auto'] = True
+            return result
+    
+    # 5. Fallback
+    fallback = _find_fallback_subtitle(user, content_id, content_type, lang)
+    if fallback:
+        result.update(fallback)
+        result['auto'] = True
+        return result
+    
+    return result
 
-    current_app.logger.debug(
-        f"get_active_subtitle_details called for user {user.id}, content_id: {content_id}, "
-        f"video_hash: {video_hash}, video_filename: {video_filename}"
-    )
 
-    # 1. User selection
-    user_selection_query = UserSubtitleSelection.query.filter_by(
+def _get_user_selection(user, content_id, video_hash, lang):
+    query = UserSubtitleSelection.query.filter_by(
         user_id=user.id,
         content_id=content_id,
         language=lang
     )
     if video_hash:
-        user_selection_query = user_selection_query.filter_by(video_hash=video_hash)
+        query = query.filter_by(video_hash=video_hash)
     else:
-        user_selection_query = user_selection_query.filter(UserSubtitleSelection.video_hash.is_(None))
+        query = query.filter(UserSubtitleSelection.video_hash.is_(None))
+    return query.options(joinedload(UserSubtitleSelection.selected_subtitle)).first()
 
-    user_selection = user_selection_query.options(
-        joinedload(UserSubtitleSelection.selected_subtitle).joinedload(Subtitle.uploader)
-    ).first()
-    active_details['user_selection_record'] = user_selection
 
-    if user_selection:
-        if user_selection.selected_subtitle_id and user_selection.selected_subtitle:
-            active_details['type'] = 'local'
-            active_details['subtitle'] = user_selection.selected_subtitle
-            user_vote = SubtitleVote.query.filter_by(
-                user_id=user.id,
-                subtitle_id=active_details['subtitle'].id
-            ).first()
-            if user_vote: active_details['user_vote_value'] = user_vote.vote_value
-            current_app.logger.info(
-                f"User selection (local): {active_details['subtitle'].id} for {content_id}, hash context: {video_hash}")
-            return active_details
+def _get_user_vote(user, subtitle_id):
+    vote = SubtitleVote.query.filter_by(user_id=user.id, subtitle_id=subtitle_id).first()
+    return vote.vote_value if vote else None
 
-        if user.opensubtitles_active and user_selection.selected_external_file_id and user_selection.external_details_json:
-            active_details['type'] = 'opensubtitles_selection'
-            active_details['details'] = user_selection.external_details_json
-            current_app.logger.info(
-                f"User selection (OS): {user_selection.selected_external_file_id} for {content_id}, hash context: {video_hash}")
-            return active_details
 
-    os_search_results = None  # Store OS search results to avoid multiple calls
+def _find_local_by_hash(content_id, video_hash, lang):
+    return Subtitle.query.filter_by(
+        content_id=content_id,
+        language=lang,
+        video_hash=video_hash
+    ).order_by(Subtitle.votes.desc()).first()
 
-    # 2. Local subtitles with matching video_hash
-    if video_hash:
-        current_app.logger.debug(f"Step 2: Checking local by hash: {video_hash} for {content_id}")
-        local_sub_by_hash = Subtitle.query.filter_by(
-            content_id=content_id,
-            language=lang,
-            video_hash=video_hash
-        ).order_by(Subtitle.votes.desc()).options(joinedload(Subtitle.uploader)).first()
 
-        if local_sub_by_hash:
-            active_details.update({'type': 'local', 'auto': True, 'subtitle': local_sub_by_hash})
-            user_vote = SubtitleVote.query.filter_by(user_id=user.id, subtitle_id=local_sub_by_hash.id).first()
-            if user_vote: active_details['user_vote_value'] = user_vote.vote_value
-            current_app.logger.info(f"Auto-selected local (hash match): {local_sub_by_hash.id} for {content_id}")
-            return active_details
-
-    # 3. OpenSubtitles with matching video_hash
-    if video_hash and user.opensubtitles_active:
-        current_app.logger.debug(f"Step 3: Checking OS by hash: {video_hash} for {content_id}")
-        os_search_results = search_opensubtitles(user, content_id, video_hash, content_type, lang)
-        for item in os_search_results:
-            attrs = item.get('attributes', {})
-            files = attrs.get('files', [])
-            if attrs.get('moviehash_match') and files and files[0].get('file_id'):
-                active_details.update({
-                    'type': 'opensubtitles_auto', 'auto': True,
-                    'details': {
-                        'file_id': files[0].get('file_id'), 'release_name': files[0].get('file_name'),
-                        'language': attrs.get('language'), 'moviehash_match': True,
-                        'ai_translated': attrs.get('ai_translated') or attrs.get('machine_translated'),
-                        'uploader': attrs.get('uploader', {}).get('name'), 'url': attrs.get('url')
+def _search_providers_by_hash(user, content_id, video_hash, content_type, lang):
+    try:
+        from ..providers.registry import ProviderRegistry
+        active_providers = ProviderRegistry.get_active_for_user(user)
+    except Exception as e:
+        current_app.logger.error(f"Error accessing ProviderRegistry: {e}")
+        return None
+    
+    for provider in active_providers:
+        if not provider.supports_hash_matching:
+            continue
+        try:
+            results = provider.search(
+                user=user,
+                imdb_id=content_id.split(':')[0] if content_id.startswith('tt') else None,
+                video_hash=video_hash,
+                languages=[lang],
+                content_type=content_type
+            )
+            for result in results:
+                if result.metadata and result.metadata.get('hash_match'):
+                    return {
+                        'type': f'{provider.name}_auto',
+                        'provider_name': provider.name,
+                        'provider_subtitle_id': result.subtitle_id,
+                        'provider_metadata': {
+                            'release_name': result.release_name,
+                            'uploader': result.uploader,
+                            'hash_match': True
+                        },
+                        'details': {'file_id': result.subtitle_id, 'release_name': result.release_name}
                     }
-                })
-                current_app.logger.info(f"Auto-selected OS (hash match): {files[0].get('file_id')} for {content_id}")
-                return active_details
+        except Exception as e:
+            current_app.logger.error(f"Provider {provider.name} search failed: {e}")
+    return None
 
-    # 4. Best Match
-    if video_filename:
-        current_app.logger.debug(f"Step 4: Checking by filename: {video_filename} for {content_id}")
-        candidates = []
-        min_similarity_threshold = 0.0
 
-        # A. Local
-        all_local_subs = Subtitle.query.filter_by(
-            content_id=content_id, language=lang
-        ).options(joinedload(Subtitle.uploader)).all()
+def _find_best_match_by_filename(user, content_id, video_filename, content_type, lang):
+    candidates = []
+    
+    # Local
+    local_subs = Subtitle.query.filter_by(content_id=content_id, language=lang).all()
+    for sub in local_subs:
+        score = calculate_filename_similarity(video_filename, sub.version_info)
+        if score > 0:
+            candidates.append({'type': 'local', 'subtitle': sub, 'score': score})
+    
+    # Providers
+    try:
+        from ..providers.registry import ProviderRegistry
+        active_providers = ProviderRegistry.get_active_for_user(user)
+        for provider in active_providers:
+            try:
+                results = provider.search(
+                    user=user,
+                    imdb_id=content_id.split(':')[0] if content_id.startswith('tt') else None,
+                    languages=[lang],
+                    content_type=content_type
+                )
+                for result in results:
+                    score = calculate_filename_similarity(video_filename, result.release_name)
+                    if result.ai_translated:
+                        score -= 0.05
+                    if score > 0:
+                        candidates.append({
+                            'type': 'provider',
+                            'provider_name': provider.name,
+                            'provider_subtitle_id': result.subtitle_id,
+                            'provider_metadata': {'release_name': result.release_name},
+                            'score': score
+                        })
+            except Exception as e:
+                current_app.logger.error(f"Provider {provider.name} search failed: {e}")
+    except:
+        pass
+    
+    if not candidates:
+        return None
+    
+    candidates.sort(key=lambda c: c['score'], reverse=True)
+    best = candidates[0]
+    
+    if best['type'] == 'local':
+        return {
+            'type': 'local',
+            'subtitle': best['subtitle'],
+            'user_vote_value': _get_user_vote(user, best['subtitle'].id)
+        }
+    else:
+        return {
+            'type': f"{best['provider_name']}_auto",
+            'provider_name': best['provider_name'],
+            'provider_subtitle_id': best['provider_subtitle_id'],
+            'provider_metadata': best['provider_metadata'],
+            'details': {'file_id': best['provider_subtitle_id']}
+        }
 
-        for sub in all_local_subs:
-            score = calculate_filename_similarity(video_filename, sub.version_info)
-            if score >= min_similarity_threshold:
-                candidates.append({'type': 'local', 'data': sub, 'score': score, 'name': sub.version_info or ""})
 
-        # B. OpenSubtitles
-        if user.opensubtitles_active:
-            if os_search_results is None:
-                current_app.logger.debug("Step 4: Performing general OS search for filename matching.")
-                os_search_results = search_opensubtitles(user, content_id, None, content_type, lang)
-
-            for item in os_search_results:
-                attrs = item.get('attributes', {})
-                files = attrs.get('files', [])
-                if not (files and files[0].get('file_id')): continue
-
-                release_name = files[0].get('file_name')
-                score = calculate_filename_similarity(video_filename, release_name)
-                if attrs.get('ai_translated') or attrs.get('machine_translated'): score -= 0.05
-
-                if score >= min_similarity_threshold:
-                    candidates.append(
-                        {'type': 'opensubtitles_auto', 'data': item, 'score': score, 'name': release_name or ""})
-
-        if candidates:
-            candidates.sort(key=lambda c: c['score'], reverse=True)
-            best_match = candidates[0]
-            current_app.logger.info(
-                f"Auto-selected by filename similarity (score: {best_match['score']:.2f}): {best_match['name']} ({best_match['type']}) for {content_id}")
-
-            active_details['auto'] = True
-            if best_match['type'] == 'local':
-                active_details.update({'type': 'local', 'subtitle': best_match['data']})
-                user_vote = SubtitleVote.query.filter_by(user_id=user.id, subtitle_id=best_match['data'].id).first()
-                if user_vote: active_details['user_vote_value'] = user_vote.vote_value
-            else:  # opensubtitles_auto
-                attrs = best_match['data'].get('attributes', {})
-                files = attrs.get('files', [])
-                active_details.update({
-                    'type': 'opensubtitles_auto',
-                    'details': {
-                        'file_id': files[0].get('file_id'), 'release_name': files[0].get('file_name'),
-                        'language': lang, 'moviehash_match': attrs.get('moviehash_match', False),
-                        'ai_translated': attrs.get('ai_translated') or attrs.get('machine_translated'),
-                        'uploader': attrs.get('uploader', {}).get('name'), 'url': attrs.get('url')
+def _find_fallback_subtitle(user, content_id, content_type, lang):
+    # Local first
+    local_sub = Subtitle.query.filter_by(
+        content_id=content_id,
+        language=lang
+    ).order_by(Subtitle.votes.desc()).first()
+    
+    if local_sub:
+        return {
+            'type': 'local',
+            'subtitle': local_sub,
+            'user_vote_value': _get_user_vote(user, local_sub.id)
+        }
+    
+    # Providers
+    try:
+        from ..providers.registry import ProviderRegistry
+        active_providers = ProviderRegistry.get_active_for_user(user)
+        for provider in active_providers:
+            try:
+                results = provider.search(
+                    user=user,
+                    imdb_id=content_id.split(':')[0] if content_id.startswith('tt') else None,
+                    languages=[lang],
+                    content_type=content_type
+                )
+                non_ai = [r for r in results if not r.ai_translated]
+                chosen = non_ai[0] if non_ai else (results[0] if results else None)
+                if chosen:
+                    return {
+                        'type': f'{provider.name}_auto',
+                        'provider_name': provider.name,
+                        'provider_subtitle_id': chosen.subtitle_id,
+                        'provider_metadata': {'release_name': chosen.release_name},
+                        'details': {'file_id': chosen.subtitle_id}
                     }
-                })
-            return active_details
-
-    # 5. Fallback: when no video_filename
-    if not video_filename:
-        current_app.logger.debug(f"Step 5: Fallback (no hash) for {content_id}")
-        # 5a. Local subtitles without video_hash
-        local_no_hash_subs = (Subtitle.query.filter_by(content_id=content_id, language=lang)
-                              .filter(Subtitle.video_hash.is_(None)).order_by(Subtitle.votes.desc())
-                              .options(joinedload(Subtitle.uploader)).all())
-
-        if local_no_hash_subs:
-            chosen_local_sub = local_no_hash_subs[0]
-            active_details.update({'type': 'local', 'auto': True, 'subtitle': chosen_local_sub})
-            user_vote = SubtitleVote.query.filter_by(user_id=user.id, subtitle_id=chosen_local_sub.id).first()
-            if user_vote: active_details['user_vote_value'] = user_vote.vote_value
-            current_app.logger.info(
-                f"Auto-selected local (fallback, no hash assigned): {chosen_local_sub.id} for {content_id}")
-            return active_details
-
-        # 5b. Any other local subtitles
-        all_local_subs_fallback = (Subtitle.query.filter_by(content_id=content_id, language=lang)
-                                   .order_by(Subtitle.votes.desc()).options(joinedload(Subtitle.uploader)).first())
-
-        if all_local_subs_fallback:
-            active_details.update({'type': 'local', 'auto': True, 'subtitle': all_local_subs_fallback})
-            user_vote = SubtitleVote.query.filter_by(user_id=user.id, subtitle_id=all_local_subs_fallback.id).first()
-            if user_vote: active_details['user_vote_value'] = user_vote.vote_value
-            current_app.logger.info(
-                f"Auto-selected local (fallback, highest votes/first): {all_local_subs_fallback.id} for {content_id}")
-            return active_details
-
-    # 6. Fallback OpenSubtitles
-    if user.opensubtitles_active:
-        current_app.logger.debug(f"Step 6: General OpenSubtitles fallback for {content_id}")
-        if os_search_results is None:
-            current_app.logger.debug("Step 6: Performing general OS search for final fallback.")
-            os_search_results = search_opensubtitles(user, content_id, None, content_type, lang)
-
-        not_ai = []
-        ai = []
-        for item in os_search_results:
-            attrs = item.get('attributes', {})
-            files = attrs.get('files', [])
-            if not (files and files[0].get('file_id')): continue
-            detail = {
-                'file_id': files[0].get('file_id'), 'release_name': files[0].get('file_name'),
-                'language': lang, 'moviehash_match': attrs.get('moviehash_match', False),
-                'ai_translated': attrs.get('ai_translated') or attrs.get('machine_translated'),
-                'uploader': attrs.get('uploader', {}).get('name'), 'url': attrs.get('url')
-            }
-            if detail['ai_translated']:
-                ai.append(detail)
-            else:
-                not_ai.append(detail)
-
-        chosen_fallback_details = None
-        if not_ai:
-            chosen_fallback_details = not_ai[0]
-        elif ai:
-            chosen_fallback_details = ai[0]
-
-        if chosen_fallback_details:
-            active_details.update({'type': 'opensubtitles_auto', 'auto': True, 'details': chosen_fallback_details})
-            current_app.logger.info(
-                f"Auto-selected OS (general fallback, type: {'AI' if chosen_fallback_details['ai_translated'] else 'Not AI'}): {chosen_fallback_details['file_id']} for {content_id}")
-            return active_details
-
-    current_app.logger.info(f"No suitable subtitle found for {content_id} after all steps.")
-    return active_details
+            except Exception as e:
+                current_app.logger.error(f"Provider {provider.name} search failed: {e}")
+    except:
+        pass
+    
+    return None
 
 
-def _get_vtt_content(subtitle):
+def get_vtt_content(subtitle):
     """
     Helper function to get VTT content for a given subtitle.
     Handles both Cloudinary and local storage.
@@ -450,3 +383,71 @@ def _get_vtt_content(subtitle):
         
         with open(local_full_path, 'r', encoding='utf-8') as f:
             return f.read()
+
+
+def generate_vtt_message(message: str) -> str:
+    """Generates a simple VTT file content displaying a message."""
+    return f"WEBVTT\n\n00:00:00.000 --> 00:05:00.000\n{message}"
+
+
+def extract_subtitle_from_zip(zip_content: bytes):
+    """
+    Extracts subtitle file from ZIP archive.
+    Returns tuple: (subtitle_content: bytes, filename: str, extension: str)
+    """
+    import zipfile
+    import io
+    
+    subtitle_extensions = ['.srt', '.vtt', '.ass', '.ssa', '.sub']
+    
+    try:
+        with zipfile.ZipFile(io.BytesIO(zip_content)) as zf:
+            for file_info in zf.filelist:
+                filename = file_info.filename
+                ext = os.path.splitext(filename)[1].lower()
+                
+                if ext in subtitle_extensions:
+                    content = zf.read(file_info)
+                    return content, filename, ext
+            
+            raise ValueError("No subtitle file found in ZIP archive")
+    except zipfile.BadZipFile:
+        raise ValueError("Invalid ZIP file")
+
+
+def process_subtitle_content(content: bytes, extension: str, encoding=None):
+    """
+    Processes subtitle content and returns both VTT and original (if ASS/SSA).
+    Returns dict: {'vtt': str, 'original': str or None, 'original_format': str or None}
+    """
+    from ..lib.subtitles import convert_to_vtt
+    
+    # Convert to VTT
+    vtt_content = convert_to_vtt(content, extension.lstrip('.'), encoding=encoding)
+    
+    # If ASS/SSA, also keep original
+    if extension.lower() in ['.ass', '.ssa']:
+        try:
+            original_content = content.decode('utf-8')
+        except UnicodeDecodeError:
+            # Try other encodings
+            for enc in ['latin-1', 'cp1252', 'iso-8859-1']:
+                try:
+                    original_content = content.decode(enc)
+                    break
+                except:
+                    continue
+            else:
+                original_content = None
+        
+        return {
+            'vtt': vtt_content,
+            'original': original_content,
+            'original_format': extension.lstrip('.')
+        }
+    
+    return {
+        'vtt': vtt_content,
+        'original': None,
+        'original_format': None
+    }

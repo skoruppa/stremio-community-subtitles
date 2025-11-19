@@ -124,10 +124,9 @@ class User(UserMixin, db.Model):
     email_confirmed = db.Column(db.Boolean, default=False)
     email_confirmed_at = db.Column(db.DateTime, nullable=True)
 
-    # OpenSubtitles Integration Fields
-    opensubtitles_token = db.Column(db.String(1024), nullable=True)  # Assuming token can be long
-    opensubtitles_base_url = db.Column(db.String(255), nullable=True)
-    opensubtitles_active = db.Column(db.Boolean, default=False, nullable=False)
+    # Provider credentials - unified system for all subtitle providers
+    # Format: {'provider_name': {'token': '...', 'active': True, 'base_url': '...', 'try_provide_ass': False, ...}, ...}
+    provider_credentials = db.Column(MutableDict.as_mutable(JSONType), nullable=True, default=dict)
 
     last_login_at = db.Column(db.DateTime)
     current_login_at = db.Column(db.DateTime)

@@ -13,9 +13,7 @@ from iso639 import Lang
 
 from ..forms import SubtitleUploadForm
 from ..languages import LANGUAGES
-from ..lib import opensubtitles_client
 from ..lib.metadata import get_metadata
-from ..lib.opensubtitles_client import make_request_with_retry
 
 try:
     import cloudinary
@@ -28,7 +26,7 @@ except ImportError:
 from ..extensions import db
 from ..models import User, Subtitle, UserActivity, UserSubtitleSelection, SubtitleVote  
 from ..lib.subtitles import convert_to_vtt
-from .utils import respond_with, get_active_subtitle_details, respond_with_no_cache, NoCacheResponse, no_cache_redirect
+from .utils import respond_with, get_active_subtitle_details, respond_with_no_cache, NoCacheResponse, no_cache_redirect, get_vtt_content, generate_vtt_message
 from urllib.parse import parse_qs, unquote
 import gzip
 import io
@@ -37,38 +35,10 @@ import hashlib # Import hashlib for SHA256 hashing
 subtitles_bp = Blueprint('subtitles', __name__)
 
 
-def _get_vtt_content(subtitle):
-    """
-    Helper function to get VTT content for a given subtitle.
-    Handles both Cloudinary and local storage.
-    """
-    if not subtitle.file_path:
-        raise ValueError("Subtitle has no file_path")
-
-    if current_app.config['STORAGE_BACKEND'] == 'cloudinary':
-        if not CLOUDINARY_AVAILABLE or not cloudinary.config().api_key:
-            raise Exception("Cloudinary not configured/available")
-        
-        generated_url_info = cloudinary.utils.cloudinary_url(subtitle.file_path, resource_type="raw", secure=True)
-        cloudinary_url = generated_url_info[0] if isinstance(generated_url_info, tuple) else generated_url_info
-        if not cloudinary_url: 
-            raise Exception("Cloudinary URL generation failed")
-        
-        r = requests.get(cloudinary_url, timeout=10)
-        r.raise_for_status()
-        return r.text
-    else:
-        local_full_path = os.path.join(current_app.config['UPLOAD_FOLDER'], subtitle.file_path)
-        if not os.path.exists(local_full_path):
-            raise FileNotFoundError("Local subtitle file not found")
-        
-        with open(local_full_path, 'r', encoding='utf-8') as f:
-            return f.read()
 
 
-def generate_vtt_message(message: str) -> str:
-    """Generates a simple VTT file content displaying a message."""
-    return f"WEBVTT\n\n00:00:00.000 --> 00:05:00.000\n{message}"
+
+
 
 
 @subtitles_bp.route('/<manifest_token>/subtitles/<content_type>/<content_id>/<params>.json')
@@ -226,16 +196,37 @@ def addon_stream(manifest_token: str, content_type: str, content_id: str, params
             })
             
             active_subtitle_info = get_active_subtitle_details(user, content_id, video_hash, content_type, video_filename, preferred_lang)
+            
+            # Add ASS format if available (local or provider)
+            add_ass_format = False
             if active_subtitle_info['type'] == 'local' and active_subtitle_info['subtitle']:
                 active_sub = active_subtitle_info['subtitle']
                 if active_sub.source_metadata and active_sub.source_metadata.get('original_format') in ['ass', 'ssa']:
-                    ass_download_url = download_url.replace('.vtt', '.ass')
-                    subtitles_list.append({
-                        'id': f"{stremio_sub_id}_ass",
-                        'url': ass_download_url,
-                        'lang': preferred_lang
-                    })
-                    current_app.logger.info(f"Added ASS format subtitle for context: {download_context}")
+                    add_ass_format = True
+            elif active_subtitle_info['type'] and '_auto' in active_subtitle_info['type']:
+                # Provider subtitle - check if provider can return ASS
+                provider_name = active_subtitle_info.get('provider_name')
+                if provider_name:
+                    try:
+                        from ..providers.registry import ProviderRegistry
+                        provider = ProviderRegistry.get(provider_name)
+                        # Check provider credentials for try_provide_ass setting
+                        provider_config = (user.provider_credentials or {}).get(provider_name, {})
+                        try_provide_ass = provider_config.get('try_provide_ass', False)
+                        # Add ASS if provider can return it OR user wants to try anyway
+                        if provider and (provider.can_return_ass or try_provide_ass):
+                            add_ass_format = True
+                    except:
+                        pass
+            
+            if add_ass_format:
+                ass_download_url = download_url.replace('.vtt', '.ass')
+                subtitles_list.append({
+                    'id': f"{stremio_sub_id}_ass",
+                    'url': ass_download_url,
+                    'lang': preferred_lang
+                })
+                current_app.logger.info(f"Added ASS format subtitle for context: {download_context}")
             
             current_app.logger.info(f"Generated download URL for context: {download_context}")
         except Exception as e:
@@ -330,30 +321,41 @@ def unified_download(manifest_token: str, download_identifier: str):
             else:
                 current_app.logger.error(f"ASS format requested but no original_file_path for subtitle ID {local_subtitle_to_serve.id}")
                 message_key = 'error'
-        # Handle community_link case
-        elif local_subtitle_to_serve.source_type == 'opensubtitles_community_link' and \
+        # Handle provider community_link case
+        elif local_subtitle_to_serve.source_type.endswith('_community_link') and \
                 local_subtitle_to_serve.source_metadata and \
-                local_subtitle_to_serve.source_metadata.get('original_file_id'):
-
-            if user.opensubtitles_active and user.opensubtitles_token and user.opensubtitles_base_url:
-                os_file_id = local_subtitle_to_serve.source_metadata.get('original_file_id')
-                opensubtitle_to_serve_details = {
-                    'file_id': os_file_id,
-                    'details': local_subtitle_to_serve.source_metadata
-                }
-                current_app.logger.info(
-                    f"Identified linked OpenSubtitle (original OS file_id: {os_file_id}) via local Subtitle ID {local_subtitle_to_serve.id}")
-                local_subtitle_to_serve = None  # Switch to OS serving
-            else:
-                current_app.logger.warning(
-                    f"User has a linked OpenSubtitle selected but OS integration is not active")
-                message_key = 'os_integration_inactive'
+                local_subtitle_to_serve.source_metadata.get('provider_subtitle_id'):
+            
+            provider_name = local_subtitle_to_serve.source_metadata.get('provider')
+            provider_subtitle_id = local_subtitle_to_serve.source_metadata.get('provider_subtitle_id')
+            
+            try:
+                from ..providers.registry import ProviderRegistry
+                provider = ProviderRegistry.get(provider_name)
+                
+                if provider and provider.is_authenticated(user):
+                    opensubtitle_to_serve_details = {
+                        'provider': provider_name,
+                        'subtitle_id': provider_subtitle_id,
+                        'metadata': local_subtitle_to_serve.source_metadata
+                    }
+                    current_app.logger.info(
+                        f"Identified linked {provider_name} subtitle (ID: {provider_subtitle_id}) via local Subtitle ID {local_subtitle_to_serve.id}")
+                    local_subtitle_to_serve = None
+                else:
+                    current_app.logger.warning(
+                        f"User has a linked {provider_name} subtitle but provider is not active")
+                    message_key = 'provider_integration_inactive'
+                    local_subtitle_to_serve = None
+            except Exception as e:
+                current_app.logger.error(f"Error accessing provider {provider_name}: {e}")
+                message_key = 'error'
                 local_subtitle_to_serve = None
 
         elif local_subtitle_to_serve.file_path:  # Standard community-uploaded subtitle
             current_app.logger.info(f"Serving community subtitle ID {local_subtitle_to_serve.id}")
             try:
-                vtt_content = _get_vtt_content(local_subtitle_to_serve)
+                vtt_content = get_vtt_content(local_subtitle_to_serve)
             except Exception as e:
                 current_app.logger.error(f"Error reading local subtitle ID {local_subtitle_to_serve.id}: {e}",
                                          exc_info=True)
@@ -363,48 +365,75 @@ def unified_download(manifest_token: str, download_identifier: str):
                 f"Local subtitle ID {local_subtitle_to_serve.id} has no file_path")
             message_key = 'error'
 
-    # Serve OpenSubtitles subtitle
-    os_subtitle_direct_url = None
-    if opensubtitle_to_serve_details and opensubtitle_to_serve_details.get('file_id') and not vtt_content:
-        os_file_id = opensubtitle_to_serve_details['file_id']
-
-        if not user.opensubtitles_active or not user.opensubtitles_token or not user.opensubtitles_base_url:
-            current_app.logger.warning(
-                f"Attempting to serve OpenSubtitle file_id {os_file_id}, but user's OS integration is not active")
-            message_key = 'os_integration_inactive'
-        else:
-            current_app.logger.info(f"Attempting to serve OpenSubtitle file_id: {os_file_id}")
+    # Serve provider subtitle
+    provider_subtitle_url = None
+    if opensubtitle_to_serve_details and not vtt_content:
+        provider_name = opensubtitle_to_serve_details.get('provider', 'opensubtitles')
+        subtitle_id = opensubtitle_to_serve_details.get('subtitle_id') or opensubtitle_to_serve_details.get('file_id')
+        
+        if subtitle_id:
             try:
-                download_info = opensubtitles_client.request_download_link(
-                    file_id=os_file_id,
-                    user=user
-                )
-                if download_info and download_info.get('link'):
-                    os_subtitle_direct_url = download_info['link']
-                    remaining_downloads = download_info.get('remaining')
-                    if remaining_downloads is not None and int(remaining_downloads) <= 10:
-                        current_app.logger.warning(
-                            f"OpenSubtitles API downloads remaining for user {user.username}: {remaining_downloads}")
-                    current_app.logger.info(f"Serving OpenSubtitles direct url")
-
-            except opensubtitles_client.OpenSubtitlesError as e:
-                current_app.logger.error(f"OpenSubtitles API error while serving file_id {os_file_id}: {e}. "
-                                         f"Try to relogin through the account's settings")
-                message_key = 'os_error_contact_support'
+                from ..providers.registry import ProviderRegistry
+                from ..providers.base import ProviderDownloadError
+                
+                provider = ProviderRegistry.get(provider_name)
+                if not provider or not provider.is_authenticated(user):
+                    current_app.logger.warning(
+                        f"Attempting to serve {provider_name} subtitle {subtitle_id}, but provider is not active")
+                    message_key = 'provider_integration_inactive'
+                else:
+                    current_app.logger.info(f"Attempting to serve {provider_name} subtitle: {subtitle_id}")
+                    try:
+                        provider_subtitle_url = provider.get_download_url(user, subtitle_id)
+                        current_app.logger.info(f"Got download URL from {provider_name}")
+                    except ProviderDownloadError as e:
+                        current_app.logger.error(f"{provider_name} API error: {e}")
+                        message_key = 'provider_error'
+                    except Exception as e:
+                        current_app.logger.error(f"Unexpected error serving {provider_name} subtitle {subtitle_id}: {e}",
+                                                 exc_info=True)
+                        message_key = 'provider_error'
             except Exception as e:
-                current_app.logger.error(f"Unexpected error serving OpenSubtitle file_id {os_file_id}: {e}",
-                                         exc_info=True)
-                message_key = 'os_error_contact_support'
+                current_app.logger.error(f"Error accessing provider registry: {e}", exc_info=True)
+                message_key = 'error'
 
-    if os_subtitle_direct_url:
-        def make_request():
-            return requests.get(os_subtitle_direct_url, timeout=10)
-
+    if provider_subtitle_url:
         try:
-            vtt_content = make_request_with_retry(make_request).text
+            r = requests.get(provider_subtitle_url, timeout=10)
+            r.raise_for_status()
+            
+            # Check if response is ZIP (SubDL returns ZIP files)
+            content_type = r.headers.get('Content-Type', '')
+            if 'zip' in content_type.lower() or provider_subtitle_url.endswith('.zip'):
+                from .utils import extract_subtitle_from_zip, process_subtitle_content
+                
+                try:
+                    # Extract subtitle from ZIP
+                    subtitle_content, filename, extension = extract_subtitle_from_zip(r.content)
+                    
+                    # Process subtitle (convert to VTT, handle ASS)
+                    processed = process_subtitle_content(subtitle_content, extension)
+                    
+                    # If ASS requested and available, serve original
+                    if is_ass_request and processed['original']:
+                        current_app.logger.info(f"Serving ASS format from provider ZIP")
+                        return NoCacheResponse(processed['original'], mimetype='text/x-ssa')
+                    elif is_ass_request:
+                        # ASS requested but not available - serve VTT instead
+                        current_app.logger.info(f"ASS requested but not in ZIP, serving VTT")
+                    
+                    vtt_content = processed['vtt']
+                except Exception as e:
+                    current_app.logger.error(f"Error processing ZIP subtitle: {e}", exc_info=True)
+                    message_key = 'error'
+            else:
+                # Plain text subtitle (VTT/SRT)
+                if is_ass_request:
+                    # ASS requested but provider returned plain text - serve as VTT
+                    current_app.logger.info(f"ASS requested but provider returned plain text, serving as VTT")
+                vtt_content = r.text
         except Exception as e:
-            current_app.logger.error(f"Unexpected error forwarding OpenSubtitle file_id {os_subtitle_direct_url}: {e}",
-                                     exc_info=True)
+            current_app.logger.error(f"Error fetching subtitle from provider URL: {e}", exc_info=True)
             message_key = 'error'
 
     if vtt_content:
@@ -420,8 +449,8 @@ def unified_download(manifest_token: str, download_identifier: str):
     messages = {
         'no_subs_found': "SCS: No Subtitles Found: Upload your own through the web interface.",
         'error': "SCS: An error occurred, please try again in a short period",
-        'os_integration_inactive': "SCS: OpenSubtitles integration is inactive. Please activate it in account settings to use this feature.",
-        'os_error_contact_support': "SCS: Error fetching from OpenSubtitles. Please try again later or check your account on OpenSubtitles.com."
+        'provider_integration_inactive': "SCS: Provider integration is inactive. Please activate it in account settings.",
+        'provider_error': "SCS: Error fetching from provider. Please try again later or check your account."
     }
     message_text = messages.get(message_key, "An error occurred or subtitles need selection.")
     current_app.logger.info(f"Serving placeholder message (key: '{message_key}') for context: {context}")
@@ -803,7 +832,7 @@ def vote_subtitle(subtitle_id, vote_type):
     subtitle = Subtitle.query.get_or_404(subtitle_id)
     is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
 
-    if subtitle.source_type not in ['community', 'opensubtitles_community_link']:
+    if not (subtitle.source_type == 'community' or subtitle.source_type.endswith('_community_link')):
         if is_ajax:
             return jsonify({'error': 'Voting not available'}), 400
         flash('Voting is not available for this type of subtitle.', 'warning')
@@ -1101,42 +1130,42 @@ def download_subtitle(subtitle_id):
     content_id_display = subtitle.content_id.replace(':', '_')
     download_filename = f"{content_id_display}_{subtitle.language}_{str(subtitle.id)[:8]}.vtt"
 
-    if subtitle.source_type == 'opensubtitles_community_link' and subtitle.source_metadata:
-        os_file_id = subtitle.source_metadata.get('original_file_id')
-        if not os_file_id:
-            current_app.logger.error(f"Linked OS subtitle {subtitle.id} missing original_file_id for download.")
+    if subtitle.source_type.endswith('_community_link') and subtitle.source_metadata:
+        provider_name = subtitle.source_metadata.get('provider')
+        provider_subtitle_id = subtitle.source_metadata.get('provider_subtitle_id')
+        
+        if not provider_subtitle_id:
+            current_app.logger.error(f"Linked provider subtitle {subtitle.id} missing provider_subtitle_id for download.")
             abort(404)
+        
         try:
-            if not current_user.opensubtitles_active or not current_user.opensubtitles_token or not current_user.opensubtitles_base_url:
-                flash(
-                    "Admin's OpenSubtitles account is not configured/active; cannot download this OS-linked subtitle.",
-                    "warning")
+            from ..providers.registry import ProviderRegistry
+            from ..providers.base import ProviderDownloadError
+            
+            provider = ProviderRegistry.get(provider_name)
+            if not provider or not provider.is_authenticated(current_user):
+                flash(f"Admin's {provider_name} account is not configured/active; cannot download this linked subtitle.", "warning")
                 return redirect(request.referrer or url_for('main.dashboard'))
-
-            download_info = opensubtitles_client.request_download_link(
-                file_id=os_file_id,
-                user=current_user
-            )
-            if download_info and download_info.get('link'):
-                os_subtitle_direct_url = download_info['link']
-                remaining_downloads = download_info.get('remaining')
-                if remaining_downloads is not None and int(remaining_downloads) <= 10:
-                    current_app.logger.warning(
-                        f"OpenSubtitles API downloads remaining for user {current_user.username}: {remaining_downloads}")
-
-                current_app.logger.info(f"Serving OpenSubtitles direct url to omit 503 errors")
-
-                return no_cache_redirect(os_subtitle_direct_url, code=302)
-            else:
-                flash("Could not retrieve download link from OpenSubtitles.", "danger")
+            
+            try:
+                provider_url = provider.get_download_url(current_user, provider_subtitle_id)
+                if provider_url:
+                    current_app.logger.info(f"Serving {provider_name} direct url")
+                    return no_cache_redirect(provider_url, code=302)
+                else:
+                    flash(f"Could not retrieve download link from {provider_name}.", "danger")
+                    abort(500)
+            except ProviderDownloadError as e:
+                current_app.logger.error(f"{provider_name} download error: {e}", exc_info=True)
+                flash(f"Error downloading from {provider_name}: {str(e)}", "danger")
                 abort(500)
         except Exception as e:
-            current_app.logger.error(f"Error downloading linked OpenSubtitle {os_file_id}: {e}", exc_info=True)
+            current_app.logger.error(f"Error downloading linked provider subtitle {provider_subtitle_id}: {e}", exc_info=True)
             abort(500)
 
     elif subtitle.file_path:  # Community subtitle (local or cloudinary)
         try:
-            vtt_content = _get_vtt_content(subtitle)
+            vtt_content = get_vtt_content(subtitle)
             return Response(vtt_content, mimetype='text/vtt',
                             headers={"Content-Disposition": f"attachment;filename={download_filename}"})
         except Exception as e:
@@ -1173,10 +1202,10 @@ def mark_compatible_hash(subtitle_id):
         flash('Content ID mismatch between subtitle and activity.', 'danger')
         return redirect(url_for('content.content_detail', activity_id=activity.id))
 
-    # Cannot mark an OpenSubtitles-linked entry as compatible for a *different* hash this way
+    # Cannot mark a provider-linked entry as compatible for a *different* hash this way
     # This feature is for community uploads primarily.
-    if original_subtitle.source_type == 'opensubtitles_community_link':
-        flash('This operation is not applicable to OpenSubtitles-linked entries in this manner.', 'warning')
+    if original_subtitle.source_type.endswith('_community_link'):
+        flash('This operation is not applicable to provider-linked entries in this manner.', 'warning')
         return redirect(url_for('content.content_detail', activity_id=activity.id))
     if not original_subtitle.file_path:  # Should not happen for community subs
         flash('Original subtitle does not have a file path, cannot mark as compatible.', 'danger')

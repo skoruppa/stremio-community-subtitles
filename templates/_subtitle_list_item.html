@@ -23,7 +23,9 @@
                 {% endif %}
                 <span class="badge bg-secondary">{{ lang_dict.get(subtitle.language, subtitle.language) }}</span> {# Display full language name #}
                 {% if subtitle.source_type == 'opensubtitles_community_link' %}
-                    <span class="badge bg-warning" title="Sourced from OpenSubtitles by {{ subtitle.uploader.username if subtitle.uploader else 'Unknown User' }}">OpenSubtitles Sourced</span>
+                    <span class="badge bg-warning" title="Sourced from OpenSubtitles by {{ subtitle.uploader.username if subtitle.uploader else 'Unknown User' }}">OpenSubtitles</span>
+                {% elif subtitle.source_type and subtitle.source_type != 'community' %}
+                    <span class="badge bg-info" title="Sourced from {{ subtitle.source_type }}">{{ subtitle.source_type | capitalize }}</span>
                 {% endif %}
             </h6>
             <small class="text-muted">

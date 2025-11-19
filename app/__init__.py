@@ -51,19 +51,26 @@ def create_app():
     cache.init_app(app)
     cors.init_app(app)
 
+    # Initialize subtitle providers
+    try:
+        from .providers import init_providers
+        init_providers(app)
+    except Exception as e:
+        app.logger.warning(f"Could not initialize providers: {e}")
+
     from .routes.auth import auth_bp
     from .routes.main import main_bp
     from .routes.manifest import manifest_bp
     from .routes.subtitles import subtitles_bp
-    from .routes.opensubtitles import opensubtitles_bp
     from .routes.content import content_bp
+    from .routes.providers import providers_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(main_bp)
     app.register_blueprint(manifest_bp)
     app.register_blueprint(subtitles_bp)
-    app.register_blueprint(opensubtitles_bp)
     app.register_blueprint(content_bp)
+    app.register_blueprint(providers_bp)
 
     # Create upload directory if it doesn't exist
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
@@ -74,5 +81,14 @@ def create_app():
     @app.shell_context_processor
     def make_shell_context():
         return {'db': db, 'app': app}
+    
+    @app.context_processor
+    def inject_providers():
+        """Make provider registry available in templates"""
+        try:
+            from .providers.registry import ProviderRegistry
+            return {'get_all_providers': ProviderRegistry.get_all}
+        except:
+            return {'get_all_providers': lambda: []}
 
     return app
