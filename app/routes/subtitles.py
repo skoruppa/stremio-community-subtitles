@@ -195,6 +195,7 @@ def addon_stream(manifest_token: str, content_type: str, content_id: str, params
         db.session.rollback()
         current_app.logger.error(f"Failed to log or update user activity for user {user.id}: {e}", exc_info=True)
 
+    subtitles_list = []
     for preferred_lang in preferred_langs:
         download_context = {
             'content_type': content_type,
@@ -211,7 +212,6 @@ def addon_stream(manifest_token: str, content_type: str, content_id: str, params
             current_app.logger.error(f"Failed to encode download context: {e}")
             return respond_with({'subtitles': []})
 
-        subtitles_list = []
         try:
             download_url = url_for('subtitles.unified_download',
                                    manifest_token=manifest_token,
