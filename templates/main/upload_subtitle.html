@@ -262,7 +262,9 @@ document.getElementById('content_type').addEventListener('change', function() {
     }
 });
 
-document.getElementById('content_id').addEventListener('blur', parseContentId);
+const contentIdField = document.getElementById('content_id');
+contentIdField.addEventListener('blur', parseContentId);
+contentIdField.addEventListener('paste', () => setTimeout(parseContentId, 10));
 
 document.addEventListener('DOMContentLoaded', function() {
     const contentType = document.getElementById('content_type');
