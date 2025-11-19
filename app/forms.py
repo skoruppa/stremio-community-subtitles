@@ -68,6 +68,38 @@ class SubtitleUploadForm(FlaskForm):
         """Custom validation for content_id field"""
         if field.data:
             content_id = field.data.strip()
+            
+            # Parse Stremio format: tt1234567:1:3 or kitsu:12345:3
+            if ':' in content_id:
+                parts = content_id.split(':')
+                
+                # Handle IMDB format: tt1234567:season:episode
+                if parts[0].startswith('tt') and len(parts) == 3:
+                    try:
+                        season = int(parts[1])
+                        episode = int(parts[2])
+                        # Auto-correct the form data
+                        field.data = parts[0]  # Set to just tt1234567
+                        self.content_type.data = 'series'
+                        self.season_number.data = season
+                        self.episode_number.data = episode
+                        return
+                    except (ValueError, IndexError):
+                        pass
+                
+                # Handle Kitsu format: kitsu:12345:episode
+                elif parts[0] == 'kitsu' and len(parts) == 3:
+                    try:
+                        episode = int(parts[2])
+                        # Auto-correct the form data
+                        field.data = f"{parts[0]}:{parts[1]}"  # Set to kitsu:12345
+                        self.content_type.data = 'series'
+                        self.episode_number.data = episode
+                        return
+                    except (ValueError, IndexError):
+                        pass
+            
+            # Standard validation
             if not (content_id.startswith('tt') or content_id.startswith('kitsu:')):
                 raise ValidationError(
                     'Content ID must be either IMDB ID (starting with "tt") or Kitsu ID (format "kitsu:12345")')

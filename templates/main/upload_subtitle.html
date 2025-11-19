@@ -213,23 +213,57 @@
 </div>
 
 {% if is_advanced_upload %}
+{% block scripts %}
+{{ super() }}
+<script src="{{ url_for('static', filename='js/utils.js') }}"></script>
 <script>
-// Show/hide series fields based on content type selection
+function parseContentId() {
+    const contentIdField = document.getElementById('content_id');
+    const contentTypeField = document.getElementById('content_type');
+    const seasonField = document.getElementById('season_number');
+    const episodeField = document.getElementById('episode_number');
+    const contentId = contentIdField.value.trim();
+    
+    if (!contentId.includes(':')) return;
+    
+    const parts = contentId.split(':');
+    
+    if (parts[0].startsWith('tt') && parts.length === 3) {
+        const season = parseInt(parts[1]);
+        const episode = parseInt(parts[2]);
+        if (!isNaN(season) && !isNaN(episode)) {
+            contentIdField.value = parts[0];
+            contentTypeField.value = 'series';
+            seasonField.value = season;
+            episodeField.value = episode;
+            document.getElementById('series-fields').style.display = 'block';
+            showToast(`Auto-detected: TV Series - Season ${season}, Episode ${episode}`);
+        }
+    } else if (parts[0] === 'kitsu' && parts.length === 3) {
+        const episode = parseInt(parts[2]);
+        if (!isNaN(episode)) {
+            contentIdField.value = `${parts[0]}:${parts[1]}`;
+            contentTypeField.value = 'series';
+            episodeField.value = episode;
+            document.getElementById('series-fields').style.display = 'block';
+            showToast(`Auto-detected: Anime Series - Episode ${episode}`);
+        }
+    }
+}
+
 document.getElementById('content_type').addEventListener('change', function() {
     const seriesFields = document.getElementById('series-fields');
     if (this.value === 'series') {
         seriesFields.style.display = 'block';
-        // Set default season to 1 if empty
         const seasonField = document.getElementById('season_number');
-        if (!seasonField.value) {
-            seasonField.value = 1;
-        }
+        if (!seasonField.value) seasonField.value = 1;
     } else {
         seriesFields.style.display = 'none';
     }
 });
 
-// Initialize on page load
+document.getElementById('content_id').addEventListener('blur', parseContentId);
+
 document.addEventListener('DOMContentLoaded', function() {
     const contentType = document.getElementById('content_type');
     if (contentType.value === 'series') {
@@ -237,6 +271,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
+{% endblock %}
 {% endif %}
 
 {% endblock %}
