@@ -141,6 +141,16 @@ class ProviderRegistry:
             import logging
             logging.error(f"Error loading SubDLProvider: {e}", exc_info=True)
         
+        try:
+            from .subsource import SubSourceProvider
+            cls.register(SubSourceProvider)
+        except ImportError as e:
+            import logging
+            logging.warning(f"Could not load SubSourceProvider: {e}")
+        except Exception as e:
+            import logging
+            logging.error(f"Error loading SubSourceProvider: {e}", exc_info=True)
+        
         # Add more providers here as they are implemented
         
         cls._initialized = True

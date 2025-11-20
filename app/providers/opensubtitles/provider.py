@@ -11,7 +11,7 @@ class OpenSubtitlesProvider(BaseSubtitleProvider):
     """OpenSubtitles.com subtitle provider"""
     
     name = 'opensubtitles'
-    display_name = 'OpenSubtitles'
+    display_name = 'OpenSubtitles.com'
     badge_color = 'warning'
     requires_auth = True
     supports_search = True

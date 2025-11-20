@@ -3,7 +3,7 @@ Base abstract class for subtitle providers.
 All subtitle providers (OpenSubtitles, SubDL, etc.) must inherit from this class.
 """
 from abc import ABC, abstractmethod
-from typing import List, Dict, Optional, Any
+from typing import List, Dict, Optional, Any, Union
 from dataclasses import dataclass
 
 
@@ -158,7 +158,7 @@ class BaseSubtitleProvider(ABC):
         pass
     
     @abstractmethod
-    def get_download_url(self, user, subtitle_id: str) -> str:
+    def get_download_url(self, user, subtitle_id: str) -> Optional[str]:
         """
         Get direct download URL for a subtitle.
         
@@ -167,12 +167,30 @@ class BaseSubtitleProvider(ABC):
             subtitle_id: Provider's subtitle ID
         
         Returns:
-            Direct download URL (string)
+            Direct download URL (string) or None if provider requires download_subtitle() method
         
         Raises:
             ProviderError: If download URL cannot be obtained
         """
         pass
+    
+    def download_subtitle(self, user, subtitle_id: str) -> bytes:
+        """
+        Download subtitle content directly (for providers that don't provide URLs).
+        
+        This is optional - only implement if get_download_url() returns None.
+        
+        Args:
+            user: User model instance
+            subtitle_id: Provider's subtitle ID
+        
+        Returns:
+            Subtitle file content as bytes
+        
+        Raises:
+            ProviderDownloadError: If download fails
+        """
+        raise NotImplementedError(f"{self.name} does not implement download_subtitle()")
     
     # UI/Forms methods
     

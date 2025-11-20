@@ -386,7 +386,26 @@ def unified_download(manifest_token: str, download_identifier: str):
                     current_app.logger.info(f"Attempting to serve {provider_name} subtitle: {subtitle_id}")
                     try:
                         provider_subtitle_url = provider.get_download_url(user, subtitle_id)
-                        current_app.logger.info(f"Got download URL from {provider_name}")
+                        
+                        # If provider returns None, use download_subtitle() method directly
+                        if provider_subtitle_url is None:
+                            current_app.logger.info(f"{provider_name} requires direct download")
+                            try:
+                                zip_content = provider.download_subtitle(user, subtitle_id)
+                                from .utils import extract_subtitle_from_zip, process_subtitle_content
+                                
+                                subtitle_content, filename, extension = extract_subtitle_from_zip(zip_content, episode=episode)
+                                processed = process_subtitle_content(subtitle_content, extension)
+                                
+                                if is_ass_request and processed['original']:
+                                    return NoCacheResponse(processed['original'], mimetype='text/x-ssa')
+                                
+                                vtt_content = processed['vtt']
+                            except Exception as e:
+                                current_app.logger.error(f"Error processing {provider_name} ZIP: {e}", exc_info=True)
+                                message_key = 'error'
+                        else:
+                            current_app.logger.info(f"Got download URL from {provider_name}")
                     except ProviderDownloadError as e:
                         current_app.logger.error(f"{provider_name} API error: {e}")
                         message_key = 'provider_error'
@@ -399,6 +418,7 @@ def unified_download(manifest_token: str, download_identifier: str):
                 message_key = 'error'
 
     if provider_subtitle_url:
+        # Regular URL download
         try:
             r = requests.get(provider_subtitle_url, timeout=10)
             r.raise_for_status()
