@@ -156,9 +156,9 @@ class OpenSubtitlesProvider(BaseSubtitleProvider):
     
     def _convert_from_provider_language(self, lang_code: str) -> str:
         """Convert OpenSubtitles ISO 639-1 to ISO 639-3"""
-        if lang_code == 'pt-br':
+        if lang_code.lower() == 'pt-br':
             return 'pob'
-        elif lang_code == 'pt-pt':
+        elif lang_code.lower() == 'pt-pt':
             return 'por'
         elif len(lang_code) == 2:
             try:
