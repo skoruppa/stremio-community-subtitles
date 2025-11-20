@@ -5,7 +5,6 @@ All subtitle providers (OpenSubtitles, SubDL, etc.) must inherit from this class
 from abc import ABC, abstractmethod
 from typing import List, Dict, Optional, Any
 from dataclasses import dataclass
-from flask_wtf import FlaskForm
 
 
 @dataclass
@@ -34,6 +33,7 @@ class BaseSubtitleProvider(ABC):
     # Provider metadata (must be set by subclass)
     name: str = None  # Internal name (e.g., 'opensubtitles', 'subdl')
     display_name: str = None  # Display name (e.g., 'OpenSubtitles', 'SubDL')
+    badge_color: str = 'primary'  # Bootstrap color for badge (primary, success, warning, info, etc.)
     requires_auth: bool = True  # Does this provider require authentication?
     supports_search: bool = True  # Can search by IMDb ID, query, etc.
     supports_hash_matching: bool = True  # Can match by video file hash
@@ -174,16 +174,6 @@ class BaseSubtitleProvider(ABC):
         pass
     
     # UI/Forms methods
-    
-    @abstractmethod
-    def get_settings_form(self) -> FlaskForm:
-        """
-        Get Flask-WTF form for provider settings.
-        
-        Returns:
-            FlaskForm subclass instance for this provider's settings
-        """
-        pass
     
     @abstractmethod
     def get_settings_template(self) -> str:

@@ -1,4 +1,4 @@
-{% macro render_provider_subtitle_item(activity, provider_result, current_user_lang, active_provider_details, lang_dict, is_active_selection=false) %}
+{% macro render_provider_subtitle_item(activity, provider_result, current_user_lang, active_provider_details, lang_dict, is_active_selection=false, get_provider=none) %}
 {#
     Renders a single subtitle item from any provider (OpenSubtitles, SubDL, etc.)
     - activity: UserActivity object
@@ -17,7 +17,8 @@
             <h6 class="mb-1">
                 {{ provider_result.release_name | truncate(80) if provider_result.release_name else 'N/A' }}
                 <span class="badge bg-secondary">{{ lang_dict.get(provider_result.language, provider_result.language | upper) }}</span>
-                <span class="badge bg-primary">{{ provider_result.provider_name | capitalize }}</span>
+                {% set provider = get_provider(provider_result.provider_name) %}
+                <span class="badge bg-{{ provider.badge_color if provider else 'primary' }}">{{ provider_result.provider_name | capitalize }}</span>
             </h6>
             <small class="text-muted">
                 Uploader: {{ provider_result.uploader if provider_result.uploader else 'N/A' }}

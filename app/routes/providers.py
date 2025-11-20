@@ -8,14 +8,6 @@ from ..providers.base import ProviderAuthError
 providers_bp = Blueprint('providers', __name__, url_prefix='/providers')
 
 
-@providers_bp.route('/settings')
-@login_required
-def provider_settings():
-    """Display provider management page"""
-    all_providers = ProviderRegistry.get_all()
-    return render_template('main/provider_settings.html', providers=all_providers)
-
-
 @providers_bp.route('/<provider_name>/connect', methods=['POST'])
 @login_required
 def connect_provider(provider_name):
@@ -23,7 +15,7 @@ def connect_provider(provider_name):
     provider = ProviderRegistry.get(provider_name)
     if not provider:
         flash(f'Provider {provider_name} not found', 'danger')
-        return redirect(url_for('providers.provider_settings'))
+        return redirect(url_for('main.account_settings'))
     
     try:
         credentials = request.form.to_dict()
@@ -59,7 +51,7 @@ def connect_provider(provider_name):
         db.session.rollback()
         flash(f'Error connecting to {provider.display_name}: {str(e)}', 'danger')
     
-    return redirect(url_for('providers.provider_settings'))
+    return redirect(url_for('main.account_settings'))
 
 
 @providers_bp.route('/<provider_name>/disconnect', methods=['POST'])
@@ -69,7 +61,7 @@ def disconnect_provider(provider_name):
     provider = ProviderRegistry.get(provider_name)
     if not provider:
         flash(f'Provider {provider_name} not found', 'danger')
-        return redirect(url_for('providers.provider_settings'))
+        return redirect(url_for('main.account_settings'))
     
     try:
         provider.logout(current_user)
@@ -83,7 +75,7 @@ def disconnect_provider(provider_name):
         db.session.rollback()
         flash(f'Error disconnecting: {str(e)}', 'danger')
     
-    return redirect(url_for('providers.provider_settings'))
+    return redirect(url_for('main.account_settings'))
 
 
 @providers_bp.route('/<uuid:activity_id>/select', methods=['POST'])

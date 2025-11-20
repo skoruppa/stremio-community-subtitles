@@ -87,8 +87,14 @@ def create_app():
         """Make provider registry available in templates"""
         try:
             from .providers.registry import ProviderRegistry
-            return {'get_all_providers': ProviderRegistry.get_all}
+            return {
+                'get_all_providers': ProviderRegistry.get_all,
+                'get_provider': ProviderRegistry.get
+            }
         except:
-            return {'get_all_providers': lambda: []}
+            return {
+                'get_all_providers': lambda: [],
+                'get_provider': lambda x: None
+            }
 
     return app

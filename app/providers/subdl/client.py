@@ -21,10 +21,10 @@ def search_subtitles(api_key, imdb_id=None, languages=None, season=None, episode
     
     base_url = "https://api.subdl.com/api/v1/subtitles"
     
-    params = {}
+    params = {'api_key': api_key}
     if imdb_id:
         # SubDL uses imdb_id with 'tt' prefix
-        params['imdb_id'] = imdb_id if imdb_id.startswith('tt') else f'tt{imdb_id}'
+        params['imdb_id'] = imdb_id
     if languages:
         # SubDL uses 2-letter codes
         params['languages'] = ','.join(languages)
@@ -36,7 +36,6 @@ def search_subtitles(api_key, imdb_id=None, languages=None, season=None, episode
         params['type'] = type  # 'movie' or 'tv'
     
     headers = {
-        'Api-Key': api_key,
         'User-Agent': 'StremioCommunitySubtitlesAddon/1.0.0'
     }
     

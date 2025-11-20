@@ -149,20 +149,23 @@
                         </h6>
                         {% if active_subtitle %}
                             <div class="list-group-item active-subtitle">
-                                {{ render_subtitle_item(active_subtitle, user_votes, user_selection, activity.id, activity.video_hash, current_user, LANGUAGE_DICT, is_active_subtitle=true) }}
+                                {{ render_subtitle_item(active_subtitle, user_votes, user_selection, activity.id, activity.video_hash, current_user, LANGUAGE_DICT, is_active_subtitle=true, get_provider=get_provider) }}
                             </div>
                         {% elif active_provider_details %}
                             <div class="list-group-item active-subtitle">
                                 {% set provider_result = namespace(
-                                    provider_name=active_provider_details.provider,
-                                    subtitle_id=active_provider_details.subtitle_id or active_provider_details.file_id|string,
-                                    language=active_provider_details.language,
+                                    provider_name=active_provider_details.provider_name,
+                                    subtitle_id=active_provider_details.subtitle_id or active_provider_details.details.file_id|string,
+                                    language=lang_code,
                                     release_name=active_provider_details.release_name,
                                     uploader=active_provider_details.uploader,
                                     ai_translated=active_provider_details.ai_translated,
+                                    rating=active_provider_details.rating if active_provider_details.rating else None,
+                                    download_count=active_provider_details.download_count if active_provider_details.download_count else None,
+                                    hearing_impaired=active_provider_details.hearing_impaired if active_provider_details.hearing_impaired else False,
                                     metadata={'hash_match': active_provider_details.moviehash_match or active_provider_details.hash_match, 'url': active_provider_details.url}
                                 ) %}
-                                {{ render_provider_subtitle_item(activity, provider_result, lang_code, active_provider_details, LANGUAGE_DICT, is_active_selection=true) }}
+                                {{ render_provider_subtitle_item(activity, provider_result, lang_code, active_provider_details, LANGUAGE_DICT, is_active_selection=true, get_provider=get_provider) }}
                             </div>
                         {% else %}
                             <div class="p-3 text-muted">
@@ -180,7 +183,7 @@
                     </div>
                     <div class="list-group list-group-flush">
                         {% for subtitle in all_subs_matching_hash %}
-                            {{ render_subtitle_item(subtitle, user_votes, user_selection, activity.id, activity.video_hash, current_user, LANGUAGE_DICT, is_active_subtitle=(active_details_by_lang.get(subtitle.language) and active_details_by_lang.get(subtitle.language).active_subtitle and active_details_by_lang.get(subtitle.language).active_subtitle.id == subtitle.id)) }}
+                            {{ render_subtitle_item(subtitle, user_votes, user_selection, activity.id, activity.video_hash, current_user, LANGUAGE_DICT, is_active_subtitle=(active_details_by_lang.get(subtitle.language) and active_details_by_lang.get(subtitle.language).active_subtitle and active_details_by_lang.get(subtitle.language).active_subtitle.id == subtitle.id), get_provider=get_provider) }}
                         {% endfor %}
                     </div>
                 </div>
@@ -193,7 +196,7 @@
                      </div>
                     <div class="list-group list-group-flush">
                         {% for subtitle in all_subs_no_hash %}
-                            {{ render_subtitle_item(subtitle, user_votes, user_selection, activity.id, activity.video_hash, current_user, LANGUAGE_DICT, is_active_subtitle=(active_details_by_lang.get(subtitle.language) and active_details_by_lang.get(subtitle.language).active_subtitle and active_details_by_lang.get(subtitle.language).active_subtitle.id == subtitle.id)) }}
+                            {{ render_subtitle_item(subtitle, user_votes, user_selection, activity.id, activity.video_hash, current_user, LANGUAGE_DICT, is_active_subtitle=(active_details_by_lang.get(subtitle.language) and active_details_by_lang.get(subtitle.language).active_subtitle and active_details_by_lang.get(subtitle.language).active_subtitle.id == subtitle.id), get_provider=get_provider) }}
                         {% endfor %}
                     </div>
                 </div>
@@ -206,7 +209,7 @@
                     </div>
                     <div class="list-group list-group-flush">
                         {% for subtitle in all_subs_other_hash %}
-                            {{ render_subtitle_item(subtitle, user_votes, user_selection, activity.id, activity.video_hash, current_user, LANGUAGE_DICT, is_active_subtitle=(active_details_by_lang.get(subtitle.language) and active_details_by_lang.get(subtitle.language).active_subtitle and active_details_by_lang.get(subtitle.language).active_subtitle.id == subtitle.id)) }}
+                            {{ render_subtitle_item(subtitle, user_votes, user_selection, activity.id, activity.video_hash, current_user, LANGUAGE_DICT, is_active_subtitle=(active_details_by_lang.get(subtitle.language) and active_details_by_lang.get(subtitle.language).active_subtitle and active_details_by_lang.get(subtitle.language).active_subtitle.id == subtitle.id), get_provider=get_provider) }}
                         {% endfor %}
                     </div>
                 </div>
@@ -251,8 +254,8 @@
                                     ) %}
                                     {% set active_details = active_details_by_lang.get(lang_code) %}
                                     {% set active_provider_details = active_details.active_provider_details if active_details else none %}
-                                    {% set is_active = active_provider_details and active_provider_details.file_id|string == file.file_id|string %}
-                                    {{ render_provider_subtitle_item(activity, provider_result, lang_code, active_provider_details, LANGUAGE_DICT, is_active_selection=is_active) }}
+                                    {% set is_active = active_provider_details and active_provider_details.details.file_id|string == file.file_id|string %}
+                                    {{ render_provider_subtitle_item(activity, provider_result, lang_code, active_provider_details, LANGUAGE_DICT, is_active_selection=is_active, get_provider=get_provider) }}
                                 {% endif %}
                             {% endfor %}
 

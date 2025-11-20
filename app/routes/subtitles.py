@@ -55,19 +55,7 @@ def addon_stream(manifest_token: str, content_type: str, content_id: str, params
         current_app.logger.warning(f"Subtitle request with invalid token: {manifest_token}")
         return respond_with({'subtitles': []})
 
-    # Ensure user has a personal API key if OS integration is active
-    # The _get_api_key function will now raise an error if no user key is present
-    # We can rely on the OS client functions to handle the missing key error.
-    # However, a check here provides a more immediate response to Stremio.
-    if user.opensubtitles_active and not user.opensubtitles_token:
-        current_app.logger.error(f"User {user.username} has OS integration active but no token.")
-        # Respond with an empty list or an error message subtitle
-        # Generating a VTT error message might be better for the user experience in Stremio
-        return respond_with({'subtitles': [{'id': 'error',
-                                            'url': url_for('subtitles.unified_download', manifest_token=manifest_token,
-                                                           download_identifier=base64.urlsafe_b64encode(json.dumps({
-                                                                                                                       'message': 'OpenSubtitles integration active but no API key configured.'}).encode(
-                                                               'utf-8')).decode('utf-8').rstrip('=')), 'lang': 'eng'}]})
+
 
     # --- Parameter Extraction ---
     content_id = unquote(content_id)
@@ -165,6 +153,7 @@ def addon_stream(manifest_token: str, content_type: str, content_id: str, params
         db.session.rollback()
         current_app.logger.error(f"Failed to log or update user activity for user {user.id}: {e}", exc_info=True)
 
+    subtitles_list = []
     for preferred_lang in preferred_langs:
         download_context = {
             'content_type': content_type,
@@ -181,7 +170,6 @@ def addon_stream(manifest_token: str, content_type: str, content_id: str, params
             current_app.logger.error(f"Failed to encode download context: {e}")
             return respond_with({'subtitles': []})
 
-        subtitles_list = []
         try:
             download_url = url_for('subtitles.unified_download',
                                    manifest_token=manifest_token,
@@ -258,6 +246,16 @@ def unified_download(manifest_token: str, download_identifier: str):
         video_hash = context.get('v_hash')
         video_filename = context.get('v_fname')
         content_type = context.get('content_type', '')
+        
+        # Extract episode from content_id for series
+        episode = None
+        if content_type == 'series' and ':' in content_id:
+            parts = content_id.split(':')
+            try:
+                episode = int(parts[-1])  # Last part is episode
+            except (ValueError, IndexError):
+                pass
+        
         if not content_id:
             raise ValueError("Missing content_id in decoded context")
     except Exception as e:
@@ -409,7 +407,7 @@ def unified_download(manifest_token: str, download_identifier: str):
                 
                 try:
                     # Extract subtitle from ZIP
-                    subtitle_content, filename, extension = extract_subtitle_from_zip(r.content)
+                    subtitle_content, filename, extension = extract_subtitle_from_zip(r.content, episode=episode)
                     
                     # Process subtitle (convert to VTT, handle ASS)
                     processed = process_subtitle_content(subtitle_content, extension)

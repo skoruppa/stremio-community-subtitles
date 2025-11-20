@@ -112,7 +112,7 @@ def calculate_filename_similarity(video_filename, subtitle_release_name):
 
 
 
-def get_active_subtitle_details(user, content_id, video_hash=None, content_type=None, video_filename=None, lang=None):
+def get_active_subtitle_details(user, content_id, video_hash=None, content_type=None, video_filename=None, lang=None, season=None, episode=None):
     """Provider-agnostic subtitle selection logic"""
     result = {
         'type': 'none',
@@ -139,16 +139,29 @@ def get_active_subtitle_details(user, content_id, video_hash=None, content_type=
             })
             return result
         
-        # Backward compat: old OpenSubtitles selection
-        if user_selection.selected_external_file_id:
-            result.update({
-                'type': 'opensubtitles_selection',
-                'provider_name': 'opensubtitles',
-                'provider_subtitle_id': str(user_selection.selected_external_file_id),
-                'provider_metadata': user_selection.external_details_json,
-                'details': user_selection.external_details_json
-            })
-            return result
+        # Provider selection
+        if user_selection.external_details_json:
+            details = user_selection.external_details_json
+            provider_name = details.get('provider')
+            subtitle_id = details.get('subtitle_id') or details.get('file_id')
+            
+            if provider_name and subtitle_id:
+                result.update({
+                    'type': f'{provider_name}_selection',
+                    'provider_name': provider_name,
+                    'provider_subtitle_id': str(subtitle_id),
+                    'provider_metadata': details,
+                    'details': details,
+                    'release_name': details.get('release_name'),
+                    'uploader': details.get('uploader'),
+                    'rating': details.get('rating'),
+                    'download_count': details.get('download_count'),
+                    'hearing_impaired': details.get('hearing_impaired', False),
+                    'ai_translated': details.get('ai_translated', False),
+                    'moviehash_match': details.get('hash_match', False),
+                    'url': details.get('url', '')
+                })
+                return result
     
     # 2. Local by hash
     if video_hash:
@@ -164,7 +177,7 @@ def get_active_subtitle_details(user, content_id, video_hash=None, content_type=
     
     # 3. Providers by hash
     if video_hash:
-        provider_result = _search_providers_by_hash(user, content_id, video_hash, content_type, lang)
+        provider_result = _search_providers_by_hash(user, content_id, video_hash, content_type, lang, season, episode)
         if provider_result:
             result.update(provider_result)
             result['auto'] = True
@@ -172,14 +185,14 @@ def get_active_subtitle_details(user, content_id, video_hash=None, content_type=
     
     # 4. Best match by filename
     if video_filename:
-        best_match = _find_best_match_by_filename(user, content_id, video_filename, content_type, lang)
+        best_match = _find_best_match_by_filename(user, content_id, video_filename, content_type, lang, season, episode)
         if best_match:
             result.update(best_match)
             result['auto'] = True
             return result
     
     # 5. Fallback
-    fallback = _find_fallback_subtitle(user, content_id, content_type, lang)
+    fallback = _find_fallback_subtitle(user, content_id, content_type, lang, season, episode)
     if fallback:
         result.update(fallback)
         result['auto'] = True
@@ -214,7 +227,7 @@ def _find_local_by_hash(content_id, video_hash, lang):
     ).order_by(Subtitle.votes.desc()).first()
 
 
-def _search_providers_by_hash(user, content_id, video_hash, content_type, lang):
+def _search_providers_by_hash(user, content_id, video_hash, content_type, lang, season=None, episode=None):
     try:
         from ..providers.registry import ProviderRegistry
         active_providers = ProviderRegistry.get_active_for_user(user)
@@ -231,6 +244,8 @@ def _search_providers_by_hash(user, content_id, video_hash, content_type, lang):
                 imdb_id=content_id.split(':')[0] if content_id.startswith('tt') else None,
                 video_hash=video_hash,
                 languages=[lang],
+                season=season,
+                episode=episode,
                 content_type=content_type
             )
             for result in results:
@@ -244,14 +259,22 @@ def _search_providers_by_hash(user, content_id, video_hash, content_type, lang):
                             'uploader': result.uploader,
                             'hash_match': True
                         },
-                        'details': {'file_id': result.subtitle_id, 'release_name': result.release_name}
+                        'details': {'file_id': result.subtitle_id, 'release_name': result.release_name},
+                        'release_name': result.release_name,
+                        'uploader': result.uploader,
+                        'rating': result.rating,
+                        'download_count': result.download_count,
+                        'hearing_impaired': result.hearing_impaired,
+                        'ai_translated': result.ai_translated,
+                        'moviehash_match': result.metadata.get('hash_match', False),
+                        'url': result.metadata.get('url', '') if result.metadata else ''
                     }
         except Exception as e:
             current_app.logger.error(f"Provider {provider.name} search failed: {e}")
     return None
 
 
-def _find_best_match_by_filename(user, content_id, video_filename, content_type, lang):
+def _find_best_match_by_filename(user, content_id, video_filename, content_type, lang, season=None, episode=None):
     candidates = []
     
     # Local
@@ -271,6 +294,8 @@ def _find_best_match_by_filename(user, content_id, video_filename, content_type,
                     user=user,
                     imdb_id=content_id.split(':')[0] if content_id.startswith('tt') else None,
                     languages=[lang],
+                    season=season,
+                    episode=episode,
                     content_type=content_type
                 )
                 for result in results:
@@ -283,7 +308,15 @@ def _find_best_match_by_filename(user, content_id, video_filename, content_type,
                             'provider_name': provider.name,
                             'provider_subtitle_id': result.subtitle_id,
                             'provider_metadata': {'release_name': result.release_name},
-                            'score': score
+                            'score': score,
+                            'release_name': result.release_name,
+                            'uploader': result.uploader,
+                            'rating': result.rating,
+                            'download_count': result.download_count,
+                            'hearing_impaired': result.hearing_impaired,
+                            'ai_translated': result.ai_translated,
+                            'moviehash_match': result.metadata.get('hash_match', False) if result.metadata else False,
+                            'url': result.metadata.get('url', '') if result.metadata else ''
                         })
             except Exception as e:
                 current_app.logger.error(f"Provider {provider.name} search failed: {e}")
@@ -308,11 +341,19 @@ def _find_best_match_by_filename(user, content_id, video_filename, content_type,
             'provider_name': best['provider_name'],
             'provider_subtitle_id': best['provider_subtitle_id'],
             'provider_metadata': best['provider_metadata'],
-            'details': {'file_id': best['provider_subtitle_id']}
+            'details': {'file_id': best['provider_subtitle_id']},
+            'release_name': best.get('release_name'),
+            'uploader': best.get('uploader'),
+            'rating': best.get('rating'),
+            'download_count': best.get('download_count'),
+            'hearing_impaired': best.get('hearing_impaired'),
+            'ai_translated': best.get('ai_translated'),
+            'moviehash_match': best.get('moviehash_match', False),
+            'url': best.get('url', '')
         }
 
 
-def _find_fallback_subtitle(user, content_id, content_type, lang):
+def _find_fallback_subtitle(user, content_id, content_type, lang, season=None, episode=None):
     # Local first
     local_sub = Subtitle.query.filter_by(
         content_id=content_id,
@@ -336,6 +377,8 @@ def _find_fallback_subtitle(user, content_id, content_type, lang):
                     user=user,
                     imdb_id=content_id.split(':')[0] if content_id.startswith('tt') else None,
                     languages=[lang],
+                    season=season,
+                    episode=episode,
                     content_type=content_type
                 )
                 non_ai = [r for r in results if not r.ai_translated]
@@ -346,7 +389,15 @@ def _find_fallback_subtitle(user, content_id, content_type, lang):
                         'provider_name': provider.name,
                         'provider_subtitle_id': chosen.subtitle_id,
                         'provider_metadata': {'release_name': chosen.release_name},
-                        'details': {'file_id': chosen.subtitle_id}
+                        'details': {'file_id': chosen.subtitle_id},
+                        'release_name': chosen.release_name,
+                        'uploader': chosen.uploader,
+                        'rating': chosen.rating,
+                        'download_count': chosen.download_count,
+                        'hearing_impaired': chosen.hearing_impaired,
+                        'ai_translated': chosen.ai_translated,
+                        'moviehash_match': chosen.metadata.get('hash_match', False) if chosen.metadata else False,
+                        'url': chosen.metadata.get('url', '') if chosen.metadata else ''
                     }
             except Exception as e:
                 current_app.logger.error(f"Provider {provider.name} search failed: {e}")
@@ -390,9 +441,10 @@ def generate_vtt_message(message: str) -> str:
     return f"WEBVTT\n\n00:00:00.000 --> 00:05:00.000\n{message}"
 
 
-def extract_subtitle_from_zip(zip_content: bytes):
+def extract_subtitle_from_zip(zip_content: bytes, episode: int = None):
     """
     Extracts subtitle file from ZIP archive.
+    If episode is provided, tries to find file matching episode number.
     Returns tuple: (subtitle_content: bytes, filename: str, extension: str)
     """
     import zipfile
@@ -402,15 +454,40 @@ def extract_subtitle_from_zip(zip_content: bytes):
     
     try:
         with zipfile.ZipFile(io.BytesIO(zip_content)) as zf:
+            subtitle_files = []
+            
+            # Collect all subtitle files
             for file_info in zf.filelist:
                 filename = file_info.filename
                 ext = os.path.splitext(filename)[1].lower()
                 
                 if ext in subtitle_extensions:
-                    content = zf.read(file_info)
-                    return content, filename, ext
+                    subtitle_files.append(file_info)
             
-            raise ValueError("No subtitle file found in ZIP archive")
+            if not subtitle_files:
+                raise ValueError("No subtitle file found in ZIP archive")
+            
+            # If episode number provided, try to find matching file
+            if episode is not None:
+                episode_patterns = [
+                    f'e{episode:02d}',  # e01, e02, etc.
+                    f'e{episode}',      # e1, e2, etc.
+                    f' {episode:02d} ', # " 01 ", " 02 ", etc.
+                    f'-{episode:02d}-', # -01-, -02-, etc.
+                    f'.{episode:02d}.'  # .01., .02., etc.
+                ]
+                
+                for file_info in subtitle_files:
+                    filename_lower = file_info.filename.lower()
+                    if any(pattern in filename_lower for pattern in episode_patterns):
+                        content = zf.read(file_info)
+                        return content, file_info.filename, os.path.splitext(file_info.filename)[1].lower()
+            
+            # Fallback: return first subtitle file
+            file_info = subtitle_files[0]
+            content = zf.read(file_info)
+            return content, file_info.filename, os.path.splitext(file_info.filename)[1].lower()
+            
     except zipfile.BadZipFile:
         raise ValueError("Invalid ZIP file")
 

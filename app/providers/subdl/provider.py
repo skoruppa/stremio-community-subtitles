@@ -1,6 +1,5 @@
 """SubDL provider implementation"""
 from typing import List, Dict, Optional, Any
-from flask_wtf import FlaskForm
 from flask import current_app
 
 from ..base import BaseSubtitleProvider, SubtitleResult, ProviderAuthError, ProviderSearchError, ProviderDownloadError
@@ -12,6 +11,7 @@ class SubDLProvider(BaseSubtitleProvider):
     
     name = 'subdl'
     display_name = 'SubDL'
+    badge_color = 'success'
     requires_auth = True  # Requires API key
     supports_search = True
     supports_hash_matching = False  # SubDL doesn't support hash matching
@@ -87,7 +87,7 @@ class SubDLProvider(BaseSubtitleProvider):
                 episode=episode,
                 type=subdl_type
             )
-            return self._parse_results(results)
+            return self._parse_results(results, season=season, episode=episode)
         except client.SubDLError as e:
             raise ProviderSearchError(str(e), self.name, getattr(e, 'status_code', None))
     
@@ -105,37 +105,43 @@ class SubDLProvider(BaseSubtitleProvider):
         creds = self.get_credentials(user)
         return client.get_download_url(creds['api_key'], subtitle_id)
     
-    def get_settings_form(self) -> FlaskForm:
-        """Get settings form (not used in new architecture)"""
-        return None
-    
     def get_settings_template(self) -> str:
         """Get settings template path"""
         return 'providers/subdl_form.html'
     
     def _convert_languages(self, languages: List[str]) -> List[str]:
-        """Convert ISO 639-3 to ISO 639-1 for SubDL"""
-        from iso639 import Lang
-        
-        converted = []
-        for lang in languages:
-            # Special cases
-            if lang == 'pob':
-                converted.append('pt')
-            elif lang == 'por':
-                converted.append('pt')
-            else:
-                try:
-                    converted.append(Lang(lang).pt1)
-                except KeyError:
-                    current_app.logger.warning(f"Could not convert language {lang}")
-                    # Try using first 2 letters as fallback
-                    if len(lang) >= 2:
-                        converted.append(lang[:2])
-        
-        return converted
+        """Convert ISO 639-3 to SubDL format"""
+        subdl_map = {
+            'ara': 'ar', 'pob': 'br_pt', 'dan': 'da', 'nld': 'nl', 'eng': 'en',
+            'fas': 'fa', 'fin': 'fi', 'fre': 'fr', 'ind': 'id', 'ita': 'it',
+            'nor': 'no', 'ron': 'ro', 'spa': 'es', 'swe': 'sv', 'vie': 'vi',
+            'sqi': 'sq', 'ben': 'bn', 'bul': 'bg', 'mya': 'my', 'cat': 'ca',
+            'zho': 'zh', 'hrv': 'hr', 'ces': 'cs', 'epo': 'eo', 'est': 'et',
+            'deu': 'de', 'ell': 'el', 'heb': 'he', 'hin': 'hi', 'hun': 'hu',
+            'isl': 'is', 'jpn': 'ja', 'kor': 'ko', 'lav': 'lv', 'lit': 'lt',
+            'mkd': 'mk', 'msa': 'ms', 'pol': 'pl', 'por': 'pt', 'rus': 'ru',
+            'srp': 'sr', 'slk': 'sk', 'slv': 'sl', 'tha': 'th', 'tur': 'tr',
+            'ukr': 'uk', 'urd': 'ur'
+        }
+        return [subdl_map.get(lang, lang[:2] if len(lang) >= 2 else lang) for lang in languages]
     
-    def _parse_results(self, api_response: Dict) -> List[SubtitleResult]:
+    def _convert_from_provider_language(self, lang_code: str) -> str:
+        """Convert SubDL format to ISO 639-3"""
+        reverse_map = {
+            'ar': 'ara', 'br_pt': 'pob', 'da': 'dan', 'nl': 'nld', 'en': 'eng',
+            'fa': 'fas', 'fi': 'fin', 'fr': 'fre', 'id': 'ind', 'it': 'ita',
+            'no': 'nor', 'ro': 'ron', 'es': 'spa', 'sv': 'swe', 'vi': 'vie',
+            'sq': 'sqi', 'bn': 'ben', 'bg': 'bul', 'my': 'mya', 'ca': 'cat',
+            'zh': 'zho', 'hr': 'hrv', 'cs': 'ces', 'eo': 'epo', 'et': 'est',
+            'de': 'deu', 'el': 'ell', 'he': 'heb', 'hi': 'hin', 'hu': 'hun',
+            'is': 'isl', 'ja': 'jpn', 'ko': 'kor', 'lv': 'lav', 'lt': 'lit',
+            'mk': 'mkd', 'ms': 'msa', 'pl': 'pol', 'pt': 'por', 'ru': 'rus',
+            'sr': 'srp', 'sk': 'slk', 'sl': 'slv', 'th': 'tha', 'tr': 'tur',
+            'uk': 'ukr', 'ur': 'urd'
+        }
+        return reverse_map.get(lang_code.lower(), lang_code)
+    
+    def _parse_results(self, api_response: Dict, season: Optional[int] = None, episode: Optional[int] = None) -> List[SubtitleResult]:
         """Parse SubDL API response to SubtitleResult objects"""
         results = []
         
@@ -143,16 +149,45 @@ class SubDLProvider(BaseSubtitleProvider):
             return results
         
         for item in api_response['subtitles']:
-            # SubDL response structure
-            subtitle_id = item.get('url') or item.get('download_url') or str(item.get('id', ''))
+            # Filter by season/episode (only for series, not movies)
+            item_season = item.get('season')
+            item_episode = item.get('episode')
+            episode_from = item.get('episode_from')
+            episode_end = item.get('episode_end')
             
-            if not subtitle_id:
+            # Skip filtering for movies (season=0 or None)
+            if item_season and item_season > 0:
+                # Skip if season doesn't match
+                if season is not None and item_season != season:
+                    continue
+                
+                # Skip if episode doesn't match (unless it's a full season pack)
+                if episode is not None:
+                    # Full season pack: episode_from is null and episode_end is 0
+                    is_full_season = episode_from is None and episode_end == 0
+                    
+                    if not is_full_season:
+                        # Check if our episode is in range
+                        if episode_from is not None and episode_end is not None:
+                            if not (episode_from <= episode <= episode_end):
+                                continue
+            
+            # SubDL response structure
+            subtitle_url = item.get('url')
+            
+            if not subtitle_url:
                 continue
+            
+            # Convert relative URL to absolute
+            if subtitle_url.startswith('/'):
+                subtitle_url = f"https://dl.subdl.com{subtitle_url}"
+            
+            lang_code = self._convert_from_provider_language(item.get('language', ''))
             
             results.append(SubtitleResult(
                 provider_name=self.name,
-                subtitle_id=subtitle_id,  # Store download URL as ID
-                language=item.get('language', ''),
+                subtitle_id=subtitle_url,  # Store full download URL as ID
+                language=lang_code,
                 release_name=item.get('release_name') or item.get('name'),
                 uploader=item.get('author') or item.get('uploader'),
                 download_count=item.get('download_count'),
@@ -162,9 +197,11 @@ class SubDLProvider(BaseSubtitleProvider):
                 fps=item.get('fps'),
                 metadata={
                     'hash_match': False,  # SubDL doesn't support hash matching
-                    'url': subtitle_id,
-                    'season': item.get('season'),
-                    'episode': item.get('episode')
+                    'url': subtitle_url,
+                    'season': item_season,
+                    'episode': item_episode,
+                    'episode_from': episode_from,
+                    'episode_end': episode_end
                 }
             ))
         

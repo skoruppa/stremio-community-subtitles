@@ -35,9 +35,9 @@ def content_detail(activity_id):
         if metadata.get('year'):
             title = f"{title} ({metadata['year']})"
         if metadata.get('season'):
-            season = f"{metadata['season']}"
+            season = metadata['season']  # Keep as int
         if metadata.get('episode'):
-            episode = f"{metadata['episode']}"
+            episode = metadata['episode']  # Keep as int
         metadata['display_title'] = title
     else:
         if activity.content_type == 'series':
@@ -90,7 +90,9 @@ def content_detail(activity_id):
             activity.video_hash,
             activity.content_type,
             activity.video_filename,
-            lang=lang_code  # Pass the specific language
+            lang=lang_code,
+            season=season,
+            episode=episode
         )
 
         active_subtitle = None
@@ -108,7 +110,7 @@ def content_detail(activity_id):
             if active_subtitle:
                 all_subtitle_ids_for_voting.add(active_subtitle.id)
         elif active_subtitle_info['type'] and ('_selection' in active_subtitle_info['type'] or '_auto' in active_subtitle_info['type']):
-            active_provider_details = active_subtitle_info['details']
+            active_provider_details = active_subtitle_info
 
         active_details_by_lang[lang_code] = {
             'active_subtitle': active_subtitle,
@@ -137,12 +139,14 @@ def content_detail(activity_id):
                         imdb_id=activity.content_id.split(':')[0] if activity.content_id.startswith('tt') else None,
                         video_hash=activity.video_hash,
                         languages=current_user.preferred_languages,
+                        season=season,
+                        episode=episode,
                         content_type=activity.content_type
                     )
                     
                     # Group results by language (convert SubtitleResult to old format for template compatibility)
                     for result in results:
-                        if result.language in provider_results_by_lang:
+                        if result.language.lower() in provider_results_by_lang:
                             # Convert SubtitleResult to old API format for template
                             item = {
                                 'provider_name': provider.name,

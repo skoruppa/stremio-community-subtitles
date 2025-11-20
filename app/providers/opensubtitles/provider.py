@@ -1,6 +1,5 @@
 """OpenSubtitles provider implementation"""
 from typing import List, Dict, Optional, Any
-from flask_wtf import FlaskForm
 from flask import current_app
 from iso639 import Lang
 
@@ -13,6 +12,7 @@ class OpenSubtitlesProvider(BaseSubtitleProvider):
     
     name = 'opensubtitles'
     display_name = 'OpenSubtitles'
+    badge_color = 'warning'
     requires_auth = True
     supports_search = True
     supports_hash_matching = True
@@ -85,7 +85,7 @@ class OpenSubtitlesProvider(BaseSubtitleProvider):
         # Build search params
         search_params = {}
         if imdb_id:
-            search_params['imdb_id'] = imdb_id.replace('tt', '') if imdb_id.startswith('tt') else imdb_id
+            search_params['imdb_id'] = imdb_id
         if query:
             search_params['query'] = query
         if os_languages:
@@ -134,10 +134,6 @@ class OpenSubtitlesProvider(BaseSubtitleProvider):
         except opensubtitles_client.OpenSubtitlesError as e:
             raise ProviderDownloadError(str(e), self.name, getattr(e, 'status_code', None))
     
-    def get_settings_form(self) -> FlaskForm:
-        """Get settings form (not used in new architecture)"""
-        return None
-    
     def get_settings_template(self) -> str:
         """Get settings template path"""
         return 'providers/opensubtitles_form.html'
@@ -157,6 +153,20 @@ class OpenSubtitlesProvider(BaseSubtitleProvider):
                     current_app.logger.warning(f"Could not convert language {lang}")
                     converted.append(lang)
         return ','.join(converted)
+    
+    def _convert_from_provider_language(self, lang_code: str) -> str:
+        """Convert OpenSubtitles ISO 639-1 to ISO 639-3"""
+        if lang_code == 'pt-br':
+            return 'pob'
+        elif lang_code == 'pt-pt':
+            return 'por'
+        elif len(lang_code) == 2:
+            try:
+                return Lang(lang_code).pt3
+            except KeyError:
+                current_app.logger.warning(f"Could not convert language {lang_code} to ISO 639-3")
+                return lang_code
+        return lang_code
     
     def _parse_results(self, api_response: Dict) -> List[SubtitleResult]:
         """Parse OpenSubtitles API response to SubtitleResult objects"""
@@ -178,10 +188,14 @@ class OpenSubtitlesProvider(BaseSubtitleProvider):
             if not file_id:
                 continue
             
+            # Convert language from ISO 639-1 to ISO 639-3
+            lang_code = attrs.get('language', '')
+            lang_code = self._convert_from_provider_language(lang_code)
+            
             results.append(SubtitleResult(
                 provider_name=self.name,
                 subtitle_id=str(file_id),
-                language=attrs.get('language', ''),
+                language=lang_code,
                 release_name=file_info.get('file_name'),
                 uploader=attrs.get('uploader', {}).get('name'),
                 download_count=attrs.get('download_count'),
