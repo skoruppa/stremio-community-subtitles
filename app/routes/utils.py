@@ -566,7 +566,7 @@ def get_vtt_content(subtitle):
 
 def generate_vtt_message(message: str) -> str:
     """Generates a simple VTT file content displaying a message."""
-    return f"WEBVTT\n\n00:00:00.000 --> 00:05:00.000\n{message}"
+    return f"WEBVTT\n\n00:00:00.000 --> 00:00:08.000\n{message}"
 
 
 def extract_subtitle_from_zip(zip_content: bytes, episode: int = None):
