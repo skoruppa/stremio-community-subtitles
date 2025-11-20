@@ -6,7 +6,7 @@ from ..models import UserActivity, Subtitle, UserSubtitleSelection, SubtitleVote
 from iso639 import Lang
 from ..lib.metadata import get_metadata
 from ..languages import LANGUAGES, LANGUAGE_DICT
-from .utils import get_active_subtitle_details, search_opensubtitles
+from .utils import get_active_subtitle_details
 
 content_bp = Blueprint('content', __name__)
 
@@ -35,9 +35,9 @@ def content_detail(activity_id):
         if metadata.get('year'):
             title = f"{title} ({metadata['year']})"
         if metadata.get('season'):
-            season = f"{metadata['season']}"
+            season = metadata['season']  # Keep as int
         if metadata.get('episode'):
-            episode = f"{metadata['episode']}"
+            episode = metadata['episode']  # Keep as int
         metadata['display_title'] = title
     else:
         if activity.content_type == 'series':
@@ -58,7 +58,7 @@ def content_detail(activity_id):
     all_subs_matching_hash = []
     all_subs_other_hash = []
     all_subs_no_hash = []
-    opensubtitles_results_by_lang = {lang: [] for lang in current_user.preferred_languages}
+    provider_results_by_lang = {lang: [] for lang in current_user.preferred_languages}
     all_subtitle_ids_for_voting = set() # Use a set to avoid duplicate IDs
 
     # Fetch all available local subtitles for all preferred languages in one query
@@ -90,11 +90,13 @@ def content_detail(activity_id):
             activity.video_hash,
             activity.content_type,
             activity.video_filename,
-            lang=lang_code  # Pass the specific language
+            lang=lang_code,
+            season=season,
+            episode=episode
         )
 
         active_subtitle = None
-        active_opensubtitle_details = None
+        active_provider_details = None
         user_vote_value = None
         user_selection = active_subtitle_info.get('user_selection_record')
         auto_selected = False
@@ -107,12 +109,12 @@ def content_detail(activity_id):
             user_vote_value = active_subtitle_info['user_vote_value']
             if active_subtitle:
                 all_subtitle_ids_for_voting.add(active_subtitle.id)
-        elif active_subtitle_info['type'] in ['opensubtitles_selection', 'opensubtitles_auto']:
-            active_opensubtitle_details = active_subtitle_info['details']
+        elif active_subtitle_info['type'] and ('_selection' in active_subtitle_info['type'] or '_auto' in active_subtitle_info['type']):
+            active_provider_details = active_subtitle_info
 
         active_details_by_lang[lang_code] = {
             'active_subtitle': active_subtitle,
-            'active_opensubtitle_details': active_opensubtitle_details,
+            'active_provider_details': active_provider_details,
             'user_selection': user_selection,
             'user_vote_value': user_vote_value,
             'auto_selected': auto_selected
@@ -121,41 +123,57 @@ def content_detail(activity_id):
     # Calculate has_any_user_selection
     has_any_user_selection = any(details.get('user_selection') is not None for details in active_details_by_lang.values())
 
-    # Get OpenSubtitles results once for all preferred languages
-    if current_user.opensubtitles_active and current_user.preferred_languages:
+    # Get provider results for all preferred languages
+    if current_user.preferred_languages:
         try:
-            os_results_all_langs = search_opensubtitles(
-                current_user,
-                activity.content_id,
-                activity.video_hash,
-                activity.content_type,
-                lang=current_user.preferred_languages # Pass the list of languages
-            )
-
-            # Group OpenSubtitles results by language
-            for item in os_results_all_langs:
-                if 'attributes' in item and 'language' in item['attributes']:
-                    try:
-                        lang_2letter = item['attributes']['language']
-                        if lang_2letter.lower() == 'pt-pt':
-                            lang_3letter = 'por'
-                        elif lang_2letter.lower() == 'pt-br':
-                            lang_3letter = 'pob'
-                        else:
-                            lang_obj = Lang(lang_2letter)
-                            lang_3letter = lang_obj.pt3
-                        
-                        item['attributes']['language_3letter'] = lang_3letter
-                        if lang_3letter in opensubtitles_results_by_lang:
-                            opensubtitles_results_by_lang[lang_3letter].append(item)
-                    except Exception as e:
-                        current_app.logger.warning(f"Could not convert language code {lang_2letter}: {e}")
-                        # If conversion fails, just log and skip if not in preferred_languages
-                        pass
-
+            from ..providers.registry import ProviderRegistry
+            from ..providers.base import SubtitleResult
+            
+            active_providers = ProviderRegistry.get_active_for_user(current_user)
+            
+            for provider in active_providers:
+                try:
+                    # Search for all preferred languages
+                    results = provider.search(
+                        user=current_user,
+                        imdb_id=activity.content_id.split(':')[0] if activity.content_id.startswith('tt') else None,
+                        video_hash=activity.video_hash,
+                        languages=current_user.preferred_languages,
+                        season=season,
+                        episode=episode,
+                        content_type=activity.content_type
+                    )
+                    
+                    # Group results by language (convert SubtitleResult to old format for template compatibility)
+                    for result in results:
+                        if result.language.lower() in provider_results_by_lang:
+                            # Convert SubtitleResult to old API format for template
+                            item = {
+                                'provider_name': provider.name,
+                                'attributes': {
+                                    'language': result.language,
+                                    'language_3letter': result.language,
+                                    'files': [{
+                                        'file_id': result.subtitle_id,
+                                        'file_name': result.release_name
+                                    }],
+                                    'uploader': {'name': result.uploader} if result.uploader else None,
+                                    'moviehash_match': result.metadata.get('hash_match', False) if result.metadata else False,
+                                    'ai_translated': result.ai_translated,
+                                    'machine_translated': False,
+                                    'ratings': result.rating,
+                                    'votes': None,
+                                    'download_count': result.download_count,
+                                    'hearing_impaired': result.hearing_impaired,
+                                    'url': result.metadata.get('url', '') if result.metadata else ''
+                                }
+                            }
+                            provider_results_by_lang[result.language].append(item)
+                except Exception as e:
+                    current_app.logger.error(f"Provider {provider.name} search failed: {e}", exc_info=True)
         except Exception as e:
-            current_app.logger.error(f"Error fetching OpenSubtitles results for display: {e}", exc_info=True)
-            flash("An error occurred while searching OpenSubtitles.", "warning")
+            current_app.logger.error(f"Error fetching provider results for display: {e}", exc_info=True)
+            flash("An error occurred while searching for subtitles.", "warning")
 
     # Fetch all user votes for all collected subtitle IDs
     user_votes = {}
@@ -167,15 +185,20 @@ def content_detail(activity_id):
         for vote in votes:
             user_votes[vote.subtitle_id] = vote.vote_value
 
-    # Calculate has_opensubtitles_results
-    has_opensubtitles_results = any(os_results for os_results in opensubtitles_results_by_lang.values())
+    # Calculate has_provider_results
+    has_provider_results = any(results for results in provider_results_by_lang.values())
 
     # Prepare preferred languages for display
     preferred_languages_display = ", ".join([LANGUAGE_DICT.get(lang_code, lang_code) for lang_code in current_user.preferred_languages])
 
-    # Check if OpenSubtitles is not active and show info message
-    if not current_user.opensubtitles_active:
-        flash(Markup('You don\'t have an active OpenSubtitles connection. To fully utilize the addon features, <a href="{}" class="alert-link">activate it in your account settings</a>.'.format(url_for('main.account_settings'))), 'info')
+    # Check if no providers are active and show info message
+    try:
+        from ..providers.registry import ProviderRegistry
+        active_providers = ProviderRegistry.get_active_for_user(current_user)
+        if not active_providers:
+            flash(Markup('You don\'t have any active provider connections. To fully utilize the addon features, <a href="{}" class="alert-link">activate providers in your account settings</a>.'.format(url_for('main.account_settings'))), 'info')
+    except:
+        pass
 
     # Pass context to the template
     context = {
@@ -190,10 +213,10 @@ def content_detail(activity_id):
         'language_list': LANGUAGES, # All available languages
         'LANGUAGE_DICT': LANGUAGE_DICT, # Dictionary for language names
         'metadata': metadata,
-        'opensubtitles_results_by_lang': opensubtitles_results_by_lang,
+        'provider_results_by_lang': provider_results_by_lang,
         'preferred_languages': current_user.preferred_languages, # User's selected preferred languages
         'has_any_user_selection': has_any_user_selection,
-        'has_opensubtitles_results': has_opensubtitles_results,
+        'has_provider_results': has_provider_results,
         'preferred_languages_display': preferred_languages_display
     }
 

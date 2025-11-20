@@ -1,4 +1,4 @@
-{% macro render_subtitle_item(subtitle, user_votes, user_selection, activity_id, current_video_hash, current_user_obj, lang_dict, is_active_subtitle=false) %}
+{% macro render_subtitle_item(subtitle, user_votes, user_selection, activity_id, current_video_hash, current_user_obj, lang_dict, is_active_subtitle=false, get_provider=none) %}
 {#
     Renders a single community subtitle item (either uploaded or linked from OpenSubtitles).
     - subtitle: The Subtitle object from the database.
@@ -22,8 +22,12 @@
                     Subtitle by {{ subtitle.uploader.username if subtitle.uploader else 'N/A' }}
                 {% endif %}
                 <span class="badge bg-secondary">{{ lang_dict.get(subtitle.language, subtitle.language) }}</span> {# Display full language name #}
-                {% if subtitle.source_type == 'opensubtitles_community_link' %}
-                    <span class="badge bg-warning" title="Sourced from OpenSubtitles by {{ subtitle.uploader.username if subtitle.uploader else 'Unknown User' }}">OpenSubtitles Sourced</span>
+                {% if subtitle.source_type and subtitle.source_type.endswith('_community_link') %}
+                    {% set provider_name = subtitle.source_type.replace('_community_link', '') %}
+                    {% set provider = get_provider(provider_name) %}
+                    <span class="badge bg-{{ provider.badge_color if provider else 'info' }}" title="Sourced from {{ provider.display_name if provider else provider_name|capitalize }} by {{ subtitle.uploader.username if subtitle.uploader else 'Unknown User' }}">{{ provider.display_name if provider else provider_name|capitalize }}</span>
+                {% elif subtitle.source_type and subtitle.source_type != 'community' %}
+                    <span class="badge bg-info" title="Sourced from {{ subtitle.source_type }}">{{ subtitle.source_type | capitalize }}</span>
                 {% endif %}
             </h6>
             <small class="text-muted">
@@ -47,8 +51,8 @@
         </div>
         <div class="col-md-5 col-lg-4 text-end gap-1 pt-2 pt-md-0">
             {% if is_active_subtitle %}
-            {# Vote Buttons - Only show if subtitle is community or OS-linked AND matches current video hash #}
-            {% if subtitle.source_type in ['community', 'opensubtitles_community_link'] and subtitle.video_hash == current_video_hash %}
+            {# Vote Buttons - Only show if subtitle is community or provider-linked AND matches current video hash #}
+            {% if (subtitle.source_type == 'community' or subtitle.source_type.endswith('_community_link')) and subtitle.video_hash == current_video_hash %}
             <span data-subtitle-id="{{ subtitle.id }}" data-current-vote="{{ user_votes.get(subtitle.id, 0) }}">
                 <button type="button" class="btn btn-sm vote-btn {% if user_votes.get(subtitle.id) == 1 %}btn-success{% else %}btn-outline-success{% endif %}" data-vote-type="up" title="Upvote">
                     <i class="fas fa-thumbs-up"></i>
@@ -72,8 +76,8 @@
                 </form>
             {% endif %}
 
-            {# Mark Compatible Button - only for community uploads with a file_path #}
-            {% if not is_active_subtitle and current_video_hash and subtitle.video_hash and subtitle.video_hash != current_video_hash and subtitle.source_type == 'community' and subtitle.file_path %}
+            {# Mark Compatible Button - for community uploads and provider-linked subtitles with a file_path #}
+            {% if current_video_hash and subtitle.video_hash and subtitle.video_hash != current_video_hash and (subtitle.source_type == 'community' or subtitle.source_type.endswith('_community_link')) and subtitle.file_path %}
                 <form action="{{ url_for('subtitles.mark_compatible_hash', subtitle_id=subtitle.id ) }}" method="POST" class="d-inline ms-1">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <input type="hidden" name="target_video_hash" value="{{ current_video_hash }}">

@@ -1,0 +1,27 @@
+<!-- SubSource Provider Connection Form -->
+<div class="mb-3">
+    <label for="subsource_api_key" class="form-label">SubSource API Key</label>
+    <input type="text" class="form-control" id="subsource_api_key" name="api_key" required
+           placeholder="Your SubSource API key">
+    <div class="form-text">
+        Get your API key from <a href="https://subsource.net/dashboard/profile" target="_blank">SubSource API page</a>
+    </div>
+</div>
+
+<div class="mb-3">
+    <div class="form-check">
+        <input class="form-check-input" type="checkbox" id="subsource_try_provide_ass" name="try_provide_ass" value="true">
+        <label class="form-check-label" for="subsource_try_provide_ass">
+            Try to provide ASS/SSA format
+        </label>
+        <div class="form-text">
+            SubSource returns ZIP files that may contain ASS format. This option will always add an ass entry in Stremio, even if there are no .ass subtitles in the .zip.
+        </div>
+    </div>
+</div>
+
+<div class="alert alert-info small">
+    <i class="fas fa-info-circle me-2"></i>
+    <strong>Note:</strong> SubSource offers API access for subtitle downloads. 
+    Check their website for current limits.
+</div>

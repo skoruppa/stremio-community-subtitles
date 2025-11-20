@@ -1,0 +1,82 @@
+{% macro render_provider_subtitle_item(activity, provider_result, current_user_lang, active_provider_details, lang_dict, is_active_selection=false, get_provider=none) %}
+{#
+    Renders a single subtitle item from any provider (OpenSubtitles, SubDL, etc.)
+    - activity: UserActivity object
+    - provider_result: SubtitleResult object from provider
+    - current_user_lang: User's preferred language
+    - active_provider_details: Currently active provider subtitle details
+    - lang_dict: Language code to name mapping
+    - is_active_selection: True if this is the active selection
+#}
+<div class="list-group-item list-group-item-action {% if is_active_selection %}bg-info active-selection-item{% else %}available-item{% endif %}"
+     data-provider="{{ provider_result.provider_name }}"
+     data-subtitle-id="{{ provider_result.subtitle_id }}"
+     data-language="{{ provider_result.language }}">
+    <div class="row align-items-center">
+        <div class="col-md-8">
+            <h6 class="mb-1">
+                {{ provider_result.release_name | truncate(100) if provider_result.release_name else 'N/A' }}
+                <span class="badge bg-secondary">{{ lang_dict.get(provider_result.language, provider_result.language | upper) }}</span>
+                {% set provider = get_provider(provider_result.provider_name) %}
+                <span class="badge bg-{{ provider.badge_color if provider else 'primary' }}">{{ provider_result.provider_name | capitalize }}</span>
+            </h6>
+            <small class="text-muted">
+                Uploader: {{ provider_result.uploader if provider_result.uploader else 'N/A' }}
+                {% if provider_result.rating is not none %}
+                    | Rating: {{ "%.1f"|format(provider_result.rating) }}/10
+                {% endif %}
+                {% if provider_result.download_count %}
+                    | Downloads: {{ provider_result.download_count }}
+                {% endif %}
+            </small>
+            <div>
+                {% if provider_result.metadata and provider_result.metadata.get('hash_match') %}
+                    <span class="badge bg-success mt-1">Hash Match</span>
+                {% endif %}
+                {% if provider_result.ai_translated %}
+                    <span class="badge bg-warning mt-1">AI Translated</span>
+                {% endif %}
+                {% if provider_result.hearing_impaired %}
+                    <span class="badge bg-info mt-1">HI</span>
+                {% endif %}
+            </div>
+        </div>
+        <div class="col-md-4 text-end gap-1 pt-2 pt-md-0">
+            {% if is_active_selection %}
+                <button class="btn btn-sm btn-success disabled" disabled>
+                    <i class="fas fa-check-circle"></i> Selected
+                </button>
+                {% if activity.video_hash and provider_result.metadata and not provider_result.metadata.get('hash_match') %}
+                    <form action="{{ url_for('providers.link_provider_subtitle', activity_id=activity.id) }}" method="POST" class="d-inline ms-2">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <input type="hidden" name="provider_name" value="{{ provider_result.provider_name }}">
+                        <input type="hidden" name="subtitle_id" value="{{ provider_result.subtitle_id }}">
+                        <input type="hidden" name="language" value="{{ provider_result.language }}">
+                        <input type="hidden" name="release_name" value="{{ provider_result.release_name | truncate(250) if provider_result.release_name else 'N/A' }}">
+                        <input type="hidden" name="uploader" value="{{ provider_result.uploader if provider_result.uploader else 'N/A' }}">
+                        <input type="hidden" name="ai_translated" value="{{ 'true' if provider_result.ai_translated else 'false' }}">
+                        <input type="hidden" name="url" value="{{ provider_result.metadata.get('url', '') if provider_result.metadata else '' }}">
+                        <button type="submit" class="btn btn-sm btn-outline-secondary" title="Link this subtitle to the current video version for the community">
+                            <i class="fas fa-link"></i> Link
+                        </button>
+                    </form>
+                {% endif %}
+            {% else %}
+                <form action="{{ url_for('providers.select_provider_subtitle', activity_id=activity.id) }}" method="POST" class="d-inline">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="provider_name" value="{{ provider_result.provider_name }}">
+                    <input type="hidden" name="subtitle_id" value="{{ provider_result.subtitle_id }}">
+                    <input type="hidden" name="language" value="{{ provider_result.language }}">
+                    <input type="hidden" name="release_name" value="{{ provider_result.release_name | truncate(250) if provider_result.release_name else 'N/A' }}">
+                    <input type="hidden" name="uploader" value="{{ provider_result.uploader if provider_result.uploader else 'N/A' }}">
+                    <input type="hidden" name="ai_translated" value="{{ 'true' if provider_result.ai_translated else 'false' }}">
+                    <input type="hidden" name="hash_match" value="{{ 'true' if provider_result.metadata and provider_result.metadata.get('hash_match') else 'false' }}">
+                    <button type="submit" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-check"></i> Select
+                    </button>
+                </form>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endmacro %}

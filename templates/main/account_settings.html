@@ -35,49 +35,20 @@
             </div>
         </div>
 
-        <!-- OpenSubtitles Settings Card -->
+        <!-- Subtitle Providers -->
         <div class="card shadow-sm mb-4">
-            <div class="card-header bg-info text-white">
-                <h5 class="mb-0">OpenSubtitles Integration</h5>
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">Subtitle Providers</h5>
             </div>
             <div class="card-body">
-                <form method="POST" action="{{ url_for('main.account_settings') }}" novalidate id="opensubtitles-settings-form">
-                    {{ os_form.hidden_tag() }}
-
-                    {% if opensubtitles_has_token %}
-
-                            <p>The integration is <strong>active</strong>.</p>
-                        {{ render_checkbox_field(os_form.use_opensubtitles, disabled=True) }}
-                    {% else %}
-                        <p>Connect your <a href="https://www.opensubtitles.com/" target="_blank">OpenSubtitles.com</a> account to enhance subtitle search and download capabilities.</p>
-                        {{ render_checkbox_field(os_form.use_opensubtitles) }}
-                    {% endif %}
-
-                    {# This div is always rendered, hidden with d-none if user has token #}
-                    <div id="opensubtitles-credentials" class="{% if opensubtitles_has_token %}d-none{% endif %}">
-                        {{ render_field(os_form.opensubtitles_username) }}
-                        {{ render_field(os_form.opensubtitles_password) }}
-                        <div class="alert alert-secondary mt-2">
-                            <i class="fas fa-info-circle me-2"></i>
-                            Provide your OpenSubtitles.com username and password to log in and activate the integration. Your credentials are sent directly to OpenSubtitles.com for login and are not stored on our servers beyond the session token.
-                        </div>
-                    </div>
-
-                    {% if not opensubtitles_has_token %}
-                    {{ render_submit_button(os_form.submit_opensubtitles) }}
-                    {% endif %}
-                </form>
-
-                {% if opensubtitles_has_token %}
-                    <hr class="my-4">
-                    <p>To completely log out from your OpenSubtitles session and clear stored details from this addon:</p>
-                    <form method="POST" action="{{ url_for('opensubtitles.opensubtitles_logout') }}" novalidate>
-                        {{ os_form.hidden_tag() }}
-                        <button type="submit" class="btn btn-danger">
-                            <i class="fas fa-sign-out-alt me-2"></i>Logout from OpenSubtitles & Clear Stored Session
-                        </button>
-                    </form>
-                {% endif %}
+                <p class="text-muted">Connect to external subtitle providers for enhanced search capabilities.</p>
+                
+                {% from "_provider_status.html" import render_provider_status %}
+                {% set all_providers = get_all_providers() %}
+                
+                {% for provider in all_providers %}
+                    {{ render_provider_status(provider, current_user) }}
+                {% endfor %}
             </div>
         </div>
 
@@ -122,14 +93,7 @@
                             <span class="text-muted">No languages selected</span>
                         {% endif %}
                     </li>
-                    <li class="list-group-item">
-                        <strong>OpenSubtitles Active:</strong>
-                        {% if opensubtitles_active %}
-                            <span class="badge bg-success">Yes</span>
-                        {% else %}
-                            <span class="badge bg-secondary">No</span>
-                        {% endif %}
-                    </li>
+
                 </ul>
             </div>
         </div>
@@ -161,39 +125,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    const useOpenSubtitlesCheckbox = document.getElementById('os_form-use_opensubtitles');
-    const credentialsDiv = document.getElementById('opensubtitles-credentials');
-    const usernameField = document.getElementById('os_form-opensubtitles_username');
-    const passwordField = document.getElementById('os_form-opensubtitles_password');
-    const hasToken = {{ opensubtitles_has_token|tojson }};
 
-    function toggleCredentialsDisplay() {
-        if (!hasToken && credentialsDiv) {
-            if (useOpenSubtitlesCheckbox.checked) {
-                credentialsDiv.style.display = 'block';
-                if (usernameField) usernameField.required = true;
-                if (passwordField) passwordField.required = true;
-            } else {
-                credentialsDiv.style.display = 'none';
-                if (usernameField) usernameField.required = false;
-                if (passwordField) passwordField.required = false;
-            }
-        } else if (credentialsDiv) {
-            credentialsDiv.style.display = 'none';
-            if (usernameField) usernameField.required = false;
-            if (passwordField) passwordField.required = false;
-        }
-    }
-
-    if (useOpenSubtitlesCheckbox) {
-        toggleCredentialsDisplay();
-        useOpenSubtitlesCheckbox.addEventListener('change', toggleCredentialsDisplay);
-
-        if (usernameField && passwordField) {
-            usernameField.addEventListener('input', toggleCredentialsDisplay);
-            passwordField.addEventListener('input', toggleCredentialsDisplay);
-        }
-    }
 });
 </script>
 {% endblock %}

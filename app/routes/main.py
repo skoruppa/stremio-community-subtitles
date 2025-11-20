@@ -6,10 +6,9 @@ from markupsafe import Markup
 from sqlalchemy.orm import joinedload
 from sqlalchemy import func
 
-from ..lib import opensubtitles_client
-from ..lib.opensubtitles_client import OpenSubtitlesError
 from ..models import User, UserActivity, Subtitle, UserSubtitleSelection, SubtitleVote
-from ..forms import LanguagePreferenceForm, OpenSubtitlesLoginForm
+from ..forms import LanguagePreferenceForm
+from ..providers.registry import ProviderRegistry
 from ..lib.metadata import get_metadata
 from ..extensions import db
 from ..languages import LANGUAGES, LANGUAGE_DICT
@@ -53,9 +52,7 @@ def dashboard():
 
     max_activities_to_display = current_app.config.get('MAX_USER_ACTIVITIES', 15)
 
-    # Check if OpenSubtitles is not active and show info message
-    if not current_user.opensubtitles_active:
-        flash(Markup('You don\'t have an active OpenSubtitles connection. To fully utilize the addon features, <a href="{}" class="alert-link">activate it in your account settings</a>.'.format(url_for('main.account_settings'))), 'info')
+
 
     # Pass activities and their metadata to the template
     return render_template('main/dashboard.html',
@@ -96,97 +93,27 @@ def configure_redirect(manifest_token):
 @main_bp.route('/account', methods=['GET', 'POST'])
 @login_required
 def account_settings():
-    """Allows user to change their preferred language and OpenSubtitles settings."""
+    """Allows user to change their preferred language."""
     lang_form = LanguagePreferenceForm(prefix="lang_form")
-    os_form = OpenSubtitlesLoginForm(prefix="os_form")
-
     lang_form.preferred_languages.choices = LANGUAGES
 
     if request.method == 'GET':
         lang_form.preferred_languages.data = current_user.preferred_languages
-        os_form.use_opensubtitles.data = current_user.opensubtitles_active
-        # We don't pre-fill username/password for security and simplicity.
-        # If opensubtitles_active is true, template will show "logged in" state.
 
     if lang_form.submit_language.data and lang_form.validate():
         try:
             current_user.preferred_languages = lang_form.preferred_languages.data
             db.session.commit()
             flash('Preferred languages updated successfully!', 'success')
-            return redirect(url_for('main.account_settings'))  # Redirect to avoid re-POST
+            return redirect(url_for('main.account_settings'))
         except Exception as e:
             db.session.rollback()
             current_app.logger.error(f"Failed to update language for user {current_user.id}: {e}")
             flash('Failed to update language.', 'danger')
 
-    if os_form.submit_opensubtitles.data and os_form.validate():
-        os_username = os_form.opensubtitles_username.data
-        os_password = os_form.opensubtitles_password.data
-
-        if os_form.use_opensubtitles.data:
-            # User wants to enable or keep enabled
-            if os_username and os_password:
-                try:
-                    current_app.logger.info(
-                        f"User {current_user.username} attempting to login/re-login to OpenSubtitles with username {os_username}.")
-                    # Pass the user object to login to use their personal API key
-                    login_data = opensubtitles_client.login(os_username, os_password, user=current_user)
-
-                    current_user.opensubtitles_token = login_data['token']
-                    current_user.opensubtitles_base_url = login_data['base_url']
-                    current_user.opensubtitles_active = True
-                    flash('Successfully logged into OpenSubtitles and activated integration!', 'success')
-                    current_app.logger.info(f"User {current_user.username} successfully logged into OpenSubtitles.")
-                except OpenSubtitlesError as e:
-                    db.session.rollback()
-                    current_app.logger.error(
-                        f"OpenSubtitles login failed for user {current_user.username} (OS username: {os_username}): {e}")
-                    flash(f'OpenSubtitles login failed: {e}', 'danger')
-                    # Ensure opensubtitles_active is false if login fails and there was no prior token
-                    if not current_user.opensubtitles_token:
-                        current_user.opensubtitles_active = False
-                        db.session.commit()
-                except Exception as e:
-                    db.session.rollback()
-                    current_app.logger.error(
-                        f"Unexpected error during OpenSubtitles login for {current_user.username}: {e}", exc_info=True)
-                    flash('An unexpected error occurred during OpenSubtitles login.', 'danger')
-                    if not current_user.opensubtitles_token:
-                        current_user.opensubtitles_active = False
-                        db.session.commit()
-            elif current_user.opensubtitles_token:
-                # If no username/password provided but a token exists, just ensure integration is active
-                if not current_user.opensubtitles_active:
-                    current_user.opensubtitles_active = True
-                    flash('OpenSubtitles integration (using existing session) has been activated.', 'info')
-                else:
-                    flash('OpenSubtitles integration remains active.', 'info')
-
-        else:
-            # User wants to disable OpenSubtitles integration (use_opensubtitles is unchecked)
-            if current_user.opensubtitles_active:
-                current_user.opensubtitles_active = False
-                flash(
-                    'OpenSubtitles integration has been locally deactivated. Your OpenSubtitles session details and API key are kept if you wish to re-activate.',
-                    'info')
-            else:
-                flash('OpenSubtitles integration is already inactive.', 'info')
-
-        try:
-            db.session.commit()
-        except Exception as e:
-            db.session.rollback()
-            current_app.logger.error(f"Failed to save OpenSubtitles settings for user {current_user.id}: {e}")
-            flash('Failed to save OpenSubtitles settings.', 'danger')
-
-        return redirect(url_for('main.account_settings'))
-
-    opensubtitles_has_token = current_user.opensubtitles_token is not None
     return render_template('main/account_settings.html',
                            lang_form=lang_form,
-                           os_form=os_form,
-                           opensubtitles_active=current_user.opensubtitles_active,
-                           opensubtitles_has_token=opensubtitles_has_token,
+                           get_all_providers=ProviderRegistry.get_all,
                            LANGUAGE_DICT=LANGUAGE_DICT)
 
 

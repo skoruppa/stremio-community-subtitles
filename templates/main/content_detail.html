@@ -3,7 +3,7 @@
 {% block title %}{{ metadata.display_title if metadata else activity.content_id }} - {{ super() }}{% endblock %}
 
 {% from "_subtitle_list_item.html" import render_subtitle_item %}
-{% from "_opensubtitle_list_item.html" import render_opensubtitle_item %}
+{% from "_provider_subtitle_list_item.html" import render_provider_subtitle_item %}
 
 {% block content %}
 <div class="row mb-4">
@@ -122,7 +122,7 @@
                 {% for lang_code in preferred_languages %}
                     {% set active_details = active_details_by_lang.get(lang_code) %}
                     {% set active_subtitle = active_details.active_subtitle if active_details else none %}
-                    {% set active_opensubtitle_details = active_details.active_opensubtitle_details if active_details else none %}
+                    {% set active_provider_details = active_details.active_provider_details if active_details else none %}
                     {% set user_selection = active_details.user_selection if active_details else none %}
                     {% set user_vote_value = active_details.user_vote_value if active_details else none %}
                     {% set auto_selected = active_details.auto_selected if active_details else false %}
@@ -137,8 +137,8 @@
                                     {% else %}
                                     <span class="badge bg-success ms-1">User Selected</span>
                                     {% endif %}
-                                {% elif active_opensubtitle_details %}
-                                    <span class="badge bg-warning ms-1">OpenSubtitles</span>
+                                {% elif active_provider_details %}
+                                    <span class="badge bg-warning ms-1">Provider</span>
                                     {% if auto_selected %}
                                     <span class="badge bg-info ms-1">Auto Selected</span>
                                     {% else %}
@@ -149,25 +149,23 @@
                         </h6>
                         {% if active_subtitle %}
                             <div class="list-group-item active-subtitle">
-                                {{ render_subtitle_item(active_subtitle, user_votes, user_selection, activity.id, activity.video_hash, current_user, LANGUAGE_DICT, is_active_subtitle=true) }}
+                                {{ render_subtitle_item(active_subtitle, user_votes, user_selection, activity.id, activity.video_hash, current_user, LANGUAGE_DICT, is_active_subtitle=true, get_provider=get_provider) }}
                             </div>
-                        {% elif active_opensubtitle_details %}
+                        {% elif active_provider_details %}
                             <div class="list-group-item active-subtitle">
-                                {% set active_os_item_for_macro = {
-                                    'attributes': {
-                                        'language': active_opensubtitle_details.language, 
-                                        'language_3letter': active_opensubtitle_details.language, 
-                                        'files': [{'file_id': active_opensubtitle_details.file_id, 'file_name': active_opensubtitle_details.release_name}],
-                                        'uploader': {'name': active_opensubtitle_details.uploader},
-                                        'moviehash_match': active_opensubtitle_details.moviehash_match,
-                                        'ai_translated': active_opensubtitle_details.ai_translated,
-                                        'machine_translated': false, 
-                                        'ratings': None, 
-                                        'votes': None, 
-                                        'url': active_opensubtitle_details.url
-                                    }
-                                } %}
-                                {{ render_opensubtitle_item(activity, active_os_item_for_macro, lang_code, active_opensubtitle_details, LANGUAGE_DICT, is_active_selection=true) }}
+                                {% set provider_result = namespace(
+                                    provider_name=active_provider_details.provider_name,
+                                    subtitle_id=active_provider_details.subtitle_id or active_provider_details.details.file_id|string,
+                                    language=lang_code,
+                                    release_name=active_provider_details.release_name,
+                                    uploader=active_provider_details.uploader,
+                                    ai_translated=active_provider_details.ai_translated,
+                                    rating=active_provider_details.rating if active_provider_details.rating else None,
+                                    download_count=active_provider_details.download_count if active_provider_details.download_count else None,
+                                    hearing_impaired=active_provider_details.hearing_impaired if active_provider_details.hearing_impaired else False,
+                                    metadata={'hash_match': active_provider_details.moviehash_match or active_provider_details.hash_match, 'url': active_provider_details.url}
+                                ) %}
+                                {{ render_provider_subtitle_item(activity, provider_result, lang_code, active_provider_details, LANGUAGE_DICT, is_active_selection=true, get_provider=get_provider) }}
                             </div>
                         {% else %}
                             <div class="p-3 text-muted">
@@ -185,7 +183,7 @@
                     </div>
                     <div class="list-group list-group-flush">
                         {% for subtitle in all_subs_matching_hash %}
-                            {{ render_subtitle_item(subtitle, user_votes, user_selection, activity.id, activity.video_hash, current_user, LANGUAGE_DICT, is_active_subtitle=(active_details_by_lang.get(subtitle.language) and active_details_by_lang.get(subtitle.language).active_subtitle and active_details_by_lang.get(subtitle.language).active_subtitle.id == subtitle.id)) }}
+                            {{ render_subtitle_item(subtitle, user_votes, user_selection, activity.id, activity.video_hash, current_user, LANGUAGE_DICT, is_active_subtitle=(active_details_by_lang.get(subtitle.language) and active_details_by_lang.get(subtitle.language).active_subtitle and active_details_by_lang.get(subtitle.language).active_subtitle.id == subtitle.id), get_provider=get_provider) }}
                         {% endfor %}
                     </div>
                 </div>
@@ -198,7 +196,7 @@
                      </div>
                     <div class="list-group list-group-flush">
                         {% for subtitle in all_subs_no_hash %}
-                            {{ render_subtitle_item(subtitle, user_votes, user_selection, activity.id, activity.video_hash, current_user, LANGUAGE_DICT, is_active_subtitle=(active_details_by_lang.get(subtitle.language) and active_details_by_lang.get(subtitle.language).active_subtitle and active_details_by_lang.get(subtitle.language).active_subtitle.id == subtitle.id)) }}
+                            {{ render_subtitle_item(subtitle, user_votes, user_selection, activity.id, activity.video_hash, current_user, LANGUAGE_DICT, is_active_subtitle=(active_details_by_lang.get(subtitle.language) and active_details_by_lang.get(subtitle.language).active_subtitle and active_details_by_lang.get(subtitle.language).active_subtitle.id == subtitle.id), get_provider=get_provider) }}
                         {% endfor %}
                     </div>
                 </div>
@@ -211,13 +209,13 @@
                     </div>
                     <div class="list-group list-group-flush">
                         {% for subtitle in all_subs_other_hash %}
-                            {{ render_subtitle_item(subtitle, user_votes, user_selection, activity.id, activity.video_hash, current_user, LANGUAGE_DICT, is_active_subtitle=(active_details_by_lang.get(subtitle.language) and active_details_by_lang.get(subtitle.language).active_subtitle and active_details_by_lang.get(subtitle.language).active_subtitle.id == subtitle.id)) }}
+                            {{ render_subtitle_item(subtitle, user_votes, user_selection, activity.id, activity.video_hash, current_user, LANGUAGE_DICT, is_active_subtitle=(active_details_by_lang.get(subtitle.language) and active_details_by_lang.get(subtitle.language).active_subtitle and active_details_by_lang.get(subtitle.language).active_subtitle.id == subtitle.id), get_provider=get_provider) }}
                         {% endfor %}
                     </div>
                 </div>
                 {% endif %}
                 
-                {% if not active_details_by_lang and not all_subs_matching_hash and not all_subs_no_hash and not all_subs_other_hash and not opensubtitles_results_by_lang %}
+                {% if not active_details_by_lang and not all_subs_matching_hash and not all_subs_no_hash and not all_subs_other_hash and not provider_results_by_lang %}
                 <div class="p-4 text-center">
                     <p class="mb-3">No community subtitles available for this content yet.</p>
                     <a href="{{ url_for('subtitles.upload_subtitle', activity_id=activity.id) }}" class="btn btn-primary">
@@ -228,37 +226,47 @@
             </div>
         </div>
 
-        {# OpenSubtitles Section - Displayed once for all languages #}
+        {# Provider Results Section - Displayed once for all languages #}
         <div class="card shadow-sm mb-4">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">OpenSubtitles Results</h5>
+                <h5 class="mb-0">Provider Results</h5>
             </div>
             <div class="card-body p-0">
-                {% if current_user.is_authenticated and not current_user.opensubtitles_active %}
-                    <div class="p-3 text-center text-muted">
-                        <p class="mb-0">OpenSubtitles integration is not active.</p>
-                        <p class="mb-0"><a href="{{ url_for('main.account_settings') }}">Activate OpenSubtitles integration in your account settings</a> to see results here.</p>
-                    </div>
-                {% else %}
-                    <div class="list-group list-group-flush">
-                    {% for lang_code, os_results in opensubtitles_results_by_lang.items() %}
-                        {% if os_results %}
-                            <h6 class="list-group-item bg-light mb-0">{{ LANGUAGE_DICT.get(lang_code, lang_code) }}</h6>
-                                {% for os_item in os_results %}
-                                    {# Need to pass active_opensubtitle_details for the specific language #}
+                <div class="list-group list-group-flush">
+                {% for lang_code, provider_results in provider_results_by_lang.items() %}
+                    {% if provider_results %}
+                        <h6 class="list-group-item bg-light mb-0">{{ LANGUAGE_DICT.get(lang_code, lang_code) }}</h6>
+                            {% for provider_item in provider_results %}
+                                {% set attrs = provider_item.attributes %}
+                                {% set file = attrs.files[0] if attrs.files else none %}
+                                {% if file %}
+                                    {% set provider_result = namespace(
+                                        provider_name=provider_item.provider_name,
+                                        subtitle_id=file.file_id|string,
+                                        language=attrs.language_3letter,
+                                        release_name=file.file_name,
+                                        uploader=attrs.uploader.name if attrs.uploader else none,
+                                        download_count=attrs.download_count,
+                                        rating=attrs.ratings,
+                                        ai_translated=attrs.ai_translated or attrs.machine_translated,
+                                        hearing_impaired=attrs.hearing_impaired,
+                                        metadata={'hash_match': attrs.moviehash_match, 'url': attrs.url, 'original_file_id': file.file_id}
+                                    ) %}
                                     {% set active_details = active_details_by_lang.get(lang_code) %}
-                                    {% set active_opensubtitle_details = active_details.active_opensubtitle_details if active_details else none %}
-                                    {{ render_opensubtitle_item(activity, os_item, lang_code, active_opensubtitle_details, LANGUAGE_DICT, is_active_selection=false) }}
-                                {% endfor %}
+                                    {% set active_provider_details = active_details.active_provider_details if active_details else none %}
+                                    {% set is_active = active_provider_details and active_provider_details.details.file_id|string == file.file_id|string %}
+                                    {{ render_provider_subtitle_item(activity, provider_result, lang_code, active_provider_details, LANGUAGE_DICT, is_active_selection=is_active, get_provider=get_provider) }}
+                                {% endif %}
+                            {% endfor %}
 
-                        {% endif %}
-                    {% endfor %}
-                    </div>
-                    {% if not has_opensubtitles_results %}
-                        <div class="p-3 text-center text-muted">
-                            <p class="mb-0">No subtitles found on OpenSubtitles for your criteria and preferred languages.</p>
-                        </div>
                     {% endif %}
+                {% endfor %}
+                </div>
+                {% if not has_provider_results %}
+                    <div class="p-3 text-center text-muted">
+                        <p class="mb-0">No subtitles found from providers for your criteria and preferred languages.</p>
+                        <p class="mb-0"><a href="{{ url_for('main.account_settings') }}">Configure providers in your account settings</a> to see results here.</p>
+                    </div>
                 {% endif %}
             </div>
         </div>

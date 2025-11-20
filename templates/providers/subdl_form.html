@@ -1,0 +1,27 @@
+<!-- SubDL Provider Connection Form -->
+<div class="mb-3">
+    <label for="subdl_api_key" class="form-label">SubDL API Key</label>
+    <input type="text" class="form-control" id="subdl_api_key" name="api_key" required
+           placeholder="Your SubDL API key">
+    <div class="form-text">
+        Get your API key from <a href="https://subdl.com/panel/api" target="_blank">SubDL API page</a>
+    </div>
+</div>
+
+<div class="mb-3">
+    <div class="form-check">
+        <input class="form-check-input" type="checkbox" id="subdl_try_provide_ass" name="try_provide_ass" value="true">
+        <label class="form-check-label" for="subdl_try_provide_ass">
+            Try to provide ASS/SSA format
+        </label>
+        <div class="form-text">
+            SubDL returns ZIP files that may contain ASS format. This option will always add an ass entry in Stremio, even is there are no .ass subtitles in the .zip.
+        </div>
+    </div>
+</div>
+
+<div class="alert alert-info small">
+    <i class="fas fa-info-circle me-2"></i>
+    <strong>Note:</strong> SubDL offers free API access with rate limits. 
+    Check their website for current limits and pricing.
+</div>
