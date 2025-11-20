@@ -191,7 +191,7 @@ def addon_stream(manifest_token: str, content_type: str, content_id: str, params
                 active_sub = active_subtitle_info['subtitle']
                 if active_sub.source_metadata and active_sub.source_metadata.get('original_format') in ['ass', 'ssa']:
                     add_ass_format = True
-            elif active_subtitle_info['type'] and '_auto' in active_subtitle_info['type']:
+            else:
                 # Provider subtitle - check if provider can return ASS
                 provider_name = active_subtitle_info.get('provider_name')
                 if provider_name:
@@ -202,7 +202,7 @@ def addon_stream(manifest_token: str, content_type: str, content_id: str, params
                         provider_config = (user.provider_credentials or {}).get(provider_name, {})
                         try_provide_ass = provider_config.get('try_provide_ass', False)
                         # Add ASS if provider can return it OR user wants to try anyway
-                        if provider and (provider.can_return_ass or try_provide_ass):
+                        if provider and try_provide_ass:
                             add_ass_format = True
                     except:
                         pass
@@ -266,7 +266,7 @@ def unified_download(manifest_token: str, download_identifier: str):
     active_subtitle_info = get_active_subtitle_details(user, content_id, video_hash, content_type, video_filename, lang)
 
     local_subtitle_to_serve = None
-    opensubtitle_to_serve_details = None
+    provider_subtitle_to_serve = None
     message_key = None
     vtt_content = None
 
@@ -275,18 +275,21 @@ def unified_download(manifest_token: str, download_identifier: str):
         if local_subtitle_to_serve:
             current_app.logger.info(
                 f"Serving active local subtitle ID {local_subtitle_to_serve.id}")
-    elif active_subtitle_info['type'] in ['opensubtitles_selection', 'opensubtitles_auto']:
-        opensubtitle_to_serve_details = active_subtitle_info['details']
-        # Handle community_link compatibility
-        if 'file_id' not in opensubtitle_to_serve_details and 'original_file_id' in opensubtitle_to_serve_details:
-            opensubtitle_to_serve_details['file_id'] = opensubtitle_to_serve_details['original_file_id']
-
-        if opensubtitle_to_serve_details and 'file_id' in opensubtitle_to_serve_details:
+    elif active_subtitle_info['type'] and ('_selection' in active_subtitle_info['type'] or '_auto' in active_subtitle_info['type']):
+        provider_name = active_subtitle_info.get('provider_name')
+        subtitle_id = active_subtitle_info.get('provider_subtitle_id')
+        
+        if provider_name and subtitle_id:
+            provider_subtitle_to_serve = {
+                'provider': provider_name,
+                'subtitle_id': subtitle_id,
+                'metadata': active_subtitle_info.get('provider_metadata', {})
+            }
             current_app.logger.info(
-                f"Serving OpenSubtitle file_id {opensubtitle_to_serve_details['file_id']} (type: {active_subtitle_info['type']})")
+                f"Serving {provider_name} subtitle {subtitle_id} (type: {active_subtitle_info['type']})")
         else:
-            current_app.logger.error(f"OpenSubtitles details missing file_id: {opensubtitle_to_serve_details}")
-            opensubtitle_to_serve_details = None
+            current_app.logger.error(f"Provider subtitle missing provider_name or subtitle_id: {active_subtitle_info}")
+            provider_subtitle_to_serve = None
 
     # Serve local subtitle
     if local_subtitle_to_serve:
@@ -332,7 +335,7 @@ def unified_download(manifest_token: str, download_identifier: str):
                 provider = ProviderRegistry.get(provider_name)
                 
                 if provider and provider.is_authenticated(user):
-                    opensubtitle_to_serve_details = {
+                    provider_subtitle_to_serve = {
                         'provider': provider_name,
                         'subtitle_id': provider_subtitle_id,
                         'metadata': local_subtitle_to_serve.source_metadata
@@ -365,9 +368,9 @@ def unified_download(manifest_token: str, download_identifier: str):
 
     # Serve provider subtitle
     provider_subtitle_url = None
-    if opensubtitle_to_serve_details and not vtt_content:
-        provider_name = opensubtitle_to_serve_details.get('provider', 'opensubtitles')
-        subtitle_id = opensubtitle_to_serve_details.get('subtitle_id') or opensubtitle_to_serve_details.get('file_id')
+    if provider_subtitle_to_serve and not vtt_content:
+        provider_name = provider_subtitle_to_serve.get('provider')
+        subtitle_id = provider_subtitle_to_serve.get('subtitle_id')
         
         if subtitle_id:
             try:
@@ -1254,7 +1257,7 @@ def mark_compatible_hash(subtitle_id):
 
     # Update UserSubtitleSelection
     user_sel = UserSubtitleSelection.query.filter_by(user_id=current_user.id, content_id=activity.content_id,
-                                                     video_hash=target_video_hash).first()
+                                                     video_hash=target_video_hash, language=original_subtitle.language).first()
     if user_sel:
         user_sel.selected_subtitle_id = newly_created_sub.id
         user_sel.selected_external_file_id = None
@@ -1262,7 +1265,8 @@ def mark_compatible_hash(subtitle_id):
         user_sel.timestamp = datetime.datetime.utcnow()
     else:
         user_sel = UserSubtitleSelection(user_id=current_user.id, content_id=activity.content_id,
-                                         video_hash=target_video_hash, selected_subtitle_id=newly_created_sub.id)
+                                         video_hash=target_video_hash, selected_subtitle_id=newly_created_sub.id,
+                                         language=original_subtitle.language)
         db.session.add(user_sel)
 
     try:

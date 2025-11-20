@@ -38,6 +38,7 @@ class BaseSubtitleProvider(ABC):
     supports_search: bool = True  # Can search by IMDb ID, query, etc.
     supports_hash_matching: bool = True  # Can match by video file hash
     can_return_ass: bool = False  # Can return ASS/SSA format (e.g., from ZIP)
+    has_additional_settings: bool = False  # Does provider have additional user settings?
     
     def __init__(self):
         """Initialize the provider. Validate that required metadata is set."""

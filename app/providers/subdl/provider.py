@@ -16,6 +16,7 @@ class SubDLProvider(BaseSubtitleProvider):
     supports_search = True
     supports_hash_matching = False  # SubDL doesn't support hash matching
     can_return_ass = True  # SubDL returns ZIP files that may contain ASS
+    has_additional_settings = True  # Has try_provide_ass setting
     
     def authenticate(self, user, credentials: Dict[str, str]) -> Dict[str, Any]:
         """Authenticate with SubDL (validate API key)"""
@@ -78,6 +79,9 @@ class SubDLProvider(BaseSubtitleProvider):
         elif content_type == 'series' or season is not None or episode is not None:
             subdl_type = 'tv'
         
+        # Extract filename from kwargs
+        file_name = kwargs.get('video_filename')
+        
         try:
             results = client.search_subtitles(
                 api_key=api_key,
@@ -85,7 +89,8 @@ class SubDLProvider(BaseSubtitleProvider):
                 languages=subdl_languages,
                 season=season,
                 episode=episode,
-                type=subdl_type
+                type=subdl_type,
+                file_name=file_name
             )
             return self._parse_results(results, season=season, episode=episode)
         except client.SubDLError as e:
@@ -177,10 +182,6 @@ class SubDLProvider(BaseSubtitleProvider):
             
             if not subtitle_url:
                 continue
-            
-            # Convert relative URL to absolute
-            if subtitle_url.startswith('/'):
-                subtitle_url = f"https://dl.subdl.com{subtitle_url}"
             
             lang_code = self._convert_from_provider_language(item.get('language', ''))
             

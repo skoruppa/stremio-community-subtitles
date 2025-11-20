@@ -76,8 +76,8 @@
                 </form>
             {% endif %}
 
-            {# Mark Compatible Button - only for community uploads with a file_path #}
-            {% if not is_active_subtitle and current_video_hash and subtitle.video_hash and subtitle.video_hash != current_video_hash and subtitle.source_type == 'community' and subtitle.file_path %}
+            {# Mark Compatible Button - for community uploads and provider-linked subtitles with a file_path #}
+            {% if current_video_hash and subtitle.video_hash and subtitle.video_hash != current_video_hash and (subtitle.source_type == 'community' or subtitle.source_type.endswith('_community_link')) and subtitle.file_path %}
                 <form action="{{ url_for('subtitles.mark_compatible_hash', subtitle_id=subtitle.id ) }}" method="POST" class="d-inline ms-1">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <input type="hidden" name="target_video_hash" value="{{ current_video_hash }}">

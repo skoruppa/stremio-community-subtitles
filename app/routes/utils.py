@@ -1,5 +1,5 @@
-import difflib
 from flask import jsonify, Response, current_app
+from rapidfuzz import fuzz
 from sqlalchemy.orm import joinedload
 from ..models import Subtitle, SubtitleVote, UserSubtitleSelection
 import os
@@ -72,41 +72,130 @@ def normalize_release_name(name):
     """Normalizes a release name for comparison."""
     if not name:
         return ""
-    # Lowercase
     name = name.lower()
-    # Remove file extension if present (e.g., .mp4, .mkv, .srt)
     name = re.sub(r'\.[a-zA-Z0-9]+$', '', name)
-    # Replace common delimiters with space
     name = re.sub(r'[\.\_\-\s]+', ' ', name)
-
-    # Remove content within brackets (often uploader tags or irrelevant info)
-    # name = re.sub(r'\[.*?\]', '', name)
-    # name = re.sub(r'\(.*?\)', '', name)
-
-    # Remove common tags that might differ but don't define the core release
     common_tags = ['web-dl', 'webrip', 'bluray', 'hdrip', 'hdtv', 'x264', 'h264', 'x265', 'hevc',
                    'aac', 'ac3', 'dts', '1080p', '720p', '2160p', '4k', 'hdr', 'dv']
     for tag in common_tags:
         name = name.replace(tag, '')
-    # Strip extra spaces
     return name.strip()
+
+
+def extract_release_components(name):
+    """Extract key components from release name for weighted comparison."""
+    if not name:
+        return {'title': '', 'season_episode': '', 'group': '', 'quality': ''}
+    
+    name_lower = name.lower()
+    # Remove file extension first (e.g., .mkv, .mp4, .avi)
+    name_lower = re.sub(r'\.[a-zA-Z0-9]+$', '', name_lower)
+    name_normalized = re.sub(r'[\.\_\-]+', ' ', name_lower)
+    
+    # Extract season/episode (S03E07, S03_07, 3x07, etc.)
+    season_episode = ''
+    se_patterns = [
+        r's(\d+)\s*e(\d+)',  # S03E07
+        r's(\d+)\s*(\d+)',   # S03_07
+        r'(\d+)x(\d+)',      # 3x07
+    ]
+    for pattern in se_patterns:
+        match = re.search(pattern, name_normalized)
+        if match:
+            season_episode = f"s{int(match.group(1)):02d}e{int(match.group(2)):02d}"
+            break
+    
+    # Extract quality: source type + resolution
+    source_types = ['web-dl', 'webdl', 'webrip', 'bluray', 'blu-ray', 'brrip', 'hdrip', 'hdtv', 'dvdrip']
+    resolution_tags = ['2160p', '1080p', '720p', '480p', '4k', 'uhd', 'hd']
+    
+    quality_parts = []
+    for source in source_types:
+        if source in name_normalized:
+            quality_parts.append(source.replace('-', ''))
+            break
+    for res in resolution_tags:
+        if res in name_normalized:
+            quality_parts.append(res)
+            break
+    
+    quality = ' '.join(quality_parts)
+    
+    # Extract release group (priority: dash before bracket > bracket at start/end)
+    group = ''
+    # Priority 1: Group after dash, before bracket at end (e.g., -BiOMA[EZTVx.to])
+    dash_before_bracket = re.search(r'-([a-z0-9]+)\[', name_lower)
+    if dash_before_bracket:
+        group = dash_before_bracket.group(1)
+    else:
+        # Priority 2: Brackets at start or end (allow dots for trackers like EZTVx.to)
+        bracket_match = re.search(r'^\[([a-z0-9.]+)\]|\[([a-z0-9.]+)\]$', name_lower)
+        if bracket_match:
+            group = bracket_match.group(1) or bracket_match.group(2)
+        else:
+            # Priority 3: After dash at end
+            dash_match = re.search(r'[-\s]([a-z0-9]+)$', name_normalized)
+            if dash_match:
+                group = dash_match.group(1)
+    
+    # Title is what remains after removing S/E, quality, and common tags
+    title = name_normalized
+    if season_episode:
+        title = re.sub(r's\d+\s*e?\d+', '', title)
+    for tag in source_types + resolution_tags + ['x264', 'h264', 'x265', 'hevc']:
+        title = title.replace(tag, '')
+    title = re.sub(r'\s+', ' ', title).strip()
+    
+    return {
+        'title': title,
+        'season_episode': season_episode,
+        'group': group,
+        'quality': quality
+    }
 
 
 def calculate_filename_similarity(video_filename, subtitle_release_name):
     """
-    Calculates the similarity ratio between a video filename and a subtitle release name.
+    Calculates weighted similarity between video filename and subtitle release name.
+    For series: S/E (40%) > group (40%) > quality (15%) > title (5%)
+    For movies: group (50%) > quality (20%) > title (30%)
     Returns a float between 0.0 and 1.0.
     """
     if not video_filename or not subtitle_release_name:
         return 0.0
 
-    norm_video_filename = normalize_release_name(video_filename)
-    norm_subtitle_release_name = normalize_release_name(subtitle_release_name)
-
-    if not norm_video_filename or not norm_subtitle_release_name:
+    video_parts = extract_release_components(video_filename)
+    subtitle_parts = extract_release_components(subtitle_release_name)
+    
+    if not video_parts['title'] or not subtitle_parts['title']:
         return 0.0
-
-    return difflib.SequenceMatcher(None, norm_video_filename, norm_subtitle_release_name).ratio()
+    
+    # Season/Episode exact match - critical for series
+    se_sim = 1.0 if (video_parts['season_episode'] and 
+                    video_parts['season_episode'] == subtitle_parts['season_episode']) else 0.0
+    
+    # Release group similarity - important for sync
+    group_sim = 0.0
+    if video_parts['group'] and subtitle_parts['group']:
+        group_sim = fuzz.ratio(video_parts['group'], subtitle_parts['group']) / 100.0
+    
+    # Quality similarity - same source type often compatible
+    quality_sim = 0.0
+    if video_parts['quality'] and subtitle_parts['quality']:
+        quality_sim = fuzz.token_set_ratio(video_parts['quality'], subtitle_parts['quality']) / 100.0
+    
+    # Title similarity - less important since filtered by content_id
+    title_sim = fuzz.token_sort_ratio(video_parts['title'], subtitle_parts['title']) / 100.0
+    
+    # Dynamic weights based on content type
+    if video_parts['season_episode']:
+        # Series: prioritize S/E match
+        score = (se_sim * 0.4) + (group_sim * 0.4) + (quality_sim * 0.15) + (title_sim * 0.05)
+    else:
+        # Movies: no S/E, redistribute weight to group and quality
+        score = (group_sim * 0.5) + (quality_sim * 0.2) + (title_sim * 0.3)
+    
+    return score
 
 
 
@@ -296,7 +385,8 @@ def _find_best_match_by_filename(user, content_id, video_filename, content_type,
                     languages=[lang],
                     season=season,
                     episode=episode,
-                    content_type=content_type
+                    content_type=content_type,
+                    video_filename=video_filename
                 )
                 for result in results:
                     score = calculate_filename_similarity(video_filename, result.release_name)
@@ -354,7 +444,7 @@ def _find_best_match_by_filename(user, content_id, video_filename, content_type,
 
 
 def _find_fallback_subtitle(user, content_id, content_type, lang, season=None, episode=None):
-    # Local first
+    # Local first (already filtered by content_id which includes season/episode)
     local_sub = Subtitle.query.filter_by(
         content_id=content_id,
         language=lang
@@ -367,10 +457,11 @@ def _find_fallback_subtitle(user, content_id, content_type, lang, season=None, e
             'user_vote_value': _get_user_vote(user, local_sub.id)
         }
     
-    # Providers
+    # Providers - filter by episode number in release_name
     try:
         from ..providers.registry import ProviderRegistry
         active_providers = ProviderRegistry.get_active_for_user(user)
+        
         for provider in active_providers:
             try:
                 results = provider.search(
@@ -381,8 +472,45 @@ def _find_fallback_subtitle(user, content_id, content_type, lang, season=None, e
                     episode=episode,
                     content_type=content_type
                 )
-                non_ai = [r for r in results if not r.ai_translated]
-                chosen = non_ai[0] if non_ai else (results[0] if results else None)
+                
+                # Filter by episode if available (series/anime)
+                if episode and results:
+                    matching = []
+                    matching_ep_only = []  # Fallback for anime with season but no S/E in name
+                    
+                    for r in results:
+                        parts = extract_release_components(r.release_name)
+                        
+                        # Priority 1: Match by S/E format (e.g., s01e05)
+                        if season and parts['season_episode'] == f"s{season:02d}e{episode:02d}":
+                            matching.append(r)
+                        # Priority 2: Match by episode only (for anime)
+                        else:
+                            ep_patterns = [
+                                f' {episode:03d}',  # " 101"
+                                f'-{episode:03d}',  # "-101"
+                                f' {episode:02d} ', # " 01 "
+                                f'-{episode:02d}-', # "-01-"
+                            ]
+                            if any(pattern in r.release_name.lower() for pattern in ep_patterns):
+                                matching_ep_only.append(r)
+                    
+                    # Use S/E match if found, otherwise episode-only match
+                    candidates = matching if matching else matching_ep_only
+                    
+                    if candidates:
+                        # Prefer non-AI translated
+                        non_ai = [r for r in candidates if not r.ai_translated]
+                        chosen = non_ai[0] if non_ai else candidates[0]
+                    else:
+                        # No episode match - use first result
+                        non_ai = [r for r in results if not r.ai_translated]
+                        chosen = non_ai[0] if non_ai else (results[0] if results else None)
+                else:
+                    # No episode filtering needed (movies)
+                    non_ai = [r for r in results if not r.ai_translated]
+                    chosen = non_ai[0] if non_ai else (results[0] if results else None)
+                
                 if chosen:
                     return {
                         'type': f'{provider.name}_auto',
@@ -471,7 +599,6 @@ def extract_subtitle_from_zip(zip_content: bytes, episode: int = None):
             if episode is not None:
                 episode_patterns = [
                     f'e{episode:02d}',  # e01, e02, etc.
-                    f'e{episode}',      # e1, e2, etc.
                     f' {episode:02d} ', # " 01 ", " 02 ", etc.
                     f'-{episode:02d}-', # -01-, -02-, etc.
                     f'.{episode:02d}.'  # .01., .02., etc.

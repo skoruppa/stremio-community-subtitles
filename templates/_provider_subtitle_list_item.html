@@ -15,7 +15,7 @@
     <div class="row align-items-center">
         <div class="col-md-8">
             <h6 class="mb-1">
-                {{ provider_result.release_name | truncate(80) if provider_result.release_name else 'N/A' }}
+                {{ provider_result.release_name | truncate(100) if provider_result.release_name else 'N/A' }}
                 <span class="badge bg-secondary">{{ lang_dict.get(provider_result.language, provider_result.language | upper) }}</span>
                 {% set provider = get_provider(provider_result.provider_name) %}
                 <span class="badge bg-{{ provider.badge_color if provider else 'primary' }}">{{ provider_result.provider_name | capitalize }}</span>

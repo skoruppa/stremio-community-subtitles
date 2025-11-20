@@ -21,10 +21,11 @@ def connect_provider(provider_name):
         credentials = request.form.to_dict()
         credentials.pop('csrf_token', None)
         
-        # Extract try_provide_ass preference
-        try_provide_ass = credentials.pop('try_provide_ass', None) == 'true'
+        # Extract try_provide_ass preference (checkbox sends 'true' if checked, nothing if unchecked)
+        try_provide_ass = credentials.pop('try_provide_ass', 'false') == 'true'
         
         # Check if already authenticated and only updating settings
+        # (no credentials means only settings like try_provide_ass)
         if provider.is_authenticated(current_user) and not credentials:
             # Only update try_provide_ass setting
             if not current_user.provider_credentials:
@@ -32,6 +33,9 @@ def connect_provider(provider_name):
             if provider_name not in current_user.provider_credentials:
                 current_user.provider_credentials[provider_name] = {}
             current_user.provider_credentials[provider_name]['try_provide_ass'] = try_provide_ass
+            # Mark as modified for SQLAlchemy to detect changes in JSON field
+            from sqlalchemy.orm.attributes import flag_modified
+            flag_modified(current_user, 'provider_credentials')
             db.session.commit()
             flash(f'{provider.display_name} settings updated!', 'success')
         else:
@@ -126,19 +130,12 @@ def select_provider_subtitle(activity_id):
             )
             db.session.add(selection)
         
-        # Store provider subtitle (backward compat with OpenSubtitles)
-        if provider_name == 'opensubtitles':
-            selection.selected_external_file_id = int(subtitle_id) if subtitle_id.isdigit() else None
-            selection.external_details_json = {
-                'file_id': subtitle_id,
-                **metadata
-            }
-        else:
-            selection.external_details_json = {
-                'provider': provider_name,
-                'subtitle_id': subtitle_id,
-                **metadata
-            }
+        # Store provider subtitle
+        selection.external_details_json = {
+            'provider': provider_name,
+            'file_id': subtitle_id,
+            **metadata
+        }
         
         db.session.commit()
         flash('Subtitle selected successfully!', 'success')

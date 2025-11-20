@@ -10,7 +10,7 @@ class SubDLError(Exception):
         self.status_code = status_code
 
 
-def search_subtitles(api_key, imdb_id=None, languages=None, season=None, episode=None, type=None):
+def search_subtitles(api_key, imdb_id=None, languages=None, season=None, episode=None, type=None, file_name=None):
     """
     Search subtitles on SubDL
     
@@ -21,7 +21,8 @@ def search_subtitles(api_key, imdb_id=None, languages=None, season=None, episode
     
     base_url = "https://api.subdl.com/api/v1/subtitles"
     
-    params = {'api_key': api_key}
+    params = {'api_key': api_key,
+              'subs_per_page': 30}
     if imdb_id:
         # SubDL uses imdb_id with 'tt' prefix
         params['imdb_id'] = imdb_id
@@ -34,6 +35,8 @@ def search_subtitles(api_key, imdb_id=None, languages=None, season=None, episode
         params['episode_number'] = episode
     if type:
         params['type'] = type  # 'movie' or 'tv'
+    if file_name:
+        params['file_name'] = file_name
     
     headers = {
         'User-Agent': 'StremioCommunitySubtitlesAddon/1.0.0'
@@ -66,4 +69,4 @@ def get_download_url(api_key, subtitle_id):
     """
     # SubDL returns download URLs directly in search results
     # This is just a placeholder - actual URL comes from search
-    return f"https://dl.subdl.com/subtitle/{subtitle_id}"
+    return f"https://dl.subdl.com{subtitle_id}"
