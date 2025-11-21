@@ -278,6 +278,7 @@ def unified_download(manifest_token: str, download_identifier: str):
     local_subtitle_to_serve = None
     provider_subtitle_to_serve = None
     message_key = None
+    failed_provider_name = None
     vtt_content = None
 
     if active_subtitle_info['type'] == 'local':
@@ -357,6 +358,7 @@ def unified_download(manifest_token: str, download_identifier: str):
                     current_app.logger.warning(
                         f"User has a linked {provider_name} subtitle but provider is not active")
                     message_key = 'provider_integration_inactive'
+                    failed_provider_name = provider_name
                     local_subtitle_to_serve = None
             except Exception as e:
                 current_app.logger.error(f"Error accessing provider {provider_name}: {e}")
@@ -392,6 +394,7 @@ def unified_download(manifest_token: str, download_identifier: str):
                     current_app.logger.warning(
                         f"Attempting to serve {provider_name} subtitle {subtitle_id}, but provider is not active")
                     message_key = 'provider_integration_inactive'
+                    failed_provider_name = provider_name
                 else:
                     current_app.logger.info(f"Attempting to serve {provider_name} subtitle: {subtitle_id}")
                     try:
@@ -419,10 +422,12 @@ def unified_download(manifest_token: str, download_identifier: str):
                     except ProviderDownloadError as e:
                         current_app.logger.error(f"{provider_name} API error: {e}")
                         message_key = 'provider_error'
+                        failed_provider_name = provider_name
                     except Exception as e:
                         current_app.logger.error(f"Unexpected error serving {provider_name} subtitle {subtitle_id}: {e}",
                                                  exc_info=True)
                         message_key = 'provider_error'
+                        failed_provider_name = provider_name
             except Exception as e:
                 current_app.logger.error(f"Error accessing provider registry: {e}", exc_info=True)
                 message_key = 'error'
@@ -480,11 +485,11 @@ def unified_download(manifest_token: str, download_identifier: str):
     messages = {
         'no_subs_found': "SCS: No Subtitles Found: Upload your own through the web interface.",
         'error': "SCS: An error occurred, please try again in a short period",
-        'provider_integration_inactive': "SCS: Provider integration is inactive. Please activate it in account settings.",
-        'provider_error': "SCS: Error fetching from provider. Please try again later or check your account."
+        'provider_integration_inactive': f"SCS: {failed_provider_name or 'Provider'} is not connected. Please reconnect in account settings.",
+        'provider_error': f"SCS: Error fetching from {failed_provider_name or 'provider'}. Please reconnect in account settings or try again later."
     }
     message_text = messages.get(message_key, "An error occurred or subtitles need selection.")
-    current_app.logger.info(f"Serving placeholder message (key: '{message_key}') for context: {context}")
+    current_app.logger.info(f"Serving placeholder message (key: '{message_key}', provider: '{failed_provider_name}') for context: {context}")
     return NoCacheResponse(generate_vtt_message(message_text), mimetype='text/vtt')
 
 

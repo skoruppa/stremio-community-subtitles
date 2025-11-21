@@ -30,21 +30,21 @@
                     <button type="button" class="btn btn-sm btn-outline-primary me-1"
                             data-bs-toggle="modal"
                             data-bs-target="#settingsModal{{ provider.name }}">
-                        <i class="fas fa-cog"></i> Settings
+                        <i class="fas fa-cog"></i><span class="d-none d-sm-inline"> Settings</span>
                     </button>
                     {% endif %}
                     <form action="{{ url_for('providers.disconnect_provider', provider_name=provider.name) }}" method="POST" class="d-inline">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <button type="submit" class="btn btn-sm btn-outline-danger"
                                 onclick="return confirm('Disconnect from {{ provider.display_name }}?');">
-                            <i class="fas fa-unlink"></i> Disconnect
+                            <i class="fas fa-unlink"></i><span class="d-none d-sm-inline"> Disconnect</span>
                         </button>
                     </form>
                 {% else %}
                     <button type="button" class="btn btn-sm btn-primary"
                             data-bs-toggle="modal"
                             data-bs-target="#connectModal{{ provider.name }}">
-                        <i class="fas fa-link"></i> Connect
+                        <i class="fas fa-link"></i><span class="d-none d-sm-inline"> Connect</span>
                     </button>
                 {% endif %}
             </div>
