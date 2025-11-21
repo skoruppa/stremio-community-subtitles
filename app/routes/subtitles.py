@@ -246,15 +246,25 @@ def unified_download(manifest_token: str, download_identifier: str):
         video_hash = context.get('v_hash')
         video_filename = context.get('v_fname')
         content_type = context.get('content_type', '')
-        
-        # Extract episode from content_id for series
+
         episode = None
+        season = None
+
         if content_type == 'series' and ':' in content_id:
             parts = content_id.split(':')
+
             try:
-                episode = int(parts[-1])  # Last part is episode
+                episode = int(parts[-1])
             except (ValueError, IndexError):
-                pass
+                episode = None
+
+            if len(parts) >= 2:
+                try:
+                    season = int(parts[-2])
+                except ValueError:
+                    season = None
+            else:
+                season = None
         
         if not content_id:
             raise ValueError("Missing content_id in decoded context")
@@ -263,7 +273,7 @@ def unified_download(manifest_token: str, download_identifier: str):
         return NoCacheResponse(generate_vtt_message("Invalid download link."), status=400, mimetype='text/vtt')
 
     # Use the utility function to get active subtitle details (now with OpenSubtitles fallback)
-    active_subtitle_info = get_active_subtitle_details(user, content_id, video_hash, content_type, video_filename, lang)
+    active_subtitle_info = get_active_subtitle_details(user, content_id, video_hash, content_type, video_filename, lang, season, episode)
 
     local_subtitle_to_serve = None
     provider_subtitle_to_serve = None
