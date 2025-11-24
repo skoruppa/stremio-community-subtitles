@@ -204,6 +204,19 @@ def calculate_filename_similarity(video_filename, subtitle_release_name):
 
 def get_active_subtitle_details(user, content_id, video_hash=None, content_type=None, video_filename=None, lang=None, season=None, episode=None):
     """Provider-agnostic subtitle selection logic"""
+    # Extract season and episode from content_id if not provided
+    if season is None and episode is None and content_type == 'series' and ':' in content_id:
+        parts = content_id.split(':')
+        try:
+            episode = int(parts[-1])
+        except (ValueError, IndexError):
+            episode = None
+        if len(parts) >= 2:
+            try:
+                season = int(parts[-2])
+            except ValueError:
+                season = None
+    
     result = {
         'type': 'none',
         'subtitle': None,

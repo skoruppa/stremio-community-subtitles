@@ -73,6 +73,8 @@ def convert_to_vtt(file_data, file_extension, encoding=None, fps=None):
                 subs = load(temp_file_path, encoding=encoding, fps=fps)
             except FormatAutodetectionError:
                 subs = load(temp_file_path, encoding=encoding, fps=fps, format_=file_extension)
+            except UnicodeDecodeError:
+                subs = load(temp_file_path, encoding='utf-8', fps=fps)
             return subs.to_string('vtt')
     except Exception as e:
         logger.error(f"Error converting subtitle file: {e}")

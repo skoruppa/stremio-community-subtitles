@@ -154,21 +154,6 @@ def addon_stream(manifest_token: str, content_type: str, content_id: str, params
         db.session.rollback()
         current_app.logger.error(f"Failed to log or update user activity for user {user.id}: {e}", exc_info=True)
 
-    # Extract season and episode for series
-    season = None
-    episode = None
-    if content_type == 'series' and ':' in content_id:
-        parts = content_id.split(':')
-        try:
-            episode = int(parts[-1])
-        except (ValueError, IndexError):
-            episode = None
-        if len(parts) >= 2:
-            try:
-                season = int(parts[-2])
-            except ValueError:
-                season = None
-    
     subtitles_list = []
     for preferred_lang in preferred_langs:
         add_ass_format = False
@@ -200,7 +185,7 @@ def addon_stream(manifest_token: str, content_type: str, content_id: str, params
                 'lang': preferred_lang
             })
             
-            active_subtitle_info = get_active_subtitle_details(user, content_id, video_hash, content_type, video_filename, preferred_lang, season, episode)
+            active_subtitle_info = get_active_subtitle_details(user, content_id, video_hash, content_type, video_filename, preferred_lang)
             add_ass_format = False
             
             if active_subtitle_info['type'] == 'local' and active_subtitle_info['subtitle']:
