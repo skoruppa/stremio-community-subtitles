@@ -4,6 +4,7 @@ import json
 import base64
 import tempfile
 import uuid
+import gc
 
 import requests  # For fetching from Cloudinary URL
 from flask import Blueprint, url_for, Response, request, current_app, flash, redirect, render_template, jsonify
@@ -153,8 +154,24 @@ def addon_stream(manifest_token: str, content_type: str, content_id: str, params
         db.session.rollback()
         current_app.logger.error(f"Failed to log or update user activity for user {user.id}: {e}", exc_info=True)
 
+    # Extract season and episode for series
+    season = None
+    episode = None
+    if content_type == 'series' and ':' in content_id:
+        parts = content_id.split(':')
+        try:
+            episode = int(parts[-1])
+        except (ValueError, IndexError):
+            episode = None
+        if len(parts) >= 2:
+            try:
+                season = int(parts[-2])
+            except ValueError:
+                season = None
+    
     subtitles_list = []
     for preferred_lang in preferred_langs:
+        add_ass_format = False
         download_context = {
             'content_type': content_type,
             'content_id': content_id,
@@ -183,27 +200,24 @@ def addon_stream(manifest_token: str, content_type: str, content_id: str, params
                 'lang': preferred_lang
             })
             
-            active_subtitle_info = get_active_subtitle_details(user, content_id, video_hash, content_type, video_filename, preferred_lang)
-            
-            # Add ASS format if available (local or provider)
+            active_subtitle_info = get_active_subtitle_details(user, content_id, video_hash, content_type, video_filename, preferred_lang, season, episode)
             add_ass_format = False
+            
             if active_subtitle_info['type'] == 'local' and active_subtitle_info['subtitle']:
                 active_sub = active_subtitle_info['subtitle']
                 if active_sub.source_metadata and active_sub.source_metadata.get('original_format') in ['ass', 'ssa']:
                     add_ass_format = True
             else:
-                # Provider subtitle - check if provider can return ASS
+                # Provider subtitle - check if the active provider supports ASS
                 provider_name = active_subtitle_info.get('provider_name')
                 if provider_name:
                     try:
                         from ..providers.registry import ProviderRegistry
                         provider = ProviderRegistry.get(provider_name)
-                        # Check provider credentials for try_provide_ass setting
-                        provider_config = (user.provider_credentials or {}).get(provider_name, {})
-                        try_provide_ass = provider_config.get('try_provide_ass', False)
-                        # Add ASS if provider can return it OR user wants to try anyway
-                        if provider and try_provide_ass:
-                            add_ass_format = True
+                        if provider and provider.can_return_ass:
+                            provider_config = (user.provider_credentials or {}).get(provider_name, {})
+                            if provider_config.get('try_provide_ass', False):
+                                add_ass_format = True
                     except:
                         pass
             
@@ -408,15 +422,24 @@ def unified_download(manifest_token: str, download_identifier: str):
                                 from .utils import extract_subtitle_from_zip, process_subtitle_content
                                 
                                 subtitle_content, filename, extension = extract_subtitle_from_zip(zip_content, episode=episode)
+                                del zip_content  # Free memory immediately
+                                
                                 processed = process_subtitle_content(subtitle_content, extension)
+                                del subtitle_content  # Free memory
                                 
                                 if is_ass_request and processed['original']:
-                                    return NoCacheResponse(processed['original'], mimetype='text/x-ssa')
+                                    result = NoCacheResponse(processed['original'], mimetype='text/x-ssa')
+                                    del processed
+                                    gc.collect()
+                                    return result
                                 
                                 vtt_content = processed['vtt']
+                                del processed
+                                gc.collect()
                             except Exception as e:
                                 current_app.logger.error(f"Error processing {provider_name} ZIP: {e}", exc_info=True)
                                 message_key = 'error'
+                                gc.collect()
                         else:
                             current_app.logger.info(f"Got download URL from {provider_name}")
                     except ProviderDownloadError as e:
@@ -445,23 +468,32 @@ def unified_download(manifest_token: str, download_identifier: str):
                 
                 try:
                     # Extract subtitle from ZIP
-                    subtitle_content, filename, extension = extract_subtitle_from_zip(r.content, episode=episode)
+                    zip_data = r.content
+                    subtitle_content, filename, extension = extract_subtitle_from_zip(zip_data, episode=episode)
+                    del zip_data  # Free memory
                     
                     # Process subtitle (convert to VTT, handle ASS)
                     processed = process_subtitle_content(subtitle_content, extension)
+                    del subtitle_content  # Free memory
                     
                     # If ASS requested and available, serve original
                     if is_ass_request and processed['original']:
                         current_app.logger.info(f"Serving ASS format from provider ZIP")
-                        return NoCacheResponse(processed['original'], mimetype='text/x-ssa')
+                        result = NoCacheResponse(processed['original'], mimetype='text/x-ssa')
+                        del processed
+                        gc.collect()
+                        return result
                     elif is_ass_request:
                         # ASS requested but not available - serve VTT instead
                         current_app.logger.info(f"ASS requested but not in ZIP, serving VTT")
                     
                     vtt_content = processed['vtt']
+                    del processed
+                    gc.collect()
                 except Exception as e:
                     current_app.logger.error(f"Error processing ZIP subtitle: {e}", exc_info=True)
                     message_key = 'error'
+                    gc.collect()
             else:
                 # Plain text subtitle (VTT/SRT)
                 if is_ass_request:
@@ -973,22 +1005,37 @@ def voted_subtitles():
         SubtitleVote.timestamp.desc()
     ).paginate(page=page, per_page=per_page, error_out=False)
     
-    # Fetch metadata for each vote
-    metadata_map = {}
+    # Batch collect unique content_ids first
+    content_ids_to_fetch = {}
     for vote in pagination.items:
         if vote.subtitle:
             content_type = 'series' if ':' in vote.subtitle.content_id else 'movie'
-            meta = get_metadata(vote.subtitle.content_id, content_type)
-            if meta:
-                metadata_map[vote.id] = meta
-                title = meta.get('title', vote.subtitle.content_id)
-                if meta.get('season') is not None and meta.get('episode') is not None:
-                    title = f"{title} S{meta['season']:02d}E{meta['episode']:02d}"
-                elif meta.get('season') is not None:
-                    title = f"{title} S{meta['season']:02d}"
-                if meta.get('year'):
-                    title = f"{title} ({meta['year']})"
-                meta['display_title'] = title
+            content_ids_to_fetch[vote.subtitle.content_id] = content_type
+    
+    # Fetch metadata in batch (cache will help)
+    metadata_cache = {}
+    for content_id, content_type in content_ids_to_fetch.items():
+        meta = get_metadata(content_id, content_type)
+        if meta:
+            metadata_cache[content_id] = meta
+    
+    # Build metadata_map using cached results
+    metadata_map = {}
+    for vote in pagination.items:
+        if vote.subtitle and vote.subtitle.content_id in metadata_cache:
+            meta = metadata_cache[vote.subtitle.content_id].copy()
+            title = meta.get('title', vote.subtitle.content_id)
+            if meta.get('season') is not None and meta.get('episode') is not None:
+                title = f"{title} S{meta['season']:02d}E{meta['episode']:02d}"
+            elif meta.get('season') is not None:
+                title = f"{title} S{meta['season']:02d}"
+            if meta.get('year'):
+                title = f"{title} ({meta['year']})"
+            meta['display_title'] = title
+            metadata_map[vote.id] = meta
+    
+    del metadata_cache
+    gc.collect()
     
     return render_template('main/voted_subtitles.html', 
                          votes=pagination.items,
@@ -1010,15 +1057,36 @@ def selected_subtitles():
         UserSubtitleSelection.timestamp.desc()
     ).paginate(page=page, per_page=per_page, error_out=False)
     
-    # Fetch metadata and user votes for each selection
-    metadata_map = {}
-    user_votes = {}
+    # Batch collect unique content_ids and subtitle_ids
+    content_ids_to_fetch = {}
+    subtitle_ids_to_check = []
     for selection in pagination.items:
-        # Determine content_type from content_id
         content_type = 'series' if ':' in selection.content_id else 'movie'
-        meta = get_metadata(selection.content_id, content_type)
+        content_ids_to_fetch[selection.content_id] = content_type
+        if selection.selected_subtitle_id and selection.selected_subtitle:
+            subtitle_ids_to_check.append(selection.selected_subtitle.id)
+    
+    # Batch fetch metadata
+    metadata_cache = {}
+    for content_id, content_type in content_ids_to_fetch.items():
+        meta = get_metadata(content_id, content_type)
         if meta:
-            metadata_map[selection.id] = meta
+            metadata_cache[content_id] = meta
+    
+    # Batch fetch votes
+    user_votes = {}
+    if subtitle_ids_to_check:
+        votes = SubtitleVote.query.filter(
+            SubtitleVote.user_id == current_user.id,
+            SubtitleVote.subtitle_id.in_(subtitle_ids_to_check)
+        ).all()
+        user_votes = {vote.subtitle_id: vote.vote_value for vote in votes}
+    
+    # Build metadata_map
+    metadata_map = {}
+    for selection in pagination.items:
+        if selection.content_id in metadata_cache:
+            meta = metadata_cache[selection.content_id].copy()
             title = meta.get('title', selection.content_id)
             if meta.get('season') is not None and meta.get('episode') is not None:
                 title = f"{title} S{meta['season']:02d}E{meta['episode']:02d}"
@@ -1027,12 +1095,10 @@ def selected_subtitles():
             if meta.get('year'):
                 title = f"{title} ({meta['year']})"
             meta['display_title'] = title
-        
-        # Get user vote for community subtitles
-        if selection.selected_subtitle_id and selection.selected_subtitle:
-            vote = SubtitleVote.query.filter_by(user_id=current_user.id, subtitle_id=selection.selected_subtitle.id).first()
-            if vote:
-                user_votes[selection.selected_subtitle.id] = vote.vote_value
+            metadata_map[selection.id] = meta
+    
+    del metadata_cache
+    gc.collect()
     
     return render_template('main/selected_subtitles.html', 
                          selections=pagination.items,
@@ -1050,13 +1116,34 @@ def my_subtitles():
         Subtitle.upload_timestamp.desc()
     ).paginate(page=page, per_page=per_page, error_out=False)
     
-    # Fetch metadata and user votes for each subtitle
-    metadata_map = {}
-    user_votes = {}
+    # Batch collect unique content_ids and subtitle_ids
+    content_ids_to_fetch = {}
+    subtitle_ids = []
     for subtitle in pagination.items:
-        meta = get_metadata(subtitle.content_id, subtitle.content_type)
+        content_ids_to_fetch[subtitle.content_id] = subtitle.content_type
+        subtitle_ids.append(subtitle.id)
+    
+    # Batch fetch metadata
+    metadata_cache = {}
+    for content_id, content_type in content_ids_to_fetch.items():
+        meta = get_metadata(content_id, content_type)
         if meta:
-            metadata_map[subtitle.id] = meta
+            metadata_cache[content_id] = meta
+    
+    # Batch fetch votes
+    user_votes = {}
+    if subtitle_ids:
+        votes = SubtitleVote.query.filter(
+            SubtitleVote.user_id == current_user.id,
+            SubtitleVote.subtitle_id.in_(subtitle_ids)
+        ).all()
+        user_votes = {vote.subtitle_id: vote.vote_value for vote in votes}
+    
+    # Build metadata_map
+    metadata_map = {}
+    for subtitle in pagination.items:
+        if subtitle.content_id in metadata_cache:
+            meta = metadata_cache[subtitle.content_id].copy()
             title = meta.get('title', subtitle.content_id)
             if meta.get('season') is not None and meta.get('episode') is not None:
                 title = f"{title} S{meta['season']:02d}E{meta['episode']:02d}"
@@ -1065,10 +1152,10 @@ def my_subtitles():
             if meta.get('year'):
                 title = f"{title} ({meta['year']})"
             meta['display_title'] = title
-        
-        vote = SubtitleVote.query.filter_by(user_id=current_user.id, subtitle_id=subtitle.id).first()
-        if vote:
-            user_votes[subtitle.id] = vote.vote_value
+            metadata_map[subtitle.id] = meta
+    
+    del metadata_cache
+    gc.collect()
     
     return render_template('main/my_subtitles.html', 
                          subtitles=pagination.items,

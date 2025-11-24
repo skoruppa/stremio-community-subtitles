@@ -6,6 +6,7 @@ import os
 import re
 import requests
 import time
+import gc
 from datetime import datetime
 
 try:
@@ -408,8 +409,10 @@ def _find_best_match_by_filename(user, content_id, video_filename, content_type,
                             'moviehash_match': result.metadata.get('hash_match', False) if result.metadata else False,
                             'url': result.metadata.get('url', '') if result.metadata else ''
                         })
+                del results  # Free memory after processing
             except Exception as e:
                 current_app.logger.error(f"Provider {provider.name} search failed: {e}")
+        gc.collect()
     except:
         pass
     
@@ -419,14 +422,15 @@ def _find_best_match_by_filename(user, content_id, video_filename, content_type,
     candidates.sort(key=lambda c: c['score'], reverse=True)
     best = candidates[0]
     
+    result = None
     if best['type'] == 'local':
-        return {
+        result = {
             'type': 'local',
             'subtitle': best['subtitle'],
             'user_vote_value': _get_user_vote(user, best['subtitle'].id)
         }
     else:
-        return {
+        result = {
             'type': f"{best['provider_name']}_auto",
             'provider_name': best['provider_name'],
             'provider_subtitle_id': best['provider_subtitle_id'],
@@ -441,6 +445,9 @@ def _find_best_match_by_filename(user, content_id, video_filename, content_type,
             'moviehash_match': best.get('moviehash_match', False),
             'url': best.get('url', '')
         }
+    
+    del candidates
+    return result
 
 
 def _find_fallback_subtitle(user, content_id, content_type, lang, season=None, episode=None):
@@ -512,7 +519,7 @@ def _find_fallback_subtitle(user, content_id, content_type, lang, season=None, e
                     chosen = non_ai[0] if non_ai else (results[0] if results else None)
                 
                 if chosen:
-                    return {
+                    result = {
                         'type': f'{provider.name}_auto',
                         'provider_name': provider.name,
                         'provider_subtitle_id': chosen.subtitle_id,
@@ -527,8 +534,13 @@ def _find_fallback_subtitle(user, content_id, content_type, lang, season=None, e
                         'moviehash_match': chosen.metadata.get('hash_match', False) if chosen.metadata else False,
                         'url': chosen.metadata.get('url', '') if chosen.metadata else ''
                     }
+                    del results
+                    gc.collect()
+                    return result
+                del results  # Free memory if no match
             except Exception as e:
                 current_app.logger.error(f"Provider {provider.name} search failed: {e}")
+        gc.collect()
     except:
         pass
     
@@ -581,7 +593,8 @@ def extract_subtitle_from_zip(zip_content: bytes, episode: int = None):
     subtitle_extensions = ['.srt', '.vtt', '.ass', '.ssa', '.sub']
     
     try:
-        with zipfile.ZipFile(io.BytesIO(zip_content)) as zf:
+        zip_buffer = io.BytesIO(zip_content)
+        with zipfile.ZipFile(zip_buffer) as zf:
             subtitle_files = []
             
             # Collect all subtitle files
@@ -608,15 +621,21 @@ def extract_subtitle_from_zip(zip_content: bytes, episode: int = None):
                     filename_lower = file_info.filename.lower()
                     if any(pattern in filename_lower for pattern in episode_patterns):
                         content = zf.read(file_info)
-                        return content, file_info.filename, os.path.splitext(file_info.filename)[1].lower()
+                        result = (content, file_info.filename, os.path.splitext(file_info.filename)[1].lower())
+                        del zip_buffer
+                        return result
             
             # Fallback: return first subtitle file
             file_info = subtitle_files[0]
             content = zf.read(file_info)
-            return content, file_info.filename, os.path.splitext(file_info.filename)[1].lower()
+            result = (content, file_info.filename, os.path.splitext(file_info.filename)[1].lower())
+            del zip_buffer
+            return result
             
     except zipfile.BadZipFile:
         raise ValueError("Invalid ZIP file")
+    finally:
+        gc.collect()
 
 
 def process_subtitle_content(content: bytes, extension: str, encoding=None):
@@ -631,6 +650,7 @@ def process_subtitle_content(content: bytes, extension: str, encoding=None):
     
     # If ASS/SSA, also keep original
     if extension.lower() in ['.ass', '.ssa']:
+        original_content = None
         try:
             original_content = content.decode('utf-8')
         except UnicodeDecodeError:
@@ -641,15 +661,17 @@ def process_subtitle_content(content: bytes, extension: str, encoding=None):
                     break
                 except:
                     continue
-            else:
-                original_content = None
         
-        return {
+        result = {
             'vtt': vtt_content,
             'original': original_content,
             'original_format': extension.lstrip('.')
         }
+        del content
+        gc.collect()
+        return result
     
+    del content
     return {
         'vtt': vtt_content,
         'original': None,
