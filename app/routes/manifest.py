@@ -1,13 +1,14 @@
 from flask import Blueprint, current_app, request
 from .utils import respond_with
 from ..models import User
+from ..version import VERSION
 
 manifest_bp = Blueprint('manifest', __name__)
 
 # Define MANIFEST dictionary
 MANIFEST = {
     'id': 'com.community.stremio-subtitles',
-    'version': '0.4.5',
+    'version': VERSION,
     'name': 'Stremio Community Subtitles',
     'logo': 'https://host/static/logo.png',  # Placeholder logo URL
     'description': 'Community-driven subtitle addon for Stremio with user accounts and uploading.',

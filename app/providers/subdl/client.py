@@ -1,6 +1,7 @@
 """SubDL API client"""
 import requests
 from flask import current_app
+from ...version import USER_AGENT
 
 
 class SubDLError(Exception):
@@ -39,7 +40,7 @@ def search_subtitles(api_key, imdb_id=None, languages=None, season=None, episode
         params['file_name'] = file_name
     
     headers = {
-        'User-Agent': 'StremioCommunitySubtitlesAddon/1.0.0'
+        'User-Agent': USER_AGENT
     }
     
     try:

@@ -3,10 +3,10 @@ import time
 from flask import current_app
 import functools # Import functools for lru_cache
 import datetime # Import datetime for cache expiration
+from ...version import USER_AGENT
 
 # Global base URL for non-authenticated or initial calls like login
 GLOBAL_OS_BASE_URL = "https://api.opensubtitles.com/api/v1"
-USER_AGENT = "StremioCommunitySubtitlesAddon/1.0.0"  # As required by OpenSubtitles API
 
 # Custom decorator for time-based LRU cache
 def timed_lru_cache(seconds: int, maxsize: int = 128):

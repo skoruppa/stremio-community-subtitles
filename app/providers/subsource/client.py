@@ -1,5 +1,6 @@
 import requests
 from typing import List, Dict, Optional
+from ...version import USER_AGENT
 
 
 class SubSourceClient:
@@ -8,7 +9,8 @@ class SubSourceClient:
     def __init__(self, api_key: str):
         self.api_key = api_key
         self.headers = {
-            'X-API-Key': api_key
+            'X-API-Key': api_key,
+            'User-Agent': USER_AGENT
         }
     
     def search_movie(self, imdb_id: str, season: int = None) -> Optional[Dict]:
