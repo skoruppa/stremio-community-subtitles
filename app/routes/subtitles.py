@@ -1022,10 +1022,19 @@ def voted_subtitles():
     del metadata_cache
     gc.collect()
     
+    # Helper function to get provider
+    from ..providers.registry import ProviderRegistry
+    def get_provider(provider_name):
+        try:
+            return ProviderRegistry.get(provider_name)
+        except:
+            return None
+    
     return render_template('main/voted_subtitles.html', 
                          votes=pagination.items,
                          pagination=pagination,
-                         metadata_map=metadata_map)
+                         metadata_map=metadata_map,
+                         get_provider=get_provider)
 
 
 @subtitles_bp.route('/selected-subtitles')
@@ -1085,11 +1094,20 @@ def selected_subtitles():
     del metadata_cache
     gc.collect()
     
+    # Helper function to get provider
+    from ..providers.registry import ProviderRegistry
+    def get_provider(provider_name):
+        try:
+            return ProviderRegistry.get(provider_name)
+        except:
+            return None
+    
     return render_template('main/selected_subtitles.html', 
                          selections=pagination.items,
                          pagination=pagination,
                          metadata_map=metadata_map,
-                         user_votes=user_votes)
+                         user_votes=user_votes,
+                         get_provider=get_provider)
 @subtitles_bp.route('/my-subtitles')
 @login_required
 def my_subtitles():
@@ -1142,11 +1160,20 @@ def my_subtitles():
     del metadata_cache
     gc.collect()
     
+    # Helper function to get provider
+    from ..providers.registry import ProviderRegistry
+    def get_provider(provider_name):
+        try:
+            return ProviderRegistry.get(provider_name)
+        except:
+            return None
+    
     return render_template('main/my_subtitles.html', 
                          subtitles=pagination.items,
                          pagination=pagination,
                          metadata_map=metadata_map,
-                         user_votes=user_votes)
+                         user_votes=user_votes,
+                         get_provider=get_provider)
 
 
 @subtitles_bp.route('/delete_subtitle/<uuid:subtitle_id>', methods=['POST'])

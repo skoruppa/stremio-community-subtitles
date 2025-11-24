@@ -59,14 +59,14 @@
                                 {% endif %}
                                 | Votes: <span class="fw-bold">{{ sub.votes }}</span>
                             </small>
-                        {% elif selection.selected_external_file_id and selection.external_details_json %}
-                            {% set os_details = selection.external_details_json %}
+                        {% elif selection.external_details_json %}
+                            {% set provider_details = selection.external_details_json %}
                             <p class="mb-1 small text-break">
-                                {{ os_details.release_name | truncate(50) if os_details.release_name else 'N/A' }}
+                                {{ provider_details.release_name | truncate(50) if provider_details.release_name else 'N/A' }}
                             </p>
                             <small class="text-muted">
-                                Uploader: {{ os_details.uploader if os_details.uploader else 'N/A' }}
-                                {% if os_details.ai_translated %}
+                                Uploader: {{ provider_details.uploader if provider_details.uploader else 'N/A' }}
+                                {% if provider_details.ai_translated %}
                                     | <span class="text-warning">AI Translated</span>
                                 {% endif %}
                             </small>
@@ -75,13 +75,18 @@
                         <div class="mt-1">
                             <span class="badge bg-secondary">{{ selection.language }}</span>
                             {% if selection.selected_subtitle_id and selection.selected_subtitle %}
-                                {% if selection.selected_subtitle.source_type == 'opensubtitles_community_link' %}
-                                <span class="badge bg-warning">OpenSubtitles Sourced</span>
+                                {% if selection.selected_subtitle.source_type.endswith('_community_link') %}
+                                    {% set provider_name = selection.selected_subtitle.source_type.replace('_community_link', '') %}
+                                    {% set provider = get_provider(provider_name) %}
+                                    <span class="badge bg-{{ provider.badge_color if provider else 'info' }}">{{ provider.display_name if provider else (provider_name | capitalize) }} Link</span>
+                                {% elif selection.selected_subtitle.source_type == 'community' %}
+                                    <span class="badge bg-primary">Community</span>
                                 {% else %}
-                                <span class="badge bg-primary">Community</span>
+                                    <span class="badge bg-info">{{ selection.selected_subtitle.source_type | capitalize }}</span>
                                 {% endif %}
-                            {% elif selection.selected_external_file_id %}
-                            <span class="badge bg-warning">OpenSubtitles</span>
+                            {% elif selection.external_details_json %}
+                                {% set provider = selection.external_details_json.get('provider', 'opensubtitles') %}
+                                <span class="badge bg-warning">{{ provider | capitalize }}</span>
                             {% endif %}
                             {% if selection.video_hash %}
                             <span class="badge bg-info" title="Video Hash: {{ selection.video_hash }}">
@@ -91,8 +96,8 @@
                         </div>
                         <small class="text-muted d-block mt-1">Selected: {{ selection.timestamp.strftime('%Y-%m-%d %H:%M') }}</small>
                     </div>
-                    <div class="ms-2 d-flex flex-column flex-sm-row gap-1 text-nowrap" {% if selection.selected_subtitle_id and selection.selected_subtitle and selection.selected_subtitle.source_type in ['community', 'opensubtitles_community_link'] %}data-subtitle-id="{{ selection.selected_subtitle.id }}" data-current-vote="{{ user_votes.get(selection.selected_subtitle.id, 0) }}"{% endif %}>
-                        {% if selection.selected_subtitle_id and selection.selected_subtitle and selection.selected_subtitle.source_type in ['community', 'opensubtitles_community_link'] %}
+                    <div class="ms-2 d-flex flex-column flex-sm-row gap-1 text-nowrap" {% if selection.selected_subtitle_id and selection.selected_subtitle and (selection.selected_subtitle.source_type == 'community' or selection.selected_subtitle.source_type.endswith('_community_link')) %}data-subtitle-id="{{ selection.selected_subtitle.id }}" data-current-vote="{{ user_votes.get(selection.selected_subtitle.id, 0) }}"{% endif %}>
+                        {% if selection.selected_subtitle_id and selection.selected_subtitle and (selection.selected_subtitle.source_type == 'community' or selection.selected_subtitle.source_type.endswith('_community_link')) %}
                         <button type="button" class="btn btn-sm vote-btn {% if user_votes.get(selection.selected_subtitle.id) == 1 %}btn-success{% else %}btn-outline-success{% endif %}" data-vote-type="up" title="Upvote">
                             <i class="fas fa-thumbs-up"></i>
                         </button>

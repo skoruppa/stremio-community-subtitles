@@ -52,10 +52,14 @@
                         {% endif %}
                         <div class="mb-1">
                             <span class="badge bg-secondary">{{ subtitle.language }}</span>
-                            {% if subtitle.source_type == 'opensubtitles_community_link' %}
-                            <span class="badge bg-warning">OS Link</span>
+                            {% if subtitle.source_type.endswith('_community_link') %}
+                                {% set provider_name = subtitle.source_type.replace('_community_link', '') %}
+                                {% set provider = get_provider(provider_name) %}
+                                <span class="badge bg-{{ provider.badge_color if provider else 'info' }}">{{ provider.display_name if provider else (provider_name | capitalize) }} Link</span>
+                            {% elif subtitle.source_type == 'community' %}
+                                <span class="badge bg-primary">Community</span>
                             {% else %}
-                            <span class="badge bg-primary">Community</span>
+                                <span class="badge bg-info">{{ subtitle.source_type | capitalize }}</span>
                             {% endif %}
                             <span class="badge {% if subtitle.votes > 0 %}bg-success{% elif subtitle.votes < 0 %}bg-danger{% else %}bg-secondary{% endif %}">
                                 {{ subtitle.votes }} votes
