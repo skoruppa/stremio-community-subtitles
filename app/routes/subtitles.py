@@ -573,27 +573,10 @@ def upload_subtitle(activity_id=None):
             form.episode_number = IntegerField('Episode Number', validators=[Optional()])
 
     if request.method == 'GET':
-        # Pre-fill form from URL parameters (for advanced upload)
         if is_advanced_upload:
             prefill_content_id = request.args.get('content_id')
-            prefill_content_type = request.args.get('content_type')
-            prefill_season = request.args.get('season')
-            prefill_episode = request.args.get('episode')
-            
             if prefill_content_id:
                 form.content_id.data = prefill_content_id
-            if prefill_content_type:
-                form.content_type.data = prefill_content_type
-            if prefill_season:
-                try:
-                    form.season_number.data = int(prefill_season)
-                except ValueError:
-                    pass
-            if prefill_episode:
-                try:
-                    form.episode_number.data = int(prefill_episode)
-                except ValueError:
-                    pass
         
         # Set default language based on browser preference or first preferred language
         selected_language = None
@@ -852,12 +835,8 @@ def upload_subtitle(activity_id=None):
 
             # Redirect appropriately
             if is_advanced_upload:
-                # Preserve form values for next upload
-                return redirect(url_for('subtitles.upload_subtitle',
-                                       content_id=content_id,
-                                       content_type=content_type,
-                                       season=season if season else '',
-                                       episode=episode if episode else ''))
+                # Preserve content_id for next upload (JS will parse it)
+                return redirect(url_for('subtitles.upload_subtitle', content_id=content_id))
             else:
                 return redirect(url_for('content.content_detail', activity_id=activity_id))
 

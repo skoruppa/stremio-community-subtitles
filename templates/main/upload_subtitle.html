@@ -271,6 +271,11 @@ document.addEventListener('DOMContentLoaded', function() {
     if (contentType.value === 'series') {
         document.getElementById('series-fields').style.display = 'block';
     }
+    // Auto-parse content_id if pre-filled from URL
+    const contentIdField = document.getElementById('content_id');
+    if (contentIdField.value.trim()) {
+        parseContentId();
+    }
 });
 </script>
 {% endblock %}
