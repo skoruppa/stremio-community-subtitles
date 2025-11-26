@@ -123,6 +123,7 @@ class User(UserMixin, db.Model):
     manifest_token = db.Column(db.String(64), unique=True, nullable=True, index=True)
     email_confirmed = db.Column(db.Boolean, default=False)
     email_confirmed_at = db.Column(db.DateTime, nullable=True)
+    show_no_subtitles = db.Column(db.Boolean, default=False)
 
     # Provider credentials - unified system for all subtitle providers
     # Format: {'provider_name': {'token': '...', 'active': True, 'base_url': '...', 'try_provide_ass': False, ...}, ...}

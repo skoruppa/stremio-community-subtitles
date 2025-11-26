@@ -173,6 +173,13 @@ def addon_stream(manifest_token: str, content_type: str, content_id: str, params
             return respond_with({'subtitles': []})
 
         try:
+            active_subtitle_info = get_active_subtitle_details(user, content_id, video_hash, content_type, video_filename, preferred_lang)
+            
+            # Check if we should add subtitle entry
+            has_subtitles = active_subtitle_info['type'] != 'none'
+            if not has_subtitles and not user.show_no_subtitles:
+                continue  # Skip this language if no subtitles and user doesn't want empty entries
+            
             download_url = url_for('subtitles.unified_download',
                                    manifest_token=manifest_token,
                                    download_identifier=download_identifier,
@@ -185,7 +192,6 @@ def addon_stream(manifest_token: str, content_type: str, content_id: str, params
                 'lang': preferred_lang
             })
             
-            active_subtitle_info = get_active_subtitle_details(user, content_id, video_hash, content_type, video_filename, preferred_lang)
             add_ass_format = False
             
             if active_subtitle_info['type'] == 'local' and active_subtitle_info['subtitle']:
