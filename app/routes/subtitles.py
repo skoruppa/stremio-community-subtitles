@@ -806,32 +806,34 @@ def upload_subtitle(activity_id=None):
             db.session.add(new_subtitle)
             db.session.commit()
 
-            # Auto-select subtitle only for regular uploads (not advanced)
-            if not is_advanced_upload:
-                try:
-                    existing_selection = UserSubtitleSelection.query.filter_by(user_id=current_user.id,
-                                                                               content_id=content_id,
-                                                                               video_hash=video_hash,
-                                                                               language=form.language.data).first()
-                    if existing_selection:
-                        existing_selection.selected_subtitle_id = new_subtitle.id
-                        existing_selection.selected_external_file_id = None
-                        existing_selection.external_details_json = None
-                        existing_selection.timestamp = datetime.datetime.utcnow()
-                    else:
-                        new_selection = UserSubtitleSelection(user_id=current_user.id, content_id=content_id,
-                                                              video_hash=video_hash,
-                                                              selected_subtitle_id=new_subtitle.id,
-                                                              language=form.language.data)
-                        db.session.add(new_selection)
-                    db.session.commit()
-                    flash('Subtitle uploaded and selected successfully!', 'success')
-                except Exception as sel_e:
-                    db.session.rollback()
-                    current_app.logger.error(f"Error auto-selecting uploaded subtitle: {sel_e}", exc_info=True)
-                    flash('Subtitle uploaded, but failed to auto-select.', 'warning')
-            else:
-                flash('Subtitle uploaded successfully!', 'success')
+            # Auto-select subtitle
+            try:
+                existing_selection = UserSubtitleSelection.query.filter_by(
+                    user_id=current_user.id,
+                    content_id=content_id,
+                    video_hash=video_hash,
+                    language=form.language.data
+                ).first()
+                if existing_selection:
+                    existing_selection.selected_subtitle_id = new_subtitle.id
+                    existing_selection.selected_external_file_id = None
+                    existing_selection.external_details_json = None
+                    existing_selection.timestamp = datetime.datetime.utcnow()
+                else:
+                    new_selection = UserSubtitleSelection(
+                        user_id=current_user.id,
+                        content_id=content_id,
+                        video_hash=video_hash,
+                        selected_subtitle_id=new_subtitle.id,
+                        language=form.language.data
+                    )
+                    db.session.add(new_selection)
+                db.session.commit()
+                flash('Subtitle uploaded and selected successfully!', 'success')
+            except Exception as sel_e:
+                db.session.rollback()
+                current_app.logger.error(f"Error auto-selecting uploaded subtitle: {sel_e}", exc_info=True)
+                flash('Subtitle uploaded, but failed to auto-select.', 'warning')
 
             # Redirect appropriately
             if is_advanced_upload:

@@ -311,10 +311,15 @@ def _get_user_selection(user, content_id, video_hash, lang):
         language=lang
     )
     if video_hash:
-        query = query.filter_by(video_hash=video_hash)
+        # First try with video_hash
+        result = query.filter_by(video_hash=video_hash).options(joinedload(UserSubtitleSelection.selected_subtitle)).first()
+        if result:
+            return result
+        # Fallback: try without video_hash (content_id only)
+        return query.filter(UserSubtitleSelection.video_hash.is_(None)).options(joinedload(UserSubtitleSelection.selected_subtitle)).first()
     else:
         query = query.filter(UserSubtitleSelection.video_hash.is_(None))
-    return query.options(joinedload(UserSubtitleSelection.selected_subtitle)).first()
+        return query.options(joinedload(UserSubtitleSelection.selected_subtitle)).first()
 
 
 def _get_user_vote(user, subtitle_id):
