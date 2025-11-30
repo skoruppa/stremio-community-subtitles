@@ -336,9 +336,10 @@ def _find_local_by_hash(content_id, video_hash, lang):
 
 
 def _get_imdb_from_kitsu(kitsu_id, content_type='series'):
-    """Fetch IMDb ID from Docchi Kitsu addon"""
+    """Fetch IMDb ID from Kitsu addon"""
     try:
-        url = f"https://anime-kitsu.strem.fun/meta/{content_type}/{kitsu_id}.json"
+        base_url = current_app.config.get('KITSU_ADDON_URL', 'https://anime-kitsu.strem.fun')
+        url = f"{base_url}/meta/{content_type}/{kitsu_id}.json"
         r = requests.get(url, timeout=5)
         r.raise_for_status()
         data = r.json()
