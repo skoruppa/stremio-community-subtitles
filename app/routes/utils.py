@@ -350,19 +350,21 @@ def _get_imdb_from_kitsu(kitsu_id, content_type='series'):
 
 
 def _search_providers_by_hash(user, content_id, video_hash, content_type, lang, season=None, episode=None):
-    try:
-        from ..providers.registry import ProviderRegistry
-        active_providers = ProviderRegistry.get_active_for_user(user)
-    except Exception as e:
-        current_app.logger.error(f"Error accessing ProviderRegistry: {e}")
-        return None
-    
     imdb_id = None
     if content_id.startswith('tt'):
         imdb_id = content_id.split(':')[0]
     elif content_id.startswith('kitsu:'):
         kitsu_base = content_id.split(':')[0] + ':' + content_id.split(':')[1]
         imdb_id = _get_imdb_from_kitsu(kitsu_base, content_type)
+    else:
+        return None
+    
+    try:
+        from ..providers.registry import ProviderRegistry
+        active_providers = ProviderRegistry.get_active_for_user(user)
+    except Exception as e:
+        current_app.logger.error(f"Error accessing ProviderRegistry: {e}")
+        return None
     
     for provider in active_providers:
         if not provider.supports_hash_matching:
@@ -421,46 +423,47 @@ def _find_best_match_by_filename(user, content_id, video_filename, content_type,
         kitsu_base = content_id.split(':')[0] + ':' + content_id.split(':')[1]
         imdb_id = _get_imdb_from_kitsu(kitsu_base, content_type)
     
-    try:
-        from ..providers.registry import ProviderRegistry
-        active_providers = ProviderRegistry.get_active_for_user(user)
-        for provider in active_providers:
-            try:
-                results = provider.search(
-                    user=user,
-                    imdb_id=imdb_id,
-                    languages=[lang],
-                    season=season,
-                    episode=episode,
-                    content_type=content_type,
-                    video_filename=video_filename
-                )
-                for result in results:
-                    score = calculate_filename_similarity(video_filename, result.release_name)
-                    if result.ai_translated:
-                        score -= 0.05
-                    if score > 0:
-                        candidates.append({
-                            'type': 'provider',
-                            'provider_name': provider.name,
-                            'provider_subtitle_id': result.subtitle_id,
-                            'provider_metadata': {'release_name': result.release_name},
-                            'score': score,
-                            'release_name': result.release_name,
-                            'uploader': result.uploader,
-                            'rating': result.rating,
-                            'download_count': result.download_count,
-                            'hearing_impaired': result.hearing_impaired,
-                            'ai_translated': result.ai_translated,
-                            'moviehash_match': result.metadata.get('hash_match', False) if result.metadata else False,
-                            'url': result.metadata.get('url', '') if result.metadata else ''
-                        })
-                del results  # Free memory after processing
-            except Exception as e:
-                current_app.logger.error(f"Provider {provider.name} search failed: {e}")
-        gc.collect()
-    except:
-        pass
+    if imdb_id:
+        try:
+            from ..providers.registry import ProviderRegistry
+            active_providers = ProviderRegistry.get_active_for_user(user)
+            for provider in active_providers:
+                try:
+                    results = provider.search(
+                        user=user,
+                        imdb_id=imdb_id,
+                        languages=[lang],
+                        season=season,
+                        episode=episode,
+                        content_type=content_type,
+                        video_filename=video_filename
+                    )
+                    for result in results:
+                        score = calculate_filename_similarity(video_filename, result.release_name)
+                        if result.ai_translated:
+                            score -= 0.05
+                        if score > 0:
+                            candidates.append({
+                                'type': 'provider',
+                                'provider_name': provider.name,
+                                'provider_subtitle_id': result.subtitle_id,
+                                'provider_metadata': {'release_name': result.release_name},
+                                'score': score,
+                                'release_name': result.release_name,
+                                'uploader': result.uploader,
+                                'rating': result.rating,
+                                'download_count': result.download_count,
+                                'hearing_impaired': result.hearing_impaired,
+                                'ai_translated': result.ai_translated,
+                                'moviehash_match': result.metadata.get('hash_match', False) if result.metadata else False,
+                                'url': result.metadata.get('url', '') if result.metadata else ''
+                            })
+                    del results  # Free memory after processing
+                except Exception as e:
+                    current_app.logger.error(f"Provider {provider.name} search failed: {e}")
+            gc.collect()
+        except:
+            pass
     
     if not candidates:
         return None
@@ -517,6 +520,9 @@ def _find_fallback_subtitle(user, content_id, content_type, lang, season=None, e
     elif content_id.startswith('kitsu:'):
         kitsu_base = content_id.split(':')[0] + ':' + content_id.split(':')[1]
         imdb_id = _get_imdb_from_kitsu(kitsu_base, content_type)
+    
+    if not imdb_id:
+        return None
     
     try:
         from ..providers.registry import ProviderRegistry
