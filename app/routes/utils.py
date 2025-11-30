@@ -335,6 +335,19 @@ def _find_local_by_hash(content_id, video_hash, lang):
     ).order_by(Subtitle.votes.desc()).first()
 
 
+def _get_imdb_from_kitsu(kitsu_id, content_type='series'):
+    """Fetch IMDb ID from Docchi Kitsu addon"""
+    try:
+        url = f"https://anime-kitsu.strem.fun/meta/{content_type}/{kitsu_id}.json"
+        r = requests.get(url, timeout=5)
+        r.raise_for_status()
+        data = r.json()
+        return data.get('meta', {}).get('imdb_id')
+    except Exception as e:
+        current_app.logger.error(f"Error fetching IMDb ID from Kitsu addon for {kitsu_id}: {e}")
+        return None
+
+
 def _search_providers_by_hash(user, content_id, video_hash, content_type, lang, season=None, episode=None):
     try:
         from ..providers.registry import ProviderRegistry
@@ -343,13 +356,20 @@ def _search_providers_by_hash(user, content_id, video_hash, content_type, lang, 
         current_app.logger.error(f"Error accessing ProviderRegistry: {e}")
         return None
     
+    imdb_id = None
+    if content_id.startswith('tt'):
+        imdb_id = content_id.split(':')[0]
+    elif content_id.startswith('kitsu:'):
+        kitsu_base = content_id.split(':')[0] + ':' + content_id.split(':')[1]
+        imdb_id = _get_imdb_from_kitsu(kitsu_base, content_type)
+    
     for provider in active_providers:
         if not provider.supports_hash_matching:
             continue
         try:
             results = provider.search(
                 user=user,
-                imdb_id=content_id.split(':')[0] if content_id.startswith('tt') else None,
+                imdb_id=imdb_id,
                 video_hash=video_hash,
                 languages=[lang],
                 season=season,
@@ -393,6 +413,13 @@ def _find_best_match_by_filename(user, content_id, video_filename, content_type,
             candidates.append({'type': 'local', 'subtitle': sub, 'score': score})
     
     # Providers
+    imdb_id = None
+    if content_id.startswith('tt'):
+        imdb_id = content_id.split(':')[0]
+    elif content_id.startswith('kitsu:'):
+        kitsu_base = content_id.split(':')[0] + ':' + content_id.split(':')[1]
+        imdb_id = _get_imdb_from_kitsu(kitsu_base, content_type)
+    
     try:
         from ..providers.registry import ProviderRegistry
         active_providers = ProviderRegistry.get_active_for_user(user)
@@ -400,7 +427,7 @@ def _find_best_match_by_filename(user, content_id, video_filename, content_type,
             try:
                 results = provider.search(
                     user=user,
-                    imdb_id=content_id.split(':')[0] if content_id.startswith('tt') else None,
+                    imdb_id=imdb_id,
                     languages=[lang],
                     season=season,
                     episode=episode,
@@ -483,6 +510,13 @@ def _find_fallback_subtitle(user, content_id, content_type, lang, season=None, e
         }
     
     # Providers - filter by episode number in release_name
+    imdb_id = None
+    if content_id.startswith('tt'):
+        imdb_id = content_id.split(':')[0]
+    elif content_id.startswith('kitsu:'):
+        kitsu_base = content_id.split(':')[0] + ':' + content_id.split(':')[1]
+        imdb_id = _get_imdb_from_kitsu(kitsu_base, content_type)
+    
     try:
         from ..providers.registry import ProviderRegistry
         active_providers = ProviderRegistry.get_active_for_user(user)
@@ -491,7 +525,7 @@ def _find_fallback_subtitle(user, content_id, content_type, lang, season=None, e
             try:
                 results = provider.search(
                     user=user,
-                    imdb_id=content_id.split(':')[0] if content_id.startswith('tt') else None,
+                    imdb_id=imdb_id,
                     languages=[lang],
                     season=season,
                     episode=episode,
