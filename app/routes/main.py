@@ -94,7 +94,7 @@ def configure_redirect(manifest_token):
 @login_required
 def account_settings():
     """Allows user to change their preferred language and other settings."""
-    # Handle AJAX request for show_no_subtitles
+    # Handle AJAX requests for settings
     if request.is_json:
         try:
             data = request.get_json()
@@ -102,9 +102,13 @@ def account_settings():
                 current_user.show_no_subtitles = data.get('show_no_subtitles', False)
                 db.session.commit()
                 return {'success': True}
+            if 'prioritize_ass_subtitles' in data:
+                current_user.prioritize_ass_subtitles = data.get('prioritize_ass_subtitles', False)
+                db.session.commit()
+                return {'success': True}
         except Exception as e:
             db.session.rollback()
-            current_app.logger.error(f"Error updating show_no_subtitles for user {current_user.id}: {e}")
+            current_app.logger.error(f"Error updating settings for user {current_user.id}: {e}")
             return {'success': False, 'error': str(e)}, 500
     
     lang_form = LanguagePreferenceForm(prefix="lang_form")

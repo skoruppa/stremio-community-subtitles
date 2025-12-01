@@ -11,42 +11,47 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // Handle show_no_subtitles toggle
-    const showNoSubtitlesToggle = document.getElementById('show_no_subtitles');
-    if (showNoSubtitlesToggle) {
-        showNoSubtitlesToggle.addEventListener('change', function() {
-            const csrfToken = document.querySelector('input[name="csrf_token"]')?.value;
-            const accountUrl = this.getAttribute('data-account-url');
-            
-            if (!csrfToken) {
-                console.error('CSRF token not found');
-                showToast('Error: Security token not found', 'danger');
-                this.checked = !this.checked;
-                return;
-            }
-            
-            fetch(accountUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': csrfToken
-                },
-                body: JSON.stringify({ show_no_subtitles: this.checked })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    showToast('Setting updated successfully', 'success');
-                } else {
-                    showToast('Failed to update setting', 'danger');
+    // Handle toggle switches
+    function handleToggle(toggleId, settingKey) {
+        const toggle = document.getElementById(toggleId);
+        if (toggle) {
+            toggle.addEventListener('change', function() {
+                const csrfToken = document.querySelector('input[name="csrf_token"]')?.value;
+                const accountUrl = this.getAttribute('data-account-url');
+                
+                if (!csrfToken) {
+                    console.error('CSRF token not found');
+                    showToast('Error: Security token not found', 'danger');
                     this.checked = !this.checked;
+                    return;
                 }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                showToast('Error updating setting', 'danger');
-                this.checked = !this.checked;
+                
+                fetch(accountUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
+                    },
+                    body: JSON.stringify({ [settingKey]: this.checked })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showToast('Setting updated successfully', 'success');
+                    } else {
+                        showToast('Failed to update setting', 'danger');
+                        this.checked = !this.checked;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showToast('Error updating setting', 'danger');
+                    this.checked = !this.checked;
+                });
             });
-        });
+        }
     }
+    
+    handleToggle('show_no_subtitles', 'show_no_subtitles');
+    handleToggle('prioritize_ass_subtitles', 'prioritize_ass_subtitles');
 });

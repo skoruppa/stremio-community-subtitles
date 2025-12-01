@@ -186,11 +186,12 @@ def addon_stream(manifest_token: str, content_type: str, content_id: str, params
                                    _external=True,
                                    _scheme=current_app.config['PREFERRED_URL_SCHEME'])
             stremio_sub_id = f"comm_{download_identifier}"
-            subtitles_list.append({
+            
+            vtt_entry = {
                 'id': stremio_sub_id,
                 'url': download_url,
                 'lang': preferred_lang
-            })
+            }
             
             add_ass_format = False
             
@@ -214,12 +215,20 @@ def addon_stream(manifest_token: str, content_type: str, content_id: str, params
             
             if add_ass_format:
                 ass_download_url = download_url.replace('.vtt', '.ass')
-                subtitles_list.append({
+                ass_entry = {
                     'id': f"{stremio_sub_id}_ass",
                     'url': ass_download_url,
                     'lang': preferred_lang
-                })
+                }
+                if user.prioritize_ass_subtitles:
+                    subtitles_list.append(ass_entry)
+                    subtitles_list.append(vtt_entry)
+                else:
+                    subtitles_list.append(vtt_entry)
+                    subtitles_list.append(ass_entry)
                 current_app.logger.info(f"Added ASS format subtitle for context: {download_context}")
+            else:
+                subtitles_list.append(vtt_entry)
             
             current_app.logger.info(f"Generated download URL for context: {download_context}")
         except Exception as e:
