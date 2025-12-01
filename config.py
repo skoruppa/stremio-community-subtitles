@@ -57,6 +57,7 @@ class Config:
     
     TMDB_KEY = os.environ.get('TMDB_API_KEY')
     OPENSUBTITLES_API_KEY = os.environ.get('OPENSUBTITLES_API_KEY')
+    KITSU_ADDON_URL = os.environ.get('KITSU_ADDON_URL', 'https://anime-kitsu.strem.fun')
 
     UPLOAD_FOLDER = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'uploads')
     
