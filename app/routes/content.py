@@ -125,55 +125,65 @@ def content_detail(activity_id):
 
     # Get provider results for all preferred languages
     if current_user.preferred_languages:
-        try:
-            from ..providers.registry import ProviderRegistry
-            from ..providers.base import SubtitleResult
-            
-            active_providers = ProviderRegistry.get_active_for_user(current_user)
-            
-            for provider in active_providers:
-                try:
-                    # Search for all preferred languages
-                    results = provider.search(
-                        user=current_user,
-                        imdb_id=activity.content_id.split(':')[0] if activity.content_id.startswith('tt') else None,
-                        video_hash=activity.video_hash,
-                        languages=current_user.preferred_languages,
-                        season=season,
-                        episode=episode,
-                        content_type=activity.content_type
-                    )
-                    
-                    # Group results by language (convert SubtitleResult to old format for template compatibility)
-                    for result in results:
-                        if result.language.lower() in provider_results_by_lang:
-                            # Convert SubtitleResult to old API format for template
-                            item = {
-                                'provider_name': provider.name,
-                                'attributes': {
-                                    'language': result.language,
-                                    'language_3letter': result.language,
-                                    'files': [{
-                                        'file_id': result.subtitle_id,
-                                        'file_name': result.release_name
-                                    }],
-                                    'uploader': {'name': result.uploader} if result.uploader else None,
-                                    'moviehash_match': result.metadata.get('hash_match', False) if result.metadata else False,
-                                    'ai_translated': result.ai_translated,
-                                    'machine_translated': False,
-                                    'ratings': result.rating,
-                                    'votes': None,
-                                    'download_count': result.download_count,
-                                    'hearing_impaired': result.hearing_impaired,
-                                    'url': result.metadata.get('url', '') if result.metadata else ''
+        # Determine imdb_id for provider search
+        imdb_id = None
+        if activity.content_id.startswith('tt'):
+            imdb_id = activity.content_id.split(':')[0]
+        elif activity.content_id.startswith('kitsu:'):
+            from .utils import _get_imdb_from_kitsu
+            kitsu_base = activity.content_id.split(':')[0] + ':' + activity.content_id.split(':')[1]
+            imdb_id = _get_imdb_from_kitsu(kitsu_base, activity.content_type)
+        
+        if imdb_id:
+            try:
+                from ..providers.registry import ProviderRegistry
+                from ..providers.base import SubtitleResult
+                
+                active_providers = ProviderRegistry.get_active_for_user(current_user)
+                
+                for provider in active_providers:
+                    try:
+                        # Search for all preferred languages
+                        results = provider.search(
+                            user=current_user,
+                            imdb_id=imdb_id,
+                            video_hash=activity.video_hash,
+                            languages=current_user.preferred_languages,
+                            season=season,
+                            episode=episode,
+                            content_type=activity.content_type
+                        )
+                        
+                        # Group results by language (convert SubtitleResult to old format for template compatibility)
+                        for result in results:
+                            if result.language.lower() in provider_results_by_lang:
+                                # Convert SubtitleResult to old API format for template
+                                item = {
+                                    'provider_name': provider.name,
+                                    'attributes': {
+                                        'language': result.language,
+                                        'language_3letter': result.language,
+                                        'files': [{
+                                            'file_id': result.subtitle_id,
+                                            'file_name': result.release_name
+                                        }],
+                                        'uploader': {'name': result.uploader} if result.uploader else None,
+                                        'moviehash_match': result.metadata.get('hash_match', False) if result.metadata else False,
+                                        'ai_translated': result.ai_translated,
+                                        'machine_translated': False,
+                                        'ratings': result.rating,
+                                        'votes': None,
+                                        'download_count': result.download_count,
+                                        'hearing_impaired': result.hearing_impaired,
+                                        'url': result.metadata.get('url', '') if result.metadata else ''
+                                    }
                                 }
-                            }
-                            provider_results_by_lang[result.language].append(item)
-                except Exception as e:
-                    current_app.logger.error(f"Provider {provider.name} search failed: {e}", exc_info=True)
-        except Exception as e:
-            current_app.logger.error(f"Error fetching provider results for display: {e}", exc_info=True)
-            flash("An error occurred while searching for subtitles.", "warning")
+                                provider_results_by_lang[result.language].append(item)
+                    except Exception as e:
+                        current_app.logger.error(f"Provider {provider.name} search failed: {e}", exc_info=True)
+            except Exception as e:
+                current_app.logger.error(f"Error fetching provider results for display: {e}", exc_info=True)
+                flash("An error occurred while searching for subtitles.", "warning")
 
     # Fetch all user votes for all collected subtitle IDs
     user_votes = {}
