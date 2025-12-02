@@ -1,6 +1,6 @@
 # Stremio Community Subtitles Addon
 
-![Version](https://img.shields.io/badge/version-0.4.5-blue.svg)
+![Version](https://img.shields.io/badge/version-0.5.0-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Status](https://img.shields.io/badge/status-Active-brightgreen.svg)
 
@@ -10,7 +10,7 @@
 
 A Stremio addon that enables you to use custom subtitles on any device – something normally only possible on desktop Stremio. Simply upload your subtitle files for the video you just started watching, and they'll be instantly available across all your devices through the addon.
 
-Every subtitle you upload helps build a community database that benefits all users. The OpenSubtitles integration allows manual selection of any available subtitles and linking them to specific video versions, ensuring perfectly synchronized subtitles for future viewers.
+Every subtitle you upload helps build a community database that benefits all users. Multiple subtitle provider integrations (OpenSubtitles, SubDL, Subsource) allow manual selection of any available subtitles and linking them to specific video versions, ensuring perfectly synchronized subtitles for future viewers.
 
 ## ✨ Features
 
@@ -18,34 +18,34 @@ Every subtitle you upload helps build a community database that benefits all use
 - **🌍 Community Database** – Your uploads help other users watching the same files
 - **🤖 Automatic Subtitle Selection** – Subtitles are selected automatically based on your video file
 - **📤 Upload Without Watching** – Upload subtitles without starting playback
-- **🎯 Manual OpenSubtitles Selection** – Choose any available OpenSubtitles subtitle for a specific video
+- **🎯 Multiple Subtitle Providers** – Connect to OpenSubtitles, SubDL, and Subsource for enhanced subtitle search
+- **🔍 Manual Provider Selection** – Choose any available subtitle from connected providers for a specific video
 - **🔗 Link to Video Version** – Linked subtitles stay synced for future viewers
 - **🧠 Viewing History Integration**
 - **🗳️ Voting System**
 - **🧹 Manage Your Data**
   - uploaded subtitles
-  - your OpenSubtitles selections
+  - your provider selections
   - your votes
 
-### ✅ New in 0.4.5 — Better ASS/SSA Support
+### ✅ New in 0.5.0 — Multiple Subtitle Providers
 
-Until now, `.ass` / `.ssa` subtitles were always **converted** to `.vtt`.  
-This caused issues:
+The addon now supports **multiple external subtitle providers**:
 
-- Stremio has inconsistent support for ASS depending on platform and playback engine
-- Converting to VTT caused loss of formatting
-- Some of the same rendering bugs happen in VTT  
-  ref: https://github.com/Stremio/stremio-bugs/issues/1404
+✅ **OpenSubtitles** – The largest subtitle database with millions of subtitles
+✅ **SubDL** – Fast and reliable subtitle source with excellent coverage
+✅ **Subsource** – Additional subtitle provider for enhanced search results
 
-So starting from **0.4.5**:
+**Features:**
+- Connect multiple providers simultaneously
+- Automatic subtitle search across all connected providers
+- Manual selection from any provider
+- Link provider subtitles to specific video versions
+- Prioritize ASS/SSA subtitles option for better formatting support
 
-✅ The addon stores **both** versions:
-- original `.ass` / `.ssa`
-- converted `.vtt`
-
-✅ In Stremio, the user can **switch** between them  
-This allows choosing whichever works best on a given device.
-This way you can pick the "least broken" option for your platform.
+**Previous updates (0.4.5):**
+- Dual format support for ASS/SSA subtitles (original + VTT conversion)
+- Switch between formats in Stremio for best compatibility
 
 ---
 
@@ -59,15 +59,20 @@ This way you can pick the "least broken" option for your platform.
 6. Open Stremio and paste it into the addon search box, or click "Install in Stremio"
 7. Done!
 
-## 🔐 OpenSubtitles Integration
+## 🔐 Subtitle Provider Integration
 
-- Log in from the [account settings](https://stremio-community-subtitles.top/account)
+Connect to external subtitle providers from [account settings](https://stremio-community-subtitles.top/account):
+
+**Supported Providers:**
+- **OpenSubtitles** – Requires API key or account
+- **SubDL** – Requires API key
+- **Subsource** – Requires API key
 
 Once connected:
 
-- Subtitles are fetched automatically
-- You can manually change OpenSubtitles for any video
-- You can **link** subtitles to your video version for the community
+- Subtitles are fetched automatically from all active providers
+- You can manually select subtitles from any provider for any video
+- You can **link** provider subtitles to your video version for the community
 
 ## 📱 Usage
 
@@ -75,7 +80,7 @@ Once connected:
 
 1. Start watching something in Stremio
 2. Visit the addon website – your current video will appear automatically
-3. Upload a subtitle or select one from OpenSubtitles
+3. Upload a subtitle or select one from connected providers
 4. The subtitle becomes available instantly across devices
 
 ### Upload Without Playback
@@ -87,7 +92,7 @@ Once connected:
 ### Automatic Matching
 
 - The addon selects the best subtitle for your file
-- Works with uploaded subs and OpenSubtitles
+- Works with uploaded subs and all connected providers
 
 ## 🧹 Manage Your Uploaded Data
 
@@ -106,7 +111,7 @@ Read the privacy policy here:
 - Upload subtitles via the website while watching a video
 - They're matched by **video hash**
 - You (and others) can instantly use them on any device
-- You can also “link” OpenSubtitles to the correct video version
+- You can also "link" provider subtitles to the correct video version
 - Everyone benefits from what the community uploads and links
 
 ## 🤝 Support
