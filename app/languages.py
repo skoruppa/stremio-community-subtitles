@@ -4,7 +4,7 @@ LANGUAGES = [
     ('eng', 'English'),
     ('pol', 'Polish'),
     ('spa', 'Spanish'),
-    ('fre', 'French'),
+    ('fra', 'French'),
     ('deu', 'German'),
     ('ita', 'Italian'),
     ('por', 'Portuguese'),
