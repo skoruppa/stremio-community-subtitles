@@ -83,6 +83,7 @@ class SubDLProvider(BaseSubtitleProvider):
         file_name = kwargs.get('video_filename')
         
         try:
+            # Try with IMDb ID first
             results = client.search_subtitles(
                 api_key=api_key,
                 imdb_id=imdb_id,
@@ -92,6 +93,32 @@ class SubDLProvider(BaseSubtitleProvider):
                 type=subdl_type,
                 file_name=file_name
             )
+            
+            # Check if response indicates "can't find movie or tv"
+            if results and results.get('status') is False and "can't find movie or tv" in results.get('error', '').lower():
+                if imdb_id:
+                    try:
+                        from ...lib.metadata import get_metadata
+                        content_id = imdb_id
+                        if season and episode:
+                            content_id = f"{imdb_id}:{season}:{episode}"
+                        elif episode:
+                            content_id = f"{imdb_id}:{episode}"
+                        
+                        metadata = get_metadata(content_id, content_type)
+                        if metadata and metadata.get('tmdb_id'):
+                            results = client.search_subtitles(
+                                api_key=api_key,
+                                tmdb_id=metadata['tmdb_id'],
+                                languages=subdl_languages,
+                                season=season,
+                                episode=episode,
+                                type=subdl_type,
+                                file_name=file_name
+                            )
+                    except:
+                        pass
+            
             return self._parse_results(results, season=season, episode=episode)
         except client.SubDLError as e:
             raise ProviderSearchError(str(e), self.name, getattr(e, 'status_code', None))

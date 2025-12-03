@@ -40,7 +40,8 @@ def _get_tmdb_metadata(content_id, content_type): # Renamed to _get_tmdb_metadat
         'season': None,
         'episode': None,
         'id': imdb_id,
-        'id_type': 'imdb'
+        'id_type': 'imdb',
+        'tmdb_id': None
     }
 
     try:
@@ -49,6 +50,7 @@ def _get_tmdb_metadata(content_id, content_type): # Renamed to _get_tmdb_metadat
         if content_type == 'movie' and find_results.movie_results:
             movie_info = find_results.movie_results[0]
             metadata['title'] = movie_info.title
+            metadata['tmdb_id'] = movie_info.id
             metadata['year'] = movie_info.release_date.year
             if movie_info.poster_url():
                 metadata['poster_url'] = movie_info.poster_url()
@@ -57,6 +59,7 @@ def _get_tmdb_metadata(content_id, content_type): # Renamed to _get_tmdb_metadat
         elif content_type == 'series' and find_results.tv_results:
             series_info = find_results.tv_results[0]
             metadata['title'] = series_info.name
+            metadata['tmdb_id'] = series_info.id
             metadata['year'] = series_info.first_air_date.year
             if series_info.poster_url():
                 metadata['poster_url'] = series_info.poster_url()

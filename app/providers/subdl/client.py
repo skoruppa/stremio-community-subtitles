@@ -11,7 +11,7 @@ class SubDLError(Exception):
         self.status_code = status_code
 
 
-def search_subtitles(api_key, imdb_id=None, languages=None, season=None, episode=None, type=None, file_name=None):
+def search_subtitles(api_key, imdb_id=None, tmdb_id=None, languages=None, season=None, episode=None, type=None, file_name=None):
     """
     Search subtitles on SubDL
     
@@ -27,6 +27,8 @@ def search_subtitles(api_key, imdb_id=None, languages=None, season=None, episode
     if imdb_id:
         # SubDL uses imdb_id with 'tt' prefix
         params['imdb_id'] = imdb_id
+    if tmdb_id:
+        params['tmdb_id'] = tmdb_id
     if languages:
         # SubDL uses 2-letter codes
         params['languages'] = ','.join(languages)
