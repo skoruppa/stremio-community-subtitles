@@ -31,11 +31,23 @@ class Config:
     SESSION_COOKIE_SAMESITE = 'Lax'
     
     # Mail configuration
+    EMAIL_METHOD = os.environ.get('EMAIL_METHOD', 'smtp')  # 'smtp', 'resend', or 'local_api'
     MAIL_DEFAULT_SENDER = os.environ.get('MAIL_DEFAULT_SENDER')
+    
+    # Resend API
     RESEND_API_KEY = os.environ.get('RESEND_API_KEY')
-
+    
+    # Local Mail API
     LOCAL_MAIL_API_URL = os.environ.get('LOCAL_MAIL_API_URL')
     LOCAL_MAIL_API_KEY = os.environ.get('LOCAL_MAIL_API_KEY')
+    
+    # SMTP Configuration
+    MAIL_SERVER = os.environ.get('MAIL_SERVER')
+    MAIL_PORT = int(os.environ.get('MAIL_PORT', 587))
+    MAIL_USE_TLS = os.environ.get('MAIL_USE_TLS', 'true').lower() in ['true', '1', 't', 'y', 'yes']
+    MAIL_USE_SSL = os.environ.get('MAIL_USE_SSL', 'false').lower() in ['true', '1', 't', 'y', 'yes']
+    MAIL_USERNAME = os.environ.get('MAIL_USERNAME')
+    MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
     
     # Database configuration
     # Check if USE_SQLITE environment variable is set to a truthy value

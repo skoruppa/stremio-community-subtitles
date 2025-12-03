@@ -3,8 +3,10 @@ from threading import Thread
 import logging
 import resend
 import requests
+from flask_mail import Message, Mail
 
 logger = logging.getLogger(__name__)
+mail = Mail()
 
 def send_async_email_via_local_api(app, sender, recipients, subject, html_body):
     with app.app_context():
@@ -64,15 +66,36 @@ def send_async_email_with_resend(app, sender, recipients, subject, html_body):
             logger.error(f"Failed to send email via Resend API: {e}", exc_info=True)
 
 
+def send_async_email_with_smtp(app, sender, recipients, subject, text_body, html_body):
+    with app.app_context():
+        try:
+            msg = Message(subject, sender=sender, recipients=recipients)
+            msg.body = text_body
+            msg.html = html_body
+            mail.send(msg)
+            logger.info(f"Email sent successfully via SMTP to: {recipients[0]}")
+        except Exception as e:
+            logger.error(f"Failed to send email via SMTP: {e}", exc_info=True)
+
+
 def send_email(subject, recipients, text_body, html_body, sender=None):
     app = current_app._get_current_object()
 
     if sender is None:
         sender = app.config['MAIL_DEFAULT_SENDER']
 
+    email_method = app.config.get('EMAIL_METHOD')
+
+    if email_method == 'resend':
+        target_func = send_async_email_with_resend
+    elif email_method == 'local_api':
+        target_func = send_async_email_via_local_api
+    else:
+        target_func = send_async_email_with_smtp
+
     Thread(
-        target=send_async_email_via_local_api,
-        args=(app, sender, recipients, subject, html_body)
+        target=target_func,
+        args=(app, sender, recipients, subject, html_body) if email_method != 'smtp' else (app, sender, recipients, subject, text_body, html_body)
     ).start()
 
 
