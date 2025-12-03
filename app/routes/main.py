@@ -130,7 +130,7 @@ def account_settings():
 
     return render_template('main/account_settings.html',
                            lang_form=lang_form,
-                           get_all_providers=ProviderRegistry.get_all,
+                           get_all_providers=lambda: ProviderRegistry.get_all(current_user, filter_by_language=True),
                            LANGUAGE_DICT=LANGUAGE_DICT)
 
 

@@ -39,6 +39,7 @@ class BaseSubtitleProvider(ABC):
     supports_hash_matching: bool = True  # Can match by video file hash
     can_return_ass: bool = False  # Can return ASS/SSA format (e.g., from ZIP)
     has_additional_settings: bool = False  # Does provider have additional user settings?
+    supported_languages: List[str] = None  # List of supported language codes (None = all languages)
     
     def __init__(self):
         """Initialize the provider. Validate that required metadata is set."""

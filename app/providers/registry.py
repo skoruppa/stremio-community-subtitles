@@ -65,14 +65,30 @@ class ProviderRegistry:
         return cls._providers.get(name)
     
     @classmethod
-    def get_all(cls) -> List[BaseSubtitleProvider]:
+    def get_all(cls, user=None, filter_by_language: bool = True) -> List[BaseSubtitleProvider]:
         """
         Get all registered providers.
+        
+        Args:
+            user: User model instance (optional, for language filtering)
+            filter_by_language: If True and user provided, filter by user's preferred languages
         
         Returns:
             List of all provider instances
         """
-        return list(cls._providers.values())
+        providers = list(cls._providers.values())
+        
+        if user and filter_by_language and hasattr(user, 'preferred_languages') and user.preferred_languages:
+            filtered = []
+            for provider in providers:
+                # If provider supports all languages or user has at least one matching language
+                if provider.supported_languages is None:
+                    filtered.append(provider)
+                elif any(lang in provider.supported_languages for lang in user.preferred_languages):
+                    filtered.append(provider)
+            return filtered
+        
+        return providers
     
     @classmethod
     def get_active_for_user(cls, user) -> List[BaseSubtitleProvider]:
@@ -150,6 +166,16 @@ class ProviderRegistry:
         except Exception as e:
             import logging
             logging.error(f"Error loading SubSourceProvider: {e}", exc_info=True)
+        
+        try:
+            from .napisy24.provider import Napisy24Provider
+            cls.register(Napisy24Provider)
+        except ImportError as e:
+            import logging
+            logging.warning(f"Could not load Napisy24Provider: {e}")
+        except Exception as e:
+            import logging
+            logging.error(f"Error loading Napisy24Provider: {e}", exc_info=True)
         
         # Add more providers here as they are implemented
         

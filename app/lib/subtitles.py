@@ -19,7 +19,7 @@ def detect_encoding(raw_data):
     logger.info(f"Detected encoding: {encoding} with confidence: {confidence}")
     
     # If confidence is low, try common encodings
-    if confidence < 0.7:
+    if confidence < 0.8:
         common_encodings = ['utf-8', 'utf-8-sig', 'cp1250', 'cp1252', 'latin1', 'iso-8859-1', 'iso-8859-2']
         for enc in common_encodings:
             try:
