@@ -43,10 +43,14 @@ def content_detail(activity_id):
         if activity.content_type == 'series':
             content_parts = activity.content_id.split(':')
             try:
-                if len(content_parts) == 3:  # Format ttID:S:E
+                if activity.content_id.startswith('kitsu:'):
+                    # Kitsu format: kitsu:11578:2 (episode only)
+                    if len(content_parts) == 3:
+                        episode = int(content_parts[2])
+                elif len(content_parts) == 3:  # IMDb format: ttID:S:E
                     season = int(content_parts[1])
                     episode = int(content_parts[2])
-                elif len(content_parts) == 2:  # Format ttID:E (assume Season 1)
+                elif len(content_parts) == 2:  # IMDb format: ttID:E (assume Season 1)
                     season = 1
                     episode = int(content_parts[1])
             except ValueError:

@@ -266,19 +266,23 @@ def unified_download(manifest_token: str, download_identifier: str):
 
         if content_type == 'series' and ':' in content_id:
             parts = content_id.split(':')
-
-            try:
-                episode = int(parts[-1])
-            except (ValueError, IndexError):
-                episode = None
-
-            if len(parts) >= 2:
+            if content_id.startswith('kitsu:'):
+                # Kitsu format: kitsu:11578:2 (episode only)
                 try:
-                    season = int(parts[-2])
-                except ValueError:
-                    season = None
+                    episode = int(parts[-1])
+                except (ValueError, IndexError):
+                    episode = None
             else:
-                season = None
+                # IMDb format: tt0877057:2:1 (season:episode)
+                try:
+                    episode = int(parts[-1])
+                except (ValueError, IndexError):
+                    episode = None
+                if len(parts) >= 3:
+                    try:
+                        season = int(parts[-2])
+                    except ValueError:
+                        season = None
         
         if not content_id:
             raise ValueError("Missing content_id in decoded context")

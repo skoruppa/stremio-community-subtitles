@@ -204,6 +204,14 @@ def calculate_filename_similarity(video_filename, subtitle_release_name):
 
 def get_active_subtitle_details(user, content_id, video_hash=None, content_type=None, video_filename=None, lang=None, season=None, episode=None):
     """Provider-agnostic subtitle selection logic"""
+    # Parse Kitsu content_id and extract IMDb ID if needed
+    imdb_id = None
+    if content_id.startswith('tt'):
+        imdb_id = content_id.split(':')[0]
+    elif content_id.startswith('kitsu:'):
+        kitsu_base = content_id.split(':')[0] + ':' + content_id.split(':')[1]
+        imdb_id = _get_imdb_from_kitsu(kitsu_base, content_type)
+    
     # Extract season and episode from content_id if not provided
     if season is None and episode is None and content_type == 'series' and ':' in content_id:
         parts = content_id.split(':')
@@ -279,8 +287,8 @@ def get_active_subtitle_details(user, content_id, video_hash=None, content_type=
             return result
     
     # 3. Providers by hash
-    if video_hash:
-        provider_result = _search_providers_by_hash(user, content_id, video_hash, content_type, lang, season, episode)
+    if video_hash and imdb_id:
+        provider_result = _search_providers_by_hash(user, imdb_id, video_hash, content_type, lang, season, episode)
         if provider_result:
             result.update(provider_result)
             result['auto'] = True
@@ -288,14 +296,14 @@ def get_active_subtitle_details(user, content_id, video_hash=None, content_type=
     
     # 4. Best match by filename
     if video_filename:
-        best_match = _find_best_match_by_filename(user, content_id, video_filename, content_type, lang, season, episode)
+        best_match = _find_best_match_by_filename(user, content_id, imdb_id, video_filename, content_type, lang, season, episode)
         if best_match:
             result.update(best_match)
             result['auto'] = True
             return result
     
     # 5. Fallback
-    fallback = _find_fallback_subtitle(user, content_id, content_type, lang, season, episode)
+    fallback = _find_fallback_subtitle(user, content_id, imdb_id, content_type, lang, season, episode)
     if fallback:
         result.update(fallback)
         result['auto'] = True
@@ -349,14 +357,8 @@ def _get_imdb_from_kitsu(kitsu_id, content_type='series'):
         return None
 
 
-def _search_providers_by_hash(user, content_id, video_hash, content_type, lang, season=None, episode=None):
-    imdb_id = None
-    if content_id.startswith('tt'):
-        imdb_id = content_id.split(':')[0]
-    elif content_id.startswith('kitsu:'):
-        kitsu_base = content_id.split(':')[0] + ':' + content_id.split(':')[1]
-        imdb_id = _get_imdb_from_kitsu(kitsu_base, content_type)
-    else:
+def _search_providers_by_hash(user, imdb_id, video_hash, content_type, lang, season=None, episode=None):
+    if not imdb_id:
         return None
     
     try:
@@ -405,7 +407,7 @@ def _search_providers_by_hash(user, content_id, video_hash, content_type, lang, 
     return None
 
 
-def _find_best_match_by_filename(user, content_id, video_filename, content_type, lang, season=None, episode=None):
+def _find_best_match_by_filename(user, content_id, imdb_id, video_filename, content_type, lang, season=None, episode=None):
     candidates = []
     
     # Local
@@ -416,13 +418,6 @@ def _find_best_match_by_filename(user, content_id, video_filename, content_type,
             candidates.append({'type': 'local', 'subtitle': sub, 'score': score})
     
     # Providers
-    imdb_id = None
-    if content_id.startswith('tt'):
-        imdb_id = content_id.split(':')[0]
-    elif content_id.startswith('kitsu:'):
-        kitsu_base = content_id.split(':')[0] + ':' + content_id.split(':')[1]
-        imdb_id = _get_imdb_from_kitsu(kitsu_base, content_type)
-    
     if imdb_id:
         try:
             from ..providers.registry import ProviderRegistry
@@ -499,7 +494,7 @@ def _find_best_match_by_filename(user, content_id, video_filename, content_type,
     return result
 
 
-def _find_fallback_subtitle(user, content_id, content_type, lang, season=None, episode=None):
+def _find_fallback_subtitle(user, content_id, imdb_id, content_type, lang, season=None, episode=None):
     # Local first (already filtered by content_id which includes season/episode)
     local_sub = Subtitle.query.filter_by(
         content_id=content_id,
@@ -512,14 +507,6 @@ def _find_fallback_subtitle(user, content_id, content_type, lang, season=None, e
             'subtitle': local_sub,
             'user_vote_value': _get_user_vote(user, local_sub.id)
         }
-    
-    # Providers - filter by episode number in release_name
-    imdb_id = None
-    if content_id.startswith('tt'):
-        imdb_id = content_id.split(':')[0]
-    elif content_id.startswith('kitsu:'):
-        kitsu_base = content_id.split(':')[0] + ':' + content_id.split(':')[1]
-        imdb_id = _get_imdb_from_kitsu(kitsu_base, content_type)
     
     if not imdb_id:
         return None
