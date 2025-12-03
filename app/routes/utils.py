@@ -210,7 +210,9 @@ def get_active_subtitle_details(user, content_id, video_hash=None, content_type=
         imdb_id = content_id.split(':')[0]
     elif content_id.startswith('kitsu:'):
         kitsu_base = content_id.split(':')[0] + ':' + content_id.split(':')[1]
-        imdb_id = _get_imdb_from_kitsu(kitsu_base, content_type)
+        imdb_id, kitsu_season = _get_imdb_from_kitsu(kitsu_base, content_type)
+        if kitsu_season:
+            season = kitsu_season
     
     # Extract season and episode from content_id if not provided
     if season is None and episode is None and content_type == 'series' and ':' in content_id:
@@ -344,17 +346,26 @@ def _find_local_by_hash(content_id, video_hash, lang):
 
 
 def _get_imdb_from_kitsu(kitsu_id, content_type='series'):
-    """Fetch IMDb ID from Kitsu addon"""
+    """Fetch IMDb ID and season from Kitsu addon. Returns tuple: (imdb_id, season)"""
     try:
         base_url = current_app.config.get('KITSU_ADDON_URL', 'https://anime-kitsu.strem.fun')
         url = f"{base_url}/meta/{content_type}/{kitsu_id}.json"
         r = requests.get(url, timeout=5)
         r.raise_for_status()
         data = r.json()
-        return data.get('meta', {}).get('imdb_id')
+        meta = data.get('meta', {})
+        imdb_id = meta.get('imdb_id')
+        
+        # Extract season from first video if available
+        season = None
+        videos = meta.get('videos', [])
+        if videos and len(videos) > 0:
+            season = videos[0].get('imdbSeason')
+        
+        return (imdb_id, season)
     except Exception as e:
         current_app.logger.error(f"Error fetching IMDb ID from Kitsu addon for {kitsu_id}: {e}")
-        return None
+        return (None, None)
 
 
 def _search_providers_by_hash(user, imdb_id, video_hash, content_type, lang, season=None, episode=None):

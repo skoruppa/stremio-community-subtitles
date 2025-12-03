@@ -136,7 +136,9 @@ def content_detail(activity_id):
         elif activity.content_id.startswith('kitsu:'):
             from .utils import _get_imdb_from_kitsu
             kitsu_base = activity.content_id.split(':')[0] + ':' + activity.content_id.split(':')[1]
-            imdb_id = _get_imdb_from_kitsu(kitsu_base, activity.content_type)
+            imdb_id, kitsu_season = _get_imdb_from_kitsu(kitsu_base, activity.content_type)
+            if kitsu_season:
+                season = kitsu_season
         
         if imdb_id:
             try:
