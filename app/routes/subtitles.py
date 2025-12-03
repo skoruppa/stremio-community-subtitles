@@ -1311,8 +1311,14 @@ def download_subtitle(subtitle_id):
                     current_app.logger.info(f"Serving {provider_name} direct url")
                     return no_cache_redirect(provider_url, code=302)
                 else:
-                    flash(f"Could not retrieve download link from {provider_name}.", "danger")
-                    abort(500)
+                    current_app.logger.info(f"{provider_name} requires direct download")
+                    try:
+                        zip_content = provider.download_subtitle(current_user, provider_subtitle_id)
+                        return Response(zip_content, mimetype='application/zip', headers={"Content-Disposition": f"attachment;filename={content_id_display}_{subtitle.language}.zip"})
+                    except Exception as e:
+                        current_app.logger.error(f"Error processing {provider_name} download: {e}", exc_info=True)
+                        flash(f"Error downloading from {provider_name}: {str(e)}", "danger")
+                        abort(500)
             except ProviderDownloadError as e:
                 current_app.logger.error(f"{provider_name} download error: {e}", exc_info=True)
                 flash(f"Error downloading from {provider_name}: {str(e)}", "danger")
