@@ -33,6 +33,9 @@ class Config:
     # Mail configuration
     MAIL_DEFAULT_SENDER = os.environ.get('MAIL_DEFAULT_SENDER')
     RESEND_API_KEY = os.environ.get('RESEND_API_KEY')
+
+    LOCAL_MAIL_API_URL = os.environ.get('LOCAL_MAIL_API_URL')
+    LOCAL_MAIL_API_KEY = os.environ.get('LOCAL_MAIL_API_KEY')
     
     # Database configuration
     # Check if USE_SQLITE environment variable is set to a truthy value
