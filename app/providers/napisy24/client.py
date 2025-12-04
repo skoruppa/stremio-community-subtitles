@@ -104,6 +104,11 @@ def _parse_xml_response(response_text, season=None, episode=None, filename=None)
         root = ET.fromstring(response_text, parser=parser)
         
         for subtitle in root.findall("subtitle"):
+            # Filter by language - only Polish
+            language_el = subtitle.find("language")
+            if language_el is not None and language_el.text and language_el.text.lower() != 'pl':
+                continue
+            
             sub_id = subtitle.find("id").text
             try:
                 fps = float(subtitle.find("fps").text.replace(",", "."))
