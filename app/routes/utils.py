@@ -202,119 +202,7 @@ def calculate_filename_similarity(video_filename, subtitle_release_name):
 
 
 
-def get_active_subtitle_details_with_cache(user, content_id, video_hash=None, content_type=None, video_filename=None, lang=None, season=None, episode=None, cached_provider_results=None):
-    """Provider-agnostic subtitle selection logic with cached provider results"""
-    # Parse Kitsu content_id and extract IMDb ID if needed
-    imdb_id = None
-    if content_id.startswith('tt'):
-        imdb_id = content_id.split(':')[0]
-    elif content_id.startswith('kitsu:'):
-        kitsu_base = content_id.split(':')[0] + ':' + content_id.split(':')[1]
-        imdb_id, kitsu_season = _get_imdb_from_kitsu(kitsu_base, content_type)
-        if kitsu_season:
-            season = kitsu_season
-    
-    # Extract season and episode from content_id if not provided
-    if season is None and episode is None and content_type == 'series' and ':' in content_id:
-        parts = content_id.split(':')
-        try:
-            episode = int(parts[-1])
-        except (ValueError, IndexError):
-            episode = None
-        if len(parts) >= 2:
-            try:
-                season = int(parts[-2])
-            except ValueError:
-                season = None
-    
-    result = {
-        'type': 'none',
-        'subtitle': None,
-        'provider_name': None,
-        'provider_subtitle_id': None,
-        'provider_metadata': None,
-        'details': None,
-        'auto': False,
-        'user_vote_value': None,
-        'user_selection_record': None
-    }
-    
-    # 1. User Selection
-    user_selection = _get_user_selection(user, content_id, video_hash, lang)
-    result['user_selection_record'] = user_selection
-    
-    if user_selection:
-        if user_selection.selected_subtitle_id:
-            result.update({
-                'type': 'local',
-                'subtitle': user_selection.selected_subtitle,
-                'user_vote_value': _get_user_vote(user, user_selection.selected_subtitle_id)
-            })
-            return result
-        
-        if user_selection.external_details_json:
-            details = user_selection.external_details_json
-            provider_name = details.get('provider')
-            subtitle_id = details.get('subtitle_id') or details.get('file_id')
-            
-            if provider_name and subtitle_id:
-                result.update({
-                    'type': f'{provider_name}_selection',
-                    'provider_name': provider_name,
-                    'provider_subtitle_id': str(subtitle_id),
-                    'provider_metadata': details,
-                    'details': details,
-                    'release_name': details.get('release_name'),
-                    'uploader': details.get('uploader'),
-                    'rating': details.get('rating'),
-                    'download_count': details.get('download_count'),
-                    'hearing_impaired': details.get('hearing_impaired', False),
-                    'ai_translated': details.get('ai_translated', False),
-                    'moviehash_match': details.get('hash_match', False),
-                    'url': details.get('url', '')
-                })
-                return result
-    
-    # 2. Local by hash
-    if video_hash:
-        local_sub = _find_local_by_hash(content_id, video_hash, lang)
-        if local_sub:
-            result.update({
-                'type': 'local',
-                'subtitle': local_sub,
-                'auto': True,
-                'user_vote_value': _get_user_vote(user, local_sub.id)
-            })
-            return result
-    
-    # 3. Providers by hash (use cache)
-    if video_hash and cached_provider_results:
-        provider_result = _search_cached_providers_by_hash(cached_provider_results, lang)
-        if provider_result:
-            result.update(provider_result)
-            result['auto'] = True
-            return result
-    
-    # 4. Best match by filename (use cache)
-    if video_filename and cached_provider_results:
-        best_match = _find_best_match_from_cache(content_id, cached_provider_results, video_filename, lang)
-        if best_match:
-            result.update(best_match)
-            result['auto'] = True
-            return result
-    
-    # 5. Fallback (use cache)
-    if cached_provider_results:
-        fallback = _find_fallback_from_cache(content_id, cached_provider_results, content_type, lang, season, episode)
-        if fallback:
-            result.update(fallback)
-            result['auto'] = True
-            return result
-    
-    return result
-
-
-def get_active_subtitle_details(user, content_id, video_hash=None, content_type=None, video_filename=None, lang=None, season=None, episode=None):
+def get_active_subtitle_details(user, content_id, video_hash=None, content_type=None, video_filename=None, lang=None, season=None, episode=None, cached_provider_results=None):
     """Provider-agnostic subtitle selection logic"""
     # Parse Kitsu content_id and extract IMDb ID if needed
     imdb_id = None
@@ -401,8 +289,8 @@ def get_active_subtitle_details(user, content_id, video_hash=None, content_type=
             return result
     
     # 3. Providers by hash
-    if video_hash and imdb_id:
-        provider_result = _search_providers_by_hash(user, imdb_id, video_hash, content_type, lang, season, episode)
+    if video_hash:
+        provider_result = _search_providers_by_hash(user, imdb_id, video_hash, content_type, lang, season, episode, cached_provider_results)
         if provider_result:
             result.update(provider_result)
             result['auto'] = True
@@ -410,14 +298,14 @@ def get_active_subtitle_details(user, content_id, video_hash=None, content_type=
     
     # 4. Best match by filename
     if video_filename:
-        best_match = _find_best_match_by_filename(user, content_id, imdb_id, video_filename, content_type, lang, season, episode)
+        best_match = _find_best_match_by_filename(user, content_id, imdb_id, video_filename, content_type, lang, season, episode, cached_provider_results)
         if best_match:
             result.update(best_match)
             result['auto'] = True
             return result
     
     # 5. Fallback
-    fallback = _find_fallback_subtitle(user, content_id, imdb_id, content_type, lang, season, episode)
+    fallback = _find_fallback_subtitle(user, content_id, imdb_id, content_type, lang, season, episode, cached_provider_results)
     if fallback:
         result.update(fallback)
         result['auto'] = True
@@ -480,156 +368,29 @@ def _get_imdb_from_kitsu(kitsu_id, content_type='series'):
         return (None, None)
 
 
-def _search_cached_providers_by_hash(cached_results, lang):
-    """Search cached provider results for hash match"""
-    for provider_name, results in cached_results.items():
-        for result in results:
-            if result.language == lang and result.metadata and result.metadata.get('hash_match'):
-                return {
-                    'type': f'{provider_name}_auto',
-                    'provider_name': provider_name,
-                    'provider_subtitle_id': result.subtitle_id,
-                    'provider_metadata': {'release_name': result.release_name, 'uploader': result.uploader, 'hash_match': True},
-                    'details': {'file_id': result.subtitle_id, 'release_name': result.release_name},
-                    'release_name': result.release_name,
-                    'uploader': result.uploader,
-                    'rating': result.rating,
-                    'download_count': result.download_count,
-                    'hearing_impaired': result.hearing_impaired,
-                    'ai_translated': result.ai_translated,
-                    'moviehash_match': True,
-                    'url': result.metadata.get('url', '') if result.metadata else ''
-                }
-    return None
-
-
-def _find_best_match_from_cache(content_id, cached_results, video_filename, lang):
-    """Find best match from cached provider results"""
-    candidates = []
-    
-    # Local
-    local_subs = Subtitle.query.filter_by(content_id=content_id, language=lang).all()
-    for sub in local_subs:
-        score = calculate_filename_similarity(video_filename, sub.version_info)
-        if score > 0:
-            candidates.append({'type': 'local', 'subtitle': sub, 'score': score})
-    
-    # Cached providers
-    for provider_name, results in cached_results.items():
-        for result in results:
-            if result.language == lang:
-                score = calculate_filename_similarity(video_filename, result.release_name)
-                if result.ai_translated:
-                    score -= 0.05
-                if score > 0:
-                    candidates.append({
-                        'type': 'provider',
+def _search_providers_by_hash(user, imdb_id, video_hash, content_type, lang, season=None, episode=None, cached_results=None):
+    """Search for hash match from cache or live search"""
+    if cached_results:
+        for provider_name, results in cached_results.items():
+            for result in results:
+                if result.language == lang and result.metadata and result.metadata.get('hash_match'):
+                    return {
+                        'type': f'{provider_name}_auto',
                         'provider_name': provider_name,
                         'provider_subtitle_id': result.subtitle_id,
-                        'provider_metadata': {'release_name': result.release_name},
-                        'score': score,
+                        'provider_metadata': {'release_name': result.release_name, 'uploader': result.uploader, 'hash_match': True},
+                        'details': {'file_id': result.subtitle_id, 'release_name': result.release_name},
                         'release_name': result.release_name,
                         'uploader': result.uploader,
                         'rating': result.rating,
                         'download_count': result.download_count,
                         'hearing_impaired': result.hearing_impaired,
                         'ai_translated': result.ai_translated,
-                        'moviehash_match': result.metadata.get('hash_match', False) if result.metadata else False,
+                        'moviehash_match': True,
                         'url': result.metadata.get('url', '') if result.metadata else ''
-                    })
-    
-    if not candidates:
+                    }
         return None
     
-    candidates.sort(key=lambda c: c['score'], reverse=True)
-    best = candidates[0]
-    
-    if best['type'] == 'local':
-        return {
-            'type': 'local',
-            'subtitle': best['subtitle'],
-            'user_vote_value': _get_user_vote(None, best['subtitle'].id)
-        }
-    else:
-        return {
-            'type': f"{best['provider_name']}_auto",
-            'provider_name': best['provider_name'],
-            'provider_subtitle_id': best['provider_subtitle_id'],
-            'provider_metadata': best['provider_metadata'],
-            'details': {'file_id': best['provider_subtitle_id']},
-            'release_name': best.get('release_name'),
-            'uploader': best.get('uploader'),
-            'rating': best.get('rating'),
-            'download_count': best.get('download_count'),
-            'hearing_impaired': best.get('hearing_impaired'),
-            'ai_translated': best.get('ai_translated'),
-            'moviehash_match': best.get('moviehash_match', False),
-            'url': best.get('url', '')
-        }
-
-
-def _find_fallback_from_cache(content_id, cached_results, content_type, lang, season=None, episode=None):
-    """Find fallback subtitle from cached provider results"""
-    # Local first
-    local_sub = Subtitle.query.filter_by(content_id=content_id, language=lang).order_by(Subtitle.votes.desc()).first()
-    if local_sub:
-        return {
-            'type': 'local',
-            'subtitle': local_sub,
-            'user_vote_value': _get_user_vote(None, local_sub.id)
-        }
-    
-    # Cached providers
-    for provider_name, results in cached_results.items():
-        lang_results = [r for r in results if r.language == lang]
-        if not lang_results:
-            continue
-        
-        if episode:
-            matching = []
-            matching_ep_only = []
-            
-            for r in lang_results:
-                parts = extract_release_components(r.release_name)
-                if season and parts['season_episode'] == f"s{season:02d}e{episode:02d}":
-                    matching.append(r)
-                else:
-                    ep_patterns = [f' {episode:03d}', f'-{episode:03d}', f' {episode:02d} ', f'-{episode:02d}-']
-                    if any(pattern in r.release_name.lower() for pattern in ep_patterns):
-                        matching_ep_only.append(r)
-            
-            candidates = matching if matching else matching_ep_only
-            if candidates:
-                non_ai = [r for r in candidates if not r.ai_translated]
-                chosen = non_ai[0] if non_ai else candidates[0]
-            else:
-                non_ai = [r for r in lang_results if not r.ai_translated]
-                chosen = non_ai[0] if non_ai else (lang_results[0] if lang_results else None)
-        else:
-            non_ai = [r for r in lang_results if not r.ai_translated]
-            chosen = non_ai[0] if non_ai else (lang_results[0] if lang_results else None)
-        
-        if chosen:
-            return {
-                'type': f'{provider_name}_auto',
-                'provider_name': provider_name,
-                'provider_subtitle_id': chosen.subtitle_id,
-                'provider_metadata': {'release_name': chosen.release_name},
-                'details': {'file_id': chosen.subtitle_id},
-                'release_name': chosen.release_name,
-                'uploader': chosen.uploader,
-                'rating': chosen.rating,
-                'download_count': chosen.download_count,
-                'hearing_impaired': chosen.hearing_impaired,
-                'ai_translated': chosen.ai_translated,
-                'moviehash_match': chosen.metadata.get('hash_match', False) if chosen.metadata else False,
-                'url': chosen.metadata.get('url', '') if chosen.metadata else ''
-            }
-    
-    return None
-
-
-def _search_providers_by_hash(user, imdb_id, video_hash, content_type, lang, season=None, episode=None):
     if not imdb_id:
         return None
     
@@ -680,7 +441,8 @@ def _search_providers_by_hash(user, imdb_id, video_hash, content_type, lang, sea
     return None
 
 
-def _find_best_match_by_filename(user, content_id, imdb_id, video_filename, content_type, lang, season=None, episode=None):
+def _find_best_match_by_filename(user, content_id, imdb_id, video_filename, content_type, lang, season=None, episode=None, cached_results=None):
+    """Find best match by filename from cache or live search"""
     candidates = []
     
     # Local
@@ -690,8 +452,31 @@ def _find_best_match_by_filename(user, content_id, imdb_id, video_filename, cont
         if score > 0:
             candidates.append({'type': 'local', 'subtitle': sub, 'score': score})
     
-    # Providers
-    if imdb_id:
+    # Providers (cached or live)
+    if cached_results:
+        for provider_name, results in cached_results.items():
+            for result in results:
+                if result.language == lang:
+                    score = calculate_filename_similarity(video_filename, result.release_name)
+                    if result.ai_translated:
+                        score -= 0.05
+                    if score > 0:
+                        candidates.append({
+                            'type': 'provider',
+                            'provider_name': provider_name,
+                            'provider_subtitle_id': result.subtitle_id,
+                            'provider_metadata': {'release_name': result.release_name},
+                            'score': score,
+                            'release_name': result.release_name,
+                            'uploader': result.uploader,
+                            'rating': result.rating,
+                            'download_count': result.download_count,
+                            'hearing_impaired': result.hearing_impaired,
+                            'ai_translated': result.ai_translated,
+                            'moviehash_match': result.metadata.get('hash_match', False) if result.metadata else False,
+                            'url': result.metadata.get('url', '') if result.metadata else ''
+                        })
+    elif imdb_id:
         try:
             from ..providers.registry import ProviderRegistry
             from ..lib.provider_async import search_providers_parallel
@@ -739,15 +524,14 @@ def _find_best_match_by_filename(user, content_id, imdb_id, video_filename, cont
     candidates.sort(key=lambda c: c['score'], reverse=True)
     best = candidates[0]
     
-    result = None
     if best['type'] == 'local':
-        result = {
+        return {
             'type': 'local',
             'subtitle': best['subtitle'],
             'user_vote_value': _get_user_vote(user, best['subtitle'].id)
         }
     else:
-        result = {
+        return {
             'type': f"{best['provider_name']}_auto",
             'provider_name': best['provider_name'],
             'provider_subtitle_id': best['provider_subtitle_id'],
@@ -762,18 +546,12 @@ def _find_best_match_by_filename(user, content_id, imdb_id, video_filename, cont
             'moviehash_match': best.get('moviehash_match', False),
             'url': best.get('url', '')
         }
-    
-    del candidates
-    return result
 
 
-def _find_fallback_subtitle(user, content_id, imdb_id, content_type, lang, season=None, episode=None):
-    # Local first (already filtered by content_id which includes season/episode)
-    local_sub = Subtitle.query.filter_by(
-        content_id=content_id,
-        language=lang
-    ).order_by(Subtitle.votes.desc()).first()
-    
+def _find_fallback_subtitle(user, content_id, imdb_id, content_type, lang, season=None, episode=None, cached_results=None):
+    """Find fallback subtitle from cache or live search"""
+    # Local first
+    local_sub = Subtitle.query.filter_by(content_id=content_id, language=lang).order_by(Subtitle.votes.desc()).first()
     if local_sub:
         return {
             'type': 'local',
@@ -781,79 +559,82 @@ def _find_fallback_subtitle(user, content_id, imdb_id, content_type, lang, seaso
             'user_vote_value': _get_user_vote(user, local_sub.id)
         }
     
-    if not imdb_id:
+    if not imdb_id and not cached_results:
         return None
     
-    try:
-        from ..providers.registry import ProviderRegistry
-        from ..lib.provider_async import search_providers_parallel
-        active_providers = ProviderRegistry.get_active_for_user(user)
-        
-        search_params = {
-            'imdb_id': imdb_id,
-            'languages': [lang],
-            'season': season,
-            'episode': episode,
-            'content_type': content_type
-        }
-        
-        results_by_provider = search_providers_parallel(user, active_providers, search_params, timeout=10)
-        
-        for provider_name, results in results_by_provider.items():
-            # Filter by episode if available (series/anime)
-            if episode and results:
-                matching = []
-                matching_ep_only = []
-                
-                for r in results:
-                    parts = extract_release_components(r.release_name)
-                    
-                    if season and parts['season_episode'] == f"s{season:02d}e{episode:02d}":
-                        matching.append(r)
-                    else:
-                        ep_patterns = [
-                            f' {episode:03d}',
-                            f'-{episode:03d}',
-                            f' {episode:02d} ',
-                            f'-{episode:02d}-',
-                        ]
-                        if any(pattern in r.release_name.lower() for pattern in ep_patterns):
-                            matching_ep_only.append(r)
-                
-                candidates = matching if matching else matching_ep_only
-                
-                if candidates:
-                    non_ai = [r for r in candidates if not r.ai_translated]
-                    chosen = non_ai[0] if non_ai else candidates[0]
-                else:
-                    non_ai = [r for r in results if not r.ai_translated]
-                    chosen = non_ai[0] if non_ai else (results[0] if results else None)
-            else:
-                non_ai = [r for r in results if not r.ai_translated]
-                chosen = non_ai[0] if non_ai else (results[0] if results else None)
+    # Get results (cached or live)
+    if cached_results:
+        results_by_provider = {k: [r for r in v if r.language == lang] for k, v in cached_results.items()}
+    else:
+        try:
+            from ..providers.registry import ProviderRegistry
+            from ..lib.provider_async import search_providers_parallel
+            active_providers = ProviderRegistry.get_active_for_user(user)
             
-            if chosen:
-                result = {
-                    'type': f'{provider_name}_auto',
-                    'provider_name': provider_name,
-                    'provider_subtitle_id': chosen.subtitle_id,
-                    'provider_metadata': {'release_name': chosen.release_name},
-                    'details': {'file_id': chosen.subtitle_id},
-                    'release_name': chosen.release_name,
-                    'uploader': chosen.uploader,
-                    'rating': chosen.rating,
-                    'download_count': chosen.download_count,
-                    'hearing_impaired': chosen.hearing_impaired,
-                    'ai_translated': chosen.ai_translated,
-                    'moviehash_match': chosen.metadata.get('hash_match', False) if chosen.metadata else False,
-                    'url': chosen.metadata.get('url', '') if chosen.metadata else ''
-                }
-                gc.collect()
-                return result
-        gc.collect()
-    except:
-        pass
+            search_params = {
+                'imdb_id': imdb_id,
+                'languages': [lang],
+                'season': season,
+                'episode': episode,
+                'content_type': content_type
+            }
+            
+            results_by_provider = search_providers_parallel(user, active_providers, search_params, timeout=10)
+            results_by_provider = {k: [r for r in v if r.language == lang] for k, v in results_by_provider.items()}
+        except:
+            return None
     
+    # Process results
+    for provider_name, lang_results in results_by_provider.items():
+        if not lang_results:
+            continue
+        
+        if episode:
+            matching = []
+            matching_ep_only = []
+            
+            for r in lang_results:
+                parts = extract_release_components(r.release_name)
+                if season and parts['season_episode'] == f"s{season:02d}e{episode:02d}":
+                    matching.append(r)
+                else:
+                    ep_patterns = [f' {episode:03d}', f'-{episode:03d}', f' {episode:02d} ', f'-{episode:02d}-']
+                    if any(pattern in r.release_name.lower() for pattern in ep_patterns):
+                        matching_ep_only.append(r)
+            
+            candidates = matching if matching else matching_ep_only
+            if candidates:
+                non_ai = [r for r in candidates if not r.ai_translated]
+                chosen = non_ai[0] if non_ai else candidates[0]
+            else:
+                non_ai = [r for r in lang_results if not r.ai_translated]
+                chosen = non_ai[0] if non_ai else (lang_results[0] if lang_results else None)
+        else:
+            non_ai = [r for r in lang_results if not r.ai_translated]
+            chosen = non_ai[0] if non_ai else (lang_results[0] if lang_results else None)
+        
+        if chosen:
+            result = {
+                'type': f'{provider_name}_auto',
+                'provider_name': provider_name,
+                'provider_subtitle_id': chosen.subtitle_id,
+                'provider_metadata': {'release_name': chosen.release_name},
+                'details': {'file_id': chosen.subtitle_id},
+                'release_name': chosen.release_name,
+                'uploader': chosen.uploader,
+                'rating': chosen.rating,
+                'download_count': chosen.download_count,
+                'hearing_impaired': chosen.hearing_impaired,
+                'ai_translated': chosen.ai_translated,
+                'moviehash_match': chosen.metadata.get('hash_match', False) if chosen.metadata else False,
+                'url': chosen.metadata.get('url', '') if chosen.metadata else ''
+            }
+            if not cached_results:
+                gc.collect()
+            return result
+    
+    if not cached_results:
+        gc.collect()
     return None
 
 

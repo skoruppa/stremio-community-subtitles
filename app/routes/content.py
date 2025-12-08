@@ -149,9 +149,7 @@ def content_detail(activity_id):
     
     # Determine active subtitle for each language using cached provider results
     for lang_code in current_user.preferred_languages:
-        from .utils import get_active_subtitle_details_with_cache
-        
-        active_subtitle_info = get_active_subtitle_details_with_cache(
+        active_subtitle_info = get_active_subtitle_details(
             current_user,
             activity.content_id,
             activity.video_hash,
