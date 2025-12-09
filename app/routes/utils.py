@@ -412,7 +412,7 @@ def _search_providers_by_hash(user, imdb_id, video_hash, content_type, lang, sea
             'content_type': content_type
         }
         
-        results_by_provider = search_providers_parallel(user, active_providers, search_params, timeout=10)
+        results_by_provider = search_providers_parallel(user, active_providers, search_params, timeout=3)
         
         for provider_name, results in results_by_provider.items():
             for result in results:
@@ -437,7 +437,7 @@ def _search_providers_by_hash(user, imdb_id, video_hash, content_type, lang, sea
                         'url': result.metadata.get('url', '') if result.metadata else ''
                     }
     except Exception as e:
-        current_app.logger.error(f"Error in provider hash search: {e}")
+        current_app.logger.warning(f"Error in provider hash search: {e}")
     return None
 
 
@@ -491,7 +491,7 @@ def _find_best_match_by_filename(user, content_id, imdb_id, video_filename, cont
                 'video_filename': video_filename
             }
             
-            results_by_provider = search_providers_parallel(user, active_providers, search_params, timeout=10)
+            results_by_provider = search_providers_parallel(user, active_providers, search_params, timeout=3)
             
             for provider_name, results in results_by_provider.items():
                 for result in results:
@@ -579,7 +579,7 @@ def _find_fallback_subtitle(user, content_id, imdb_id, content_type, lang, seaso
                 'content_type': content_type
             }
             
-            results_by_provider = search_providers_parallel(user, active_providers, search_params, timeout=10)
+            results_by_provider = search_providers_parallel(user, active_providers, search_params, timeout=3)
             results_by_provider = {k: [r for r in v if r.language == lang] for k, v in results_by_provider.items()}
         except:
             return None

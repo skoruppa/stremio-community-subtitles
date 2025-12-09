@@ -66,9 +66,6 @@ class Config:
             'postgresql://stremio_community_subs:password@localhost:5436/stremio_community_subs?sslmode=disable'
     
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    SQLALCHEMY_ENGINE_OPTIONS = {
-        'pool_pre_ping': True
-    }
     
     TMDB_KEY = os.environ.get('TMDB_API_KEY')
     OPENSUBTITLES_API_KEY = os.environ.get('OPENSUBTITLES_API_KEY')
@@ -81,6 +78,14 @@ class Config:
     CACHE_TYPE = 'SimpleCache'
     # CACHE_DIR = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'instance/cache')
     CACHE_DEFAULT_TIMEOUT = 300
+    
+    # Database connection pool settings
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        'pool_pre_ping': True,
+        'pool_size': 10,
+        'max_overflow': 20,
+        'pool_recycle': 3600
+    }
 
     MAX_USER_ACTIVITIES = int(os.environ.get('MAX_USER_ACTIVITIES') or '15')
 
