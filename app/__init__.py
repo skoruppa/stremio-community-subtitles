@@ -43,6 +43,16 @@ def create_app():
     else:
         logging.basicConfig(level=logging.INFO)
 
+    # Setup Better Stack logging before other initializations
+    if app.config.get('USE_BETTERSTACK') and app.config.get('BETTERSTACK_SOURCE_TOKEN'):
+        try:
+            from logtail import LogtailHandler
+            handler = LogtailHandler(source_token=app.config['BETTERSTACK_SOURCE_TOKEN'])
+            app.logger.addHandler(handler)
+            app.logger.info("Better Stack logging enabled")
+        except Exception as e:
+            app.logger.warning(f"Failed to setup Better Stack logging: {e}")
+    
     db.init_app(app)
     migrate.init_app(app, db)
     login_manager.init_app(app)
