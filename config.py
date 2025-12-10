@@ -74,6 +74,7 @@ class Config:
     # Better Stack (Logtail) configuration
     USE_BETTERSTACK = os.environ.get('USE_BETTERSTACK', 'false').lower() in ['true', '1', 't', 'y', 'yes']
     BETTERSTACK_SOURCE_TOKEN = os.environ.get('BETTERSTACK_SOURCE_TOKEN')
+    BETTERSTACK_HOST = os.environ.get('BETTERSTACK_HOST', 'https://in.logs.betterstack.com')
 
     UPLOAD_FOLDER = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'uploads')
     

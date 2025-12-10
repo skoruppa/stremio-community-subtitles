@@ -47,7 +47,10 @@ def create_app():
     if app.config.get('USE_BETTERSTACK') and app.config.get('BETTERSTACK_SOURCE_TOKEN'):
         try:
             from logtail import LogtailHandler
-            handler = LogtailHandler(source_token=app.config['BETTERSTACK_SOURCE_TOKEN'])
+            handler = LogtailHandler(
+                source_token=app.config['BETTERSTACK_SOURCE_TOKEN'],
+                host=app.config.get('BETTERSTACK_HOST', 'https://in.logs.betterstack.com')
+            )
             app.logger.addHandler(handler)
             app.logger.info("Better Stack logging enabled")
         except Exception as e:
