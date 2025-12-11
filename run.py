@@ -81,17 +81,14 @@ def create_admin_command(email, username, password):
 
 
 if __name__ == '__main__':
-    # Get host and port from environment variables or use defaults
-    host = os.environ.get('FLASK_RUN_HOST', '0.0.0.0')
-    try:
-        port = int(os.environ.get('FLASK_RUN_PORT', '5000'))
-    except ValueError:
-        port = 5000  # Default port if env var is not an integer
-
+    use_gevent = app.config.get('USE_GEVENT', True)
+    app.logger.info(f"Provider async mode: {'gevent' if use_gevent else 'threads'}")
+    
     if app.config['DEBUG']:
-        # Use Flask's built-in server for development
-        app.run(host=host, port=port, debug=True)
+        app.run(debug=True)
     else:
-        # Use waitress for production
-        print(f"Starting production server on {host}:{port}")
+        # For waitress, read from environment
+        host = os.environ.get('FLASK_RUN_HOST', '0.0.0.0')
+        port = int(os.environ.get('FLASK_RUN_PORT', '5000'))
+        app.logger.info(f"Starting production server on {host}:{port}")
         serve(app, host=host, port=port)

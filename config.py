@@ -95,11 +95,18 @@ class Config:
     }
 
     MAX_USER_ACTIVITIES = int(os.environ.get('MAX_USER_ACTIVITIES') or '15')
+    
+    # Gevent support (disabled in development for debugger compatibility)
+    USE_GEVENT = True
+    
+    # Flask server configuration (for app.run() and waitress)
+    SERVER_NAME = None  # Flask will use FLASK_RUN_HOST:FLASK_RUN_PORT from .env
 
 
 class DevelopmentConfig(Config):
     """Development configuration."""
     DEBUG = True
+    USE_GEVENT = False  # Disable gevent in development for debugger compatibility
 
 
 class ProductionConfig(Config):
