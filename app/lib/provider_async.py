@@ -22,6 +22,10 @@ def search_providers_parallel(user, active_providers, search_params, timeout=5):
     import time
     
     results_by_provider = {}
+    
+    if not active_providers:
+        return results_by_provider
+    
     app = current_app._get_current_object()
     user_id = user.id
     start_time = time.time()
@@ -33,8 +37,10 @@ def search_providers_parallel(user, active_providers, search_params, timeout=5):
                 results = provider.search(user=thread_user, **search_params)
                 return (provider.name, results)
             except Exception as e:
-                app.logger.error(f"Provider {provider.name} search failed: {e}")
+                app.logger.warning(f"Provider {provider.name} search failed: {e}")
                 return (provider.name, [])
+            finally:
+                db.session.remove()
     
     with ThreadPoolExecutor(max_workers=min(len(active_providers), 3)) as executor:
         future_to_provider = {
@@ -73,6 +79,9 @@ def search_providers_with_fallback(user, active_providers, search_params, timeou
     from .. import db
     import time
     
+    if not active_providers:
+        return None
+    
     app = current_app._get_current_object()
     user_id = user.id
     start_time = time.time()
@@ -86,6 +95,8 @@ def search_providers_with_fallback(user, active_providers, search_params, timeou
             except Exception as e:
                 app.logger.warning(f"Provider {provider.name} search failed: {e}")
                 return None
+            finally:
+                db.session.remove()
     
     with ThreadPoolExecutor(max_workers=min(len(active_providers), 3)) as executor:
         future_to_provider = {

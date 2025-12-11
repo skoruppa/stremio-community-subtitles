@@ -87,9 +87,11 @@ class Config:
     # Database connection pool settings
     SQLALCHEMY_ENGINE_OPTIONS = {
         'pool_pre_ping': True,
-        'pool_size': 10,
-        'max_overflow': 20,
-        'pool_recycle': 3600
+        'pool_size': 5,
+        'max_overflow': 10,
+        'pool_recycle': 300,
+        'pool_timeout': 30,
+        'pool_reset_on_return': 'rollback'
     }
 
     MAX_USER_ACTIVITIES = int(os.environ.get('MAX_USER_ACTIVITIES') or '15')

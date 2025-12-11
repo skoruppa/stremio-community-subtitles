@@ -462,7 +462,7 @@ def unified_download(manifest_token: str, download_identifier: str):
     if provider_subtitle_url:
         # Regular URL download
         try:
-            r = requests.get(provider_subtitle_url, timeout=10)
+            r = requests.get(provider_subtitle_url, timeout=5)
             r.raise_for_status()
             
             # Check if response is ZIP (SubDL returns ZIP files)
@@ -504,8 +504,14 @@ def unified_download(manifest_token: str, download_identifier: str):
                     # ASS requested but provider returned plain text - serve as VTT
                     current_app.logger.info(f"ASS requested but provider returned plain text, serving as VTT")
                 vtt_content = r.text
+        except requests.Timeout:
+            current_app.logger.warning(f"Timeout fetching subtitle from {provider_subtitle_url}")
+            message_key = 'provider_timeout'
+        except requests.RequestException as e:
+            current_app.logger.warning(f"Error fetching subtitle from provider: {e}")
+            message_key = 'provider_error'
         except Exception as e:
-            current_app.logger.error(f"Error fetching subtitle from provider URL: {e}", exc_info=True)
+            current_app.logger.error(f"Unexpected error fetching subtitle: {e}")
             message_key = 'error'
 
     if vtt_content:
@@ -522,7 +528,8 @@ def unified_download(manifest_token: str, download_identifier: str):
         'no_subs_found': "SCS: No Subtitles Found: Upload your own through the web interface.",
         'error': "SCS: An error occurred, please try again in a short period",
         'provider_integration_inactive': f"SCS: {failed_provider_name or 'Provider'} is not connected. Please reconnect in account settings.",
-        'provider_error': f"SCS: Error fetching from {failed_provider_name or 'provider'}. Please reconnect in account settings or try again later."
+        'provider_error': f"SCS: Error fetching from {failed_provider_name or 'provider'}. Please reconnect in account settings or try again later.",
+        'provider_timeout': f"SCS: {failed_provider_name or 'Provider'} timeout. The service is slow or unavailable, try again later."
     }
     message_text = messages.get(message_key, "An error occurred or subtitles need selection.")
     current_app.logger.info(f"Serving placeholder message (key: '{message_key}', provider: '{failed_provider_name}') for context: {context}")
