@@ -51,11 +51,15 @@ class SubSourceProvider(BaseSubtitleProvider):
         if not api_key:
             raise ProviderAuthError("API key is required")
         
-        # Test API key
+        # Test API key with random IMDb ID to avoid rate limiting
         try:
+            import random
+            test_ids = ['tt0111161', 'tt0068646', 'tt0468569', 'tt0167260', 'tt0110912', 'tt0120737', 'tt0109830', 'tt0137523', 'tt1375666', 'tt0080684',
+                        'tt0133093', 'tt0099685', 'tt0073486', 'tt0114369', 'tt0047478', 'tt0317248', 'tt0102926', 'tt0816692', 'tt0245429', 'tt0120815']
+            test_id = random.choice(test_ids)
+            
             client = SubSourceClient(api_key)
-            # Try a simple search to validate key
-            client.search_movie('tt0111161')
+            client.search_movie(test_id)
             
             return {
                 'api_key': api_key,
@@ -197,7 +201,12 @@ class SubSourceProvider(BaseSubtitleProvider):
             return results
             
         except Exception as e:
-            current_app.logger.error(f"SubSource search failed: {e}")
+            error_msg = str(e)
+            # Log as warning for rate limiting (429), error for others
+            if '429' in error_msg or 'Too Many Requests' in error_msg:
+                current_app.logger.warning(f"SubSource search failed: {e}")
+            else:
+                current_app.logger.error(f"SubSource search failed: {e}")
             raise
     
     def get_download_url(self, user, subtitle_id: str) -> str:

@@ -38,8 +38,9 @@ def search_subtitles(api_key, imdb_id=None, tmdb_id=None, languages=None, season
         params['episode_number'] = episode
     if type:
         params['type'] = type  # 'movie' or 'tv'
-    if file_name:
-        params['file_name'] = file_name
+    # SubDL doesn't support file_name parameter according to official docs
+    # if file_name:
+    #     params['file_name'] = file_name
     
     headers = {
         'User-Agent': USER_AGENT

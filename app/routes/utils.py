@@ -700,6 +700,14 @@ def extract_subtitle_from_zip(zip_content: bytes, episode: int = None):
             if not subtitle_files:
                 raise ValueError(f"No subtitle file found in ZIP archive. Files in archive: {all_files}. Episode filter: {episode}")
             
+            # If only one file in archive, return it regardless of episode filter
+            if len(subtitle_files) == 1:
+                file_info = subtitle_files[0]
+                content = zf.read(file_info)
+                result = (content, file_info.filename, os.path.splitext(file_info.filename)[1].lower())
+                del zip_buffer
+                return result
+            
             # If episode number provided, try to find matching file
             if episode is not None:
                 episode_patterns = [
