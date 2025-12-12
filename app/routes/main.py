@@ -62,9 +62,14 @@ def dashboard():
 
 
 @main_bp.route('/configure')
-@login_required
 def configure():
-    """Displays the addon installation page."""
+    """Displays the addon installation page or login form."""
+    if not current_user.is_authenticated:
+        from ..forms import LoginForm
+        form = LoginForm()
+        flash('Please log in to access this page.', 'info')
+        return render_template('auth/login.html', form=form, embedded=True)
+    
     # Generate manifest URL parts
     from urllib.parse import urlparse
 

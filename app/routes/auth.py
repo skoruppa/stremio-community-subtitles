@@ -49,7 +49,15 @@ def login():
         current_app.logger.info(f"User {user.username} logged in")
 
         next_page = session.pop('next_url', None) or request.args.get('next')
-        if not next_page or urlparse(next_page).netloc != '':
+        if not next_page:
+            # Try referrer if no explicit next page
+            if request.referrer:
+                parsed_referrer = urlparse(request.referrer)
+                # Only use referrer if it's from same host
+                if not parsed_referrer.netloc or parsed_referrer.netloc == request.host:
+                    next_page = parsed_referrer.path
+        
+        if not next_page or (urlparse(next_page).netloc and urlparse(next_page).netloc != request.host):
             next_page = url_for('main.dashboard')
         return redirect(next_page)
     
