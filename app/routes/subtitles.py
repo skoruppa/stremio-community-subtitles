@@ -449,7 +449,11 @@ def unified_download(manifest_token: str, download_identifier: str):
                             current_app.logger.info(f"Got download URL from {provider_name}")
                     except ProviderDownloadError as e:
                         error_msg = str(e)
-                        current_app.logger.error(f"{provider_name} API error: {error_msg}")
+                        # Log as warning for client errors (4xx), error for server errors
+                        if hasattr(e, 'status_code') and e.status_code and 400 <= e.status_code < 500:
+                            current_app.logger.warning(f"{provider_name} API error: {error_msg}")
+                        else:
+                            current_app.logger.error(f"{provider_name} API error: {error_msg}")
                         message_key = 'provider_download_error'
                         failed_provider_name = provider_name
                         failed_provider_error = error_msg
