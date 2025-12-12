@@ -167,7 +167,12 @@ def login(username, password, user=None):
                 error_message += f" - {error_data.get('message', e.response.text)}"
         except ValueError:  # If error response is not JSON or parsing HTML failed
             error_message += f" - {e.response.text}"
-        current_app.logger.error(f"OpenSubtitles API HTTP error during login: {error_message}")
+        
+        # Log as warning for client errors (4xx), error for server errors (5xx)
+        if 400 <= e.response.status_code < 500:
+            current_app.logger.warning(f"OpenSubtitles API HTTP error during login: {error_message}")
+        else:
+            current_app.logger.error(f"OpenSubtitles API HTTP error during login: {error_message}")
         raise OpenSubtitlesError(error_message, status_code=e.response.status_code)
     except requests.exceptions.RequestException as e:
         current_app.logger.error(f"OpenSubtitles API request error during login: {e}")
@@ -303,7 +308,7 @@ def search_subtitles(imdb_id=None, query=None, languages=None, moviehash=None,
             error_message += f" - {error_data.get('message', e.response.text)}"
         except ValueError:
             error_message += f" - {e.response.text}"
-        current_app.logger.error(f"OpenSubtitles API HTTP error during authenticated search: {error_message}")
+        current_app.logger.error(f"OpenSubtitles API HTTP error during authenticated search: {error_message} | Request params: {params}")
         raise OpenSubtitlesError(error_message, status_code=e.response.status_code)
     except requests.exceptions.RequestException as e:
         current_app.logger.error(f"OpenSubtitles API request error during authenticated search: {e}")
@@ -366,7 +371,12 @@ def request_download_link(file_id, user=None):
             error_message += f" - {message}"
         except ValueError:
             error_message += f" - {e.response.text}"
-        current_app.logger.error(f"OpenSubtitles API HTTP error during authenticated download request: {error_message}")
+        
+        # Log as warning for client errors (4xx), error for server errors (5xx)
+        if 400 <= e.response.status_code < 500:
+            current_app.logger.warning(f"OpenSubtitles API HTTP error during authenticated download request: {error_message} | file_id: {file_id}")
+        else:
+            current_app.logger.error(f"OpenSubtitles API HTTP error during authenticated download request: {error_message} | file_id: {file_id}")
         raise OpenSubtitlesError(error_message, status_code=e.response.status_code)
     except requests.exceptions.RequestException as e:
         current_app.logger.error(f"OpenSubtitles API request error during authenticated download request: {e}")

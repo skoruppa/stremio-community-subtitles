@@ -47,7 +47,7 @@ def search_by_hash(filehash, filesize, filename, api_user="subliminal", api_pass
             'release': filename or 'Hash match'
         }
     except Exception as e:
-        current_app.logger.error(f"Napisy24 hash search error: {e}")
+        current_app.logger.error(f"Napisy24 hash search error: {e} | hash={filehash}, size={filesize}, filename={filename}")
         raise Napisy24Error(f"Hash search failed: {e}")
 
 
@@ -67,7 +67,7 @@ def search_by_title(title, season=None, episode=None, filename=None):
         
         return _parse_xml_response(response.text, season, episode, filename)
     except Exception as e:
-        current_app.logger.error(f"Napisy24 title search error: {e}")
+        current_app.logger.error(f"Napisy24 title search error: {e} | title={title}, season={season}, episode={episode}")
         raise Napisy24Error(f"Title search failed: {e}")
 
 
@@ -82,7 +82,7 @@ def search_by_imdb(imdb_id, season=None, episode=None, filename=None):
         
         return _parse_xml_response(response.text, season, episode, filename)
     except Exception as e:
-        current_app.logger.error(f"Napisy24 IMDb search error: {e}")
+        current_app.logger.error(f"Napisy24 IMDb search error: {e} | imdb_id={imdb_id}, season={season}, episode={episode}")
         raise Napisy24Error(f"IMDb search failed: {e}")
 
 
@@ -169,5 +169,5 @@ def download_subtitle(subtitle_id):
         
         return response.content
     except Exception as e:
-        current_app.logger.error(f"Napisy24 download error: {e}")
+        current_app.logger.error(f"Napisy24 download error: {e} | subtitle_id={subtitle_id}")
         raise Napisy24Error(f"Download failed: {e}")

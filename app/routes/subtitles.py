@@ -297,6 +297,7 @@ def unified_download(manifest_token: str, download_identifier: str):
     provider_subtitle_to_serve = None
     message_key = None
     failed_provider_name = None
+    failed_provider_error = None
     vtt_content = None
 
     if active_subtitle_info['type'] == 'local':
@@ -447,14 +448,18 @@ def unified_download(manifest_token: str, download_identifier: str):
                         else:
                             current_app.logger.info(f"Got download URL from {provider_name}")
                     except ProviderDownloadError as e:
-                        current_app.logger.error(f"{provider_name} API error: {e}")
-                        message_key = 'provider_error'
+                        error_msg = str(e)
+                        current_app.logger.error(f"{provider_name} API error: {error_msg}")
+                        message_key = 'provider_download_error'
                         failed_provider_name = provider_name
+                        failed_provider_error = error_msg
                     except Exception as e:
-                        current_app.logger.error(f"Unexpected error serving {provider_name} subtitle {subtitle_id}: {e}",
+                        error_msg = str(e)
+                        current_app.logger.error(f"Unexpected error serving {provider_name} subtitle {subtitle_id}: {error_msg}",
                                                  exc_info=True)
-                        message_key = 'provider_error'
+                        message_key = 'provider_download_error'
                         failed_provider_name = provider_name
+                        failed_provider_error = error_msg
             except Exception as e:
                 current_app.logger.error(f"Error accessing provider registry: {e}", exc_info=True)
                 message_key = 'error'
@@ -529,7 +534,8 @@ def unified_download(manifest_token: str, download_identifier: str):
         'error': "SCS: An error occurred, please try again in a short period",
         'provider_integration_inactive': f"SCS: {failed_provider_name or 'Provider'} is not connected. Please reconnect in account settings.",
         'provider_error': f"SCS: Error fetching from {failed_provider_name or 'provider'}. Please reconnect in account settings or try again later.",
-        'provider_timeout': f"SCS: {failed_provider_name or 'Provider'} timeout. The service is slow or unavailable, try again later."
+        'provider_timeout': f"SCS: {failed_provider_name or 'Provider'} timeout. The service is slow or unavailable, try again later.",
+        'provider_download_error': f"SCS: {failed_provider_name or 'Provider'} error: {failed_provider_error or 'Download failed'}."
     }
     message_text = messages.get(message_key, "An error occurred or subtitles need selection.")
     current_app.logger.info(f"Serving placeholder message (key: '{message_key}', provider: '{failed_provider_name}') for context: {context}")

@@ -687,6 +687,7 @@ def extract_subtitle_from_zip(zip_content: bytes, episode: int = None):
         zip_buffer = io.BytesIO(zip_content)
         with zipfile.ZipFile(zip_buffer) as zf:
             subtitle_files = []
+            all_files = [f.filename for f in zf.filelist]
             
             # Collect all subtitle files
             for file_info in zf.filelist:
@@ -697,7 +698,7 @@ def extract_subtitle_from_zip(zip_content: bytes, episode: int = None):
                     subtitle_files.append(file_info)
             
             if not subtitle_files:
-                raise ValueError("No subtitle file found in ZIP archive")
+                raise ValueError(f"No subtitle file found in ZIP archive. Files in archive: {all_files}. Episode filter: {episode}")
             
             # If episode number provided, try to find matching file
             if episode is not None:

@@ -57,7 +57,7 @@ def search_subtitles(api_key, imdb_id=None, tmdb_id=None, languages=None, season
             error_msg += f" - {error_data.get('message', e.response.text)}"
         except:
             error_msg += f" - {e.response.text}"
-        current_app.logger.error(error_msg)
+        current_app.logger.error(f"{error_msg} | Request: {base_url} params={params}")
         raise SubDLError(error_msg, e.response.status_code)
     except requests.exceptions.RequestException as e:
         current_app.logger.error(f"SubDL request error: {e}")
