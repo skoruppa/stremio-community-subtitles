@@ -11,7 +11,7 @@ except ImportError:
     from concurrent.futures import ThreadPoolExecutor, as_completed
 
 
-def search_providers_parallel(user, active_providers, search_params, timeout=5):
+def search_providers_parallel(user, active_providers, search_params, timeout=10):
     use_gevent = GEVENT_AVAILABLE and current_app.config.get('USE_GEVENT', True)
     if use_gevent:
         return _search_providers_parallel_gevent(user, active_providers, search_params, timeout)
@@ -19,7 +19,7 @@ def search_providers_parallel(user, active_providers, search_params, timeout=5):
         return _search_providers_parallel_threads(user, active_providers, search_params, timeout)
 
 
-def _search_providers_parallel_gevent(user, active_providers, search_params, timeout=5):
+def _search_providers_parallel_gevent(user, active_providers, search_params, timeout=10):
     """
     Search multiple providers in parallel using gevent greenlets.
     
@@ -112,7 +112,7 @@ def _search_providers_parallel_threads(user, active_providers, search_params, ti
         
         for future in as_completed(future_to_provider, timeout=timeout):
             try:
-                provider_name, results = future.result(timeout=0.5)
+                provider_name, results = future.result(timeout=1)
                 results_by_provider[provider_name] = results
             except Exception as e:
                 provider = future_to_provider[future]
@@ -123,7 +123,7 @@ def _search_providers_parallel_threads(user, active_providers, search_params, ti
     return results_by_provider
 
 
-def search_providers_with_fallback(user, active_providers, search_params, timeout=5):
+def search_providers_with_fallback(user, active_providers, search_params, timeout=10):
     use_gevent = GEVENT_AVAILABLE and current_app.config.get('USE_GEVENT', True)
     if use_gevent:
         return _search_providers_with_fallback_gevent(user, active_providers, search_params, timeout)
@@ -131,7 +131,7 @@ def search_providers_with_fallback(user, active_providers, search_params, timeou
         return _search_providers_with_fallback_threads(user, active_providers, search_params, timeout)
 
 
-def _search_providers_with_fallback_gevent(user, active_providers, search_params, timeout=5):
+def _search_providers_with_fallback_gevent(user, active_providers, search_params, timeout=10):
     """
     Search providers in parallel and return first successful result.
     Used for hash matching and best match scenarios.
@@ -182,7 +182,7 @@ def _search_providers_with_fallback_gevent(user, active_providers, search_params
     return None
 
 
-def _search_providers_with_fallback_threads(user, active_providers, search_params, timeout=5):
+def _search_providers_with_fallback_threads(user, active_providers, search_params, timeout=10):
     """Thread-based fallback implementation"""
     from ..models import User
     from .. import db
@@ -210,7 +210,7 @@ def _search_providers_with_fallback_threads(user, active_providers, search_param
         
         for future in as_completed(future_to_provider, timeout=timeout):
             try:
-                results = future.result(timeout=0.5)
+                results = future.result(timeout=1)
                 if results:
                     gc.collect()
                     return results
