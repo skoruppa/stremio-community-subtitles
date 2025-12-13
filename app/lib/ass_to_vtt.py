@@ -50,7 +50,7 @@ def _convert_ass_color_to_css(ass_color_str: Optional[str]) -> Optional[str]:
             blue_hex, green_hex, red_hex = hex_color[0:2], hex_color[2:4], hex_color[4:6]
             alpha_val = 1.0
         else:
-            logger.warning(f"Invalid ASS color format length: {ass_color_str}")
+            logger.debug(f"Invalid ASS color format length: {ass_color_str}")
             return None
         r, g, b = int(red_hex, 16), int(green_hex, 16), int(blue_hex, 16)
         if alpha_val >= 0.999:
@@ -58,10 +58,10 @@ def _convert_ass_color_to_css(ass_color_str: Optional[str]) -> Optional[str]:
         else:
             return f"rgba({r},{g},{b},{alpha_val})"
     except ValueError:
-        logger.warning(f"Could not parse ASS color: {ass_color_str}")
+        logger.debug(f"Could not parse ASS color: {ass_color_str}")
         return None
     except Exception as e:
-        logger.warning(f"Unexpected error parsing ASS color {ass_color_str}: {e}")
+        logger.debug(f"Unexpected error parsing ASS color {ass_color_str}: {e}")
         return None
 
 
@@ -156,14 +156,14 @@ class AssParser:
         self._split_into_sections(content)
 
         if not self.sections and SECTION_EVENTS not in self.sections:
-            logger.warning("No sections found or [Events] section is missing.")
+            logger.debug("No sections found or [Events] section is missing.")
             if not self.sections.get(SECTION_EVENTS): raise AssParsingError(
                 "Missing [Events] section; other key sections might also be missing.")
 
         self._parse_script_info()
         self._parse_styles()
         self._parse_events()
-        if not self.events: logger.warning("No events (Dialogue lines) parsed.")
+        if not self.events: logger.debug("No events (Dialogue lines) parsed.")
         logger.debug("Parsing finished.")
         return True
 
@@ -186,7 +186,7 @@ class AssParser:
     def _parse_script_info(self):
         # Using the version with enhanced logging from previous step
         if SECTION_SCRIPT_INFO not in self.sections:
-            logger.warning(
+            logger.debug(
                 "Missing [Script Info] section. Using default values for resolution (if not provided otherwise).")
             self.info['PlayResX'] = self.info.get('PlayResX', 0)
             self.info['PlayResY'] = self.info.get('PlayResY', 0)
@@ -202,7 +202,7 @@ class AssParser:
                 parsed_info_this_run[stripped_key] = stripped_value
                 logger.debug(f"  Found key: '{stripped_key}', value: '{stripped_value}'")
             elif not line.startswith(';'):
-                logger.warning(f"  Ignoring unknown line in [Script Info]: {line}")
+                logger.debug(f"  Ignoring unknown line in [Script Info]: {line}")
 
         for key, value in parsed_info_this_run.items(): self.info[key] = value
         logger.debug(f"Updated self.info after parsing [Script Info]: {self.info}")
@@ -215,7 +215,7 @@ class AssParser:
             self.info['PlayResX'] = int(stripped_resx)
             logger.debug(f"Successfully converted PlayResX to int: {self.info['PlayResX']}")
         except (ValueError, TypeError, AttributeError) as e:
-            logger.warning(
+            logger.debug(
                 f"Invalid or missing PlayResX value ('{raw_resx}'). Could not convert to int. Using 0. Error: {e}")
             self.info['PlayResX'] = 0
 
@@ -227,7 +227,7 @@ class AssParser:
             self.info['PlayResY'] = int(stripped_resy)
             logger.debug(f"Successfully converted PlayResY to int: {self.info['PlayResY']}")
         except (ValueError, TypeError, AttributeError) as e:
-            logger.warning(
+            logger.debug(
                 f"Invalid or missing PlayResY value ('{raw_resy}'). Could not convert to int. Using 0. Error: {e}")
             self.info['PlayResY'] = 0
 
@@ -241,7 +241,7 @@ class AssParser:
         elif SECTION_STYLES_V4 in self.sections:
             styles_section_name, self._style_format = SECTION_STYLES_V4, ALT_STYLE_FORMAT_SSA.split(',')
         else:
-            logger.warning("Missing styles section.")
+            logger.debug("Missing styles section.")
             return
         logger.debug(f"Parsing section: [{styles_section_name}]")
         for line in self.sections[styles_section_name]:
@@ -255,10 +255,10 @@ class AssParser:
                 if not format_line_found:
                     default_format = DEFAULT_STYLE_FORMAT if styles_section_name == SECTION_STYLES_V4PLUS else ALT_STYLE_FORMAT_SSA
                     self._style_format, format_line_found = default_format.split(','), True
-                    logger.warning(f"Missing 'Format:' in styles. Using default for {styles_section_name}.")
+                    logger.debug(f"Missing 'Format:' in styles. Using default for {styles_section_name}.")
                 parts = line[len("style:"):].strip().split(',', len(self._style_format) - 1)
                 if len(parts) != len(self._style_format):
-                    logger.warning(f"Incorrect field count in style line: {line}. Ignoring.")
+                    logger.debug(f"Incorrect field count in style line: {line}. Ignoring.")
                     continue
                 style_dict = {key: parts[i].strip() for i, key in enumerate(self._style_format)}
                 style_name = style_dict.get('Name')
@@ -275,7 +275,7 @@ class AssParser:
                                 else:
                                     style_dict[key] = float(style_dict[key])
                             except (ValueError, TypeError):
-                                logger.warning(
+                                logger.debug(
                                     f"Invalid numeric value for '{key}' in style '{style_name}': {style_dict[key]}. Using 0.")
                                 style_dict[key] = 0
                     normalized_style_name = style_name.replace(" ", "_")
@@ -283,11 +283,11 @@ class AssParser:
                     self.styles[normalized_style_name]['OriginalName'] = style_name
                     logger.debug(f"Parsed style: {normalized_style_name} (originally: {style_name})")
                 else:
-                    logger.warning(f"Ignoring style without a name: {line}")
+                    logger.debug(f"Ignoring style without a name: {line}")
 
     def _parse_events(self):
         if SECTION_EVENTS not in self.sections:
-            logger.warning("Missing [Events] section. No subtitles.")
+            logger.debug("Missing [Events] section. No subtitles.")
             self.events = []
             return
         self._event_format, format_line_found = DEFAULT_EVENT_FORMAT.split(','), False
@@ -308,11 +308,11 @@ class AssParser:
                         self._event_format = ALT_EVENT_FORMAT_MARKED.split(',')
                         if 'Marked' in self._event_format and 'Layer' not in self._event_format: self._event_format = [
                             'Layer' if h == 'Marked' else h for h in self._event_format]
-                    logger.warning("Missing 'Format:' line in [Events]. Using default/inferred format.")
+                    logger.debug("Missing 'Format:' line in [Events]. Using default/inferred format.")
                     format_line_found = True
                 parts = line[len("dialogue:"):].strip().split(',', len(self._event_format) - 1)
                 if len(parts) != len(self._event_format):
-                    logger.warning(f"Incorrect field count in Dialogue: {line}. Ignoring.")
+                    logger.debug(f"Incorrect field count in Dialogue: {line}. Ignoring.")
                     continue
                 event_dict = {}
                 try:
@@ -322,11 +322,11 @@ class AssParser:
                     if 'Style' in event_dict: event_dict['Style'] = event_dict['Style'].replace(" ", "_")
                     self.events.append(event_dict)
                 except ValueError:
-                    logger.warning(f"Could not parse numeric values in Dialogue: {line}. Ignoring.")
+                    logger.debug(f"Could not parse numeric values in Dialogue: {line}. Ignoring.")
                 except Exception as e:
-                    logger.warning(f"Error parsing Dialogue line: {line}. Error: {e}. Ignoring.")
+                    logger.debug(f"Error parsing Dialogue line: {line}. Error: {e}. Ignoring.")
             elif not line_lower.startswith("comment:"):
-                logger.warning(f"Ignoring unknown line in [Events]: {line}")
+                logger.debug(f"Ignoring unknown line in [Events]: {line}")
 
 
 class VttConverter:
@@ -336,14 +336,14 @@ class VttConverter:
         self.info, self.styles, self.events = info, styles, events
         self.play_res_x, self.play_res_y = info.get('PlayResX', 0), info.get('PlayResY', 0)
         self.default_style_name = next(iter(styles.keys()), None)
-        if not self.default_style_name and styles: logger.warning("Could not determine a default style.")
+        if not self.default_style_name and styles: logger.debug("Could not determine a default style.")
 
     def _get_style(self, style_name: str) -> Dict[str, Any]:
         if style_name in self.styles: return self.styles[style_name]
         if self.default_style_name:
-            logger.warning(f"Style '{style_name}' not found. Using default '{self.default_style_name}'.")
+            logger.debug(f"Style '{style_name}' not found. Using default '{self.default_style_name}'.")
             return self.styles[self.default_style_name]
-        logger.warning(f"Style '{style_name}' not found and no default style.")
+        logger.debug(f"Style '{style_name}' not found and no default style.")
         return {}
 
     def _convert_timestamp(self, ass_time: str) -> str:
@@ -444,7 +444,7 @@ class VttConverter:
                             logger.debug(
                                 f"Tag \\an{tag_val_str}: Set VTT align={vtt_txt_align}, line={override_settings['line']}, line-align={vtt_ln_anchor}")
                         else:
-                            logger.warning(f"Ignoring invalid alignment tag: \\{tag_content}")
+                            logger.debug(f"Ignoring invalid alignment tag: \\{tag_content}")
                     elif tag_content.startswith('pos('):
                         match = re.match(r'pos\s*\(\s*([\d.]+)\s*,\s*([\d.]+)\s*\)', tag_content)
                         if match and self.play_res_x > 0 and self.play_res_y > 0:
@@ -468,9 +468,9 @@ class VttConverter:
                                      'line-align': 'start', 'position-align': pos_align})
                                 logger.debug(f"Tag \\{tag_content}: Set VTT position={pos_p:.2f}%, line={line_p:.2f}%, position-align={pos_align}")
                             except ValueError:
-                                logger.warning(f"Ignoring invalid values in tag \\{tag_content}")
+                                logger.debug(f"Ignoring invalid values in tag \\{tag_content}")
                         else:
-                            logger.warning(f"Ignoring tag \\{tag_content}. Missing PlayRes or invalid format.")
+                            logger.debug(f"Ignoring tag \\{tag_content}. Missing PlayRes or invalid format.")
                     elif tag_content == 'r':
                         base_style = self._get_style(current_event_style_name)
                         is_bold, is_italic, is_underline = base_style.get('Bold', 0) in [-1, 1], base_style.get(
@@ -534,7 +534,7 @@ class VttConverter:
             #         else:
             #             logger.debug(f"Font size {font_size_percent}% out of range for style '{style_name_norm}'")
             #     except ValueError:
-            #         logger.warning(f"Invalid Fontsize value '{ass_fontsize_val}' for style '{style_name_norm}'.")
+            #         logger.debug(f"Invalid Fontsize value '{ass_fontsize_val}' for style '{style_name_norm}'.")
 
 
             outline_color_css = _convert_ass_color_to_css(style_props.get('OutlineColour'))
@@ -546,7 +546,7 @@ class VttConverter:
                         rules_for_style.append(f"-webkit-text-stroke-width: {int(outline_width)}px;")
                     rules_for_style.append(f"-webkit-text-stroke-color: {outline_color_css};")
                 except ValueError:
-                    logger.warning(f"Invalid Outline width value '{outline_width_val}' for style '{style_name_norm}'.")
+                    logger.debug(f"Invalid Outline width value '{outline_width_val}' for style '{style_name_norm}'.")
 
             border_style_val = style_props.get('BorderStyle')
             border_style = 1
@@ -554,7 +554,7 @@ class VttConverter:
                 try:
                     border_style = int(float(border_style_val))
                 except ValueError:
-                    logger.warning(f"Invalid BorderStyle value '{border_style_val}' for style '{style_name_norm}'.")
+                    logger.debug(f"Invalid BorderStyle value '{border_style_val}' for style '{style_name_norm}'.")
             back_color_css = _convert_ass_color_to_css(style_props.get('BackColour'))
             shadow_depth_val = style_props.get('Shadow')
             shadow_depth = 0
@@ -562,7 +562,7 @@ class VttConverter:
                 try:
                     shadow_depth = int(float(shadow_depth_val))
                 except ValueError:
-                    logger.warning(f"Invalid Shadow value '{shadow_depth_val}' for style '{style_name_norm}'.")
+                    logger.debug(f"Invalid Shadow value '{shadow_depth_val}' for style '{style_name_norm}'.")
             shadows_list = []
             if shadow_depth > 0:
                 shadow_color_source = back_color_css if border_style == 1 else (
@@ -582,7 +582,7 @@ class VttConverter:
                     spacing_px = float(spacing_val)
                     if spacing_px != 0: rules_for_style.append(f"letter-spacing: {spacing_px}px;")
                 except ValueError:
-                    logger.warning(f"Invalid Spacing value '{spacing_val}' for style '{style_name_norm}'.")
+                    logger.debug(f"Invalid Spacing value '{spacing_val}' for style '{style_name_norm}'.")
 
             if rules_for_style: css_rules.append(f"::cue(.{style_name_norm}) {{ {' '.join(rules_for_style)} }}")
 
@@ -592,7 +592,7 @@ class VttConverter:
     def generate_vtt(self) -> str:
         logger.debug("Starting WebVTT content generation.")
         if not self.events:
-            logger.warning("No events to convert. Returning empty VTT header.")
+            logger.debug("No events to convert. Returning empty VTT header.")
             return "WEBVTT\n"
         try:
             sorted_events = sorted(self.events, key=lambda e: self._parse_ass_time_for_sorting(e['Start']))
