@@ -147,7 +147,7 @@ def addon_stream(manifest_token: str, content_type: str, content_id: str, params
                 for old_activity in oldest_activities:
                     db.session.delete(old_activity)
                     current_app.logger.info(
-                        f"Deleted oldest UserActivity ID {old_activity.id} for user {user.id} to maintain limit of {max_activities}.")
+                        f"Deleted oldest UserActivity ID {old_activity.id} for user {user.id} to maintain limit of {max_activities-1}.")
 
         db.session.commit()
     except Exception as e:
