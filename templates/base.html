@@ -74,6 +74,13 @@
         </div>
     </nav>
 
+    <!-- Coffee Banner (Floating) -->
+    <div id="coffeeBanner" class="alert alert-info alert-dismissible fade show shadow" role="alert" style="display: none; position: fixed; bottom: 30px; right: 20px; z-index: 1050; max-width: 350px;">
+        <i class="fa-solid fa-mug-saucer me-2"></i>
+        Like my addon? Consider <a href="https://buycoffee.to/skoruppa" target="_blank" class="alert-link">buying me a coffee</a>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close" onclick="dismissCoffeeBanner()"></button>
+    </div>
+
     <!-- Main Content -->
     <main class="container">
         <!-- Flash Messages as Toasts -->
@@ -117,8 +124,18 @@
 
     {% block scripts %}
     <script>
+        // Coffee banner management
+        function dismissCoffeeBanner() {
+            localStorage.setItem('coffeeBannerDismissed', 'true');
+        }
+
         // Initialize tooltips
         document.addEventListener('DOMContentLoaded', function() {
+            // Show coffee banner if not dismissed
+            if (!localStorage.getItem('coffeeBannerDismissed')) {
+                document.getElementById('coffeeBanner').style.display = 'block';
+            }
+
             var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
             var tooltipList = tooltipTriggerList.map(function(tooltipTriggerEl) {
                 return new bootstrap.Tooltip(tooltipTriggerEl);

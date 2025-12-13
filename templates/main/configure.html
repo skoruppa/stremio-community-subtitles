@@ -116,6 +116,7 @@
 {% endblock %}
 
 {% block scripts %}
+{{ super() }}
 <script>
 function copyToClipboard(elementId) {
     const element = document.getElementById(elementId);

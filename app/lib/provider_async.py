@@ -1,6 +1,7 @@
 """Asynchronous provider search utilities"""
 from flask import current_app
 import gc
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 try:
     from gevent import spawn, joinall, Timeout
@@ -8,7 +9,6 @@ try:
     GEVENT_AVAILABLE = True
 except ImportError:
     GEVENT_AVAILABLE = False
-    from concurrent.futures import ThreadPoolExecutor, as_completed
 
 
 def search_providers_parallel(user, active_providers, search_params, timeout=10):
