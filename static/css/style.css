@@ -160,3 +160,24 @@ body {
 .list-group-item.bg-info.highlighted {
     filter: brightness(0.9); 
 }
+
+/* Coffee Banner */
+.coffee-banner {
+    display: none;
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1050;
+    max-width: 350px;
+    width: 90%;
+}
+
+@media (min-width: 768px) {
+    .coffee-banner {
+        left: auto;
+        right: 20px;
+        transform: none;
+        width: auto;
+    }
+}
