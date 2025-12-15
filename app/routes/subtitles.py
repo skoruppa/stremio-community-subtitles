@@ -442,7 +442,7 @@ def unified_download(manifest_token: str, download_identifier: str):
                                 del processed
                                 gc.collect()
                             except Exception as e:
-                                current_app.logger.error(f"Error processing {provider_name} ZIP: {e}", exc_info=True)
+                                current_app.logger.error(f"Error processing {provider_name} ZIP (subtitle_id={subtitle_id}, content_type={type(zip_content).__name__}, size={len(zip_content) if hasattr(zip_content, '__len__') else 'unknown'}): {e}", exc_info=True)
                                 message_key = 'error'
                                 gc.collect()
                         else:
@@ -504,7 +504,7 @@ def unified_download(manifest_token: str, download_identifier: str):
                     del processed
                     gc.collect()
                 except Exception as e:
-                    current_app.logger.error(f"Error processing ZIP subtitle: {e}", exc_info=True)
+                    current_app.logger.error(f"Error processing ZIP subtitle (url={provider_subtitle_url}, content_type={content_type}, response_size={len(r.content)}): {e}", exc_info=True)
                     message_key = 'error'
                     gc.collect()
             else:

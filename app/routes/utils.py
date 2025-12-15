@@ -681,7 +681,7 @@ def extract_subtitle_from_zip(zip_content: bytes, episode: int = None):
     import zipfile
     import io
     
-    subtitle_extensions = ['.srt', '.vtt', '.ass', '.ssa', '.sub']
+    subtitle_extensions = ['.srt', '.vtt', '.ass', '.ssa', '.sub', '.smi']
     
     try:
         zip_buffer = io.BytesIO(zip_content)
