@@ -441,6 +441,15 @@ def unified_download(manifest_token: str, download_identifier: str):
                                 vtt_content = processed['vtt']
                                 del processed
                                 gc.collect()
+                            except ValueError as e:
+                                if "No subtitle file found in" in str(e):
+                                    current_app.logger.warning(f"{provider_name} archive contains no subtitle files (subtitle_id={subtitle_id}): {e}")
+                                    message_key = 'provider_no_subtitle_in_archive'
+                                    failed_provider_name = provider_name
+                                else:
+                                    current_app.logger.error(f"Error processing {provider_name} ZIP (subtitle_id={subtitle_id}): {e}", exc_info=True)
+                                    message_key = 'error'
+                                gc.collect()
                             except Exception as e:
                                 current_app.logger.error(f"Error processing {provider_name} ZIP (subtitle_id={subtitle_id}, content_type={type(zip_content).__name__}, size={len(zip_content) if hasattr(zip_content, '__len__') else 'unknown'}): {e}", exc_info=True)
                                 message_key = 'error'
@@ -503,6 +512,14 @@ def unified_download(manifest_token: str, download_identifier: str):
                     vtt_content = processed['vtt']
                     del processed
                     gc.collect()
+                except ValueError as e:
+                    if "No subtitle file found in" in str(e):
+                        current_app.logger.warning(f"Provider archive contains no subtitle files (url={provider_subtitle_url}): {e}")
+                        message_key = 'provider_no_subtitle_in_archive'
+                    else:
+                        current_app.logger.error(f"Error processing ZIP subtitle (url={provider_subtitle_url}, content_type={content_type}, response_size={len(r.content)}): {e}", exc_info=True)
+                        message_key = 'error'
+                    gc.collect()
                 except Exception as e:
                     current_app.logger.error(f"Error processing ZIP subtitle (url={provider_subtitle_url}, content_type={content_type}, response_size={len(r.content)}): {e}", exc_info=True)
                     message_key = 'error'
@@ -517,7 +534,8 @@ def unified_download(manifest_token: str, download_identifier: str):
             current_app.logger.warning(f"Timeout fetching subtitle from {provider_subtitle_url}")
             message_key = 'provider_timeout'
         except requests.RequestException as e:
-            current_app.logger.warning(f"Error fetching subtitle from provider: {e}")
+            status_code = getattr(e.response, 'status_code', None) if hasattr(e, 'response') else None
+            current_app.logger.warning(f"Error fetching subtitle from provider (url={provider_subtitle_url}, status={status_code}): {e}")
             message_key = 'provider_error'
         except Exception as e:
             current_app.logger.error(f"Unexpected error fetching subtitle: {e}")
@@ -539,7 +557,8 @@ def unified_download(manifest_token: str, download_identifier: str):
         'provider_integration_inactive': f"SCS: {failed_provider_name or 'Provider'} is not connected. Please reconnect in account settings.",
         'provider_error': f"SCS: Error fetching from {failed_provider_name or 'provider'}. Please reconnect in account settings or try again later.",
         'provider_timeout': f"SCS: {failed_provider_name or 'Provider'} timeout. The service is slow or unavailable, try again later.",
-        'provider_download_error': f"SCS: {failed_provider_name or 'Provider'} error: {failed_provider_error or 'Download failed'}."
+        'provider_download_error': f"SCS: {failed_provider_name or 'Provider'} error: {failed_provider_error or 'Download failed'}.",
+        'provider_no_subtitle_in_archive': f"SCS: {failed_provider_name or 'Provider'} archive does not contain any subtitle files."
     }
     message_text = messages.get(message_key, "An error occurred or subtitles need selection.")
     current_app.logger.info(f"Serving placeholder message (key: '{message_key}', provider: '{failed_provider_name}') for context: {context}")

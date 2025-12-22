@@ -51,7 +51,8 @@ def _get_tmdb_metadata(content_id, content_type): # Renamed to _get_tmdb_metadat
             movie_info = find_results.movie_results[0]
             metadata['title'] = movie_info.title
             metadata['tmdb_id'] = movie_info.id
-            metadata['year'] = movie_info.release_date.year
+            if movie_info.release_date and hasattr(movie_info.release_date, 'year'):
+                metadata['year'] = movie_info.release_date.year
             if movie_info.poster_url():
                 metadata['poster_url'] = movie_info.poster_url()
             return metadata
@@ -60,7 +61,8 @@ def _get_tmdb_metadata(content_id, content_type): # Renamed to _get_tmdb_metadat
             series_info = find_results.tv_results[0]
             metadata['title'] = series_info.name
             metadata['tmdb_id'] = series_info.id
-            metadata['year'] = series_info.first_air_date.year
+            if series_info.first_air_date and hasattr(series_info.first_air_date, 'year'):
+                metadata['year'] = series_info.first_air_date.year
             if series_info.poster_url():
                 metadata['poster_url'] = series_info.poster_url()
 

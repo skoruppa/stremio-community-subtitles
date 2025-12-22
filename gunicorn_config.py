@@ -18,6 +18,14 @@ timeout = 30  # Worker timeout - critical for preventing hangs
 graceful_timeout = 30
 keepalive = 2
 
+# Post-fork hook to ensure clean DB connections per worker
+def post_fork(server, worker):
+    from app import create_app
+    from app.extensions import db
+    app = create_app()
+    with app.app_context():
+        db.engine.dispose()  # Close all connections inherited from parent
+
 # Logging
 accesslog = '-'
 errorlog = '-'

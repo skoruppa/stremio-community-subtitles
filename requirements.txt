@@ -63,3 +63,4 @@ pymysql==1.1.1
 flask-talisman==1.1.0
 resend==2.15.0
 rapidfuzz==3.10.1
+rarfile==4.2

@@ -7,6 +7,9 @@ import re
 import requests
 import time
 import gc
+import zipfile
+import io
+import rarfile
 from datetime import datetime
 
 try:
@@ -674,66 +677,63 @@ def generate_vtt_message(message: str) -> str:
 
 def extract_subtitle_from_zip(zip_content: bytes, episode: int = None):
     """
-    Extracts subtitle file from ZIP archive.
+    Extracts subtitle file from ZIP or RAR archive.
     If episode is provided, tries to find file matching episode number.
     Returns tuple: (subtitle_content: bytes, filename: str, extension: str)
     """
-    import zipfile
-    import io
-    
     subtitle_extensions = ['.srt', '.vtt', '.ass', '.ssa', '.sub', '.smi']
+    episode_patterns = [
+        f'e{episode:02d}',
+        f' {episode:02d} ',
+        f'-{episode:02d}-',
+        f'.{episode:02d}.'
+    ] if episode is not None else []
     
+    def find_and_extract(archive_files, read_func, archive_type):
+        """Common logic for finding and extracting subtitle from archive"""
+        subtitle_files = [f for f in archive_files if os.path.splitext(f if isinstance(f, str) else f.filename)[1].lower() in subtitle_extensions]
+        
+        if not subtitle_files:
+            all_names = [f if isinstance(f, str) else f.filename for f in archive_files]
+            raise ValueError(f"No subtitle file found in {archive_type} archive. Files in archive: {all_names}. Episode filter: {episode}")
+        
+        if len(subtitle_files) == 1:
+            chosen = subtitle_files[0]
+            fname = chosen if isinstance(chosen, str) else chosen.filename
+            return (read_func(chosen), fname, os.path.splitext(fname)[1].lower())
+        
+        if episode_patterns:
+            for f in subtitle_files:
+                fname = f if isinstance(f, str) else f.filename
+                if any(pattern in fname.lower() for pattern in episode_patterns):
+                    return (read_func(f), fname, os.path.splitext(fname)[1].lower())
+        
+        chosen = subtitle_files[0]
+        fname = chosen if isinstance(chosen, str) else chosen.filename
+        return (read_func(chosen), fname, os.path.splitext(fname)[1].lower())
+    
+    # Check if RAR
+    if zip_content[:4] == b'Rar!':
+        try:
+            rar_buffer = io.BytesIO(zip_content)
+            with rarfile.RarFile(rar_buffer) as rf:
+                result = find_and_extract(rf.namelist(), rf.read, 'RAR')
+                del rar_buffer
+                return result
+        except rarfile.Error as e:
+            raise ValueError(f"Invalid RAR file: {e}")
+        finally:
+            gc.collect()
+    
+    # Handle ZIP
     try:
         zip_buffer = io.BytesIO(zip_content)
         with zipfile.ZipFile(zip_buffer) as zf:
-            subtitle_files = []
-            all_files = [f.filename for f in zf.filelist]
-            
-            # Collect all subtitle files
-            for file_info in zf.filelist:
-                filename = file_info.filename
-                ext = os.path.splitext(filename)[1].lower()
-                
-                if ext in subtitle_extensions:
-                    subtitle_files.append(file_info)
-            
-            if not subtitle_files:
-                raise ValueError(f"No subtitle file found in ZIP archive. Files in archive: {all_files}. Episode filter: {episode}")
-            
-            # If only one file in archive, return it regardless of episode filter
-            if len(subtitle_files) == 1:
-                file_info = subtitle_files[0]
-                content = zf.read(file_info)
-                result = (content, file_info.filename, os.path.splitext(file_info.filename)[1].lower())
-                del zip_buffer
-                return result
-            
-            # If episode number provided, try to find matching file
-            if episode is not None:
-                episode_patterns = [
-                    f'e{episode:02d}',  # e01, e02, etc.
-                    f' {episode:02d} ', # " 01 ", " 02 ", etc.
-                    f'-{episode:02d}-', # -01-, -02-, etc.
-                    f'.{episode:02d}.'  # .01., .02., etc.
-                ]
-                
-                for file_info in subtitle_files:
-                    filename_lower = file_info.filename.lower()
-                    if any(pattern in filename_lower for pattern in episode_patterns):
-                        content = zf.read(file_info)
-                        result = (content, file_info.filename, os.path.splitext(file_info.filename)[1].lower())
-                        del zip_buffer
-                        return result
-            
-            # Fallback: return first subtitle file
-            file_info = subtitle_files[0]
-            content = zf.read(file_info)
-            result = (content, file_info.filename, os.path.splitext(file_info.filename)[1].lower())
+            result = find_and_extract(zf.filelist, lambda f: zf.read(f), 'ZIP')
             del zip_buffer
             return result
-            
     except zipfile.BadZipFile:
-        raise ValueError("Invalid ZIP file")
+        raise ValueError(f"Invalid ZIP file. First 20 bytes: {zip_content[:20].hex() if len(zip_content) >= 20 else zip_content.hex()}")
     finally:
         gc.collect()
 
