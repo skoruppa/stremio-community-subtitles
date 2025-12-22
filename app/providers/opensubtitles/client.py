@@ -237,7 +237,6 @@ def logout(token, user):
         raise OpenSubtitlesError(f"Request failed during logout: {e}")
 
 
-@timed_lru_cache(seconds=15 * 60) # Cache for 15 minutes
 def search_subtitles(imdb_id=None, query=None, languages=None, moviehash=None,
                      season_number=None, episode_number=None, type=None, user=None):
     """
@@ -252,10 +251,6 @@ def search_subtitles(imdb_id=None, query=None, languages=None, moviehash=None,
         type (str, optional): Content type ('movie' or 'episode').
         user (User): The user object containing the token, base_url, and API key.
     """
-    # Note: user object is not hashable, so it cannot be directly part of lru_cache key.
-    # We rely on the fact that the user's token and base_url are used to make the request,
-    # and if they change, a new request will be made.
-    # For caching purposes, we'll use a simplified key that doesn't include the user object itself.
 
     if not user or not hasattr(user, 'opensubtitles_token') or not user.opensubtitles_token or \
             not hasattr(user, 'opensubtitles_base_url') or not user.opensubtitles_base_url:
