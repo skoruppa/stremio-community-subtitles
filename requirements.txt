@@ -27,7 +27,7 @@ Flask-Migrate==4.0.7
 Flask-SQLAlchemy==3.1.1
 Flask-WTF==1.2.2
 frozenlist==1.6.0
-greenlet==3.2.1
+greenlet==3.2.2
 gunicorn==23.0.0
 gevent==25.9.1
 logtail-python==0.2.9
