@@ -10,8 +10,10 @@ monkey.patch_all()
 bind = f"{os.getenv('FLASK_RUN_HOST', '0.0.0.0')}:{os.getenv('FLASK_RUN_PORT', '5000')}"
 backlog = 2048
 
-# Worker processes
-workers = int(os.getenv('GUNICORN_WORKERS', multiprocessing.cpu_count() * 2 + 1))
+# Worker processes - reduced to limit total DB connections
+# Each worker can use up to pool_size + max_overflow connections
+# With 3 workers: 3 * (5 + 10) = 45 max connections
+workers = int(os.getenv('GUNICORN_WORKERS', 3))  # Reduced from CPU*2+1
 worker_class = 'gevent'
 worker_connections = 1000
 max_requests = 1000
