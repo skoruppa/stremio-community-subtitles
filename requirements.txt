@@ -28,8 +28,8 @@ Flask-SQLAlchemy==3.1.1
 Flask-WTF==1.2.2
 frozenlist==1.6.0
 greenlet==3.2.1
-gunicorn==20.0.4
-gevent==24.11.1
+gunicorn==23.0.0
+gevent==25.9.1
 logtail-python==0.2.9
 idna==3.10
 itsdangerous==2.2.0
@@ -47,7 +47,7 @@ pysubs2==1.8.0
 python-dateutil==2.9.0.post0
 iso639-lang==2.6.0
 python-dotenv==1.0.1
-requests==2.32.3
+requests==2.32.4
 setuptools==80.3.1
 six==1.17.0
 SQLAlchemy==2.0.40
