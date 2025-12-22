@@ -3,7 +3,7 @@
 # CRITICAL: Monkey patch BEFORE any other imports
 # Exclude ssl to avoid Python 3.12 recursion bug
 from gevent import monkey
-monkey.patch_all(ssl=False)
+monkey.patch_all()
 
 # Now safe to import everything else
 import os
