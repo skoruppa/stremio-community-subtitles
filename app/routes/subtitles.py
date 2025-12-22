@@ -80,7 +80,7 @@ def addon_stream(manifest_token: str, content_type: str, content_id: str, params
         try:
             video_size = int(video_size_str)
         except ValueError:
-            current_app.logger.warning(f"Could not convert videoSize '{video_size_str}' to integer.")
+            current_app.logger.warning(f"Could not convert videoSize '{video_size_str}' to integer. URL: {request.url}")
 
     preferred_langs = user.preferred_languages
     current_app.logger.info(
