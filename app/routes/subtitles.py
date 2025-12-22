@@ -73,6 +73,10 @@ def addon_stream(manifest_token: str, content_type: str, content_id: str, params
 
     video_hash = parsed_params.get('videoHash')
     video_size_str = parsed_params.get('videoSize')
+    
+    if video_size_str and video_size_str.endswith('.json'):
+        video_size_str = video_size_str[:-5]
+    
     video_filename = parsed_params.get('filename')
 
     video_size = None
