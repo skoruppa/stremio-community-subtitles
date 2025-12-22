@@ -54,7 +54,7 @@ def _search_providers_parallel_gevent(user, active_providers, search_params, tim
                 app.logger.warning(f"Provider {provider.name} timeout")
                 result_container.set((provider.name, []))
             except Exception as e:
-                app.logger.warning(f"Provider {provider.name} search failed: {e}")
+                app.logger.warning(f"Provider {provider.name} search failed: {e}", exc_info=True)
                 result_container.set((provider.name, []))
             finally:
                 db.session.remove()
