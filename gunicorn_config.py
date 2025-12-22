@@ -6,17 +6,6 @@ import os
 from gevent import monkey
 monkey.patch_all()
 
-# Fix Python 3.12 + gevent ssl.SSLContext recursion bug
-import ssl
-if hasattr(ssl.SSLContext, 'verify_mode'):
-    def _fixed_verify_mode_get(self):
-        return object.__getattribute__(self, '_verify_mode')
-    
-    def _fixed_verify_mode_set(self, value):
-        object.__setattr__(self, '_verify_mode', value)
-    
-    ssl.SSLContext.verify_mode = property(_fixed_verify_mode_get, _fixed_verify_mode_set)
-
 # Server socket
 bind = f"{os.getenv('FLASK_RUN_HOST', '0.0.0.0')}:{os.getenv('FLASK_RUN_PORT', '5000')}"
 backlog = 2048
