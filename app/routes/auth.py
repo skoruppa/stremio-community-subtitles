@@ -152,7 +152,7 @@ def register():
 
         except IntegrityError as e:
             db.session.rollback()
-            current_app.logger.error(f"IntegrityError during user registration: {str(e)}")
+            current_app.logger.warning(f"IntegrityError during user registration (race condition): {str(e)}")
 
             # Check error details to provide a more specific message
             error_message = str(e.orig)
