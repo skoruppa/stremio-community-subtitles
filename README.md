@@ -116,7 +116,7 @@ Read the privacy policy here:
 
 ## 🤝 Support
 
-If you want to thank me for the addon, you can [buy me a coffee](https://buycoffee.to/skoruppa) ☕
+If you want to thank me for the addon, you can [buy me a coffee](https://buymeacoffee.com/skoruppa) ☕
 
 ## 🔗 Links
 
