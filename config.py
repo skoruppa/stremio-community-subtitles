@@ -70,6 +70,7 @@ class Config:
     TMDB_KEY = os.environ.get('TMDB_API_KEY')
     OPENSUBTITLES_API_KEY = os.environ.get('OPENSUBTITLES_API_KEY')
     KITSU_ADDON_URL = os.environ.get('KITSU_ADDON_URL', 'https://anime-kitsu.strem.fun')
+    MAL_CLIENT_ID = os.environ.get('MAL_CLIENT_ID')
     
     # Better Stack (Logtail) configuration
     USE_BETTERSTACK = os.environ.get('USE_BETTERSTACK', 'false').lower() in ['true', '1', 't', 'y', 'yes']

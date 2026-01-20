@@ -3,6 +3,8 @@ import kitsu # Import kitsu library
 import asyncio # Import asyncio
 from flask import current_app
 from kitsu.models import Title
+from pyMALv2.auth import Authorization
+from pyMALv2.services.anime_service.anime_service import AnimeService
 
 from ..extensions import cache
 
@@ -205,6 +207,85 @@ async def _get_kitsu_metadata(content_id): # Changed to async def
             await client.close()
 
 
+def _get_mal_metadata(content_id):
+    """
+    Fetches metadata from MyAnimeList based on MAL ID extracted from content_id.
+    Handles anime (mal:ID) and specific episodes (mal:ID:EPISODE_NUM).
+    Returns a dictionary with 'title', 'poster_url', 'year', 'season', 'episode', 'id', 'id_type',
+    or None if not found/API error.
+    """
+    if not content_id or not content_id.startswith('mal:'):
+        current_app.logger.info(f"Content ID {content_id} is not a MAL ID. Skipping MAL lookup.")
+        return None
+
+    parts = content_id.split(':')
+    if len(parts) < 2:
+        current_app.logger.warning(f"Invalid MAL ID format: {content_id}")
+        return None
+
+    try:
+        mal_anime_id = int(parts[1])
+        episode_num = int(parts[2]) if len(parts) > 2 and parts[2].isdigit() else None
+    except ValueError:
+        current_app.logger.warning(f"Invalid MAL ID or episode number: {content_id}")
+        return None
+
+    mal_client_id = current_app.config.get('MAL_CLIENT_ID')
+    
+    if not mal_client_id:
+        current_app.logger.warning("MAL_CLIENT_ID not configured.")
+        return None
+
+    metadata = {
+        'title': None,
+        'poster_url': None,
+        'year': None,
+        'season': None,
+        'episode': None,
+        'id': str(mal_anime_id),
+        'id_type': 'mal'
+    }
+
+    try:
+        auth = Authorization()
+        auth.client_id = mal_client_id
+        anime_service = AnimeService(auth)
+        
+        anime = anime_service.get(
+            mal_anime_id,
+            fields='id,title,main_picture,alternative_titles,start_date,end_date,synopsis,mean,num_episodes,start_season'
+        )
+
+        if not anime:
+            current_app.logger.warning(f"MAL anime not found for ID: {mal_anime_id}")
+            return None
+
+        if anime.title:
+            metadata['title'] = anime.title
+
+        if anime.main_picture:
+            if anime.main_picture.large:
+                metadata['poster_url'] = anime.main_picture.large
+            elif anime.main_picture.medium:
+                metadata['poster_url'] = anime.main_picture.medium
+
+        if anime.start_date:
+            try:
+                metadata['year'] = anime.start_date.year
+            except (ValueError, AttributeError) as e:
+                current_app.logger.warning(f"Could not parse year from MAL start_date: {e}")
+
+        if episode_num is not None:
+            metadata['episode'] = episode_num
+            metadata['title'] = f"{metadata['title']} - Episode {episode_num}"
+
+        return metadata
+
+    except Exception as e:
+        current_app.logger.error(f"Error fetching MAL metadata for {content_id}: {e}")
+        return None
+
+
 @cache.memoize(timeout=86400)
 def get_metadata(content_id, content_type=None):
     """
@@ -229,6 +310,8 @@ def get_metadata(content_id, content_type=None):
             asyncio.set_event_loop(loop)
         
         return loop.run_until_complete(_get_kitsu_metadata(content_id))
+    elif content_id and content_id.startswith('mal:'):
+        return _get_mal_metadata(content_id)
     else:
         current_app.logger.info(f"Unsupported content_id format: {content_id}")
         return None

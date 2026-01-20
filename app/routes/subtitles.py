@@ -278,6 +278,12 @@ def unified_download(manifest_token: str, download_identifier: str):
                     episode = int(parts[-1])
                 except (ValueError, IndexError):
                     episode = None
+            elif content_id.startswith('mal:'):
+                # mal format: mal:59978:2 (episode only)
+                try:
+                    episode = int(parts[-1])
+                except (ValueError, IndexError):
+                    episode = None
             else:
                 # IMDb format: tt0877057:2:1 (season:episode)
                 try:
@@ -672,8 +678,8 @@ def upload_subtitle(activity_id=None):
                 content_type = form.content_type.data
 
                 # Validate content_id format
-                if not (base_content_id.startswith('tt') or base_content_id.startswith('kitsu:')):
-                    flash('Content ID must be either IMDB ID (starting with "tt") or Kitsu ID (format "kitsu:12345")',
+                if not (base_content_id.startswith('tt') or base_content_id.startswith('kitsu:') or base_content_id.startswith('mal:')):
+                    flash('Content ID must be either IMDB ID (starting with "tt") or Kitsu ID (format "kitsu:12345") or MAL ID (format "mal:12345")',
                           'danger')
                     return render_template('main/upload_subtitle.html', form=form, activity=activity,
                                            metadata=metadata, season=season, episode=episode,
@@ -692,7 +698,7 @@ def upload_subtitle(activity_id=None):
                     # Construct content_id for series
                     if base_content_id.startswith('tt'):
                         content_id = f"{base_content_id}:{season_num}:{episode_num}"
-                    else:  # kitsu format
+                    else:  # mal/kitsu format
                         content_id = f"{base_content_id}:{episode_num}"
 
                     season = season_num
