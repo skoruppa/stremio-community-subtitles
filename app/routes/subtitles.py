@@ -60,9 +60,7 @@ def addon_stream(manifest_token: str, content_type: str, content_id: str, params
 
     # --- Parameter Extraction ---
     content_id = unquote(content_id)
-    if content_id.startswith("mal:"):
-        current_app.logger.info(f"Ignoring as those are probably from the Docchi extension with hardcoded subs")
-        return respond_with({'subtitles': []})
+
 
     try:
         param_string_to_parse = request.query_string.decode() if request.query_string else params
@@ -78,6 +76,10 @@ def addon_stream(manifest_token: str, content_type: str, content_id: str, params
         video_size_str = video_size_str[:-5]
     
     video_filename = parsed_params.get('filename')
+
+    if video_filename.endswith(".docc"):
+        current_app.logger.info(f"Ignoring as those are probably from the Docchi extension with hardcoded subs")
+        return respond_with({'subtitles': []})
 
     video_size = None
     if video_size_str:
