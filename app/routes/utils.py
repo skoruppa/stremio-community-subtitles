@@ -385,7 +385,6 @@ def _get_imdb_from_mal(mal_id, content_type='series'):
     try:
         base_url = current_app.config.get('KITSU_ADDON_URL', 'https://anime-kitsu.strem.fun')
         url = f"{base_url}/meta/{content_type}/{mal_id}.json"
-        current_app.logger.info(f"Fetching IMDb ID from MAL addon: {url}")
         r = requests.get(url, timeout=5)
         r.raise_for_status()
         data = r.json()
@@ -397,15 +396,11 @@ def _get_imdb_from_mal(mal_id, content_type='series'):
         videos = meta.get('videos', [])
         if not imdb_id and videos:
             imdb_id = videos[0].get('imdb_id')
-            current_app.logger.info(f"IMDb ID found in first video: {imdb_id}")
-        elif imdb_id:
-            current_app.logger.info(f"IMDb ID found in meta: {imdb_id}")
         
         # Extract season from first video if available
         if videos:
             season = videos[0].get('imdbSeason')
         
-        current_app.logger.info(f"MAL {mal_id} -> IMDb: {imdb_id}, Season: {season}")
         return (imdb_id, season)
     except Exception as e:
         current_app.logger.error(f"Error fetching IMDb ID from MAL addon for {mal_id}: {e}")
