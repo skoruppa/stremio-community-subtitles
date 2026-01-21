@@ -126,14 +126,21 @@
     <script>
         // Coffee banner management
         function dismissCoffeeBanner() {
-            localStorage.setItem('coffeeBannerDismissed', 'true');
+            const oneWeek = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
+            const dismissTime = Date.now() + oneWeek;
+            localStorage.setItem('coffeeBannerDismissed', dismissTime.toString());
         }
 
         // Initialize tooltips
         document.addEventListener('DOMContentLoaded', function() {
-            // Show coffee banner if not dismissed
-            if (!localStorage.getItem('coffeeBannerDismissed')) {
+            // Show coffee banner if not dismissed or if week has passed
+            const dismissedUntil = localStorage.getItem('coffeeBannerDismissed');
+            if (!dismissedUntil || Date.now() > parseInt(dismissedUntil)) {
                 document.getElementById('coffeeBanner').style.display = 'block';
+                // Clear expired dismissal
+                if (dismissedUntil) {
+                    localStorage.removeItem('coffeeBannerDismissed');
+                }
             }
 
             var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
