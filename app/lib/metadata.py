@@ -260,7 +260,10 @@ def _get_mal_metadata(content_id):
             current_app.logger.warning(f"MAL anime not found for ID: {mal_anime_id}")
             return None
 
-        if anime.title:
+        # Prefer English title
+        if anime.alternative_titles and anime.alternative_titles.en:
+            metadata['title'] = anime.alternative_titles.en
+        elif anime.title:
             metadata['title'] = anime.title
 
         if anime.main_picture:
