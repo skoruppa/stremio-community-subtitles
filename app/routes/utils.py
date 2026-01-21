@@ -207,7 +207,7 @@ def calculate_filename_similarity(video_filename, subtitle_release_name):
 
 def get_active_subtitle_details(user, content_id, video_hash=None, content_type=None, video_filename=None, lang=None, season=None, episode=None, cached_provider_results=None):
     """Provider-agnostic subtitle selection logic"""
-    # Parse Kitsu content_id and extract IMDb ID if needed
+    # Parse Kitsu/MAL content_id and extract IMDb ID if needed
     imdb_id = None
     if content_id.startswith('tt'):
         imdb_id = content_id.split(':')[0]
@@ -216,6 +216,11 @@ def get_active_subtitle_details(user, content_id, video_hash=None, content_type=
         imdb_id, kitsu_season = _get_imdb_from_kitsu(kitsu_base, content_type)
         if kitsu_season:
             season = kitsu_season
+    elif content_id.startswith('mal:'):
+        mal_base = content_id.split(':')[0] + ':' + content_id.split(':')[1]
+        imdb_id, mal_season = _get_imdb_from_mal(mal_base, content_type)
+        if mal_season:
+            season = mal_season
     
     # Extract season and episode from content_id if not provided
     if season is None and episode is None and content_type == 'series' and ':' in content_id:
@@ -358,16 +363,47 @@ def _get_imdb_from_kitsu(kitsu_id, content_type='series'):
         data = r.json()
         meta = data.get('meta', {})
         imdb_id = meta.get('imdb_id')
+        season = None
+        
+        # If no IMDb in meta, check first video
+        videos = meta.get('videos', [])
+        if not imdb_id and videos:
+            imdb_id = videos[0].get('imdb_id')
         
         # Extract season from first video if available
-        season = None
-        videos = meta.get('videos', [])
-        if videos and len(videos) > 0:
+        if videos:
             season = videos[0].get('imdbSeason')
         
         return (imdb_id, season)
     except Exception as e:
         current_app.logger.error(f"Error fetching IMDb ID from Kitsu addon for {kitsu_id}: {e}")
+        return (None, None)
+
+
+def _get_imdb_from_mal(mal_id, content_type='series'):
+    """Fetch IMDb ID and season from MAL addon (via Kitsu addon). Returns tuple: (imdb_id, season)"""
+    try:
+        base_url = current_app.config.get('KITSU_ADDON_URL', 'https://anime-kitsu.strem.fun')
+        url = f"{base_url}/meta/{content_type}/{mal_id}.json"
+        r = requests.get(url, timeout=5)
+        r.raise_for_status()
+        data = r.json()
+        meta = data.get('meta', {})
+        imdb_id = meta.get('imdb_id')
+        season = None
+        
+        # If no IMDb in meta, check first video
+        videos = meta.get('videos', [])
+        if not imdb_id and videos:
+            imdb_id = videos[0].get('imdb_id')
+        
+        # Extract season from first video if available
+        if videos:
+            season = videos[0].get('imdbSeason')
+        
+        return (imdb_id, season)
+    except Exception as e:
+        current_app.logger.error(f"Error fetching IMDb ID from MAL addon for {mal_id}: {e}")
         return (None, None)
 
 
