@@ -65,7 +65,7 @@ class SubDLProvider(BaseSubtitleProvider):
         api_key = creds['api_key']
         
         # SubDL doesn't support hash matching
-        if video_hash and not imdb_id:
+        if video_hash and not imdb_id and not query:
             current_app.logger.info("SubDL doesn't support hash-only search")
             return []
         
@@ -83,10 +83,11 @@ class SubDLProvider(BaseSubtitleProvider):
         file_name = kwargs.get('video_filename')
         
         try:
-            # Try with IMDb ID first
+            # Try with IMDb ID first, fallback to film_name
             results = client.search_subtitles(
                 api_key=api_key,
                 imdb_id=imdb_id,
+                film_name=query if not imdb_id else None,
                 languages=subdl_languages,
                 season=season,
                 episode=episode,

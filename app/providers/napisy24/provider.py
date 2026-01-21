@@ -70,50 +70,59 @@ class Napisy24Provider(BaseSubtitleProvider):
                 return results
         
         # Fallback to IMDb and title search
-        if imdb_id:
+        if imdb_id or query:
             seen_ids = set()
             
             # Try IMDb search
-            try:
-                imdb_results = client.search_by_imdb(
-                    imdb_id=imdb_id,
-                    season=season,
-                    episode=episode,
-                    filename=kwargs.get('video_filename')
-                )
-                for item in imdb_results:
-                    if item['id'] not in seen_ids:
-                        seen_ids.add(item['id'])
-                        results.append(SubtitleResult(
-                            provider_name=self.name,
-                            subtitle_id=item['id'],
-                            language='pol',
-                            release_name=item['release'],
-                            uploader=item.get('author'),
-                            fps=item.get('fps')
-                        ))
-            except client.Napisy24Error:
-                pass
+            if imdb_id:
+                try:
+                    imdb_results = client.search_by_imdb(
+                        imdb_id=imdb_id,
+                        season=season,
+                        episode=episode,
+                        filename=kwargs.get('video_filename')
+                    )
+                    for item in imdb_results:
+                        if item['id'] not in seen_ids:
+                            seen_ids.add(item['id'])
+                            results.append(SubtitleResult(
+                                provider_name=self.name,
+                                subtitle_id=item['id'],
+                                language='pol',
+                                release_name=item['release'],
+                                uploader=item.get('author'),
+                                fps=item.get('fps')
+                            ))
+                except client.Napisy24Error:
+                    pass
             
-            # Try title search with metadata
-            try:
-                from ...lib.metadata import get_metadata
-                # Reconstruct content_id
-                content_id = imdb_id
-                if season and episode:
-                    content_id = f"{imdb_id}:{season}:{episode}"
-                elif episode:
-                    content_id = f"{imdb_id}:{episode}"
-                
-                metadata = get_metadata(content_id, content_type)
-                if metadata and metadata.get('title'):
+            # Try title search
+            search_title = query
+            if not search_title and imdb_id:
+                # Try to get title from metadata
+                try:
+                    from ...lib.metadata import get_metadata
+                    # Reconstruct content_id
+                    content_id = imdb_id
+                    if season and episode:
+                        content_id = f"{imdb_id}:{season}:{episode}"
+                    elif episode:
+                        content_id = f"{imdb_id}:{episode}"
+                    
+                    metadata = get_metadata(content_id, content_type)
+                    if metadata and metadata.get('title'):
+                        search_title = metadata['title']
+                except:
+                    pass
+            
+            if search_title:
+                try:
                     import re
-                    title = metadata['title']
                     # Remove S01E01 pattern and everything after it
-                    title = re.split(r'\s+S\d+E\d+', title, flags=re.IGNORECASE)[0].strip()
+                    search_title = re.split(r'\s+S\d+E\d+', search_title, flags=re.IGNORECASE)[0].strip()
                     
                     title_results = client.search_by_title(
-                        title=title,
+                        title=search_title,
                         season=season,
                         episode=episode,
                         filename=kwargs.get('video_filename')
@@ -129,8 +138,8 @@ class Napisy24Provider(BaseSubtitleProvider):
                                 uploader=item.get('author'),
                                 fps=item.get('fps')
                             ))
-            except:
-                pass
+                except:
+                    pass
         
         return results
     

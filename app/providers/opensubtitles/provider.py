@@ -109,7 +109,8 @@ class OpenSubtitlesProvider(BaseSubtitleProvider):
         
         try:
             results = opensubtitles_client.search_subtitles(**search_params, user=temp_user)
-            return self._parse_results(results)
+            # Pass query, season, episode for filtering when searching by title
+            return self._parse_results(results, query=query, season=season, episode=episode)
         except opensubtitles_client.OpenSubtitlesError as e:
             raise ProviderSearchError(str(e), self.name, getattr(e, 'status_code', None))
     
@@ -168,7 +169,7 @@ class OpenSubtitlesProvider(BaseSubtitleProvider):
                 return lang_code
         return lang_code
     
-    def _parse_results(self, api_response: Dict) -> List[SubtitleResult]:
+    def _parse_results(self, api_response: Dict, query: Optional[str] = None, season: Optional[int] = None, episode: Optional[int] = None) -> List[SubtitleResult]:
         """Parse OpenSubtitles API response to SubtitleResult objects"""
         results = []
         
@@ -177,6 +178,16 @@ class OpenSubtitlesProvider(BaseSubtitleProvider):
         
         for item in api_response['data']:
             attrs = item.get('attributes', {})
+            
+            # Filter by parent_title when searching by query (title)
+            if query:
+                feature_details = attrs.get('feature_details', {})
+                if feature_details:
+                    parent_title = feature_details.get('parent_title', '')
+                    # Check if query is in parent_title (case insensitive)
+                    if parent_title and query.lower() not in parent_title.lower():
+                        continue
+            
             files = attrs.get('files', [])
             
             if not files:

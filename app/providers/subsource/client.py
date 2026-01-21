@@ -13,16 +13,28 @@ class SubSourceClient:
             'User-Agent': USER_AGENT
         }
     
-    def search_movie(self, imdb_id: str, season: int = None) -> Optional[Dict]:
-        """Search for movie/series by IMDB ID"""
+    def search_movie(self, imdb_id: str = None, query: str = None, season: int = None, content_type: str = None) -> Optional[Dict]:
+        """Search for movie/series by IMDB ID or text query"""
         url = f"{self.BASE_URL}/movies/search"
-        params = {
-            'searchType': 'imdb',
-            'imdb': imdb_id
-        }
+        params = {}
+        
+        if imdb_id:
+            params['searchType'] = 'imdb'
+            params['imdb'] = imdb_id
+        elif query:
+            params['searchType'] = 'text'
+            params['q'] = query
+        else:
+            return None
         
         if season is not None:
             params['season'] = season
+        
+        if content_type:
+            if content_type == 'movie':
+                params['type'] = 'movie'
+            elif content_type == 'series':
+                params['type'] = 'series'
         
         response = requests.get(url, headers=self.headers, params=params, timeout=10)
         response.raise_for_status()

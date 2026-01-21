@@ -88,32 +88,49 @@ def content_detail(activity_id):
 
     # Determine imdb_id for provider search
     imdb_id = None
+    search_query = None
     if activity.content_id.startswith('tt'):
         imdb_id = activity.content_id.split(':')[0]
+        current_app.logger.info(f"IMDb content_id detected: {imdb_id}")
     elif activity.content_id.startswith('kitsu:'):
         from .utils import _get_imdb_from_kitsu
         kitsu_base = activity.content_id.split(':')[0] + ':' + activity.content_id.split(':')[1]
+        current_app.logger.info(f"Kitsu content_id detected: {kitsu_base}")
         imdb_id, kitsu_season = _get_imdb_from_kitsu(kitsu_base, activity.content_type)
         if kitsu_season:
             season = kitsu_season
     elif activity.content_id.startswith('mal:'):
         from .utils import _get_imdb_from_mal
         mal_base = activity.content_id.split(':')[0] + ':' + activity.content_id.split(':')[1]
+        current_app.logger.info(f"MAL content_id detected: {mal_base}")
         imdb_id, mal_season = _get_imdb_from_mal(mal_base, activity.content_type)
         if mal_season:
             season = mal_season
+        current_app.logger.info(f"MAL resolved to IMDb: {imdb_id}, season: {season}")
+    
+    # Fallback to title search if no IMDb ID
+    if not imdb_id and metadata and metadata.get('title'):
+        import re
+        search_query = metadata['title']
+        # Remove episode/season info from title for search
+        search_query = re.split(r'\s+S\d+E\d+', search_query, flags=re.IGNORECASE)[0].strip()
+        search_query = re.split(r'\s+-\s+Ep(?:isode)?\s+\d+', search_query, flags=re.IGNORECASE)[0].strip()
+        current_app.logger.info(f"No IMDb ID, using title search: {search_query}")
     
     # Single provider search for both active selection and display
     provider_results_raw = {}
-    if current_user.preferred_languages and imdb_id:
+    if current_user.preferred_languages and (imdb_id or search_query):
+        current_app.logger.info(f"Starting provider search with IMDb: {imdb_id}, query: {search_query}, season: {season}, episode: {episode}")
         try:
             from ..providers.registry import ProviderRegistry
             from ..lib.provider_async import search_providers_parallel
             
             active_providers = ProviderRegistry.get_active_for_user(current_user)
+            current_app.logger.info(f"Active providers: {[p.name for p in active_providers]}")
             
             search_params = {
                 'imdb_id': imdb_id,
+                'query': search_query,
                 'video_hash': activity.video_hash,
                 'languages': current_user.preferred_languages,
                 'season': season,
@@ -123,6 +140,7 @@ def content_detail(activity_id):
             }
             
             provider_results_raw = search_providers_parallel(current_user, active_providers, search_params, timeout=10)
+            current_app.logger.info(f"Provider search completed. Results: {sum(len(v) for v in provider_results_raw.values())} subtitles found")
             
             # Process for display
             for provider_name, results in provider_results_raw.items():

@@ -82,10 +82,10 @@ class SubSourceProvider(BaseSubtitleProvider):
         creds = self.get_credentials(user)
         return creds and creds.get('active') and creds.get('api_key')
     
-    def search(self, user, imdb_id: str = None, languages: List[str] = None, 
-               season: int = None, episode: int = None, **kwargs) -> List[SubtitleResult]:
+    def search(self, user, imdb_id: str = None, query: str = None, languages: List[str] = None, 
+               season: int = None, episode: int = None, content_type: str = None, **kwargs) -> List[SubtitleResult]:
         """Search for subtitles"""
-        if not imdb_id:
+        if not imdb_id and not query:
             return []
         
         creds = self.get_credentials(user)
@@ -96,7 +96,7 @@ class SubSourceProvider(BaseSubtitleProvider):
             client = SubSourceClient(creds['api_key'])
             
             # Search for movie/series
-            movie = client.search_movie(imdb_id, season=season)
+            movie = client.search_movie(imdb_id=imdb_id, query=query, season=season, content_type=content_type)
             if not movie:
                 return []
             
