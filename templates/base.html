@@ -135,8 +135,14 @@
         document.addEventListener('DOMContentLoaded', function() {
             // Show coffee banner if not dismissed or if week has passed
             const dismissedUntil = localStorage.getItem('coffeeBannerDismissed');
-            if (!dismissedUntil || Date.now() > parseInt(dismissedUntil)) {
-                document.getElementById('coffeeBanner').style.display = 'block';
+            const banner = document.getElementById('coffeeBanner');
+            
+            if (dismissedUntil && Date.now() < parseInt(dismissedUntil)) {
+                // Still dismissed - hide banner
+                banner.style.display = 'none';
+            } else {
+                // Show banner (not dismissed or week passed)
+                banner.style.display = 'block';
                 // Clear expired dismissal
                 if (dismissedUntil) {
                     localStorage.removeItem('coffeeBannerDismissed');
