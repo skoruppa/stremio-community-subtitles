@@ -1,6 +1,6 @@
 # 🛡️ Privacy Policy – Stremio Community Subtitles
 
-_Last updated: June 3, 2025_
+_Last updated: January 26, 2026_
 
 This addon was built to improve subtitle support for all Stremio users while respecting your privacy. Here's exactly what data we collect and how we use it.
 
@@ -19,14 +19,14 @@ When you use the addon, we store a minimal amount of data necessary to provide i
   - Older entries are automatically removed. You can also manually delete your history at any time.
 
 - **Uploaded Subtitles**
-  - Subtitles you upload are stored on [Cloudinary](https://cloudinary.com), and they’re publicly accessible to other users of the addon.
+  - Subtitles you upload are stored on [Cloudinary](https://cloudinary.com), and they're publicly accessible to other users of the addon.
   - You remain the owner of the files you upload and can delete them anytime from the website.
 
 - **Votes on Subtitles**
   - If you upvote or downvote a subtitle, that vote is stored to help others find the best-matched subtitles.
 
-- **OpenSubtitles Token**
-  - If you log in to OpenSubtitles, we store your **access token** only. We never store your OpenSubtitles username or password.
+- **Subtitle Provider Credentials**
+  - If you connect external subtitle providers (OpenSubtitles, SubDL, Subsource), we store your **API keys or access tokens** only. We never store your provider passwords.
 
 - **Cookies**
   - A single session cookie (`hear`) is used to keep you logged in between visits. No tracking cookies are used.
@@ -41,6 +41,7 @@ We only use the collected data to:
 - Automatically match subtitles to what you're watching.
 - Improve the quality of subtitle recommendations for everyone.
 - Allow you to manage your uploaded subtitles and history.
+- Connect to external subtitle providers on your behalf.
 
 We **do not** use your data for analytics, tracking, advertising, or any commercial purposes.
 
@@ -50,6 +51,8 @@ We **do not** use your data for analytics, tracking, advertising, or any commerc
 
 - **Cloudinary** – Used to store uploaded subtitle files.
 - **OpenSubtitles** – Used to fetch subtitles if no local match is found. API calls are made using your token (if connected).
+- **SubDL** – Used to fetch subtitles using your API key (if connected).
+- **Subsource** – Used to fetch subtitles using your API key (if connected).
 
 We do not share any personal data with these services beyond what's technically required.
 
@@ -64,8 +67,15 @@ No trackers. No profiling.
 
 ## 🧹 Data Control
 
-- You can delete your uploaded subtitles and viewing history from the website.
-- If you'd like to delete your account and all associated data, please contact us directly.
+- You can delete your uploaded subtitles, viewing history, and subtitle selections from the website.
+- You can delete your account and all associated data directly from account settings.
+- When you delete your account, all your data is permanently removed:
+  - Uploaded subtitles
+  - Viewing history
+  - Votes
+  - Subtitle selections
+  - Provider credentials
+  - Account information
 
 Concerned about privacy? You can always [self-host the addon](https://github.com/skoruppa/stremio-community-subtitles) and use your own local database and storage.
 
@@ -73,7 +83,7 @@ Concerned about privacy? You can always [self-host the addon](https://github.com
 
 ## 📬 Contact
 
-Got a question, concern, or want your account deleted?  
+Got a question or concern?  
 → Open an issue at [GitHub Repo](https://github.com/skoruppa/stremio-community-subtitles)  
 
 ---

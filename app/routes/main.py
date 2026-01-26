@@ -1,7 +1,7 @@
 import datetime  # Added for UserSubtitleSelection timestamp
 
 from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app
-from flask_login import login_required, current_user
+from flask_login import login_required, current_user, logout_user
 from markupsafe import Markup
 from sqlalchemy.orm import joinedload
 from sqlalchemy import func
@@ -169,6 +169,44 @@ def delete_activity(activity_id):
         flash('Error deleting activity record. Please try again.', 'danger')
 
     return redirect(url_for('main.dashboard'))
+
+
+@main_bp.route('/delete_account', methods=['POST'])
+@login_required
+def delete_account():
+    """Permanently deletes user account and all associated data."""
+    confirm_username = request.form.get('confirm_username', '').strip()
+    
+    if confirm_username != current_user.username:
+        flash('Username confirmation does not match. Account not deleted.', 'danger')
+        return redirect(url_for('main.account_settings'))
+    
+    user_id = current_user.id
+    username = current_user.username
+    
+    try:
+        # Delete all user data
+        UserActivity.query.filter_by(user_id=user_id).delete()
+        SubtitleVote.query.filter_by(user_id=user_id).delete()
+        UserSubtitleSelection.query.filter_by(user_id=user_id).delete()
+        Subtitle.query.filter_by(uploader_id=user_id).delete()
+        
+        # Delete user account
+        db.session.delete(current_user)
+        db.session.commit()
+        
+        # Logout user
+        logout_user()
+        
+        current_app.logger.info(f"User account deleted: {username} (ID: {user_id})")
+        flash('Your account has been permanently deleted.', 'info')
+        return redirect(url_for('main.index'))
+        
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Error deleting account for user {user_id}: {e}")
+        flash('Error deleting account. Please try again or contact support.', 'danger')
+        return redirect(url_for('main.account_settings'))
 
 
 
