@@ -34,6 +34,9 @@ class Config:
     EMAIL_METHOD = os.environ.get('EMAIL_METHOD', 'smtp')  # 'smtp', 'resend', or 'local_api'
     MAIL_DEFAULT_SENDER = os.environ.get('MAIL_DEFAULT_SENDER')
     
+    # Email verification (can be disabled for self-hosting)
+    DISABLE_EMAIL_VERIFICATION = os.environ.get('DISABLE_EMAIL_VERIFICATION', 'false').lower() in ['true', '1', 't', 'y', 'yes']
+    
     # Resend API
     RESEND_API_KEY = os.environ.get('RESEND_API_KEY')
     

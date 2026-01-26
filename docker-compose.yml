@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    restart: always
+    ports:
+      - "${FLASK_RUN_PORT:-4949}:4949"
+    environment:
+      - FLASK_APP=wsgi.py
+      - FLASK_ENV=${FLASK_ENV:-production}
+      - SECRET_KEY=${SECRET_KEY}
+      - DATABASE_URL=${DATABASE_URL:-sqlite:////app/data/stremio_subtitles.db}
+      - DISABLE_EMAIL_VERIFICATION=${DISABLE_EMAIL_VERIFICATION:-true}
+      - MAIL_SERVER=${MAIL_SERVER:-}
+      - MAIL_PORT=${MAIL_PORT:-587}
+      - MAIL_USE_TLS=${MAIL_USE_TLS:-True}
+      - MAIL_USERNAME=${MAIL_USERNAME:-}
+      - MAIL_PASSWORD=${MAIL_PASSWORD:-}
+      - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME:-}
+      - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY:-}
+      - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET:-}
+      - TMDB_API_KEY=${TMDB_API_KEY:-}
+      - MAL_CLIENT_ID=${MAL_CLIENT_ID:-}
+      - BETTERSTACK_SOURCE_TOKEN=${BETTERSTACK_SOURCE_TOKEN:-}
+      - PREFERRED_URL_SCHEME=${PREFERRED_URL_SCHEME:-https}
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./subtitles:/app/subtitles

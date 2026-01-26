@@ -128,6 +128,12 @@ def register():
                     preferred_languages=form.preferred_languages.data, active=False)
         user.set_password(form.password.data)
         user.generate_manifest_token()
+        
+        # Check if email verification is disabled (for self-hosting)
+        if current_app.config.get('DISABLE_EMAIL_VERIFICATION', False):
+            user.active = True
+            user.email_confirmed = True
+            user.email_confirmed_at = datetime.utcnow()
 
         # Add default user role
         user_role = Role.query.filter_by(name='User').first()
@@ -142,12 +148,15 @@ def register():
         try:
             db.session.commit()
 
-            # Send confirmation email
-            send_confirmation_email(user)
-
-            flash(
-                'A confirmation email has been sent to your email address. Please check your inbox to activate your account.',
-                'info')
+            # Send confirmation email only if verification is enabled
+            if not current_app.config.get('DISABLE_EMAIL_VERIFICATION', False):
+                send_confirmation_email(user)
+                flash(
+                    'A confirmation email has been sent to your email address. Please check your inbox to activate your account.',
+                    'info')
+            else:
+                flash('Registration successful! You can now log in.', 'success')
+            
             return redirect(url_for('auth.login'))
 
         except IntegrityError as e:

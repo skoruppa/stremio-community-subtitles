@@ -123,7 +123,24 @@ If you want to thank me for the addon, you can [buy me a coffee](https://buymeac
 🌐 Website: [https://stremio-community-subtitles.top](https://stremio-community-subtitles.top)  
 💻 Source Code: [https://github.com/skoruppa/stremio-community-subtitles](https://github.com/skoruppa/stremio-community-subtitles)
 
-The addon is self-hostable – feel free to deploy your own instance if needed!
+## 🐳 Self-Hosting with Docker
+
+The addon is self-hostable! Deploy your own instance with Docker in minutes:
+
+```bash
+cp .env.docker.example .env
+# Edit .env and set your SECRET_KEY
+docker-compose up -d
+docker-compose exec app flask db upgrade
+```
+
+**Features:**
+- SQLite database (no external DB needed)
+- Local subtitle storage (no cloud required)
+- Email verification disabled by default
+- Only SECRET_KEY required to start
+
+See **[DOCKER.md](DOCKER.md)** for complete deployment guide.
 
 ## 📄 License
 
