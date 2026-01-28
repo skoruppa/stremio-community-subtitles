@@ -121,8 +121,15 @@ if __name__ == '__main__':
             if workers > 1:
                 # Use hypercorn CLI for multiple workers
                 import subprocess
+                import sys
+                import os
+                
+                # Get hypercorn path from venv
+                venv_bin = os.path.dirname(sys.executable)
+                hypercorn_path = os.path.join(venv_bin, 'hypercorn')
+                
                 cmd = [
-                    'hypercorn', 'run:app',
+                    hypercorn_path, 'run:app',
                     '--bind', f'{host}:{port}',
                     '--workers', str(workers),
                     '--access-logfile', '-',
