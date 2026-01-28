@@ -154,9 +154,9 @@ async def login(username, password, user=None):
         
         # Log as warning for client errors (4xx), error for server errors (5xx)
         if 400 <= e.status < 500:
-            current_app.logger.warning(f"OpenSubtitles API HTTP error during login: {error_message}")
+            current_app.logger.warning(f"OpenSubtitles API HTTP error during login: {error_message} | username={username}")
         else:
-            current_app.logger.error(f"OpenSubtitles API HTTP error during login: {error_message}")
+            current_app.logger.error(f"OpenSubtitles API HTTP error during login: {error_message} | username={username}")
         raise OpenSubtitlesError(error_message, status_code=e.status)
     except aiohttp.ClientError as e:
         current_app.logger.error(f"OpenSubtitles API request error during login: {e}")

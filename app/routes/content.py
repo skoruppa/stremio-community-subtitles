@@ -36,7 +36,7 @@ async def content_detail(activity_id):
     episode = None
 
     # Fetch metadata using the helper
-    current_app.logger.info(f"[TIMING] Activity fetched in {time.time() - start_time:.2f}s")
+    current_app.logger.debug(f"[TIMING] Activity fetched in {time.time() - start_time:.2f}s")
     metadata = await get_metadata(activity.content_id, activity.content_type)
 
     # Add display_title to metadata and extract season/episode
@@ -137,7 +137,7 @@ async def content_detail(activity_id):
         search_query = re.split(r'\s+-\s+Ep(?:isode)?\s+\d+', search_query, flags=re.IGNORECASE)[0].strip()
     
     # Single provider search for both active selection and display
-    current_app.logger.info(f"[TIMING] Metadata and prep done in {time.time() - start_time:.2f}s")
+    current_app.logger.debug(f"[TIMING] Metadata and prep done in {time.time() - start_time:.2f}s")
     provider_results_raw = {}
     if preferred_languages and (imdb_id or search_query):
         try:
@@ -161,7 +161,7 @@ async def content_detail(activity_id):
             }
             
             provider_results_raw = await search_providers_parallel(user, active_providers, search_params, timeout=10)
-            current_app.logger.info(f"[TIMING] Provider search done in {time.time() - start_time:.2f}s")
+            current_app.logger.debug(f"[TIMING] Provider search done in {time.time() - start_time:.2f}s")
             
             # Process for display
             for provider_name, results in provider_results_raw.items():
@@ -193,7 +193,7 @@ async def content_detail(activity_id):
             await flash("An error occurred while searching for subtitles.", "warning")
     
     # Determine active subtitle for each language using cached provider results
-    current_app.logger.info(f"[TIMING] Before get_active_subtitle_details in {time.time() - start_time:.2f}s")
+    current_app.logger.debug(f"[TIMING] Before get_active_subtitle_details in {time.time() - start_time:.2f}s")
     async with async_session_maker() as session:
         result = await session.execute(select(User).filter_by(id=user_id))
         user = result.scalar_one_or_none()
@@ -236,7 +236,7 @@ async def content_detail(activity_id):
                 'auto_selected': auto_selected
             }
     
-    current_app.logger.info(f"[TIMING] After get_active_subtitle_details in {time.time() - start_time:.2f}s")
+    current_app.logger.debug(f"[TIMING] After get_active_subtitle_details in {time.time() - start_time:.2f}s")
     # Calculate has_any_user_selection
     has_any_user_selection = any(details.get('user_selection') is not None for details in active_details_by_lang.values())
 

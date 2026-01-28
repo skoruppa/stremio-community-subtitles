@@ -492,9 +492,15 @@ async def unified_download(manifest_token: str, download_identifier: str):
                             current_app.logger.warning(f"{provider_name} API error: {error_msg}")
                         else:
                             current_app.logger.error(f"{provider_name} API error: {error_msg}")
-                        message_key = 'provider_download_error'
-                        failed_provider_name = provider_name
-                        failed_provider_error = error_msg
+                        
+                        # Special handling for 401 Unauthorized
+                        if hasattr(e, 'status_code') and e.status_code == 401:
+                            message_key = 'provider_auth_expired'
+                            failed_provider_name = provider_name
+                        else:
+                            message_key = 'provider_download_error'
+                            failed_provider_name = provider_name
+                            failed_provider_error = error_msg
                     except Exception as e:
                         error_msg = str(e)
                         current_app.logger.error(f"Unexpected error serving {provider_name} subtitle {subtitle_id}: {error_msg}",
@@ -588,7 +594,8 @@ async def unified_download(manifest_token: str, download_identifier: str):
         'provider_error': f"SCS: Error fetching from {failed_provider_name or 'provider'}. Please reconnect in account settings or try again later.",
         'provider_timeout': f"SCS: {failed_provider_name or 'Provider'} timeout. The service is slow or unavailable, try again later.",
         'provider_download_error': f"SCS: {failed_provider_name or 'Provider'} error: {failed_provider_error or 'Download failed'}.",
-        'provider_no_subtitle_in_archive': f"SCS: {failed_provider_name or 'Provider'} archive does not contain any subtitle files."
+        'provider_no_subtitle_in_archive': f"SCS: {failed_provider_name or 'Provider'} archive does not contain any subtitle files.",
+        'provider_auth_expired': f"SCS: {failed_provider_name or 'Provider'} authentication expired. Please log in again in account settings."
     }
     message_text = messages.get(message_key, "An error occurred or subtitles need selection.")
     current_app.logger.info(f"Serving placeholder message (key: '{message_key}', provider: '{failed_provider_name}') for context: {context}")
