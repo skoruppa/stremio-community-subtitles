@@ -13,7 +13,7 @@ pymysql==1.1.1
 greenlet==3.2.2
 aiohttp==3.13.3
 aiohappyeyeballs==2.6.1
-aiosignal==1.3.2
+aiosignal==1.4.0
 aiofiles==24.1.0
 aiosmtplib==5.1.0
 cryptography==44.0.3
