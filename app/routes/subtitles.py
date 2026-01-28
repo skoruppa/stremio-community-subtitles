@@ -66,7 +66,7 @@ async def addon_stream(manifest_token: str, content_type: str, content_id: str, 
 
 
     try:
-        param_string_to_parse = (await request.query_string).decode() if await request.query_string else params
+        param_string_to_parse = request.query_string.decode() if request.query_string else params
         parsed_params = {k: v[0] for k, v in parse_qs(param_string_to_parse).items() if v}
     except Exception as e:
         current_app.logger.error(f"Failed to parse params '{params}' or query string '{request.query_string}': {e}")
@@ -89,7 +89,7 @@ async def addon_stream(manifest_token: str, content_type: str, content_id: str, 
         try:
             video_size = int(video_size_str)
         except ValueError:
-            current_app.logger.warning(f"Could not convert videoSize '{video_size_str}' to integer. URL: {await request.url}")
+            current_app.logger.warning(f"Could not convert videoSize '{video_size_str}' to integer. URL: {request.url}")
 
     preferred_langs = user.preferred_languages
     current_app.logger.info(
@@ -458,7 +458,7 @@ async def unified_download(manifest_token: str, download_identifier: str):
                                 subtitle_content, filename, extension = extract_subtitle_from_zip(zip_content, episode=episode)
                                 del zip_content  # Free memory immediately
                                 
-                                processed = process_subtitle_content(subtitle_content, extension)
+                                processed = await process_subtitle_content(subtitle_content, extension)
                                 del subtitle_content  # Free memory
                                 
                                 if is_ass_request and processed['original']:
@@ -525,7 +525,7 @@ async def unified_download(manifest_token: str, download_identifier: str):
                             del zip_data  # Free memory
                             
                             # Process subtitle (convert to VTT, handle ASS)
-                            processed = process_subtitle_content(subtitle_content, extension)
+                            processed = await process_subtitle_content(subtitle_content, extension)
                             del subtitle_content  # Free memory
                             
                             # If ASS requested and available, serve original
@@ -1016,7 +1016,7 @@ async def select_subtitle(activity_id, subtitle_id):
 async def vote_subtitle(subtitle_id, vote_type):
     activity_id = (await request.form).get('activity_id')
     vote_value = 1 if vote_type == 'up' else -1
-    is_ajax = (await request.headers).get('X-Requested-With') == 'XMLHttpRequest'
+    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
     
     async with async_session_maker() as session:
         # Get subtitle
@@ -1030,7 +1030,7 @@ async def vote_subtitle(subtitle_id, vote_type):
             if is_ajax:
                 return jsonify({'error': 'Voting not available'}), 400
             await flash('Voting is not available for this type of subtitle.', 'warning')
-            return redirect(await request.referrer or url_for('main.dashboard'))
+            return redirect(request.referrer or url_for('main.dashboard'))
 
         vote_result = await session.execute(
             select(SubtitleVote).filter_by(user_id=(current_user.auth_id), subtitle_id=subtitle_id)
@@ -1369,7 +1369,7 @@ async def delete_subtitle(subtitle_id):
         
         if subtitle.uploader_id != int(current_user.auth_id) and not (user and user.has_role('Admin')):
             await flash('You do not have permission to delete this subtitle.', 'danger')
-            return redirect(await request.referrer or url_for('main.dashboard'))
+            return redirect(request.referrer or url_for('main.dashboard'))
 
         try:
             # Delete associated selections
@@ -1475,7 +1475,7 @@ async def download_subtitle(subtitle_id):
             provider = ProviderRegistry.get(provider_name)
             if not provider or not provider.is_authenticated(current_user):
                 await flash(f"Admin's {provider_name} account is not configured/active; cannot download this linked subtitle.", "warning")
-                return redirect(await request.referrer or url_for('main.dashboard'))
+                return redirect(request.referrer or url_for('main.dashboard'))
             
             try:
                 provider_url = await provider.get_download_url(current_user, provider_subtitle_id)
@@ -1520,16 +1520,16 @@ async def mark_compatible_hash(subtitle_id):
 
     if not target_video_hash:
         await flash('Target video hash is missing.', 'danger')
-        return redirect(await request.referrer or url_for('main.dashboard'))
+        return redirect(request.referrer or url_for('main.dashboard'))
     if not activity_id_str:
         await flash('Activity ID is missing.', 'danger')
-        return redirect(await request.referrer or url_for('main.dashboard'))
+        return redirect(request.referrer or url_for('main.dashboard'))
 
     try:
         activity_id_uuid = uuid.UUID(activity_id_str)
     except ValueError:
         await flash('Invalid Activity ID format.', 'danger')
-        return redirect(await request.referrer or url_for('main.dashboard'))
+        return redirect(request.referrer or url_for('main.dashboard'))
 
     async with async_session_maker() as session:
         # Get original subtitle

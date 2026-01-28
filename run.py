@@ -109,8 +109,6 @@ if __name__ == '__main__':
     else:
         # Production mode - use Hypercorn
         print(f"Starting production server on {host}:{port}")
-        print(f"For production, use: hypercorn run:app --bind {host}:{port} --workers 4")
-        print("Or set DEBUG=true for development mode")
         
         # Try to use hypercorn if available
         try:
@@ -118,14 +116,29 @@ if __name__ == '__main__':
             from hypercorn.asyncio import serve
             import asyncio
             
-            config = Config()
-            config.bind = [f"{host}:{port}"]
-            config.workers = int(os.getenv('HYPERCORN_WORKERS', 1))
-            config.accesslog = '-'
-            config.errorlog = '-'
+            workers = int(os.getenv('HYPERCORN_WORKERS', 1))
             
-            print(f"Running with Hypercorn ({config.workers} worker(s))")
-            asyncio.run(serve(app, config))
+            if workers > 1:
+                # Use hypercorn CLI for multiple workers
+                import subprocess
+                cmd = [
+                    'hypercorn', 'run:app',
+                    '--bind', f'{host}:{port}',
+                    '--workers', str(workers),
+                    '--access-logfile', '-',
+                    '--error-logfile', '-'
+                ]
+                print(f"Running with Hypercorn ({workers} workers)")
+                subprocess.run(cmd)
+            else:
+                # Single worker - use serve directly
+                config = Config()
+                config.bind = [f"{host}:{port}"]
+                config.accesslog = '-'
+                config.errorlog = '-'
+                
+                print(f"Running with Hypercorn (1 worker)")
+                asyncio.run(serve(app, config))
         except ImportError:
             print("Hypercorn not found, falling back to Quart dev server")
             print("Install: pip install hypercorn")

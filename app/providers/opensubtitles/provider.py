@@ -26,7 +26,7 @@ class OpenSubtitlesProvider(BaseSubtitleProvider):
             raise ProviderAuthError("Username and password required", self.name)
         
         try:
-            result = await client.login(username, password, user)
+            result = await opensubtitles_client.login(username, password, user)
             return {
                 'token': result['token'],
                 'base_url': result['base_url'],
@@ -50,7 +50,7 @@ class OpenSubtitlesProvider(BaseSubtitleProvider):
                     self.opensubtitles_base_url = base_url
             
             temp_user = TempUser(creds['token'], creds['base_url'])
-            await client.logout(creds['token'], temp_user)
+            await opensubtitles_client.logout(creds['token'], temp_user)
             return True
         except Exception as e:
             current_app.logger.error(f"OpenSubtitles logout error: {e}")
@@ -130,7 +130,7 @@ class OpenSubtitlesProvider(BaseSubtitleProvider):
         temp_user = TempUser(creds['token'], creds['base_url'])
         
         try:
-            result = await client.request_download_link(int(subtitle_id), temp_user)
+            result = await opensubtitles_client.request_download_link(int(subtitle_id), temp_user)
             return result.get('link')
         except opensubtitles_client.OpenSubtitlesError as e:
             raise ProviderDownloadError(str(e), self.name, getattr(e, 'status_code', None))

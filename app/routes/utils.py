@@ -799,7 +799,7 @@ def extract_subtitle_from_zip(zip_content: bytes, episode: int = None):
         gc.collect()
 
 
-def process_subtitle_content(content: bytes, extension: str, encoding=None):
+async def process_subtitle_content(content: bytes, extension: str, encoding=None):
     """
     Processes subtitle content and returns both VTT and original (if ASS/SSA).
     Returns dict: {'vtt': str, 'original': str or None, 'original_format': str or None}
@@ -807,7 +807,7 @@ def process_subtitle_content(content: bytes, extension: str, encoding=None):
     from ..lib.subtitles import convert_to_vtt
     
     # Convert to VTT
-    vtt_content = convert_to_vtt(content, extension.lstrip('.'), encoding=encoding)
+    vtt_content = await convert_to_vtt(content, extension.lstrip('.'), encoding=encoding)
     
     # If ASS/SSA, also keep original
     if extension.lower() in ['.ass', '.ssa']:
