@@ -1,6 +1,6 @@
 # Stremio Community Subtitles Addon
 
-![Version](https://img.shields.io/badge/version-0.6.0-blue.svg)
+![Version](https://img.shields.io/badge/version-0.6.1-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Status](https://img.shields.io/badge/status-Active-brightgreen.svg)
 
@@ -28,24 +28,16 @@ Every subtitle you upload helps build a community database that benefits all use
   - your provider selections
   - your votes
 
-### ✅ New in 0.5.0 — Multiple Subtitle Providers
+### ✅ New in 0.6.0 — Performance Improvements
 
-The addon now supports **multiple external subtitle providers**:
+Major performance upgrade with migration to async architecture:
 
-✅ **OpenSubtitles** – The largest subtitle database with millions of subtitles
-✅ **SubDL** – Fast and reliable subtitle source with excellent coverage
-✅ **Subsource** – Additional subtitle provider for enhanced search results
+✅ **Async Framework Migration** – Migrated from Flask+gevent to Quart+Hypercorn with full async/await support
+✅ **Async HTTP Client** – Replaced synchronous requests with aiohttp for non-blocking I/O
+✅ **Parallel Language Processing** – Multiple preferred languages are now processed simultaneously
+✅ **Faster Response Times** – Significantly reduced latency for subtitle requests
 
-**Features:**
-- Connect multiple providers simultaneously
-- Automatic subtitle search across all connected providers
-- Manual selection from any provider
-- Link provider subtitles to specific video versions
-- Prioritize ASS/SSA subtitles option for better formatting support
-
-**Previous updates (0.4.5):**
-- Dual format support for ASS/SSA subtitles (original + VTT conversion)
-- Switch between formats in Stremio for best compatibility
+**Note:** SubDL and Subsource providers may experience slow response times. If content loading takes longer than expected, it's likely due to these external services. Consider disabling them in account settings if performance is critical.
 
 ---
 

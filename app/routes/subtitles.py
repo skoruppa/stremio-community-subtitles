@@ -176,9 +176,8 @@ async def addon_stream(manifest_token: str, content_type: str, content_id: str, 
             await session.rollback()
             current_app.logger.error(f"Failed to log or update user activity for user {user.id}: {e}", exc_info=True)
 
-    subtitles_list = []
-    for preferred_lang in preferred_langs:
-        add_ass_format = False
+    # Parallel search for all languages
+    async def process_language(preferred_lang):
         download_context = {
             'content_type': content_type,
             'content_id': content_id,
@@ -192,7 +191,7 @@ async def addon_stream(manifest_token: str, content_type: str, content_id: str, 
             download_identifier = base64.urlsafe_b64encode(context_json.encode('utf-8')).decode('utf-8').rstrip('=')
         except Exception as e:
             current_app.logger.error(f"Failed to encode download context: {e}")
-            return respond_with({'subtitles': []})
+            return None
 
         try:
             active_subtitle_info = await get_active_subtitle_details(user, content_id, video_hash, content_type, video_filename, preferred_lang)
@@ -200,7 +199,7 @@ async def addon_stream(manifest_token: str, content_type: str, content_id: str, 
             # Check if we should add subtitle entry
             has_subtitles = active_subtitle_info['type'] != 'none'
             if not has_subtitles and not user.show_no_subtitles:
-                continue  # Skip this language if no subtitles and user doesn't want empty entries
+                return []  # Skip this language if no subtitles and user doesn't want empty entries
             
             download_url = url_for('subtitles.unified_download',
                                    manifest_token=manifest_token,
@@ -215,6 +214,7 @@ async def addon_stream(manifest_token: str, content_type: str, content_id: str, 
                 'lang': preferred_lang
             }
             
+            entries = []
             add_ass_format = False
             
             if active_subtitle_info['type'] == 'local' and active_subtitle_info['subtitle']:
@@ -243,19 +243,28 @@ async def addon_stream(manifest_token: str, content_type: str, content_id: str, 
                     'lang': preferred_lang
                 }
                 if user.prioritize_ass_subtitles:
-                    subtitles_list.append(ass_entry)
-                    subtitles_list.append(vtt_entry)
+                    entries.append(ass_entry)
+                    entries.append(vtt_entry)
                 else:
-                    subtitles_list.append(vtt_entry)
-                    subtitles_list.append(ass_entry)
+                    entries.append(vtt_entry)
+                    entries.append(ass_entry)
                 current_app.logger.info(f"Added ASS format subtitle for context: {download_context}")
             else:
-                subtitles_list.append(vtt_entry)
+                entries.append(vtt_entry)
             
             current_app.logger.info(f"Generated download URL for context: {download_context}")
+            return entries
         except Exception as e:
             current_app.logger.error(f"Error generating download URL for identifier {download_identifier}: {e}")
-            return respond_with({'subtitles': []})
+            return []
+    
+    # Process all languages in parallel
+    results = await asyncio.gather(*[process_language(lang) for lang in preferred_langs], return_exceptions=True)
+    
+    subtitles_list = []
+    for result in results:
+        if result and not isinstance(result, Exception):
+            subtitles_list.extend(result)
 
     return respond_with_no_cache({'subtitles': subtitles_list})
 
