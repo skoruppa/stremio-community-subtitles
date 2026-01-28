@@ -619,7 +619,7 @@ async def _find_fallback_subtitle(user, content_id, imdb_id, content_type, lang,
     # Local first
     async with async_session_maker() as session:
         result = await session.execute(
-            select(Subtitle).options(selectinload(Subtitle.uploader)).filter_by(content_id=content_id, language=lang).order_by(Subtitle.votes.desc())
+            select(Subtitle).options(selectinload(Subtitle.uploader)).filter_by(content_id=content_id, language=lang).order_by(Subtitle.votes.desc()).limit(1)
         )
         local_sub = result.scalar_one_or_none()
         
