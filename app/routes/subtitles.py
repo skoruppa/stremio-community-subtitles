@@ -107,7 +107,7 @@ async def addon_stream(manifest_token: str, content_type: str, content_id: str, 
                         content_id=content_id,
                         video_hash=video_hash,
                         video_size=video_size
-                    )
+                    ).limit(1)
                 )
                 existing_activity = result.scalar_one_or_none()
                 if existing_activity:
@@ -126,7 +126,7 @@ async def addon_stream(manifest_token: str, content_type: str, content_id: str, 
                         video_hash=None,
                         video_size=video_size,
                         video_filename=video_filename
-                    )
+                    ).limit(1)
                 )
                 existing_activity = result.scalar_one_or_none()
                 if existing_activity:
