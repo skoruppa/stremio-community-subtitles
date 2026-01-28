@@ -5,6 +5,7 @@ import chardet
 from pysubs2 import SSAFile, load, FormatAutodetectionError
 import re
 import logging
+import aiofiles
 from ..lib.ass_to_vtt import convert_ass_file_to_vtt_string, convert_ass_string_to_vtt_string, AssParsingError, VttConversionError
 
 logger = logging.getLogger(__name__)
@@ -32,7 +33,7 @@ def detect_encoding(raw_data):
     return encoding or 'utf-8'
 
 
-def convert_to_vtt(file_data, file_extension, encoding=None, fps=None):
+async def convert_to_vtt(file_data, file_extension, encoding=None, fps=None):
     """
     Convert subtitle file to VTT format.
     
@@ -52,9 +53,11 @@ def convert_to_vtt(file_data, file_extension, encoding=None, fps=None):
     logger.info(f"Converting subtitle with encoding: {encoding}, FPS: {fps}")
     
     # Create a temporary file to work with
-    with tempfile.NamedTemporaryFile(delete=False, suffix=file_extension) as temp_file:
-        temp_file.write(file_data)
-        temp_file_path = temp_file.name
+    temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=file_extension)
+    temp_file_path = temp_file.name
+    
+    async with aiofiles.open(temp_file_path, 'wb') as f:
+        await f.write(file_data)
     
     try:
         if file_extension.lower() in ('ass', 'ssa'):

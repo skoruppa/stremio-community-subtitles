@@ -27,10 +27,16 @@
 
 4. **Initialize database:**
    ```bash
-   docker-compose exec app flask db upgrade
+   docker-compose exec app python run.py init-db
+   docker-compose exec app python run.py create-roles
    ```
 
-5. **Access the application:**
+5. **Create admin user (optional):**
+   ```bash
+   docker-compose exec app python run.py create-admin admin@example.com admin yourpassword
+   ```
+
+6. **Access the application:****
    - Application: http://localhost:4949
 
 ## Storage

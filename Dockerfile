@@ -10,7 +10,7 @@ WORKDIR /app
 
 # Copy requirements and install Python dependencies
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt gunicorn gevent
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
 COPY . .
@@ -21,5 +21,5 @@ RUN mkdir -p /app/data /app/logs /app/subtitles
 # Expose port
 EXPOSE 4949
 
-# Run gunicorn
-CMD ["gunicorn", "-c", "gunicorn_config.py", "wsgi:app"]
+# Run with Hypercorn (4 workers for production)
+CMD ["hypercorn", "run:app", "--bind", "0.0.0.0:4949", "--workers", "4"]

@@ -1,7 +1,7 @@
-import requests
+import asyncio
+import aiohttp
 from typing import List, Dict, Optional
 from ...version import USER_AGENT
-
 
 class SubSourceClient:
     BASE_URL = "https://api.subsource.net/api/v1"
@@ -13,7 +13,7 @@ class SubSourceClient:
             'User-Agent': USER_AGENT
         }
     
-    def search_movie(self, imdb_id: str = None, query: str = None, season: int = None, content_type: str = None) -> Optional[Dict]:
+    async def search_movie(self, imdb_id: str = None, query: str = None, season: int = None, content_type: str = None) -> Optional[Dict]:
         """Search for movie/series by IMDB ID or text query"""
         url = f"{self.BASE_URL}/movies/search"
         params = {}
@@ -36,15 +36,15 @@ class SubSourceClient:
             elif content_type == 'series':
                 params['type'] = 'series'
         
-        response = requests.get(url, headers=self.headers, params=params, timeout=10)
-        response.raise_for_status()
-        
-        data = response.json()
-        if data.get('success') and data.get('data'):
-            return data['data'][0]  # Return first match
-        return None
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, headers=self.headers, params=params, timeout=aiohttp.ClientTimeout(total=10)) as response:
+                response.raise_for_status()
+                data = await response.json()
+                if data.get('success') and data.get('data'):
+                    return data['data'][0]  # Return first match
+                return None
     
-    def get_subtitles(self, movie_id: int, language: str = None, page: int = 1, limit: int = 20) -> Dict:
+    async def get_subtitles(self, movie_id: int, language: str = None, page: int = 1, limit: int = 20) -> Dict:
         """Get subtitles for a movie/series"""
         url = f"{self.BASE_URL}/subtitles"
         params = {
@@ -56,19 +56,18 @@ class SubSourceClient:
         if language:
             params['language'] = language
         
-        response = requests.get(url, headers=self.headers, params=params, timeout=10)
-        response.raise_for_status()
-        
-        return response.json()
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, headers=self.headers, params=params, timeout=aiohttp.ClientTimeout(total=10)) as response:
+                response.raise_for_status()
+                return await response.json()
     
-    def download_subtitle(self, subtitle_id: int) -> bytes:
+    async def download_subtitle(self, subtitle_id: int) -> bytes:
         """Download subtitle ZIP file"""
         url = f"{self.BASE_URL}/subtitles/{subtitle_id}/download"
         
-        response = requests.get(url, headers=self.headers, timeout=30)
-        response.raise_for_status()
-        
-        # SubSource returns JSON with body field containing ZIP stream
-        body = response.content
-        
-        return body
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, headers=self.headers, timeout=aiohttp.ClientTimeout(total=30)) as response:
+                response.raise_for_status()
+                # SubSource returns JSON with body field containing ZIP stream
+                body = await response.read()
+                return body

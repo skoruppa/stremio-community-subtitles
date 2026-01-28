@@ -1,8 +1,9 @@
-{% macro render_provider_status(provider, user) %}
+{% macro render_provider_status(provider, user, is_authenticated) %}
 {#
     Renders provider connection status
     - provider: BaseSubtitleProvider instance
     - user: Current user object
+    - is_authenticated: Boolean indicating if provider is authenticated
 #}
 <div class="card mb-3">
     <div class="card-body">
@@ -10,7 +11,7 @@
             <div>
                 <h6 class="mb-1">{{ provider.display_name }}</h6>
                 <small class="text-muted">
-                    {% if provider.is_authenticated(user) %}
+                    {% if is_authenticated %}
                         <span class="badge bg-success">
                             <i class="fas fa-check-circle"></i> Connected
                         </span>
@@ -25,7 +26,7 @@
                 </small>
             </div>
             <div>
-                {% if provider.is_authenticated(user) %}
+                {% if is_authenticated %}
                     {% if provider.has_additional_settings %}
                     <button type="button" class="btn btn-sm btn-outline-primary me-1"
                             data-bs-toggle="modal"
@@ -77,7 +78,7 @@
 </div>
 
 {# Settings Modal (for connected providers) #}
-{% if provider.is_authenticated(user) %}
+{% if is_authenticated %}
 <div class="modal fade" id="settingsModal{{ provider.name }}" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">

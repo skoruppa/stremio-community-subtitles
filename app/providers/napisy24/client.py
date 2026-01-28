@@ -1,9 +1,10 @@
 """Napisy24 API client"""
-import requests
+import asyncio
+import aiohttp
 import re
 from lxml import etree
 import xml.etree.ElementTree as ET
-from flask import current_app
+from quart import current_app
 
 
 class Napisy24Error(Exception):
@@ -13,45 +14,47 @@ class Napisy24Error(Exception):
         self.status_code = status_code
 
 
-def search_by_hash(filehash, filesize, filename, api_user="subliminal", api_password="lanimilbus"):
+async def search_by_hash(filehash, filesize, filename, api_user="subliminal", api_password="lanimilbus"):
     """Search subtitles by video file hash"""
     try:
-        response = requests.post("http://napisy24.pl/run/CheckSubAgent.php", data={
-            'postAction': 'CheckSub',
-            'ua': api_user,
-            'ap': api_password,
-            'fh': filehash,
-            'fs': filesize,
-            'n24pref': 1,
-            'fn': filename or ""
-        }, headers={"User-Agent": "Subliminal"}, timeout=10)
-        
-        if response.status_code != 200:
-            return None
-        
-        try:
-            response_text, response_data = response.content.split(b'||', 1)
-        except ValueError:
-            return None
-        
-        if not response_text.startswith(b"OK-2"):
-            return None
-        
-        match = re.search(rb"fps:([\d.]+)", response_text)
-        fps = float(match.group(1)) if match else None
-        sub_id = int(re.search(rb"lp:([\d.]+)", response_text).group(1))
-        
-        return {
-            'id': str(sub_id),
-            'fps': fps,
-            'release': filename or 'Hash match'
-        }
+        async with aiohttp.ClientSession() as session:
+            async with session.post("http://napisy24.pl/run/CheckSubAgent.php", data={
+                'postAction': 'CheckSub',
+                'ua': api_user,
+                'ap': api_password,
+                'fh': filehash,
+                'fs': filesize,
+                'n24pref': 1,
+                'fn': filename or ""
+            }, headers={"User-Agent": "Subliminal"}, timeout=aiohttp.ClientTimeout(total=10)) as response:
+                
+                if response.status != 200:
+                    return None
+                
+                content = await response.read()
+                try:
+                    response_text, response_data = content.split(b'||', 1)
+                except ValueError:
+                    return None
+                
+                if not response_text.startswith(b"OK-2"):
+                    return None
+                
+                match = re.search(rb"fps:([\d.]+)", response_text)
+                fps = float(match.group(1)) if match else None
+                sub_id = int(re.search(rb"lp:([\d.]+)", response_text).group(1))
+                
+                return {
+                    'id': str(sub_id),
+                    'fps': fps,
+                    'release': filename or 'Hash match'
+                }
     except Exception as e:
         current_app.logger.error(f"Napisy24 hash search error: {e} | hash={filehash}, size={filesize}, filename={filename}")
         raise Napisy24Error(f"Hash search failed: {e}")
 
 
-def search_by_title(title, season=None, episode=None, filename=None):
+async def search_by_title(title, season=None, episode=None, filename=None):
     """Search subtitles by title"""
     try:
         # Build search query
@@ -60,27 +63,31 @@ def search_by_title(title, season=None, episode=None, filename=None):
             search_query = f"{title} {season}x{episode:02d}"
         
         url = f"http://napisy24.pl/libs/webapi.php?title={search_query}"
-        response = requests.get(url, timeout=10)
-        
-        if response.status_code != 200 or response.text == 'brak wynikow':
-            return []
-        
-        return _parse_xml_response(response.text, season, episode, filename)
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, timeout=aiohttp.ClientTimeout(total=10)) as response:
+                if response.status != 200:
+                    return []
+                text = await response.text()
+                if text == 'brak wynikow':
+                    return []
+                return _parse_xml_response(text, season, episode, filename)
     except Exception as e:
         current_app.logger.error(f"Napisy24 title search error: {e} | title={title}, season={season}, episode={episode}")
         raise Napisy24Error(f"Title search failed: {e}")
 
 
-def search_by_imdb(imdb_id, season=None, episode=None, filename=None):
+async def search_by_imdb(imdb_id, season=None, episode=None, filename=None):
     """Search subtitles by IMDb ID"""
     try:
         url = f"http://napisy24.pl/libs/webapi.php?imdb={imdb_id}"
-        response = requests.get(url, timeout=10)
-        
-        if response.status_code != 200 or response.text == 'brak wynikow':
-            return []
-        
-        return _parse_xml_response(response.text, season, episode, filename)
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, timeout=aiohttp.ClientTimeout(total=10)) as response:
+                if response.status != 200:
+                    return []
+                text = await response.text()
+                if text == 'brak wynikow':
+                    return []
+                return _parse_xml_response(text, season, episode, filename)
     except Exception as e:
         current_app.logger.error(f"Napisy24 IMDb search error: {e} | imdb_id={imdb_id}, season={season}, episode={episode}")
         raise Napisy24Error(f"IMDb search failed: {e}")
@@ -157,17 +164,16 @@ def _parse_xml_response(response_text, season=None, episode=None, filename=None)
         raise Napisy24Error(f"XML parse failed: {e}")
 
 
-def download_subtitle(subtitle_id):
+async def download_subtitle(subtitle_id):
     """Download subtitle by ID"""
     try:
         url = f"http://napisy24.pl/run/pages/download.php?napisId={subtitle_id}&typ=sr"
         headers = {"Referer": "http://napisy24.pl/"}
-        response = requests.get(url, headers=headers, timeout=10)
-        
-        if response.status_code != 200:
-            raise Napisy24Error(f"Download failed with status {response.status_code}", response.status_code)
-        
-        return response.content
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, headers=headers, timeout=aiohttp.ClientTimeout(total=10)) as response:
+                if response.status != 200:
+                    raise Napisy24Error(f"Download failed with status {response.status}", response.status)
+                return await response.read()
     except Exception as e:
         current_app.logger.error(f"Napisy24 download error: {e} | subtitle_id={subtitle_id}")
         raise Napisy24Error(f"Download failed: {e}")

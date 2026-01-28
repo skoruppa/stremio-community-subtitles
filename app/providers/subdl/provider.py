@@ -1,6 +1,6 @@
 """SubDL provider implementation"""
 from typing import List, Dict, Optional, Any
-from flask import current_app
+from quart import current_app
 
 from ..base import BaseSubtitleProvider, SubtitleResult, ProviderAuthError, ProviderSearchError, ProviderDownloadError
 from . import client
@@ -18,7 +18,7 @@ class SubDLProvider(BaseSubtitleProvider):
     can_return_ass = True  # SubDL returns ZIP files that may contain ASS
     has_additional_settings = True  # Has try_provide_ass setting
     
-    def authenticate(self, user, credentials: Dict[str, str]) -> Dict[str, Any]:
+    async def authenticate(self, user, credentials: Dict[str, str]) -> Dict[str, Any]:
         """Authenticate with SubDL (validate API key)"""
         api_key = credentials.get('api_key')
         
@@ -28,7 +28,7 @@ class SubDLProvider(BaseSubtitleProvider):
         # Test API key with a simple search
         try:
             # Try searching for a known movie to validate key
-            client.search_subtitles(api_key, imdb_id='tt0111161', languages=['en'])
+            await client.search_subtitles(api_key, imdb_id='tt0111161', languages=['en'])
             return {
                 'api_key': api_key,
                 'active': True
@@ -36,16 +36,16 @@ class SubDLProvider(BaseSubtitleProvider):
         except client.SubDLError as e:
             raise ProviderAuthError(f"Invalid API key: {str(e)}", self.name, getattr(e, 'status_code', None))
     
-    def logout(self, user) -> bool:
+    async def logout(self, user) -> bool:
         """Logout from SubDL (just clear credentials)"""
         return True
     
-    def is_authenticated(self, user) -> bool:
+    async def is_authenticated(self, user) -> bool:
         """Check if user has valid SubDL API key"""
-        creds = self.get_credentials(user)
+        creds = await self.get_credentials(user)
         return bool(creds and creds.get('active') and creds.get('api_key'))
     
-    def search(
+    async def search(
         self,
         user,
         imdb_id: Optional[str] = None,
@@ -58,10 +58,10 @@ class SubDLProvider(BaseSubtitleProvider):
         **kwargs
     ) -> List[SubtitleResult]:
         """Search SubDL"""
-        if not self.is_authenticated(user):
+        if not await self.is_authenticated(user):
             raise ProviderSearchError("Not authenticated", self.name)
         
-        creds = self.get_credentials(user)
+        creds = await self.get_credentials(user)
         api_key = creds['api_key']
         
         # SubDL doesn't support hash matching
@@ -84,7 +84,7 @@ class SubDLProvider(BaseSubtitleProvider):
         
         try:
             # Try with IMDb ID first, fallback to film_name
-            results = client.search_subtitles(
+            results = await client.search_subtitles(
                 api_key=api_key,
                 imdb_id=imdb_id,
                 film_name=query if not imdb_id else None,
@@ -108,7 +108,7 @@ class SubDLProvider(BaseSubtitleProvider):
                         
                         metadata = get_metadata(content_id, content_type)
                         if metadata and metadata.get('tmdb_id'):
-                            results = client.search_subtitles(
+                            results = await client.search_subtitles(
                                 api_key=api_key,
                                 tmdb_id=metadata['tmdb_id'],
                                 languages=subdl_languages,
@@ -124,9 +124,9 @@ class SubDLProvider(BaseSubtitleProvider):
         except client.SubDLError as e:
             raise ProviderSearchError(str(e), self.name, getattr(e, 'status_code', None))
     
-    def get_download_url(self, user, subtitle_id: str) -> str:
+    async def get_download_url(self, user, subtitle_id: str) -> str:
         """Get download URL for SubDL subtitle"""
-        if not self.is_authenticated(user):
+        if not await self.is_authenticated(user):
             raise ProviderDownloadError("Not authenticated", self.name)
         
         # SubDL provides direct download URLs in search results
@@ -135,7 +135,7 @@ class SubDLProvider(BaseSubtitleProvider):
             return subtitle_id
         
         # Fallback
-        creds = self.get_credentials(user)
+        creds = await self.get_credentials(user)
         return client.get_download_url(creds['api_key'], subtitle_id)
     
     def get_settings_template(self) -> str:

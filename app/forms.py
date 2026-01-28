@@ -1,5 +1,5 @@
-from flask_wtf import FlaskForm
-from flask_wtf.file import FileField, FileAllowed, FileRequired
+from quart_wtf import QuartForm
+from quart_wtf.file import FileField, FileAllowed, FileRequired
 from wtforms import StringField, PasswordField, BooleanField, SubmitField, SelectField, SelectMultipleField, TextAreaField
 from wtforms.fields.numeric import IntegerField
 from wtforms.validators import DataRequired, Email, EqualTo, Length, ValidationError, Optional
@@ -7,14 +7,14 @@ from .models import User
 from .languages import LANGUAGES
 
 
-class LoginForm(FlaskForm):
+class LoginForm(QuartForm):
     email = StringField('Email', validators=[DataRequired(), Email()])
     password = PasswordField('Password', validators=[DataRequired()])
     remember_me = BooleanField('Remember Me')
     submit = SubmitField('Sign In')
 
 
-class RegistrationForm(FlaskForm):
+class RegistrationForm(QuartForm):
     username = StringField('Username', validators=[DataRequired(), Length(min=3, max=80)])
     email = StringField('Email', validators=[DataRequired(), Email(), Length(max=120)])
     password = PasswordField('Password', validators=[DataRequired(), Length(min=8)])
@@ -22,18 +22,28 @@ class RegistrationForm(FlaskForm):
     preferred_languages = SelectMultipleField('Preferred Subtitle Languages', choices=LANGUAGES, validators=[DataRequired()])
     submit = SubmitField('Register')
 
-    def validate_username(self, username):
-        user = User.query.filter_by(username=username.data).first()
-        if user:
-            raise ValidationError('Username already taken. Please choose a different one.')
+    async def async_validate(self):
+        """Async validation for database checks"""
+        from sqlalchemy import select
+        from .extensions import async_session_maker
+        
+        async with async_session_maker() as session:
+            # Check username
+            result = await session.execute(select(User).filter_by(username=self.username.data))
+            if result.scalar_one_or_none():
+                self.username.errors.append('Username already taken. Please choose a different one.')
+                return False
+            
+            # Check email
+            result = await session.execute(select(User).filter_by(email=self.email.data))
+            if result.scalar_one_or_none():
+                self.email.errors.append('Email already registered. Please use a different email or sign in.')
+                return False
+        
+        return True
 
-    def validate_email(self, email):
-        user = User.query.filter_by(email=email.data).first()
-        if user:
-            raise ValidationError('Email already registered. Please use a different email or sign in.')
 
-
-class SubtitleUploadForm(FlaskForm):
+class SubtitleUploadForm(QuartForm):
     # Basic fields (always present)
     subtitle_file = FileField('Subtitle File (.srt, .sub, .txt, .ass, .ssa)', validators=[
         FileRequired(),
@@ -111,30 +121,30 @@ class SubtitleUploadForm(FlaskForm):
                 raise ValidationError('Episode number is required for TV series')
 
 
-class ChangePasswordForm(FlaskForm):
+class ChangePasswordForm(QuartForm):
     current_password = PasswordField('Current Password', validators=[DataRequired()])
     new_password = PasswordField('New Password', validators=[DataRequired(), Length(min=8)])
     confirm_password = PasswordField('Confirm New Password', validators=[DataRequired(), EqualTo('new_password')])
     submit = SubmitField('Change Password')
 
 
-class ResetPasswordRequestForm(FlaskForm):
+class ResetPasswordRequestForm(QuartForm):
     email = StringField('Email', validators=[DataRequired(), Email()])
     submit = SubmitField('Request Password Reset')
 
 
-class ResetPasswordForm(FlaskForm):
+class ResetPasswordForm(QuartForm):
     password = PasswordField('New Password', validators=[DataRequired(), Length(min=8)])
     password2 = PasswordField('Confirm Password', validators=[DataRequired(), EqualTo('password')])
     submit = SubmitField('Reset Password')
 
 
-class LanguagePreferenceForm(FlaskForm):
+class LanguagePreferenceForm(QuartForm):
     preferred_languages = SelectMultipleField('Preferred Subtitle Languages', choices=LANGUAGES, validators=[DataRequired()])
     submit_language = SubmitField('Update Preference')
 
 
-class OpenSubtitlesLoginForm(FlaskForm):
+class OpenSubtitlesLoginForm(QuartForm):
     use_opensubtitles = BooleanField('Use OpenSubtitles Integration')
     opensubtitles_username = StringField(
         'OpenSubtitles Username', 

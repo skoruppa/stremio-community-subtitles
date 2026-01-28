@@ -1,94 +1,132 @@
+#!/usr/bin/env python3
+"""Application entry point"""
 import os
+import sys
+import asyncio
 import click
-from app import create_app, db
-from waitress import serve
+from app import create_app
 
-# Create the Flask app instance using the factory
 app = create_app()
 
+@click.group()
+def cli():
+    """Management commands"""
+    pass
 
-@app.cli.command("init-db")
-def init_db_command():
-    """Clear existing data and create database tables."""
-    click.echo("Dropping all tables...")
-    db.drop_all()
-    click.echo("Creating all tables...")
-    db.create_all()
-    click.echo("Initialized the database!")
-
-
-@app.cli.command("create-roles")
-def create_roles_command():
-    """Create the default roles."""
-    from app.models import Role
-    click.echo("Creating default roles...")
-    try:
-        # Check if roles already exist
-        admin_role = Role.query.filter_by(name='Admin').first()
-        user_role = Role.query.filter_by(name='User').first()
-
-        if not admin_role:
-            admin_role = Role(name='Admin', description='Administrator')
-            db.session.add(admin_role)
-            click.echo("Created 'Admin' role")
-
-        if not user_role:
-            user_role = Role(name='User', description='Standard user')
-            db.session.add(user_role)
-            click.echo("Created 'User' role")
-
-        db.session.commit()
-        click.echo("Roles created successfully")
-    except Exception as e:
-        db.session.rollback()
-        click.echo(f"Error creating roles: {e}")
-
-
-@app.cli.command("create-admin")
+@cli.command()
 @click.argument("email")
 @click.argument("username")
 @click.argument("password")
-def create_admin_command(email, username, password):
-    """Create an admin user."""
+def create_admin(email, username, password):
+    """Create an admin user"""
+    from app.extensions import async_session_maker
     from app.models import User, Role
-    click.echo(f"Creating admin user: {username} ({email})...")
-    try:
-        # Check if user already exists
-        user = User.query.filter((User.email == email) | (User.username == username)).first()
-        if user:
-            click.echo(f"User with email {email} or username {username} already exists")
-            return
+    from sqlalchemy import select
+    
+    async def _create():
+        async with async_session_maker() as session:
+            result = await session.execute(
+                select(User).filter((User.email == email) | (User.username == username))
+            )
+            if result.scalar_one_or_none():
+                click.echo("User already exists")
+                return
+            
+            user = User(email=email, username=username, active=True)
+            user.set_password(password)
+            user.generate_manifest_token()
+            
+            result = await session.execute(select(Role).filter_by(name='Admin'))
+            admin_role = result.scalar_one_or_none()
+            if not admin_role:
+                admin_role = Role(name='Admin', description='Administrator')
+                session.add(admin_role)
+            
+            user.roles.append(admin_role)
+            session.add(user)
+            await session.commit()
+            click.echo(f"Admin user created: {username}")
+    
+    with app.app_context():
+        asyncio.run(_create())
 
-        # Create new user
-        user = User(email=email, username=username, active=True)
-        user.set_password(password)
-        user.generate_manifest_token()
+@cli.command('init-db')
+def init_db_command():
+    """Initialize database tables"""
+    from app.extensions import engine, Base
+    
+    async def _init():
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+        click.echo("Database tables created")
+    
+    with app.app_context():
+        asyncio.run(_init())
 
-        # Add admin role
-        admin_role = Role.query.filter_by(name='Admin').first()
-        if not admin_role:
-            click.echo("Admin role not found. Creating it...")
-            admin_role = Role(name='Admin', description='Administrator')
-            db.session.add(admin_role)
-
-        user.roles.append(admin_role)
-        db.session.add(user)
-        db.session.commit()
-        click.echo(f"Admin user created successfully: {username}")
-    except Exception as e:
-        db.session.rollback()
-        click.echo(f"Error creating admin user: {e}")
-
+@cli.command('create-roles')
+def create_roles_command():
+    """Create default roles"""
+    from app.extensions import async_session_maker
+    from app.models import Role
+    from sqlalchemy import select
+    
+    async def _create():
+        async with async_session_maker() as session:
+            roles = [
+                ('User', 'Standard user'),
+                ('Admin', 'Administrator')
+            ]
+            
+            for name, desc in roles:
+                result = await session.execute(select(Role).filter_by(name=name))
+                if not result.scalar_one_or_none():
+                    session.add(Role(name=name, description=desc))
+                    click.echo(f"Created role: {name}")
+                else:
+                    click.echo(f"Role already exists: {name}")
+            
+            await session.commit()
+    
+    with app.app_context():
+        asyncio.run(_create())
 
 if __name__ == '__main__':
-    use_gevent = app.config.get('USE_GEVENT', True)
-    app.logger.info(f"Provider async mode: {'gevent' if use_gevent else 'threads'}")
+    # Check if running CLI commands
+    if len(sys.argv) > 1 and sys.argv[1] in ['create-admin', 'init-db', 'create-roles']:
+        cli()
+        sys.exit(0)
     
-    if app.config['DEBUG']:
-        app.run(debug=True)
+    # Run web server
+    debug = os.getenv('DEBUG', 'false').lower() in ('true', '1', 'yes')
+    host = os.getenv('FLASK_RUN_HOST', '0.0.0.0')
+    port = int(os.getenv('FLASK_RUN_PORT', 5000))
+    
+    if debug:
+        # Development mode - Quart built-in server with auto-reload
+        print(f"Starting development server on {host}:{port}")
+        print("Auto-reload enabled")
+        app.run(host=host, port=port, debug=True, use_reloader=True)
     else:
-        # For waitress, read from environment
-        host = os.environ.get('FLASK_RUN_HOST', '0.0.0.0')
-        port = int(os.environ.get('FLASK_RUN_PORT', '5000'))
-        app.logger.info(f"Starting production server on {host}:{port}")
-        serve(app, host=host, port=port)
+        # Production mode - use Hypercorn
+        print(f"Starting production server on {host}:{port}")
+        print(f"For production, use: hypercorn run:app --bind {host}:{port} --workers 4")
+        print("Or set DEBUG=true for development mode")
+        
+        # Try to use hypercorn if available
+        try:
+            from hypercorn.config import Config
+            from hypercorn.asyncio import serve
+            import asyncio
+            
+            config = Config()
+            config.bind = [f"{host}:{port}"]
+            config.workers = int(os.getenv('HYPERCORN_WORKERS', 1))
+            config.accesslog = '-'
+            config.errorlog = '-'
+            
+            print(f"Running with Hypercorn ({config.workers} worker(s))")
+            asyncio.run(serve(app, config))
+        except ImportError:
+            print("Hypercorn not found, falling back to Quart dev server")
+            print("Install: pip install hypercorn")
+            app.run(host=host, port=port, debug=False)

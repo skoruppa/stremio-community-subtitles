@@ -1,278 +1,316 @@
 """Provider management routes"""
-from flask import Blueprint, request, flash, redirect, url_for, render_template
-from flask_login import login_required, current_user
-from ..extensions import db
+from quart import Blueprint, request, flash, redirect, url_for, render_template, current_app
+from quart_auth import login_required, current_user
+from sqlalchemy import select, func, delete as sql_delete
+from sqlalchemy.orm.attributes import flag_modified
+from ..extensions import async_session_maker
+from ..models import User, UserActivity, Subtitle, UserSubtitleSelection, SubtitleVote
 from ..providers.registry import ProviderRegistry
 from ..providers.base import ProviderAuthError
+import datetime
 
 providers_bp = Blueprint('providers', __name__, url_prefix='/providers')
 
 
 @providers_bp.route('/<provider_name>/connect', methods=['POST'])
 @login_required
-def connect_provider(provider_name):
+async def connect_provider(provider_name):
     """Connect to a provider or update settings"""
     provider = ProviderRegistry.get(provider_name)
     if not provider:
-        flash(f'Provider {provider_name} not found', 'danger')
+        await flash(f'Provider {provider_name} not found', 'danger')
         return redirect(url_for('main.account_settings'))
     
+    user_id = (current_user.auth_id)
+    
     try:
-        credentials = request.form.to_dict()
+        form_data = await request.form
+        credentials = dict(form_data)
         credentials.pop('csrf_token', None)
         
-        # Extract try_provide_ass preference (checkbox sends 'true' if checked, nothing if unchecked)
+        # Extract try_provide_ass preference
         try_provide_ass = credentials.pop('try_provide_ass', 'false') == 'true'
         
-        # Check if already authenticated and only updating settings
-        # (no credentials means only settings like try_provide_ass)
-        if provider.is_authenticated(current_user) and not credentials:
-            # Only update try_provide_ass setting
-            if not current_user.provider_credentials:
-                current_user.provider_credentials = {}
-            if provider_name not in current_user.provider_credentials:
-                current_user.provider_credentials[provider_name] = {}
-            current_user.provider_credentials[provider_name]['try_provide_ass'] = try_provide_ass
-            # Mark as modified for SQLAlchemy to detect changes in JSON field
-            from sqlalchemy.orm.attributes import flag_modified
-            flag_modified(current_user, 'provider_credentials')
-            db.session.commit()
-            flash(f'{provider.display_name} settings updated!', 'success')
-        else:
-            # Full authentication
-            result = provider.authenticate(current_user, credentials)
+        async with async_session_maker() as session:
+            result = await session.execute(select(User).filter_by(id=user_id))
+            user = result.scalar_one_or_none()
             
-            # Add try_provide_ass to result
-            result['try_provide_ass'] = try_provide_ass
-            
-            provider.save_credentials(current_user, result)
-            db.session.commit()
-            
-            flash(f'Successfully connected to {provider.display_name}!', 'success')
+            # Check if already authenticated and only updating settings
+            if await provider.is_authenticated(user) and not credentials:
+                # Only update try_provide_ass setting
+                if not user.provider_credentials:
+                    user.provider_credentials = {}
+                if provider_name not in user.provider_credentials:
+                    user.provider_credentials[provider_name] = {}
+                user.provider_credentials[provider_name]['try_provide_ass'] = try_provide_ass
+                flag_modified(user, 'provider_credentials')
+                await session.commit()
+                await flash(f'{provider.display_name} settings updated!', 'success')
+            else:
+                # Full authentication
+                auth_result = await provider.authenticate(user, credentials)
+                
+                # Add try_provide_ass to result
+                auth_result['try_provide_ass'] = try_provide_ass
+                
+                await provider.save_credentials(user, auth_result)
+                await session.commit()
+                
+                await flash(f'Successfully connected to {provider.display_name}!', 'success')
     except ProviderAuthError as e:
-        flash(f'Authentication failed: {str(e)}', 'danger')
+        await flash(f'Authentication failed: {str(e)}', 'danger')
     except Exception as e:
-        db.session.rollback()
-        flash(f'Error connecting to {provider.display_name}: {str(e)}', 'danger')
+        await flash(f'Error connecting to {provider.display_name}: {str(e)}', 'danger')
     
     return redirect(url_for('main.account_settings'))
 
 
 @providers_bp.route('/<provider_name>/disconnect', methods=['POST'])
 @login_required
-def disconnect_provider(provider_name):
+async def disconnect_provider(provider_name):
     """Disconnect from a provider"""
     provider = ProviderRegistry.get(provider_name)
     if not provider:
-        flash(f'Provider {provider_name} not found', 'danger')
+        await flash(f'Provider {provider_name} not found', 'danger')
         return redirect(url_for('main.account_settings'))
     
+    user_id = (current_user.auth_id)
+    
     try:
-        provider.logout(current_user)
-        
-        if hasattr(current_user, 'provider_credentials') and current_user.provider_credentials:
-            current_user.provider_credentials.pop(provider_name, None)
-            db.session.commit()
-        
-        flash(f'Disconnected from {provider.display_name}', 'success')
+        async with async_session_maker() as session:
+            result = await session.execute(select(User).filter_by(id=user_id))
+            user = result.scalar_one_or_none()
+            
+            await provider.logout(user)
+            
+            if hasattr(user, 'provider_credentials') and user.provider_credentials:
+                user.provider_credentials.pop(provider_name, None)
+                await session.commit()
+            
+            await flash(f'Disconnected from {provider.display_name}', 'success')
     except Exception as e:
-        db.session.rollback()
-        flash(f'Error disconnecting: {str(e)}', 'danger')
+        await flash(f'Error disconnecting: {str(e)}', 'danger')
     
     return redirect(url_for('main.account_settings'))
 
 
 @providers_bp.route('/<uuid:activity_id>/select', methods=['POST'])
 @login_required
-def select_provider_subtitle(activity_id):
+async def select_provider_subtitle(activity_id):
     """Select a subtitle from a provider"""
-    from ..models import UserActivity, UserSubtitleSelection
-    import datetime
+    user_id = (current_user.auth_id)
     
-    activity = UserActivity.query.filter_by(id=activity_id, user_id=current_user.id).first_or_404()
-    
-    provider_name = request.form.get('provider_name')
-    subtitle_id = request.form.get('subtitle_id')
-    language = request.form.get('language')
-    
-    if not all([provider_name, subtitle_id, language]):
-        flash('Missing required parameters', 'danger')
-        return redirect(url_for('content.content_detail', activity_id=activity_id))
-    
-    try:
-        # Build metadata from form
-        metadata = {
-            'release_name': request.form.get('release_name'),
-            'uploader': request.form.get('uploader'),
-            'ai_translated': request.form.get('ai_translated') == 'true',
-            'hash_match': request.form.get('hash_match') == 'true'
-        }
+    async with async_session_maker() as session:
+        result = await session.execute(
+            select(UserActivity).filter_by(id=activity_id, user_id=user_id)
+        )
+        activity = result.scalar_one_or_none()
+        if not activity:
+            from quart import abort
+            abort(404)
         
-        # Find or create selection
-        selection = UserSubtitleSelection.query.filter_by(
-            user_id=current_user.id,
-            content_id=activity.content_id,
-            video_hash=activity.video_hash,
-            language=language
-        ).first()
+        form_data = await request.form
+        provider_name = form_data.get('provider_name')
+        subtitle_id = form_data.get('subtitle_id')
+        language = form_data.get('language')
         
-        if selection:
-            selection.selected_subtitle_id = None
-            selection.selected_external_file_id = None
-            selection.external_details_json = None
-            selection.timestamp = datetime.datetime.utcnow()
-        else:
-            selection = UserSubtitleSelection(
-                user_id=current_user.id,
-                content_id=activity.content_id,
-                video_hash=activity.video_hash,
-                language=language
+        if not all([provider_name, subtitle_id, language]):
+            await flash('Missing required parameters', 'danger')
+            return redirect(url_for('content.content_detail', activity_id=activity_id))
+        
+        try:
+            # Build metadata from form
+            metadata = {
+                'release_name': form_data.get('release_name'),
+                'uploader': form_data.get('uploader'),
+                'ai_translated': form_data.get('ai_translated') == 'true',
+                'hash_match': form_data.get('hash_match') == 'true'
+            }
+            
+            # Find or create selection
+            result = await session.execute(
+                select(UserSubtitleSelection).filter_by(
+                    user_id=user_id,
+                    content_id=activity.content_id,
+                    video_hash=activity.video_hash,
+                    language=language
+                )
             )
-            db.session.add(selection)
-        
-        # Store provider subtitle
-        selection.external_details_json = {
-            'provider': provider_name,
-            'file_id': subtitle_id,
-            **metadata
-        }
-        
-        db.session.commit()
-        flash('Subtitle selected successfully!', 'success')
-    except Exception as e:
-        db.session.rollback()
-        flash(f'Error selecting subtitle: {str(e)}', 'danger')
+            selection = result.scalar_one_or_none()
+            
+            if selection:
+                selection.selected_subtitle_id = None
+                selection.selected_external_file_id = None
+                selection.external_details_json = None
+                selection.timestamp = datetime.datetime.utcnow()
+            else:
+                selection = UserSubtitleSelection(
+                    user_id=user_id,
+                    content_id=activity.content_id,
+                    video_hash=activity.video_hash,
+                    language=language
+                )
+                session.add(selection)
+            
+            # Store provider subtitle
+            selection.external_details_json = {
+                'provider': provider_name,
+                'file_id': subtitle_id,
+                **metadata
+            }
+            
+            await session.commit()
+            await flash('Subtitle selected successfully!', 'success')
+        except Exception as e:
+            await session.rollback()
+            await flash(f'Error selecting subtitle: {str(e)}', 'danger')
     
     return redirect(url_for('content.content_detail', activity_id=activity_id))
 
 
 @providers_bp.route('/<uuid:activity_id>/link', methods=['POST'])
 @login_required
-def link_provider_subtitle(activity_id):
+async def link_provider_subtitle(activity_id):
     """Link a provider subtitle to video hash as community preferred version"""
-    from ..models import UserActivity, Subtitle, UserSubtitleSelection, SubtitleVote
-    from sqlalchemy import func
-    import datetime
+    user_id = (current_user.auth_id)
     
-    activity = UserActivity.query.filter_by(id=activity_id, user_id=current_user.id).first_or_404()
-    
-    if not activity.video_hash:
-        flash('Cannot link subtitle: video has no hash', 'warning')
-        return redirect(url_for('content.content_detail', activity_id=activity_id))
-    
-    provider_name = request.form.get('provider_name')
-    subtitle_id = request.form.get('subtitle_id')
-    language = request.form.get('language')
-    release_name = request.form.get('release_name')
-    uploader = request.form.get('uploader')
-    ai_translated = request.form.get('ai_translated') == 'true'
-    url = request.form.get('url')
-    
-    if not all([provider_name, subtitle_id, language, release_name]):
-        flash('Missing required parameters', 'danger')
-        return redirect(url_for('content.content_detail', activity_id=activity_id))
-    
-    dialect_name = db.engine.dialect.name
-    
-    # Check if already linked
-    if dialect_name == 'postgresql':
-        filter_cond = Subtitle.source_metadata['provider_subtitle_id'].astext == str(subtitle_id)
-    else:
-        filter_cond = func.json_unquote(func.json_extract(Subtitle.source_metadata, '$.provider_subtitle_id')) == str(subtitle_id)
-    
-    existing = Subtitle.query.filter_by(
-        video_hash=activity.video_hash,
-        source_type=f'{provider_name}_community_link',
-        language=language
-    ).filter(filter_cond).first()
-    
-    if existing:
-        flash('This subtitle is already linked to this video version', 'info')
-        # Auto-select existing
-        selection = UserSubtitleSelection.query.filter_by(
-            user_id=current_user.id,
-            content_id=activity.content_id,
-            video_hash=activity.video_hash,
-            language=language
-        ).first()
-        if selection:
-            selection.selected_subtitle_id = existing.id
-            selection.selected_external_file_id = None
-            selection.external_details_json = None
+    async with async_session_maker() as session:
+        result = await session.execute(
+            select(UserActivity).filter_by(id=activity_id, user_id=user_id)
+        )
+        activity = result.scalar_one_or_none()
+        if not activity:
+            from quart import abort
+            abort(404)
+        
+        if not activity.video_hash:
+            await flash('Cannot link subtitle: video has no hash', 'warning')
+            return redirect(url_for('content.content_detail', activity_id=activity_id))
+        
+        form_data = await request.form
+        provider_name = form_data.get('provider_name')
+        subtitle_id = form_data.get('subtitle_id')
+        language = form_data.get('language')
+        release_name = form_data.get('release_name')
+        uploader = form_data.get('uploader')
+        ai_translated = form_data.get('ai_translated') == 'true'
+        url = form_data.get('url')
+        
+        if not all([provider_name, subtitle_id, language, release_name]):
+            await flash('Missing required parameters', 'danger')
+            return redirect(url_for('content.content_detail', activity_id=activity_id))
+        
+        # Check if already linked
+        dialect_name = session.bind.dialect.name
+        
+        if dialect_name == 'postgresql':
+            filter_cond = Subtitle.source_metadata['provider_subtitle_id'].astext == str(subtitle_id)
         else:
-            selection = UserSubtitleSelection(
-                user_id=current_user.id,
-                content_id=activity.content_id,
+            filter_cond = func.json_unquote(func.json_extract(Subtitle.source_metadata, '$.provider_subtitle_id')) == str(subtitle_id)
+        
+        result = await session.execute(
+            select(Subtitle)
+            .filter_by(
                 video_hash=activity.video_hash,
-                selected_subtitle_id=existing.id,
+                source_type=f'{provider_name}_community_link',
                 language=language
             )
-            db.session.add(selection)
-        db.session.commit()
-        return redirect(url_for('content.content_detail', activity_id=activity_id))
-    
-    try:
-        linked_subtitle = Subtitle(
-            content_id=activity.content_id,
-            content_type=activity.content_type,
-            video_hash=activity.video_hash,
-            language=language,
-            file_path=None,
-            uploader_id=current_user.id,
-            author=uploader if uploader and uploader != 'N/A' else provider_name.title(),
-            version_info=release_name,
-            source_type=f'{provider_name}_community_link',
-            source_metadata={
-                'provider': provider_name,
-                'provider_subtitle_id': subtitle_id,
-                'original_uploader': uploader,
-                'original_release_name': release_name,
-                'original_url': url,
-                'ai_translated': ai_translated,
-                'linked_by_user_id': current_user.id
-            },
-            votes=1
+            .filter(filter_cond)
         )
-        db.session.add(linked_subtitle)
-        db.session.flush()
+        existing = result.scalar_one_or_none()
         
-        # Add initial vote
-        vote = SubtitleVote(
-            user_id=current_user.id,
-            subtitle_id=linked_subtitle.id,
-            vote_value=1
-        )
-        db.session.add(vote)
-        
-        # Update selection
-        selection = UserSubtitleSelection.query.filter_by(
-            user_id=current_user.id,
-            content_id=activity.content_id,
-            video_hash=activity.video_hash,
-            language=language
-        ).first()
-        
-        if selection:
-            selection.selected_subtitle_id = linked_subtitle.id
-            selection.selected_external_file_id = None
-            selection.external_details_json = None
-            selection.timestamp = datetime.datetime.utcnow()
-        else:
-            selection = UserSubtitleSelection(
-                user_id=current_user.id,
-                content_id=activity.content_id,
-                video_hash=activity.video_hash,
-                selected_subtitle_id=linked_subtitle.id,
-                language=language
+        if existing:
+            await flash('This subtitle is already linked to this video version', 'info')
+            # Auto-select existing
+            result = await session.execute(
+                select(UserSubtitleSelection).filter_by(
+                    user_id=user_id,
+                    content_id=activity.content_id,
+                    video_hash=activity.video_hash,
+                    language=language
+                )
             )
-            db.session.add(selection)
+            selection = result.scalar_one_or_none()
+            if selection:
+                selection.selected_subtitle_id = existing.id
+                selection.selected_external_file_id = None
+                selection.external_details_json = None
+            else:
+                selection = UserSubtitleSelection(
+                    user_id=user_id,
+                    content_id=activity.content_id,
+                    video_hash=activity.video_hash,
+                    selected_subtitle_id=existing.id,
+                    language=language
+                )
+                session.add(selection)
+            await session.commit()
+            return redirect(url_for('content.content_detail', activity_id=activity_id))
         
-        db.session.commit()
-        flash('Subtitle successfully linked to this video version!', 'success')
-    except Exception as e:
-        db.session.rollback()
-        from flask import current_app
-        current_app.logger.error(f'Error linking subtitle: {e}', exc_info=True)
-        flash('Error linking subtitle', 'danger')
+        try:
+            linked_subtitle = Subtitle(
+                content_id=activity.content_id,
+                content_type=activity.content_type,
+                video_hash=activity.video_hash,
+                language=language,
+                file_path=None,
+                uploader_id=user_id,
+                author=uploader if uploader and uploader != 'N/A' else provider_name.title(),
+                version_info=release_name,
+                source_type=f'{provider_name}_community_link',
+                source_metadata={
+                    'provider': provider_name,
+                    'provider_subtitle_id': subtitle_id,
+                    'original_uploader': uploader,
+                    'original_release_name': release_name,
+                    'original_url': url,
+                    'ai_translated': ai_translated,
+                    'linked_by_user_id': user_id
+                },
+                votes=1
+            )
+            session.add(linked_subtitle)
+            await session.flush()
+            
+            # Add initial vote
+            vote = SubtitleVote(
+                user_id=user_id,
+                subtitle_id=linked_subtitle.id,
+                vote_value=1
+            )
+            session.add(vote)
+            
+            # Update selection
+            result = await session.execute(
+                select(UserSubtitleSelection).filter_by(
+                    user_id=user_id,
+                    content_id=activity.content_id,
+                    video_hash=activity.video_hash,
+                    language=language
+                )
+            )
+            selection = result.scalar_one_or_none()
+            
+            if selection:
+                selection.selected_subtitle_id = linked_subtitle.id
+                selection.selected_external_file_id = None
+                selection.external_details_json = None
+                selection.timestamp = datetime.datetime.utcnow()
+            else:
+                selection = UserSubtitleSelection(
+                    user_id=user_id,
+                    content_id=activity.content_id,
+                    video_hash=activity.video_hash,
+                    selected_subtitle_id=linked_subtitle.id,
+                    language=language
+                )
+                session.add(selection)
+            
+            await session.commit()
+            await flash('Subtitle successfully linked to this video version!', 'success')
+        except Exception as e:
+            await session.rollback()
+            current_app.logger.error(f'Error linking subtitle: {e}', exc_info=True)
+            await flash('Error linking subtitle', 'danger')
     
     return redirect(url_for('content.content_detail', activity_id=activity_id))

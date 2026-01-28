@@ -1,6 +1,6 @@
 """OpenSubtitles provider implementation"""
 from typing import List, Dict, Optional, Any
-from flask import current_app
+from quart import current_app
 from iso639 import Lang
 
 from ..base import BaseSubtitleProvider, SubtitleResult, ProviderAuthError, ProviderSearchError, ProviderDownloadError
@@ -17,7 +17,7 @@ class OpenSubtitlesProvider(BaseSubtitleProvider):
     supports_search = True
     supports_hash_matching = True
     
-    def authenticate(self, user, credentials: Dict[str, str]) -> Dict[str, Any]:
+    async def authenticate(self, user, credentials: Dict[str, str]) -> Dict[str, Any]:
         """Authenticate with OpenSubtitles"""
         username = credentials.get('username')
         password = credentials.get('password')
@@ -26,7 +26,7 @@ class OpenSubtitlesProvider(BaseSubtitleProvider):
             raise ProviderAuthError("Username and password required", self.name)
         
         try:
-            result = opensubtitles_client.login(username, password, user)
+            result = await client.login(username, password, user)
             return {
                 'token': result['token'],
                 'base_url': result['base_url'],
@@ -36,9 +36,9 @@ class OpenSubtitlesProvider(BaseSubtitleProvider):
         except opensubtitles_client.OpenSubtitlesError as e:
             raise ProviderAuthError(str(e), self.name, getattr(e, 'status_code', None))
     
-    def logout(self, user) -> bool:
+    async def logout(self, user) -> bool:
         """Logout from OpenSubtitles"""
-        creds = self.get_credentials(user)
+        creds = await self.get_credentials(user)
         if not creds:
             return True
         
@@ -50,18 +50,18 @@ class OpenSubtitlesProvider(BaseSubtitleProvider):
                     self.opensubtitles_base_url = base_url
             
             temp_user = TempUser(creds['token'], creds['base_url'])
-            opensubtitles_client.logout(creds['token'], temp_user)
+            await client.logout(creds['token'], temp_user)
             return True
         except Exception as e:
             current_app.logger.error(f"OpenSubtitles logout error: {e}")
             return False
     
-    def is_authenticated(self, user) -> bool:
+    async def is_authenticated(self, user) -> bool:
         """Check if user has valid OpenSubtitles credentials"""
-        creds = self.get_credentials(user)
+        creds = await self.get_credentials(user)
         return bool(creds and creds.get('active') and creds.get('token') and creds.get('base_url'))
     
-    def search(
+    async def search(
         self,
         user,
         imdb_id: Optional[str] = None,
@@ -74,10 +74,10 @@ class OpenSubtitlesProvider(BaseSubtitleProvider):
         **kwargs
     ) -> List[SubtitleResult]:
         """Search OpenSubtitles"""
-        if not self.is_authenticated(user):
+        if not await self.is_authenticated(user):
             raise ProviderSearchError("Not authenticated", self.name)
         
-        creds = self.get_credentials(user)
+        creds = await self.get_credentials(user)
         
         # Convert languages to OpenSubtitles format
         os_languages = self._convert_languages(languages) if languages else None
@@ -108,18 +108,18 @@ class OpenSubtitlesProvider(BaseSubtitleProvider):
         temp_user = TempUser(creds['token'], creds['base_url'])
         
         try:
-            results = opensubtitles_client.search_subtitles(**search_params, user=temp_user)
+            results = await opensubtitles_client.search_subtitles(**search_params, user=temp_user)
             # Pass query, season, episode for filtering when searching by title
             return self._parse_results(results, query=query, season=season, episode=episode)
         except opensubtitles_client.OpenSubtitlesError as e:
             raise ProviderSearchError(str(e), self.name, getattr(e, 'status_code', None))
     
-    def get_download_url(self, user, subtitle_id: str) -> str:
+    async def get_download_url(self, user, subtitle_id: str) -> str:
         """Get download URL for OpenSubtitles subtitle"""
-        if not self.is_authenticated(user):
+        if not await self.is_authenticated(user):
             raise ProviderDownloadError("Not authenticated", self.name)
         
-        creds = self.get_credentials(user)
+        creds = await self.get_credentials(user)
         
         # Create temp user
         class TempUser:
@@ -130,7 +130,7 @@ class OpenSubtitlesProvider(BaseSubtitleProvider):
         temp_user = TempUser(creds['token'], creds['base_url'])
         
         try:
-            result = opensubtitles_client.request_download_link(int(subtitle_id), temp_user)
+            result = await client.request_download_link(int(subtitle_id), temp_user)
             return result.get('link')
         except opensubtitles_client.OpenSubtitlesError as e:
             raise ProviderDownloadError(str(e), self.name, getattr(e, 'status_code', None))

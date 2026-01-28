@@ -18,20 +18,20 @@ class Napisy24Provider(BaseSubtitleProvider):
     has_additional_settings = False
     supported_languages = ['pol']
     
-    def authenticate(self, user, credentials: Dict[str, str]) -> Dict[str, Any]:
+    async def authenticate(self, user, credentials: Dict[str, str]) -> Dict[str, Any]:
         """No authentication needed for Napisy24"""
         return {'active': True}
     
-    def logout(self, user) -> bool:
+    async def logout(self, user) -> bool:
         """Logout (no-op for Napisy24)"""
         return True
     
-    def is_authenticated(self, user) -> bool:
+    async def is_authenticated(self, user) -> bool:
         """Check if provider is active"""
-        creds = self.get_credentials(user)
+        creds = await self.get_credentials(user)
         return creds is not None and creds.get('active', False)
     
-    def search(
+    async def search(
         self,
         user,
         imdb_id: Optional[str] = None,
@@ -44,7 +44,7 @@ class Napisy24Provider(BaseSubtitleProvider):
         **kwargs
     ) -> List[SubtitleResult]:
         """Search Napisy24"""
-        if not self.is_authenticated(user):
+        if not await self.is_authenticated(user):
             raise ProviderSearchError("Not authenticated", self.name)
         
         # Filter by language
@@ -57,7 +57,7 @@ class Napisy24Provider(BaseSubtitleProvider):
         if video_hash:
             video_filename = kwargs.get('video_filename', '')
             video_size = kwargs.get('video_size', '')
-            hash_result = client.search_by_hash(video_hash, str(video_size), video_filename)
+            hash_result = await client.search_by_hash(video_hash, str(video_size), video_filename)
             if hash_result:
                 results.append(SubtitleResult(
                     provider_name=self.name,
@@ -76,7 +76,7 @@ class Napisy24Provider(BaseSubtitleProvider):
             # Try IMDb search
             if imdb_id:
                 try:
-                    imdb_results = client.search_by_imdb(
+                    imdb_results = await client.search_by_imdb(
                         imdb_id=imdb_id,
                         season=season,
                         episode=episode,
@@ -109,7 +109,7 @@ class Napisy24Provider(BaseSubtitleProvider):
                     elif episode:
                         content_id = f"{imdb_id}:{episode}"
                     
-                    metadata = get_metadata(content_id, content_type)
+                    metadata = await get_metadata(content_id, content_type)
                     if metadata and metadata.get('title'):
                         search_title = metadata['title']
                 except:
@@ -121,7 +121,7 @@ class Napisy24Provider(BaseSubtitleProvider):
                     # Remove S01E01 pattern and everything after it
                     search_title = re.split(r'\s+S\d+E\d+', search_title, flags=re.IGNORECASE)[0].strip()
                     
-                    title_results = client.search_by_title(
+                    title_results = await client.search_by_title(
                         title=search_title,
                         season=season,
                         episode=episode,
@@ -143,17 +143,17 @@ class Napisy24Provider(BaseSubtitleProvider):
         
         return results
     
-    def get_download_url(self, user, subtitle_id: str) -> Optional[str]:
+    async def get_download_url(self, user, subtitle_id: str) -> Optional[str]:
         """Napisy24 requires direct download"""
         return None
     
-    def download_subtitle(self, user, subtitle_id: str) -> bytes:
+    async def download_subtitle(self, user, subtitle_id: str) -> bytes:
         """Download subtitle from Napisy24"""
-        if not self.is_authenticated(user):
+        if not await self.is_authenticated(user):
             raise ProviderDownloadError("Not authenticated", self.name)
         
         try:
-            return client.download_subtitle(subtitle_id)
+            return await client.download_subtitle(subtitle_id)
         except client.Napisy24Error as e:
             raise ProviderDownloadError(str(e), self.name, getattr(e, 'status_code', None))
     

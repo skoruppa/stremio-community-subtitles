@@ -1,10 +1,12 @@
-from flask import jsonify, Response, current_app
+from quart import jsonify, Response, current_app
 from rapidfuzz import fuzz
-from sqlalchemy.orm import joinedload
+from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 from ..models import Subtitle, SubtitleVote, UserSubtitleSelection
+from ..extensions import async_session_maker
 import os
 import re
-import requests
+import aiohttp
 import time
 import gc
 import zipfile
@@ -205,7 +207,7 @@ def calculate_filename_similarity(video_filename, subtitle_release_name):
 
 
 
-def get_active_subtitle_details(user, content_id, video_hash=None, content_type=None, video_filename=None, lang=None, season=None, episode=None, cached_provider_results=None):
+async def get_active_subtitle_details(user, content_id, video_hash=None, content_type=None, video_filename=None, lang=None, season=None, episode=None, cached_provider_results=None):
     """Provider-agnostic subtitle selection logic"""
     # Parse Kitsu/MAL content_id and extract IMDb ID if needed
     imdb_id = None
@@ -213,12 +215,12 @@ def get_active_subtitle_details(user, content_id, video_hash=None, content_type=
         imdb_id = content_id.split(':')[0]
     elif content_id.startswith('kitsu:'):
         kitsu_base = content_id.split(':')[0] + ':' + content_id.split(':')[1]
-        imdb_id, kitsu_season = _get_imdb_from_kitsu(kitsu_base, content_type)
+        imdb_id, kitsu_season = await _get_imdb_from_kitsu(kitsu_base, content_type)
         if kitsu_season:
             season = kitsu_season
     elif content_id.startswith('mal:'):
         mal_base = content_id.split(':')[0] + ':' + content_id.split(':')[1]
-        imdb_id, mal_season = _get_imdb_from_mal(mal_base, content_type)
+        imdb_id, mal_season = await _get_imdb_from_mal(mal_base, content_type)
         if mal_season:
             season = mal_season
     
@@ -241,14 +243,14 @@ def get_active_subtitle_details(user, content_id, video_hash=None, content_type=
         'provider_name': None,
         'provider_subtitle_id': None,
         'provider_metadata': None,
-        'details': None,  # Backward compat
+        'details': None,
         'auto': False,
         'user_vote_value': None,
         'user_selection_record': None
     }
     
     # 1. User Selection
-    user_selection = _get_user_selection(user, content_id, video_hash, lang)
+    user_selection = await _get_user_selection(user, content_id, video_hash, lang)
     result['user_selection_record'] = user_selection
     
     if user_selection:
@@ -256,7 +258,7 @@ def get_active_subtitle_details(user, content_id, video_hash=None, content_type=
             result.update({
                 'type': 'local',
                 'subtitle': user_selection.selected_subtitle,
-                'user_vote_value': _get_user_vote(user, user_selection.selected_subtitle_id)
+                'user_vote_value': await _get_user_vote(user, user_selection.selected_subtitle_id)
             })
             return result
         
@@ -286,19 +288,19 @@ def get_active_subtitle_details(user, content_id, video_hash=None, content_type=
     
     # 2. Local by hash
     if video_hash:
-        local_sub = _find_local_by_hash(content_id, video_hash, lang)
+        local_sub = await _find_local_by_hash(content_id, video_hash, lang)
         if local_sub:
             result.update({
                 'type': 'local',
                 'subtitle': local_sub,
                 'auto': True,
-                'user_vote_value': _get_user_vote(user, local_sub.id)
+                'user_vote_value': await _get_user_vote(user, local_sub.id)
             })
             return result
     
     # 3. Providers by hash
     if video_hash:
-        provider_result = _search_providers_by_hash(user, imdb_id, video_hash, content_type, lang, season, episode, cached_provider_results)
+        provider_result = await _search_providers_by_hash(user, imdb_id, video_hash, content_type, lang, season, episode, cached_provider_results)
         if provider_result:
             result.update(provider_result)
             result['auto'] = True
@@ -306,14 +308,14 @@ def get_active_subtitle_details(user, content_id, video_hash=None, content_type=
     
     # 4. Best match by filename
     if video_filename:
-        best_match = _find_best_match_by_filename(user, content_id, imdb_id, video_filename, content_type, lang, season, episode, cached_provider_results)
+        best_match = await _find_best_match_by_filename(user, content_id, imdb_id, video_filename, content_type, lang, season, episode, cached_provider_results)
         if best_match:
             result.update(best_match)
             result['auto'] = True
             return result
     
     # 5. Fallback
-    fallback = _find_fallback_subtitle(user, content_id, imdb_id, content_type, lang, season, episode, cached_provider_results)
+    fallback = await _find_fallback_subtitle(user, content_id, imdb_id, content_type, lang, season, episode, cached_provider_results)
     if fallback:
         result.update(fallback)
         result['auto'] = True
@@ -322,92 +324,102 @@ def get_active_subtitle_details(user, content_id, video_hash=None, content_type=
     return result
 
 
-def _get_user_selection(user, content_id, video_hash, lang):
-    query = UserSubtitleSelection.query.filter_by(
-        user_id=user.id,
-        content_id=content_id,
-        language=lang
-    )
-    if video_hash:
-        # First try with video_hash
-        result = query.filter_by(video_hash=video_hash).options(joinedload(UserSubtitleSelection.selected_subtitle)).first()
-        if result:
-            return result
-        # Fallback: try without video_hash (content_id only)
-        return query.filter(UserSubtitleSelection.video_hash.is_(None)).options(joinedload(UserSubtitleSelection.selected_subtitle)).first()
-    else:
-        query = query.filter(UserSubtitleSelection.video_hash.is_(None))
-        return query.options(joinedload(UserSubtitleSelection.selected_subtitle)).first()
+async def _get_user_selection(user, content_id, video_hash, lang):
+    async with async_session_maker() as session:
+        stmt = select(UserSubtitleSelection).filter_by(
+            user_id=user.id,
+            content_id=content_id,
+            language=lang
+        ).options(selectinload(UserSubtitleSelection.selected_subtitle).selectinload(Subtitle.uploader))
+        
+        if video_hash:
+            # First try with video_hash
+            result = await session.execute(stmt.filter_by(video_hash=video_hash))
+            selection = result.scalar_one_or_none()
+            if selection:
+                return selection
+            # Fallback: try without video_hash
+            result = await session.execute(stmt.filter(UserSubtitleSelection.video_hash.is_(None)))
+            return result.scalar_one_or_none()
+        else:
+            result = await session.execute(stmt.filter(UserSubtitleSelection.video_hash.is_(None)))
+            return result.scalar_one_or_none()
 
 
-def _get_user_vote(user, subtitle_id):
-    vote = SubtitleVote.query.filter_by(user_id=user.id, subtitle_id=subtitle_id).first()
-    return vote.vote_value if vote else None
+async def _get_user_vote(user, subtitle_id):
+    async with async_session_maker() as session:
+        result = await session.execute(
+            select(SubtitleVote).filter_by(user_id=user.id, subtitle_id=subtitle_id)
+        )
+        vote = result.scalar_one_or_none()
+        return vote.vote_value if vote else None
 
 
-def _find_local_by_hash(content_id, video_hash, lang):
-    return Subtitle.query.filter_by(
-        content_id=content_id,
-        language=lang,
-        video_hash=video_hash
-    ).order_by(Subtitle.votes.desc()).first()
+async def _find_local_by_hash(content_id, video_hash, lang):
+    async with async_session_maker() as session:
+        result = await session.execute(
+            select(Subtitle).options(selectinload(Subtitle.uploader)).filter_by(
+                content_id=content_id,
+                language=lang,
+                video_hash=video_hash
+            ).order_by(Subtitle.votes.desc()).limit(1)
+        )
+        return result.scalar_one_or_none()
 
 
-def _get_imdb_from_kitsu(kitsu_id, content_type='series'):
+async def _get_imdb_from_kitsu(kitsu_id, content_type='series'):
     """Fetch IMDb ID and season from Kitsu addon. Returns tuple: (imdb_id, season)"""
     try:
         base_url = current_app.config.get('KITSU_ADDON_URL', 'https://anime-kitsu.strem.fun')
         url = f"{base_url}/meta/{content_type}/{kitsu_id}.json"
-        r = requests.get(url, timeout=5)
-        r.raise_for_status()
-        data = r.json()
-        meta = data.get('meta', {})
-        imdb_id = meta.get('imdb_id')
-        season = None
-        
-        # If no IMDb in meta, check first video
-        videos = meta.get('videos', [])
-        if not imdb_id and videos:
-            imdb_id = videos[0].get('imdb_id')
-        
-        # Extract season from first video if available
-        if videos:
-            season = videos[0].get('imdbSeason')
-        
-        return (imdb_id, season)
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, timeout=aiohttp.ClientTimeout(total=5)) as r:
+                r.raise_for_status()
+                data = await r.json()
+                meta = data.get('meta', {})
+                imdb_id = meta.get('imdb_id')
+                season = None
+                
+                videos = meta.get('videos', [])
+                if not imdb_id and videos:
+                    imdb_id = videos[0].get('imdb_id')
+                
+                if videos:
+                    season = videos[0].get('imdbSeason')
+                
+                return (imdb_id, season)
     except Exception as e:
-        current_app.logger.error(f"Error fetching IMDb ID from Kitsu addon for {kitsu_id}: {e}")
+        current_app.logger.error(f"Error fetching IMDb from Kitsu for {kitsu_id}: {e}")
         return (None, None)
 
 
-def _get_imdb_from_mal(mal_id, content_type='series'):
-    """Fetch IMDb ID and season from MAL addon (via Kitsu addon). Returns tuple: (imdb_id, season)"""
+async def _get_imdb_from_mal(mal_id, content_type='series'):
+    """Fetch IMDb ID and season from MAL addon. Returns tuple: (imdb_id, season)"""
     try:
         base_url = current_app.config.get('KITSU_ADDON_URL', 'https://anime-kitsu.strem.fun')
         url = f"{base_url}/meta/{content_type}/{mal_id}.json"
-        r = requests.get(url, timeout=5)
-        r.raise_for_status()
-        data = r.json()
-        meta = data.get('meta', {})
-        imdb_id = meta.get('imdb_id')
-        season = None
-        
-        # If no IMDb in meta, check first video
-        videos = meta.get('videos', [])
-        if not imdb_id and videos:
-            imdb_id = videos[0].get('imdb_id')
-        
-        # Extract season from first video if available
-        if videos:
-            season = videos[0].get('imdbSeason')
-        
-        return (imdb_id, season)
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, timeout=aiohttp.ClientTimeout(total=5)) as r:
+                r.raise_for_status()
+                data = await r.json()
+                meta = data.get('meta', {})
+                imdb_id = meta.get('imdb_id')
+                season = None
+                
+                videos = meta.get('videos', [])
+                if not imdb_id and videos:
+                    imdb_id = videos[0].get('imdb_id')
+                
+                if videos:
+                    season = videos[0].get('imdbSeason')
+                
+                return (imdb_id, season)
     except Exception as e:
-        current_app.logger.error(f"Error fetching IMDb ID from MAL addon for {mal_id}: {e}")
+        current_app.logger.error(f"Error fetching IMDb from MAL for {mal_id}: {e}")
         return (None, None)
 
 
-def _search_providers_by_hash(user, imdb_id, video_hash, content_type, lang, season=None, episode=None, cached_results=None):
+async def _search_providers_by_hash(user, imdb_id, video_hash, content_type, lang, season=None, episode=None, cached_results=None):
     """Search for hash match from cache or live search"""
     if cached_results:
         for provider_name, results in cached_results.items():
@@ -428,6 +440,7 @@ def _search_providers_by_hash(user, imdb_id, video_hash, content_type, lang, sea
                         'moviehash_match': True,
                         'url': result.metadata.get('url', '') if result.metadata else ''
                     }
+        # If we have cached results but no hash match, don't do another search
         return None
     
     if not imdb_id:
@@ -436,7 +449,7 @@ def _search_providers_by_hash(user, imdb_id, video_hash, content_type, lang, sea
     try:
         from ..providers.registry import ProviderRegistry
         from ..lib.provider_async import search_providers_parallel
-        active_providers = ProviderRegistry.get_active_for_user(user)
+        active_providers = await ProviderRegistry.get_active_for_user(user)
         active_providers = [p for p in active_providers if p.supports_hash_matching]
         
         if not active_providers:
@@ -451,7 +464,7 @@ def _search_providers_by_hash(user, imdb_id, video_hash, content_type, lang, sea
             'content_type': content_type
         }
         
-        results_by_provider = search_providers_parallel(user, active_providers, search_params, timeout=3)
+        results_by_provider = await search_providers_parallel(user, active_providers, search_params, timeout=3)
         
         for provider_name, results in results_by_provider.items():
             for result in results:
@@ -480,12 +493,17 @@ def _search_providers_by_hash(user, imdb_id, video_hash, content_type, lang, sea
     return None
 
 
-def _find_best_match_by_filename(user, content_id, imdb_id, video_filename, content_type, lang, season=None, episode=None, cached_results=None):
+async def _find_best_match_by_filename(user, content_id, imdb_id, video_filename, content_type, lang, season=None, episode=None, cached_results=None):
     """Find best match by filename from cache or live search"""
     candidates = []
     
     # Local
-    local_subs = Subtitle.query.filter_by(content_id=content_id, language=lang).all()
+    async with async_session_maker() as session:
+        result = await session.execute(
+            select(Subtitle).filter_by(content_id=content_id, language=lang)
+        )
+        local_subs = result.scalars().all()
+        
     for sub in local_subs:
         score = calculate_filename_similarity(video_filename, sub.version_info)
         if score > 0:
@@ -519,7 +537,7 @@ def _find_best_match_by_filename(user, content_id, imdb_id, video_filename, cont
         try:
             from ..providers.registry import ProviderRegistry
             from ..lib.provider_async import search_providers_parallel
-            active_providers = ProviderRegistry.get_active_for_user(user)
+            active_providers = await ProviderRegistry.get_active_for_user(user)
             
             search_params = {
                 'imdb_id': imdb_id,
@@ -530,7 +548,7 @@ def _find_best_match_by_filename(user, content_id, imdb_id, video_filename, cont
                 'video_filename': video_filename
             }
             
-            results_by_provider = search_providers_parallel(user, active_providers, search_params, timeout=3)
+            results_by_provider = await search_providers_parallel(user, active_providers, search_params, timeout=3)
             
             for provider_name, results in results_by_provider.items():
                 for result in results:
@@ -567,7 +585,7 @@ def _find_best_match_by_filename(user, content_id, imdb_id, video_filename, cont
         return {
             'type': 'local',
             'subtitle': best['subtitle'],
-            'user_vote_value': _get_user_vote(user, best['subtitle'].id)
+            'user_vote_value': await _get_user_vote(user, best['subtitle'].id)
         }
     else:
         return {
@@ -587,15 +605,20 @@ def _find_best_match_by_filename(user, content_id, imdb_id, video_filename, cont
         }
 
 
-def _find_fallback_subtitle(user, content_id, imdb_id, content_type, lang, season=None, episode=None, cached_results=None):
+async def _find_fallback_subtitle(user, content_id, imdb_id, content_type, lang, season=None, episode=None, cached_results=None):
     """Find fallback subtitle from cache or live search"""
     # Local first
-    local_sub = Subtitle.query.filter_by(content_id=content_id, language=lang).order_by(Subtitle.votes.desc()).first()
+    async with async_session_maker() as session:
+        result = await session.execute(
+            select(Subtitle).filter_by(content_id=content_id, language=lang).order_by(Subtitle.votes.desc())
+        )
+        local_sub = result.scalar_one_or_none()
+        
     if local_sub:
         return {
             'type': 'local',
             'subtitle': local_sub,
-            'user_vote_value': _get_user_vote(user, local_sub.id)
+            'user_vote_value': await _get_user_vote(user, local_sub.id)
         }
     
     if not imdb_id and not cached_results:
@@ -608,7 +631,7 @@ def _find_fallback_subtitle(user, content_id, imdb_id, content_type, lang, seaso
         try:
             from ..providers.registry import ProviderRegistry
             from ..lib.provider_async import search_providers_parallel
-            active_providers = ProviderRegistry.get_active_for_user(user)
+            active_providers = await ProviderRegistry.get_active_for_user(user)
             
             search_params = {
                 'imdb_id': imdb_id,
@@ -618,7 +641,7 @@ def _find_fallback_subtitle(user, content_id, imdb_id, content_type, lang, seaso
                 'content_type': content_type
             }
             
-            results_by_provider = search_providers_parallel(user, active_providers, search_params, timeout=3)
+            results_by_provider = await search_providers_parallel(user, active_providers, search_params, timeout=3)
             results_by_provider = {k: [r for r in v if r.language == lang] for k, v in results_by_provider.items()}
         except:
             return None
@@ -677,7 +700,7 @@ def _find_fallback_subtitle(user, content_id, imdb_id, content_type, lang, seaso
     return None
 
 
-def get_vtt_content(subtitle):
+async def get_vtt_content(subtitle):
     """
     Helper function to get VTT content for a given subtitle.
     Handles both Cloudinary and local storage.
@@ -694,16 +717,18 @@ def get_vtt_content(subtitle):
         if not cloudinary_url: 
             raise Exception("Cloudinary URL generation failed")
         
-        r = requests.get(cloudinary_url, timeout=10)
-        r.raise_for_status()
-        return r.text
+        async with aiohttp.ClientSession() as session:
+            async with session.get(cloudinary_url, timeout=aiohttp.ClientTimeout(total=10)) as r:
+                r.raise_for_status()
+                return await r.text()
     else:
+        import aiofiles
         local_full_path = os.path.join(current_app.config['UPLOAD_FOLDER'], subtitle.file_path)
         if not os.path.exists(local_full_path):
             raise FileNotFoundError("Local subtitle file not found")
         
-        with open(local_full_path, 'r', encoding='utf-8') as f:
-            return f.read()
+        async with aiofiles.open(local_full_path, 'r', encoding='utf-8') as f:
+            return await f.read()
 
 
 def generate_vtt_message(message: str) -> str:

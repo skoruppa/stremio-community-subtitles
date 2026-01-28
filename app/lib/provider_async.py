@@ -1,222 +1,78 @@
-"""Asynchronous provider search utilities"""
-from flask import current_app
-import gc
-from concurrent.futures import ThreadPoolExecutor, as_completed
+"""Asynchronous provider search using asyncio"""
+import asyncio
+import logging
 
-try:
-    from gevent import spawn, joinall, Timeout
-    from gevent.event import AsyncResult
-    GEVENT_AVAILABLE = True
-except ImportError:
-    GEVENT_AVAILABLE = False
+logger = logging.getLogger(__name__)
 
 
-def search_providers_parallel(user, active_providers, search_params, timeout=10):
-    use_gevent = GEVENT_AVAILABLE and current_app.config.get('USE_GEVENT', True)
-    if use_gevent:
-        return _search_providers_parallel_gevent(user, active_providers, search_params, timeout)
-    else:
-        return _search_providers_parallel_threads(user, active_providers, search_params, timeout)
-
-
-def _search_providers_parallel_gevent(user, active_providers, search_params, timeout=10):
+async def search_providers_parallel(user, active_providers, search_params, timeout=10.0):
     """
-    Search multiple providers in parallel using gevent greenlets.
-    
-    Args:
-        user: User object
-        active_providers: List of provider instances
-        search_params: Dict with search parameters (imdb_id, video_hash, languages, etc.)
-        timeout: Timeout in seconds for each provider
+    Search multiple providers in parallel using asyncio.
     
     Returns:
         Dict mapping provider_name -> list of results
     """
-    from ..models import User
-    from .. import db
-    
-    results_by_provider = {}
-    
     if not active_providers:
-        return results_by_provider
+        return {}
     
-    app = current_app._get_current_object()
-    user_id = user.id
-    
-    def search_single_provider(provider, result_container):
-        with app.app_context():
-            try:
-                with Timeout(timeout):
-                    thread_user = db.session.get(User, user_id)
-                    results = provider.search(user=thread_user, **search_params)
-                    result_container.set((provider.name, results))
-            except Timeout:
-                app.logger.warning(f"Provider {provider.name} timeout")
-                result_container.set((provider.name, []))
-            except Exception as e:
-                app.logger.warning(f"Provider {provider.name} search failed: {e}", exc_info=True)
-                result_container.set((provider.name, []))
-            finally:
-                db.session.remove()
-    
-    # Spawn greenlets for each provider
-    greenlets = []
-    result_containers = []
-    
-    for provider in active_providers:
-        result_container = AsyncResult()
-        result_containers.append(result_container)
-        greenlet = spawn(search_single_provider, provider, result_container)
-        greenlets.append(greenlet)
-    
-    # Wait for all with timeout
-    joinall(greenlets, timeout=timeout)
-    
-    # Collect results
-    for result_container in result_containers:
-        if result_container.ready():
-            provider_name, results = result_container.get()
-            results_by_provider[provider_name] = results
-    
-    gc.collect()
-    return results_by_provider
-
-
-def _search_providers_parallel_threads(user, active_providers, search_params, timeout=5):
-    """Fallback to threads for development/debug mode"""
-    from ..models import User
-    from .. import db
-    
-    results_by_provider = {}
-    
-    if not active_providers:
-        return results_by_provider
-    
-    app = current_app._get_current_object()
-    user_id = user.id
-    
-    def search_single_provider(provider):
-        with app.app_context():
-            try:
-                thread_user = db.session.get(User, user_id)
-                results = provider.search(user=thread_user, **search_params)
+    async def search_single_provider(provider):
+        try:
+            async with asyncio.timeout(timeout):
+                results = await provider.search(user=user, **search_params)
                 return (provider.name, results)
-            except Exception as e:
-                app.logger.warning(f"Provider {provider.name} search failed: {e}")
-                return (provider.name, [])
-            finally:
-                db.session.remove()
+        except asyncio.TimeoutError:
+            logger.warning(f"Provider {provider.name} timeout")
+            return (provider.name, [])
+        except Exception as e:
+            logger.warning(f"Provider {provider.name} failed: {e}", exc_info=True)
+            return (provider.name, [])
     
-    with ThreadPoolExecutor(max_workers=min(len(active_providers), 3)) as executor:
-        future_to_provider = {executor.submit(search_single_provider, p): p for p in active_providers}
-        
-        for future in as_completed(future_to_provider, timeout=timeout):
-            try:
-                provider_name, results = future.result(timeout=1)
-                results_by_provider[provider_name] = results
-            except Exception as e:
-                provider = future_to_provider[future]
-                app.logger.warning(f"Provider {provider.name} timeout: {e}")
-                results_by_provider[provider.name] = []
+    tasks = [search_single_provider(p) for p in active_providers]
+    results = await asyncio.gather(*tasks, return_exceptions=True)
     
-    gc.collect()
+    results_by_provider = {}
+    for result in results:
+        if isinstance(result, Exception):
+            logger.error(f"Provider exception: {result}")
+            continue
+        if isinstance(result, tuple) and len(result) == 2:
+            provider_name, provider_results = result
+            results_by_provider[provider_name] = provider_results
+    
     return results_by_provider
 
 
-def search_providers_with_fallback(user, active_providers, search_params, timeout=10):
-    use_gevent = GEVENT_AVAILABLE and current_app.config.get('USE_GEVENT', True)
-    if use_gevent:
-        return _search_providers_with_fallback_gevent(user, active_providers, search_params, timeout)
-    else:
-        return _search_providers_with_fallback_threads(user, active_providers, search_params, timeout)
-
-
-def _search_providers_with_fallback_gevent(user, active_providers, search_params, timeout=10):
+async def search_providers_with_fallback(user, active_providers, search_params, timeout=10.0):
     """
-    Search providers in parallel and return first successful result.
-    Used for hash matching and best match scenarios.
+    Search providers and return first successful result.
     
     Returns:
         First successful result or None
     """
-    from ..models import User
-    from .. import db
-    
     if not active_providers:
         return None
     
-    app = current_app._get_current_object()
-    user_id = user.id
-    first_result = AsyncResult()
-    
-    def search_single_provider(provider):
-        with app.app_context():
-            try:
-                with Timeout(timeout):
-                    thread_user = db.session.get(User, user_id)
-                    results = provider.search(user=thread_user, **search_params)
-                    if results and not first_result.ready():
-                        first_result.set(results)
-            except Timeout:
-                app.logger.warning(f"Provider {provider.name} timeout")
-            except Exception as e:
-                app.logger.warning(f"Provider {provider.name} search failed: {e}")
-            finally:
-                db.session.remove()
-    
-    # Spawn greenlets for each provider
-    greenlets = [spawn(search_single_provider, provider) for provider in active_providers]
-    
-    # Wait for first result or timeout
-    try:
-        result = first_result.get(timeout=timeout)
-        gc.collect()
-        return result
-    except Timeout:
-        pass
-    
-    # Wait for remaining greenlets to finish
-    joinall(greenlets, timeout=0.1)
-    
-    gc.collect()
-    return None
-
-
-def _search_providers_with_fallback_threads(user, active_providers, search_params, timeout=10):
-    """Thread-based fallback implementation"""
-    from ..models import User
-    from .. import db
-    
-    if not active_providers:
-        return None
-    
-    app = current_app._get_current_object()
-    user_id = user.id
-    
-    def search_single_provider(provider):
-        with app.app_context():
-            try:
-                thread_user = db.session.get(User, user_id)
-                results = provider.search(user=thread_user, **search_params)
+    async def search_single_provider(provider):
+        try:
+            async with asyncio.timeout(timeout):
+                results = await provider.search(user=user, **search_params)
                 return results if results else None
-            except Exception as e:
-                app.logger.warning(f"Provider {provider.name} search failed: {e}")
-                return None
-            finally:
-                db.session.remove()
+        except asyncio.TimeoutError:
+            logger.warning(f"Provider {provider.name} timeout")
+            return None
+        except Exception as e:
+            logger.warning(f"Provider {provider.name} failed: {e}")
+            return None
     
-    with ThreadPoolExecutor(max_workers=min(len(active_providers), 3)) as executor:
-        future_to_provider = {executor.submit(search_single_provider, p): p for p in active_providers}
-        
-        for future in as_completed(future_to_provider, timeout=timeout):
-            try:
-                results = future.result(timeout=1)
-                if results:
-                    gc.collect()
-                    return results
-            except Exception as e:
-                provider = future_to_provider[future]
-                app.logger.warning(f"Provider {provider.name} error: {e}")
+    tasks = [search_single_provider(p) for p in active_providers]
     
-    gc.collect()
+    for coro in asyncio.as_completed(tasks):
+        try:
+            result = await coro
+            if result:
+                return result
+        except Exception as e:
+            logger.error(f"Provider exception: {e}")
+            continue
+    
     return None

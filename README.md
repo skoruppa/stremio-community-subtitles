@@ -1,6 +1,6 @@
 # Stremio Community Subtitles Addon
 
-![Version](https://img.shields.io/badge/version-0.5.1-blue.svg)
+![Version](https://img.shields.io/badge/version-0.6.0-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Status](https://img.shields.io/badge/status-Active-brightgreen.svg)
 
@@ -131,7 +131,8 @@ The addon is self-hostable! Deploy your own instance with Docker in minutes:
 cp .env.docker.example .env
 # Edit .env and set your SECRET_KEY
 docker-compose up -d
-docker-compose exec app flask db upgrade
+docker-compose exec app python run.py init-db
+docker-compose exec app python run.py create-roles
 ```
 
 **Features:**

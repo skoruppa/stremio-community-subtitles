@@ -1,29 +1,43 @@
-from flask import Blueprint, render_template, flash, current_app, url_for
-from flask_login import login_required, current_user
+from quart import Blueprint, render_template, flash, current_app, url_for
+from quart_auth import login_required, current_user
 from markupsafe import Markup
 from sqlalchemy.orm import joinedload
-from ..models import UserActivity, Subtitle, UserSubtitleSelection, SubtitleVote
+from sqlalchemy import select
+from ..models import UserActivity, Subtitle, UserSubtitleSelection, SubtitleVote, User
 from iso639 import Lang
 from ..lib.metadata import get_metadata
 from ..languages import LANGUAGES, LANGUAGE_DICT
 from .utils import get_active_subtitle_details
+from ..extensions import async_session_maker
 
 content_bp = Blueprint('content', __name__)
 
 
 @content_bp.route('/content/<uuid:activity_id>')
 @login_required
-def content_detail(activity_id):
+async def content_detail(activity_id):
     """Displays details for a specific content item based on user activity."""
+    import time
+    start_time = time.time()
+    user_id = (current_user.auth_id)
+    
     # Fetch the specific activity ensuring it belongs to the current user
-    activity = UserActivity.query.filter_by(id=activity_id, user_id=current_user.id).first_or_404()
+    async with async_session_maker() as session:
+        result = await session.execute(
+            select(UserActivity).filter_by(id=activity_id, user_id=user_id)
+        )
+        activity = result.scalar_one_or_none()
+        if not activity:
+            from quart import abort
+            abort(404)
 
     # Parse season/episode if applicable
     season = None
     episode = None
 
     # Fetch metadata using the helper
-    metadata = get_metadata(activity.content_id, activity.content_type)
+    current_app.logger.info(f"[TIMING] Activity fetched in {time.time() - start_time:.2f}s")
+    metadata = await get_metadata(activity.content_id, activity.content_type)
 
     # Add display_title to metadata and extract season/episode
     if metadata:
@@ -35,22 +49,21 @@ def content_detail(activity_id):
         if metadata.get('year'):
             title = f"{title} ({metadata['year']})"
         if metadata.get('season'):
-            season = metadata['season']  # Keep as int
+            season = metadata['season']
         if metadata.get('episode'):
-            episode = metadata['episode']  # Keep as int
+            episode = metadata['episode']
         metadata['display_title'] = title
     else:
         if activity.content_type == 'series':
             content_parts = activity.content_id.split(':')
             try:
                 if activity.content_id.startswith('kitsu:'):
-                    # Kitsu format: kitsu:11578:2 (episode only)
                     if len(content_parts) == 3:
                         episode = int(content_parts[2])
-                elif len(content_parts) == 3:  # IMDb format: ttID:S:E
+                elif len(content_parts) == 3:
                     season = int(content_parts[1])
                     episode = int(content_parts[2])
-                elif len(content_parts) == 2:  # IMDb format: ttID:E (assume Season 1)
+                elif len(content_parts) == 2:
                     season = 1
                     episode = int(content_parts[1])
             except ValueError:
@@ -62,17 +75,29 @@ def content_detail(activity_id):
     all_subs_matching_hash = []
     all_subs_other_hash = []
     all_subs_no_hash = []
-    provider_results_by_lang = {lang: [] for lang in current_user.preferred_languages}
-    all_subtitle_ids_for_voting = set() # Use a set to avoid duplicate IDs
+    
+    async with async_session_maker() as session:
+        result = await session.execute(select(User).filter_by(id=user_id))
+        user = result.scalar_one_or_none()
+        preferred_languages = user.preferred_languages if user else []
+    
+    provider_results_by_lang = {lang: [] for lang in preferred_languages}
+    all_subtitle_ids_for_voting = set()
 
     # Fetch all available local subtitles for all preferred languages in one query
-    all_local_subs = Subtitle.query.filter(
-        Subtitle.content_id == activity.content_id,
-        Subtitle.language.in_(current_user.preferred_languages)
-    ).options(joinedload(Subtitle.uploader)).all()
+    async with async_session_maker() as session:
+        result = await session.execute(
+            select(Subtitle)
+            .filter(
+                Subtitle.content_id == activity.content_id,
+                Subtitle.language.in_(preferred_languages)
+            )
+            .options(joinedload(Subtitle.uploader))
+        )
+        all_local_subs = result.scalars().all()
 
-    # Group local subtitles by language and hash, and also create aggregated lists
-    temp_grouped_local_subs = {lang: {'matching_hash': [], 'other_hash': [], 'no_hash': []} for lang in current_user.preferred_languages}
+    # Group local subtitles by language and hash
+    temp_grouped_local_subs = {lang: {'matching_hash': [], 'other_hash': [], 'no_hash': []} for lang in preferred_languages}
     for sub in all_local_subs:
         if sub.language in temp_grouped_local_subs:
             if activity.video_hash and sub.video_hash == activity.video_hash:
@@ -94,13 +119,13 @@ def content_detail(activity_id):
     elif activity.content_id.startswith('kitsu:'):
         from .utils import _get_imdb_from_kitsu
         kitsu_base = activity.content_id.split(':')[0] + ':' + activity.content_id.split(':')[1]
-        imdb_id, kitsu_season = _get_imdb_from_kitsu(kitsu_base, activity.content_type)
+        imdb_id, kitsu_season = await _get_imdb_from_kitsu(kitsu_base, activity.content_type)
         if kitsu_season:
             season = kitsu_season
     elif activity.content_id.startswith('mal:'):
         from .utils import _get_imdb_from_mal
         mal_base = activity.content_id.split(':')[0] + ':' + activity.content_id.split(':')[1]
-        imdb_id, mal_season = _get_imdb_from_mal(mal_base, activity.content_type)
+        imdb_id, mal_season = await _get_imdb_from_mal(mal_base, activity.content_type)
         if mal_season:
             season = mal_season
     
@@ -108,31 +133,35 @@ def content_detail(activity_id):
     if not imdb_id and metadata and metadata.get('title'):
         import re
         search_query = metadata['title']
-        # Remove episode/season info from title for search
         search_query = re.split(r'\s+S\d+E\d+', search_query, flags=re.IGNORECASE)[0].strip()
         search_query = re.split(r'\s+-\s+Ep(?:isode)?\s+\d+', search_query, flags=re.IGNORECASE)[0].strip()
     
     # Single provider search for both active selection and display
+    current_app.logger.info(f"[TIMING] Metadata and prep done in {time.time() - start_time:.2f}s")
     provider_results_raw = {}
-    if current_user.preferred_languages and (imdb_id or search_query):
+    if preferred_languages and (imdb_id or search_query):
         try:
             from ..providers.registry import ProviderRegistry
             from ..lib.provider_async import search_providers_parallel
             
-            active_providers = ProviderRegistry.get_active_for_user(current_user)
+            async with async_session_maker() as session:
+                result = await session.execute(select(User).filter_by(id=user_id))
+                user = result.scalar_one_or_none()
+                active_providers = await ProviderRegistry.get_active_for_user(user)
             
             search_params = {
                 'imdb_id': imdb_id,
                 'query': search_query,
                 'video_hash': activity.video_hash,
-                'languages': current_user.preferred_languages,
+                'languages': preferred_languages,
                 'season': season,
                 'episode': episode,
                 'content_type': activity.content_type,
                 'video_filename': activity.video_filename
             }
             
-            provider_results_raw = search_providers_parallel(current_user, active_providers, search_params, timeout=10)
+            provider_results_raw = await search_providers_parallel(user, active_providers, search_params, timeout=10)
+            current_app.logger.info(f"[TIMING] Provider search done in {time.time() - start_time:.2f}s")
             
             # Process for display
             for provider_name, results in provider_results_raw.items():
@@ -161,72 +190,85 @@ def content_detail(activity_id):
                         provider_results_by_lang[result.language].append(item)
         except Exception as e:
             current_app.logger.error(f"Error fetching provider results: {e}", exc_info=True)
-            flash("An error occurred while searching for subtitles.", "warning")
+            await flash("An error occurred while searching for subtitles.", "warning")
     
     # Determine active subtitle for each language using cached provider results
-    for lang_code in current_user.preferred_languages:
-        active_subtitle_info = get_active_subtitle_details(
-            current_user,
-            activity.content_id,
-            activity.video_hash,
-            activity.content_type,
-            activity.video_filename,
-            lang=lang_code,
-            season=season,
-            episode=episode,
-            cached_provider_results=provider_results_raw
-        )
+    current_app.logger.info(f"[TIMING] Before get_active_subtitle_details in {time.time() - start_time:.2f}s")
+    async with async_session_maker() as session:
+        result = await session.execute(select(User).filter_by(id=user_id))
+        user = result.scalar_one_or_none()
+        
+        for lang_code in preferred_languages:
+            active_subtitle_info = await get_active_subtitle_details(
+                user,
+                activity.content_id,
+                activity.video_hash,
+                activity.content_type,
+                activity.video_filename,
+                lang=lang_code,
+                season=season,
+                episode=episode,
+                cached_provider_results=provider_results_raw
+            )
 
-        active_subtitle = None
-        active_provider_details = None
-        user_vote_value = None
-        user_selection = active_subtitle_info.get('user_selection_record')
-        auto_selected = False
+            active_subtitle = None
+            active_provider_details = None
+            user_vote_value = None
+            user_selection = active_subtitle_info.get('user_selection_record')
+            auto_selected = False
 
-        if active_subtitle_info:
-            auto_selected = active_subtitle_info['auto']
+            if active_subtitle_info:
+                auto_selected = active_subtitle_info['auto']
 
-        if active_subtitle_info['type'] == 'local':
-            active_subtitle = active_subtitle_info['subtitle']
-            user_vote_value = active_subtitle_info['user_vote_value']
-            if active_subtitle:
-                all_subtitle_ids_for_voting.add(active_subtitle.id)
-        elif active_subtitle_info['type'] and ('_selection' in active_subtitle_info['type'] or '_auto' in active_subtitle_info['type']):
-            active_provider_details = active_subtitle_info
+            if active_subtitle_info['type'] == 'local':
+                active_subtitle = active_subtitle_info['subtitle']
+                user_vote_value = active_subtitle_info['user_vote_value']
+                if active_subtitle:
+                    all_subtitle_ids_for_voting.add(active_subtitle.id)
+            elif active_subtitle_info['type'] and ('_selection' in active_subtitle_info['type'] or '_auto' in active_subtitle_info['type']):
+                active_provider_details = active_subtitle_info
 
-        active_details_by_lang[lang_code] = {
-            'active_subtitle': active_subtitle,
-            'active_provider_details': active_provider_details,
-            'user_selection': user_selection,
-            'user_vote_value': user_vote_value,
-            'auto_selected': auto_selected
-        }
+            active_details_by_lang[lang_code] = {
+                'active_subtitle': active_subtitle,
+                'active_provider_details': active_provider_details,
+                'user_selection': user_selection,
+                'user_vote_value': user_vote_value,
+                'auto_selected': auto_selected
+            }
     
+    current_app.logger.info(f"[TIMING] After get_active_subtitle_details in {time.time() - start_time:.2f}s")
     # Calculate has_any_user_selection
     has_any_user_selection = any(details.get('user_selection') is not None for details in active_details_by_lang.values())
 
     # Fetch all user votes for all collected subtitle IDs
     user_votes = {}
     if all_subtitle_ids_for_voting:
-        votes = SubtitleVote.query.filter(
-            SubtitleVote.user_id == current_user.id,
-            SubtitleVote.subtitle_id.in_(list(all_subtitle_ids_for_voting))
-        ).all()
-        for vote in votes:
-            user_votes[vote.subtitle_id] = vote.vote_value
+        async with async_session_maker() as session:
+            result = await session.execute(
+                select(SubtitleVote).filter(
+                    SubtitleVote.user_id == user_id,
+                    SubtitleVote.subtitle_id.in_(list(all_subtitle_ids_for_voting))
+                )
+            )
+            votes = result.scalars().all()
+            for vote in votes:
+                user_votes[vote.subtitle_id] = vote.vote_value
 
     # Calculate has_provider_results
     has_provider_results = any(results for results in provider_results_by_lang.values())
 
     # Prepare preferred languages for display
-    preferred_languages_display = ", ".join([LANGUAGE_DICT.get(lang_code, lang_code) for lang_code in current_user.preferred_languages])
+    preferred_languages_display = ", ".join([LANGUAGE_DICT.get(lang_code, lang_code) for lang_code in preferred_languages])
 
     # Check if no providers are active and show info message
     try:
         from ..providers.registry import ProviderRegistry
-        active_providers = ProviderRegistry.get_active_for_user(current_user)
-        if not active_providers:
-            flash(Markup('You don\'t have any active provider connections. To fully utilize the addon features, <a href="{}" class="alert-link">activate providers in your account settings</a>.'.format(url_for('main.account_settings'))), 'info')
+        async with async_session_maker() as session:
+            result = await session.execute(select(User).filter_by(id=user_id))
+            user = result.scalar_one_or_none()
+            active_providers = await ProviderRegistry.get_active_for_user(user)
+            if not active_providers:
+                await flash(Markup('You don\'t have any active provider connections. To fully utilize the addon features, <a href="{}" class="alert-link">activate providers in your account settings</a>.'.format(url_for('main.account_settings'))), 'info')
     except:
         pass
 
@@ -240,14 +282,16 @@ def content_detail(activity_id):
         'all_subs_other_hash': all_subs_other_hash,
         'all_subs_no_hash': all_subs_no_hash,
         'user_votes': user_votes,
-        'language_list': LANGUAGES, # All available languages
-        'LANGUAGE_DICT': LANGUAGE_DICT, # Dictionary for language names
+        'language_list': LANGUAGES,
+        'LANGUAGE_DICT': LANGUAGE_DICT,
         'metadata': metadata,
         'provider_results_by_lang': provider_results_by_lang,
-        'preferred_languages': current_user.preferred_languages, # User's selected preferred languages
+        'preferred_languages': preferred_languages,
         'has_any_user_selection': has_any_user_selection,
         'has_provider_results': has_provider_results,
         'preferred_languages_display': preferred_languages_display
     }
 
-    return render_template('main/content_detail.html', **context)
+    return await render_template('main/content_detail.html', **context)
+
+

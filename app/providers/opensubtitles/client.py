@@ -1,6 +1,7 @@
-import requests
+import asyncio
+import aiohttp
 import time
-from flask import current_app
+from quart import current_app
 import functools # Import functools for lru_cache
 import datetime # Import datetime for cache expiration
 from ...version import USER_AGENT
@@ -40,43 +41,46 @@ class OpenSubtitlesError(Exception):
         self.status_code = status_code
 
 
-def make_request_with_retry(request_func, max_retries=3, retry_delay=1.0):
+# Modified for aiohttp - returns response data directly
+async def make_request_with_retry(request_func, max_retries=3, retry_delay=1.0):
     """
     Makes an HTTP request with retry logic for 5xx server errors.
 
     Args:
-        request_func (callable): Function that makes the HTTP request (should return requests.Response)
+        request_func (callable): Function that makes the HTTP request (should return aiohttp.ClientResponse)
         max_retries (int): Maximum number of retry attempts (default: 2)
         retry_delay (float): Delay in seconds between retries (default: 1.0)
 
     Returns:
-        requests.Response: The successful response
+        aiohttp.ClientResponse: The successful response
 
     Raises:
-        requests.exceptions.HTTPError: For non-5xx HTTP errors or after max retries
-        requests.exceptions.RequestException: For other request errors
+        aiohttp.ClientResponseError: For non-5xx HTTP errors or after max retries
+        aiohttp.ClientError: For other request errors
     """
     last_exception = None
 
     for attempt in range(max_retries + 1):  # +1 for initial attempt
         try:
-            response = request_func()
+            data = await request_func()
+            # request_func now handles raise_for_status() and returns data
+            return data
 
-            # If we get a 5xx server error, retry (unless we've exhausted attempts)
-            if 500 <= response.status_code < 600 and attempt < max_retries:
+        except aiohttp.ClientResponseError as e:
+            # For 5xx server errors, retry
+            if 500 <= e.status < 600 and attempt < max_retries:
                 current_app.logger.warning(
-                    f"OpenSubtitles API returned {response.status_code} server error "
+                    f"OpenSubtitles API returned {e.status} server error "
                     f"(attempt {attempt + 1}/{max_retries + 1}). "
                     f"Retrying in {retry_delay} seconds..."
                 )
-                time.sleep(retry_delay)
+                await asyncio.sleep(retry_delay)
+                last_exception = e
                 continue
+            # For other HTTP errors, raise immediately
+            raise
 
-            # For any other status code (including success or client errors), return the response
-            # The caller will handle raising exceptions for HTTP errors
-            return response
-
-        except requests.exceptions.RequestException as e:
+        except aiohttp.ClientError as e:
             last_exception = e
             # For network errors, also retry
             if attempt < max_retries:
@@ -84,7 +88,7 @@ def make_request_with_retry(request_func, max_retries=3, retry_delay=1.0):
                     f"OpenSubtitles API request failed (attempt {attempt + 1}/{max_retries + 1}): {e}. "
                     f"Retrying in {retry_delay} seconds..."
                 )
-                time.sleep(retry_delay)
+                await asyncio.sleep(retry_delay)
                 continue
             else:
                 # Re-raise the last exception if we've exhausted retries
@@ -95,7 +99,7 @@ def make_request_with_retry(request_func, max_retries=3, retry_delay=1.0):
         raise last_exception
 
 
-def login(username, password, user=None):
+async def login(username, password, user=None):
     """
     Logs in to OpenSubtitles.
     API Documentation: https://opensubtitles.stoplight.io/docs/opensubtitles-api/c2NoOjQ4MTA4NzYz-login
@@ -128,14 +132,15 @@ def login(username, password, user=None):
         'password': password
     }
 
-    def make_request():
-        return requests.post(f"{GLOBAL_OS_BASE_URL}/login", headers=headers, json=payload, timeout=15)
+    async def make_request():
+        async with aiohttp.ClientSession() as session:
+            async with session.post(f"{GLOBAL_OS_BASE_URL}/login", headers=headers, json=payload, timeout=aiohttp.ClientTimeout(total=15)) as response:
+                response.raise_for_status()
+                return await response.json()
 
     try:
         current_app.logger.info(f"Attempting OpenSubtitles login for user: {username}")
-        response = make_request_with_retry(make_request)
-        response.raise_for_status()
-        data = response.json()
+        data = await make_request_with_retry(make_request)
 
         if 'token' not in data or 'base_url' not in data:
             current_app.logger.error(f"OpenSubtitles login response missing token or base_url: {data}")
@@ -144,11 +149,11 @@ def login(username, password, user=None):
         current_app.logger.info(
             f"OpenSubtitles login successful for user: {data.get('user', {}).get('username', username)}. Base URL: {data['base_url']}")
         return data
-    except requests.exceptions.HTTPError as e:
-        error_message = f"API error: {e.response.status_code}"
+    except aiohttp.ClientResponseError as e:
+        error_message = f"API error: {e.response.status}"
         try:
             # Try to get the error message from the HTML body if it's a 403 from Varnish/OpenSubtitles
-            if e.response.status_code == 403 and "User-Agent" in e.response.text:
+            if e.response.status == 403 and "User-Agent" in e.response.text:
                 # Extract the specific message if possible, or use a generic one
                 start_marker = "<h1>Error 403 "
                 end_marker = "</h1>"
@@ -163,18 +168,18 @@ def login(username, password, user=None):
                 else:
                     error_message += f" - {e.response.text}"  # Fallback to full text
             else:
-                error_data = e.response.json()
-                error_message += f" - {error_data.get('message', e.response.text)}"
+                error_data = await e.response.json()
+                error_message += f" - {error_data.get('message', await e.response.text())}"
         except ValueError:  # If error response is not JSON or parsing HTML failed
-            error_message += f" - {e.response.text}"
+            error_message += f" - {await e.response.text()}"
         
         # Log as warning for client errors (4xx), error for server errors (5xx)
-        if 400 <= e.response.status_code < 500:
+        if 400 <= e.status < 500:
             current_app.logger.warning(f"OpenSubtitles API HTTP error during login: {error_message}")
         else:
             current_app.logger.error(f"OpenSubtitles API HTTP error during login: {error_message}")
-        raise OpenSubtitlesError(error_message, status_code=e.response.status_code)
-    except requests.exceptions.RequestException as e:
+        raise OpenSubtitlesError(error_message, status_code=e.status)
+    except aiohttp.ClientError as e:
         current_app.logger.error(f"OpenSubtitles API request error during login: {e}")
         raise OpenSubtitlesError(f"Request failed during login: {e}")
     except ValueError as e:  # Includes JSONDecodeError
@@ -182,7 +187,7 @@ def login(username, password, user=None):
         raise OpenSubtitlesError(f"Failed to decode API response during login: {e}")
 
 
-def logout(token, user):
+async def logout(token, user):
     """
     Logs out from OpenSubtitles using the user-specific token and base_url from the user object.
     API Documentation: Uses the base_url from login response.
@@ -211,33 +216,35 @@ def logout(token, user):
         'User-Agent': USER_AGENT
     }
 
-    def make_request():
-        return requests.delete(f"https://{user.opensubtitles_base_url}/api/v1/logout", headers=headers, timeout=15)
+    async def make_request():
+        async with aiohttp.ClientSession() as session:
+            async with session.delete(f"https://{user.opensubtitles_base_url}/api/v1/logout", headers=headers, timeout=aiohttp.ClientTimeout(total=15)) as response:
+                response.raise_for_status()
+                try:
+                    return await response.json()
+                except ValueError:
+                    return {"status": "success", "message": "Logout successful"}
 
     try:
         current_app.logger.info(f"Attempting OpenSubtitles logout using base_url: {user.opensubtitles_base_url}")
-        response = make_request_with_retry(make_request)
-        response.raise_for_status()
+        data = await make_request_with_retry(make_request)
         current_app.logger.info("OpenSubtitles logout successful.")
+        return data
+    except aiohttp.ClientResponseError as e:
+        error_message = f"API error: {e.status}"
         try:
-            return response.json()
+            error_data = await e.response.json()
+            error_message += f" - {error_data.get('message', await e.response.text())}"
         except ValueError:
-            return {"status": "success", "message": "Logout successful"}
-    except requests.exceptions.HTTPError as e:
-        error_message = f"API error: {e.response.status_code}"
-        try:
-            error_data = e.response.json()
-            error_message += f" - {error_data.get('message', e.response.text)}"
-        except ValueError:
-            error_message += f" - {e.response.text}"
+            error_message += f" - {await e.response.text()}"
         current_app.logger.error(f"OpenSubtitles API HTTP error during logout: {error_message}")
-        raise OpenSubtitlesError(error_message, status_code=e.response.status_code)
-    except requests.exceptions.RequestException as e:
+        raise OpenSubtitlesError(error_message, status_code=e.response.status)
+    except aiohttp.ClientError as e:
         current_app.logger.error(f"OpenSubtitles API request error during logout: {e}")
         raise OpenSubtitlesError(f"Request failed during logout: {e}")
 
 
-def search_subtitles(imdb_id=None, query=None, languages=None, moviehash=None,
+async def search_subtitles(imdb_id=None, query=None, languages=None, moviehash=None,
                      season_number=None, episode_number=None, type=None, user=None):
     """
     Searches for subtitles on OpenSubtitles. Requires user authentication.
@@ -286,26 +293,27 @@ def search_subtitles(imdb_id=None, query=None, languages=None, moviehash=None,
         current_app.logger.warning("OpenSubtitles search called with no effective search parameters.")
         raise OpenSubtitlesError("No search criteria provided for subtitle search.")
 
-    def make_request():
-        return requests.get(f"https://{user.opensubtitles_base_url}/api/v1/subtitles", headers=headers, params=params,
-                            timeout=15)
+    async def make_request():
+        async with aiohttp.ClientSession() as session:
+            async with session.get(f"https://{user.opensubtitles_base_url}/api/v1/subtitles", headers=headers, params=params, timeout=aiohttp.ClientTimeout(total=15)) as response:
+                response.raise_for_status()
+                return await response.json()
 
     try:
         current_app.logger.info(
             f"Searching OpenSubtitles (authenticated) at {user.opensubtitles_base_url}/api/v1/subtitles with params: {params}")
-        response = make_request_with_retry(make_request)
-        response.raise_for_status()
-        return response.json()
-    except requests.exceptions.HTTPError as e:
-        error_message = f"API error: {e.response.status_code}"
+        data = await make_request_with_retry(make_request)
+        return data
+    except aiohttp.ClientResponseError as e:
+        error_message = f"API error: {e.status}"
         try:
-            error_data = e.response.json()
-            error_message += f" - {error_data.get('message', e.response.text)}"
+            error_data = await e.response.json()
+            error_message += f" - {error_data.get('message', await e.response.text())}"
         except ValueError:
-            error_message += f" - {e.response.text}"
+            error_message += f" - {await e.response.text()}"
         current_app.logger.error(f"OpenSubtitles API HTTP error during authenticated search: {error_message} | Request params: {params}")
-        raise OpenSubtitlesError(error_message, status_code=e.response.status_code)
-    except requests.exceptions.RequestException as e:
+        raise OpenSubtitlesError(error_message, status_code=e.response.status)
+    except aiohttp.ClientError as e:
         current_app.logger.error(f"OpenSubtitles API request error during authenticated search: {e}")
         raise OpenSubtitlesError(f"Request failed during authenticated search: {e}")
     except ValueError as e:
@@ -313,7 +321,7 @@ def search_subtitles(imdb_id=None, query=None, languages=None, moviehash=None,
         raise OpenSubtitlesError(f"Failed to decode API response during authenticated search: {e}")
 
 
-def request_download_link(file_id, user=None):
+async def request_download_link(file_id, user=None):
     """
     Requests a download link for a specific subtitle file_id. Requires user authentication.
     Args:
@@ -348,32 +356,33 @@ def request_download_link(file_id, user=None):
         'sub_format': 'webvtt'
     }
 
-    def make_request():
-        return requests.post(f"https://{user.opensubtitles_base_url}/api/v1/download", headers=headers, json=payload,
-                             timeout=15)
+    async def make_request():
+        async with aiohttp.ClientSession() as session:
+            async with session.post(f"https://{user.opensubtitles_base_url}/api/v1/download", headers=headers, json=payload, timeout=aiohttp.ClientTimeout(total=15)) as response:
+                response.raise_for_status()
+                return await response.json()
 
     try:
         current_app.logger.info(
             f"Requesting OpenSubtitles download link (authenticated) for file_id: {file_id} at {user.opensubtitles_base_url}/api/v1/download")
-        response = make_request_with_retry(make_request)
-        response.raise_for_status()
-        return response.json()
-    except requests.exceptions.HTTPError as e:
-        error_message = f"API error: {e.response.status_code}"
+        data = await make_request_with_retry(make_request)
+        return data
+    except aiohttp.ClientResponseError as e:
+        error_message = f"API error: {e.status}"
         try:
-            error_data = e.response.json()
-            message = error_data.get("message", e.response.text)
+            error_data = await e.response.json()
+            message = error_data.get("message", await e.response.text())
             error_message += f" - {message}"
         except ValueError:
-            error_message += f" - {e.response.text}"
+            error_message += f" - {await e.response.text()}"
         
         # Log as warning for client errors (4xx), error for server errors (5xx)
-        if 400 <= e.response.status_code < 500:
+        if 400 <= e.status < 500:
             current_app.logger.warning(f"OpenSubtitles API HTTP error during authenticated download request: {error_message} | file_id: {file_id}")
         else:
             current_app.logger.error(f"OpenSubtitles API HTTP error during authenticated download request: {error_message} | file_id: {file_id}")
-        raise OpenSubtitlesError(error_message, status_code=e.response.status_code)
-    except requests.exceptions.RequestException as e:
+        raise OpenSubtitlesError(error_message, status_code=e.status)
+    except aiohttp.ClientError as e:
         current_app.logger.error(f"OpenSubtitles API request error during authenticated download request: {e}")
         raise OpenSubtitlesError(f"Request failed during authenticated download request: {e}")
     except ValueError as e:

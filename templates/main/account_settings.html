@@ -46,7 +46,7 @@
                         <div class="form-text small">When disabled, subtitle entries won't appear in Stremio if no subtitles are available</div>
                     </div>
                     <div class="form-check form-switch">
-                        <input class="form-check-input" type="checkbox" id="show_no_subtitles" data-account-url="{{ url_for('main.account_settings') }}" style="width: 3rem; height: 1.5rem; cursor: pointer;" {% if current_user.show_no_subtitles %}checked{% endif %}>
+                        <input class="form-check-input" type="checkbox" id="show_no_subtitles" data-account-url="{{ url_for('main.account_settings') }}" style="width: 3rem; height: 1.5rem; cursor: pointer;" {% if user.show_no_subtitles %}checked{% endif %}>
                     </div>
                 </div>
                 <div class="d-flex justify-content-between align-items-center">
@@ -55,7 +55,7 @@
                         <div class="form-text small">When enabled, .ass/.ssa subtitles will appear first in Stremio's subtitle list</div>
                     </div>
                     <div class="form-check form-switch">
-                        <input class="form-check-input" type="checkbox" id="prioritize_ass_subtitles" data-account-url="{{ url_for('main.account_settings') }}" style="width: 3rem; height: 1.5rem; cursor: pointer;" {% if current_user.prioritize_ass_subtitles %}checked{% endif %}>
+                        <input class="form-check-input" type="checkbox" id="prioritize_ass_subtitles" data-account-url="{{ url_for('main.account_settings') }}" style="width: 3rem; height: 1.5rem; cursor: pointer;" {% if user.prioritize_ass_subtitles %}checked{% endif %}>
                     </div>
                 </div>
             </div>
@@ -70,10 +70,10 @@
                 <p class="text-muted">Connect to external subtitle providers for enhanced search capabilities.</p>
                 
                 {% from "_provider_status.html" import render_provider_status %}
-                {% set all_providers = get_all_providers() %}
+                {% if not all_providers is defined %}{% set all_providers = get_all_providers() %}{% endif %}
                 
-                {% for provider in all_providers %}
-                    {{ render_provider_status(provider, current_user) }}
+                {% for provider, is_authenticated in all_providers %}
+                    {{ render_provider_status(provider, current_user, is_authenticated) }}
                 {% endfor %}
             </div>
         </div>
@@ -87,18 +87,18 @@
             <div class="card-body">
                 <ul class="list-group list-group-flush">
                     <li class="list-group-item">
-                        <strong>Username:</strong> {{ current_user.username }}
+                        <strong>Username:</strong> {{ user.username }}
                     </li>
                     <li class="list-group-item">
-                        <strong>Email:</strong> {{ current_user.email }}
+                        <strong>Email:</strong> {{ user.email }}
                     </li>
                     <li class="list-group-item">
-                        <strong>Member Since:</strong> {{ current_user.created_at.strftime('%Y-%m-%d') }}
+                        <strong>Member Since:</strong> {{ user.created_at.strftime('%Y-%m-%d') }}
                     </li>
                     <li class="list-group-item">
                         <strong>Current Languages:</strong>
-                        {% if current_user.preferred_languages %}
-                            {% for lang_code in current_user.preferred_languages %}
+                        {% if user.preferred_languages %}
+                            {% for lang_code in user.preferred_languages %}
                                 <span class="badge bg-secondary me-1">{{ LANGUAGE_DICT.get(lang_code, lang_code) }}</span>
                             {% endfor %}
                         {% else %}
@@ -170,7 +170,7 @@
                 <form method="POST" action="{{ url_for('main.delete_account') }}" id="deleteAccountForm">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div class="mb-3">
-                        <label for="confirmUsername" class="form-label">Type your username <strong>{{ current_user.username }}</strong> to confirm:</label>
+                        <label for="confirmUsername" class="form-label">Type your username <strong>{{ user.username }}</strong> to confirm:</label>
                         <input type="text" class="form-control" id="confirmUsername" name="confirm_username" required>
                     </div>
                 </form>
@@ -194,7 +194,7 @@
 // Enable delete button only when username matches
 document.getElementById('confirmUsername').addEventListener('input', function(e) {
     const confirmBtn = document.getElementById('confirmDeleteBtn');
-    confirmBtn.disabled = e.target.value !== '{{ current_user.username }}';
+    confirmBtn.disabled = e.target.value !== '{{ user.username }}';
 });
 </script>
 {% endblock %}

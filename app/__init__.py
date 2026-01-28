@@ -1,26 +1,24 @@
+"""Async Quart application factory"""
 import os
 import logging
-from flask import Flask
-from flask_talisman import Talisman
-from .extensions import db, migrate, login_manager, csrf, compress, cache, cors
+from quart import Quart
+from .extensions import init_async_db, auth_manager, init_cors, cache, csrf
 from config import get_config
-from . import models
 
 
 def create_app():
-    """Create and configure the Flask application using the factory pattern."""
-    app = Flask(__name__,
-                instance_relative_config=True,
-                template_folder='../templates',
-                static_folder='../static')
-    Talisman(app, content_security_policy=None)
+    """Create and configure the Quart application."""
+    app = Quart(
+        __name__,
+        instance_relative_config=True,
+        template_folder='../templates',
+        static_folder='../static'
+    )
 
     app.config.from_object(get_config())
-
-    # Ensure the instance folder exists
     os.makedirs(app.instance_path, exist_ok=True)
 
-    # Initialize Cloudinary if configured
+    # Cloudinary
     if app.config.get('STORAGE_BACKEND') == 'cloudinary':
         import cloudinary
         if (app.config.get('CLOUDINARY_CLOUD_NAME') and
@@ -30,20 +28,13 @@ def create_app():
                 cloud_name=app.config['CLOUDINARY_CLOUD_NAME'],
                 api_key=app.config['CLOUDINARY_API_KEY'],
                 api_secret=app.config['CLOUDINARY_API_SECRET'],
-                secure=True  # Use HTTPS for Cloudinary URLs
+                secure=True
             )
-            app.logger.info("Cloudinary configured for subtitle storage.")
-        else:
-            app.logger.warning("STORAGE_BACKEND is 'cloudinary' but Cloudinary credentials are not fully set. Falling back to local storage behavior might be unexpected.")
-            # Optionally, force STORAGE_BACKEND to 'local' or raise an error
-            # For now, it will proceed, and parts of the app might fail if they expect Cloudinary.
+            app.logger.info("Cloudinary configured.")
 
-    if app.config['DEBUG']:
-        logging.basicConfig(level=logging.DEBUG)
-    else:
-        logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(level=logging.DEBUG if app.config['DEBUG'] else logging.INFO)
 
-    # Setup Better Stack logging before other initializations
+    # Better Stack
     if app.config.get('USE_BETTERSTACK') and app.config.get('BETTERSTACK_SOURCE_TOKEN'):
         try:
             from logtail import LogtailHandler
@@ -54,17 +45,13 @@ def create_app():
             app.logger.addHandler(handler)
             app.logger.info("Better Stack logging enabled")
         except Exception as e:
-            app.logger.warning(f"Failed to setup Better Stack logging: {e}")
+            app.logger.warning(f"Failed to setup Better Stack: {e}")
     
-    db.init_app(app)
-    migrate.init_app(app, db)
-    login_manager.init_app(app)
+    init_async_db(app)
+    auth_manager.init_app(app)
     csrf.init_app(app)
-    compress.init_app(app)
-    cache.init_app(app)
-    cors.init_app(app)
+    init_cors(app)
 
-    # Initialize subtitle providers
     try:
         from .providers import init_providers
         init_providers(app)
@@ -85,19 +72,10 @@ def create_app():
     app.register_blueprint(content_bp)
     app.register_blueprint(providers_bp)
 
-    # Create upload directory if it doesn't exist
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
-    # Create cache directory if it doesn't exist
-    # os.makedirs(app.config['CACHE_DIR'], exist_ok=True)
-
-    @app.shell_context_processor
-    def make_shell_context():
-        return {'db': db, 'app': app}
-    
     @app.context_processor
     def inject_providers():
-        """Make provider registry available in templates"""
         try:
             from .providers.registry import ProviderRegistry
             return {
@@ -109,5 +87,37 @@ def create_app():
                 'get_all_providers': lambda: [],
                 'get_provider': lambda x: None
             }
+    
+    @app.context_processor
+    async def inject_user():
+        from quart_auth import current_user
+        try:
+            is_auth = await current_user.is_authenticated
+        except:
+            is_auth = False
+        
+        if is_auth:
+            from .models import User
+            from sqlalchemy import select
+            from sqlalchemy.orm import selectinload
+            from .extensions import async_session_maker
+            async with async_session_maker() as session:
+                result = await session.execute(
+                    select(User)
+                    .filter_by(id=current_user.auth_id)
+                    .options(
+                        selectinload(User.uploaded_subtitles),
+                        selectinload(User.selections),
+                        selectinload(User.votes)
+                    )
+                )
+                user = result.scalar_one_or_none()
+                if user:
+                    # Access relationships to load them before session closes
+                    _ = user.uploaded_subtitles
+                    _ = user.selections
+                    _ = user.votes
+                    return {'user': user}
+        return {'user': None}
 
     return app

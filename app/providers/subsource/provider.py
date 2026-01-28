@@ -1,5 +1,5 @@
 from typing import List, Optional
-from flask import current_app
+from quart import current_app
 from ..base import BaseSubtitleProvider, SubtitleResult, ProviderAuthError, ProviderDownloadError
 from .client import SubSourceClient
 
@@ -44,7 +44,7 @@ class SubSourceProvider(BaseSubtitleProvider):
     can_return_ass = True
     has_additional_settings = True
     
-    def authenticate(self, user, credentials: dict) -> dict:
+    async def authenticate(self, user, credentials: dict) -> dict:
         """Authenticate with SubSource API"""
         api_key = credentials.get('api_key', '').strip()
         
@@ -69,26 +69,26 @@ class SubSourceProvider(BaseSubtitleProvider):
             current_app.logger.error(f"SubSource auth failed: {e}")
             raise ProviderAuthError(f"Invalid API key: {str(e)}")
     
-    def logout(self, user) -> None:
+    async def logout(self, user) -> None:
         """Logout from SubSource"""
-        creds = self.get_credentials(user)
+        creds = await self.get_credentials(user)
         if creds:
             creds['active'] = False
             creds['api_key'] = None
             self.save_credentials(user, creds)
     
-    def is_authenticated(self, user) -> bool:
+    async def is_authenticated(self, user) -> bool:
         """Check if user is authenticated"""
-        creds = self.get_credentials(user)
+        creds = await self.get_credentials(user)
         return creds and creds.get('active') and creds.get('api_key')
     
-    def search(self, user, imdb_id: str = None, query: str = None, languages: List[str] = None, 
+    async def search(self, user, imdb_id: str = None, query: str = None, languages: List[str] = None, 
                season: int = None, episode: int = None, content_type: str = None, **kwargs) -> List[SubtitleResult]:
         """Search for subtitles"""
         if not imdb_id and not query:
             return []
         
-        creds = self.get_credentials(user)
+        creds = await self.get_credentials(user)
         if not creds or not creds.get('api_key'):
             raise ProviderAuthError("Not authenticated")
         
@@ -96,7 +96,7 @@ class SubSourceProvider(BaseSubtitleProvider):
             client = SubSourceClient(creds['api_key'])
             
             # Search for movie/series
-            movie = client.search_movie(imdb_id=imdb_id, query=query, season=season, content_type=content_type)
+            movie = await client.search_movie(imdb_id=imdb_id, query=query, season=season, content_type=content_type)
             if not movie:
                 return []
             
@@ -113,7 +113,7 @@ class SubSourceProvider(BaseSubtitleProvider):
                 max_pages = 3  # Limit to first 3 pages
                 
                 while page <= max_pages:
-                    response = client.get_subtitles(movie_id, subsource_lang, page=page, limit=20)
+                    response = await client.get_subtitles(movie_id, subsource_lang, page=page, limit=20)
                     
                     if not response.get('success') or not response.get('data'):
                         break
@@ -209,14 +209,14 @@ class SubSourceProvider(BaseSubtitleProvider):
                 current_app.logger.error(f"SubSource search failed: {e}")
             raise
     
-    def get_download_url(self, user, subtitle_id: str) -> str:
+    async def get_download_url(self, user, subtitle_id: str) -> str:
         """SubSource doesn't provide direct URLs, must use download_subtitle() method"""
         # Return None to indicate that download must be handled via download_subtitle()
         return None
     
-    def download_subtitle(self, user, subtitle_id: str) -> bytes:
+    async def download_subtitle(self, user, subtitle_id: str) -> bytes:
         """Download subtitle ZIP file"""
-        creds = self.get_credentials(user)
+        creds = await self.get_credentials(user)
         if not creds or not creds.get('api_key'):
             raise ProviderAuthError("Not authenticated")
         

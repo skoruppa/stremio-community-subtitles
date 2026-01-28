@@ -91,7 +91,7 @@ class ProviderRegistry:
         return providers
     
     @classmethod
-    def get_active_for_user(cls, user) -> List[BaseSubtitleProvider]:
+    async def get_active_for_user(cls, user) -> List[BaseSubtitleProvider]:
         """
         Get all providers that are authenticated/active for a user.
         
@@ -101,10 +101,12 @@ class ProviderRegistry:
         Returns:
             List of active provider instances
         """
-        return [
-            provider for provider in cls._providers.values()
-            if provider.is_authenticated(user)
-        ]
+        import asyncio
+        active_providers = []
+        for provider in cls._providers.values():
+            if await provider.is_authenticated(user):
+                active_providers.append(provider)
+        return active_providers
     
     @classmethod
     def get_by_auth_requirement(cls, requires_auth: bool) -> List[BaseSubtitleProvider]:

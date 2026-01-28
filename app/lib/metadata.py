@@ -1,7 +1,7 @@
 import themoviedb
-import kitsu # Import kitsu library
-import asyncio # Import asyncio
-from flask import current_app
+import kitsu
+import asyncio
+from quart import current_app
 from kitsu.models import Title
 from pyMALv2.auth import Authorization
 from pyMALv2.services.anime_service.anime_service import AnimeService
@@ -11,7 +11,7 @@ from ..extensions import cache
 tmdb_api = themoviedb.tmdb.TMDb()
 
 
-def _get_tmdb_metadata(content_id, content_type): # Renamed to _get_tmdb_metadata
+def _get_tmdb_metadata(content_id, content_type):
     """
     Fetches metadata from TMDB based on IMDb ID extracted from content_id.
     Handles movies (tt...) and series (tt...:s:e or tt...:s).
@@ -25,7 +25,7 @@ def _get_tmdb_metadata(content_id, content_type): # Renamed to _get_tmdb_metadat
 
     if not content_id or not content_id.startswith('tt'):
         current_app.logger.info(f"Content ID {content_id} is not an IMDb ID. Skipping TMDB lookup.")
-        return None  # Not an IMDb ID
+        return None
 
     tmdb_api.key = tmdb_key
     tmdb_api.language = 'en'
@@ -78,7 +78,7 @@ def _get_tmdb_metadata(content_id, content_type): # Renamed to _get_tmdb_metadat
                     episode_num = int(parts[2])
                 except ValueError:
                     pass
-            elif len(parts) == 2:  # Handle ttID:S format -> assume season 1
+            elif len(parts) == 2:
                 season_num = 1
                 episode_num = int(parts[1])
 
@@ -107,7 +107,7 @@ def _get_tmdb_metadata(content_id, content_type): # Renamed to _get_tmdb_metadat
         return None
 
 
-async def _get_kitsu_metadata(content_id): # Changed to async def
+async def _get_kitsu_metadata(content_id):
     """
     Fetches metadata from Kitsu based on Kitsu ID extracted from content_id.
     Handles anime (kitsu:ID) and specific episodes (kitsu:ID:EPISODE_NUM).
@@ -136,7 +136,7 @@ async def _get_kitsu_metadata(content_id): # Changed to async def
         'title': None,
         'poster_url': None,
         'year': None,
-        'season': None,  # Kitsu doesn't typically use seasons like TMDB
+        'season': None,
         'episode': None,
         'id': kitsu_anime_id,
         'id_type': 'kitsu'
@@ -260,7 +260,6 @@ def _get_mal_metadata(content_id):
             current_app.logger.warning(f"MAL anime not found for ID: {mal_anime_id}")
             return None
 
-        # Prefer English title
         if anime.alternative_titles and anime.alternative_titles.en:
             metadata['title'] = anime.alternative_titles.en
         elif anime.title:
@@ -290,7 +289,7 @@ def _get_mal_metadata(content_id):
 
 
 @cache.memoize(timeout=86400)
-def get_metadata(content_id, content_type=None):
+async def get_metadata(content_id, content_type=None):
     """
     Public dispatcher function to fetch metadata from various sources.
     :param content_id: The ID of the content (e.g., 'tt12345', 'kitsu:123', 'kitsu:123:1').
@@ -303,16 +302,7 @@ def get_metadata(content_id, content_type=None):
             return None
         return _get_tmdb_metadata(content_id, content_type)
     elif content_id and content_id.startswith('kitsu:'):
-        try:
-            loop = asyncio.get_event_loop()
-            if loop.is_closed():
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-        except RuntimeError:
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-        
-        return loop.run_until_complete(_get_kitsu_metadata(content_id))
+        return await _get_kitsu_metadata(content_id)
     elif content_id and content_id.startswith('mal:'):
         return _get_mal_metadata(content_id)
     else:

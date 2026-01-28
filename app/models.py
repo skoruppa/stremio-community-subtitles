@@ -4,22 +4,21 @@ import secrets
 import json
 from time import time
 
-from sqlalchemy import TypeDecorator, Text
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, Text, BigInteger, SmallInteger, ForeignKey, Table, TypeDecorator, CHAR, select, UniqueConstraint
+from sqlalchemy.orm import relationship, declarative_base
 from sqlalchemy.dialects.mysql import LONGTEXT
-from werkzeug.security import generate_password_hash, check_password_hash
-from flask_login import UserMixin
-from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.dialects.postgresql import UUID as PG_UUID
-from sqlalchemy.types import TypeDecorator, CHAR
+from sqlalchemy.dialects.postgresql import JSONB, UUID as PG_UUID
 from sqlalchemy.ext.mutable import MutableDict, MutableList
-from .extensions import db, login_manager
-from flask import current_app
+from werkzeug.security import generate_password_hash, check_password_hash
+from quart import current_app
+from .extensions import Base, async_session_maker
 
-# Association table for many-to-many relationship between users and roles
-roles_users = db.Table(
+# Association table
+roles_users = Table(
     'roles_users',
-    db.Column('user_id', db.Integer, db.ForeignKey('users.id')),
-    db.Column('role_id', db.Integer, db.ForeignKey('roles.id'))
+    Base.metadata,
+    Column('user_id', Integer, ForeignKey('users.id')),
+    Column('role_id', Integer, ForeignKey('roles.id'))
 )
 
 
@@ -101,44 +100,43 @@ class JSONType(TypeDecorator):
                 return value
 
 
-class Role(db.Model):
+class Role(Base):
     __tablename__ = 'roles'
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(80), unique=True, nullable=False)
-    description = db.Column(db.String(255))
+    id = Column(Integer, primary_key=True)
+    name = Column(String(80), unique=True, nullable=False)
+    description = Column(String(255))
+    users = relationship('User', secondary=roles_users, back_populates='roles')
 
     def __repr__(self):
         return f'<Role {self.name}>'
 
 
-class User(UserMixin, db.Model):
+class User(Base):
     __tablename__ = 'users'
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(80), unique=True, nullable=False, index=True)
-    email = db.Column(db.String(120), unique=True, nullable=False, index=True)
-    password_hash = db.Column(db.String(255), nullable=False)
-    preferred_languages = db.Column(MutableList.as_mutable(JSONType), default=list)
-    active = db.Column(db.Boolean, default=False)  # Changed to False by default until email is confirmed
-    created_at = db.Column(db.DateTime, default=datetime.datetime.utcnow)
-    manifest_token = db.Column(db.String(64), unique=True, nullable=True, index=True)
-    email_confirmed = db.Column(db.Boolean, default=False)
-    email_confirmed_at = db.Column(db.DateTime, nullable=True)
-    show_no_subtitles = db.Column(db.Boolean, default=False)
-    prioritize_ass_subtitles = db.Column(db.Boolean, default=False)
+    id = Column(Integer, primary_key=True)
+    username = Column(String(80), unique=True, nullable=False, index=True)
+    email = Column(String(120), unique=True, nullable=False, index=True)
+    password_hash = Column(String(255), nullable=False)
+    preferred_languages = Column(MutableList.as_mutable(JSONType), default=list)
+    active = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    manifest_token = Column(String(64), unique=True, nullable=True, index=True)
+    email_confirmed = Column(Boolean, default=False)
+    email_confirmed_at = Column(DateTime, nullable=True)
+    show_no_subtitles = Column(Boolean, default=False)
+    prioritize_ass_subtitles = Column(Boolean, default=False)
+    provider_credentials = Column(MutableDict.as_mutable(JSONType), nullable=True, default=dict)
+    last_login_at = Column(DateTime)
+    current_login_at = Column(DateTime)
+    last_login_ip = Column(String(100))
+    current_login_ip = Column(String(100))
+    login_count = Column(Integer, default=0)
 
-    # Provider credentials - unified system for all subtitle providers
-    # Format: {'provider_name': {'token': '...', 'active': True, 'base_url': '...', 'try_provide_ass': False, ...}, ...}
-    provider_credentials = db.Column(MutableDict.as_mutable(JSONType), nullable=True, default=dict)
-
-    last_login_at = db.Column(db.DateTime)
-    current_login_at = db.Column(db.DateTime)
-    last_login_ip = db.Column(db.String(100))
-    current_login_ip = db.Column(db.String(100))
-    login_count = db.Column(db.Integer, default=0)
-
-    # Relationships
-    roles = db.relationship('Role', secondary=roles_users,
-                            backref=db.backref('users', lazy='dynamic'))
+    roles = relationship('Role', secondary=roles_users, back_populates='users')
+    uploaded_subtitles = relationship('Subtitle', back_populates='uploader')
+    activity_log = relationship('UserActivity', back_populates='user')
+    selections = relationship('UserSubtitleSelection', back_populates='user')
+    votes = relationship('SubtitleVote', back_populates='user')
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -147,21 +145,35 @@ class User(UserMixin, db.Model):
         return check_password_hash(self.password_hash, password)
 
     def generate_manifest_token(self):
-        """Generates a unique manifest token for the user."""
         while True:
             token = secrets.token_urlsafe(32)
-            if not User.query.filter_by(manifest_token=token).first():
-                self.manifest_token = token
-                break
+            # Note: In async context, this should be checked differently
+            self.manifest_token = token
+            break
 
     @staticmethod
-    def get_by_manifest_token(token):
-        """Finds a user by their manifest token."""
-        return User.query.filter_by(manifest_token=token).first()
+    async def get_by_manifest_token(token):
+        async with async_session_maker() as session:
+            result = await session.execute(select(User).filter_by(manifest_token=token))
+            return result.scalar_one_or_none()
 
     def has_role(self, role_name):
-        """Check if user has a specific role."""
         return any(role.name == role_name for role in self.roles)
+
+    @property
+    def is_authenticated(self):
+        return True
+
+    @property
+    def is_active(self):
+        return self.active
+
+    @property
+    def is_anonymous(self):
+        return False
+
+    def get_id(self):
+        return str(self.id)
 
     def get_email_confirmation_token(self, expires_in=86400):
         """Generate a token for email confirmation that expires in 24 hours by default."""
@@ -309,73 +321,64 @@ class User(UserMixin, db.Model):
         return f'<User {self.username}>'
 
 
-class Subtitle(db.Model):
+class Subtitle(Base):
     __tablename__ = 'subtitles'
-    id = db.Column(GUID(), primary_key=True, default=uuid.uuid4)
-    content_id = db.Column(db.String(100), nullable=False, index=True)
-    content_type = db.Column(db.String(20), nullable=False)
-    video_hash = db.Column(db.String(50), nullable=True, index=True)
-    language = db.Column(db.String(10), nullable=False, index=True)
-    file_path = db.Column(db.String(255), nullable=True) # Nullable now, for linked OpenSubtitles
-    hash = db.Column(db.String(64), nullable=True, index=True) # SHA256 hash of the VTT content
-    uploader_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    upload_timestamp = db.Column(db.DateTime, default=datetime.datetime.utcnow, index=True)
-    votes = db.Column(db.Integer, default=0, index=True)
-    author = db.Column(db.String(100), nullable=True)
-    version_info = db.Column(db.Text, nullable=True)
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    content_id = Column(String(100), nullable=False, index=True)
+    content_type = Column(String(20), nullable=False)
+    video_hash = Column(String(50), nullable=True, index=True)
+    language = Column(String(10), nullable=False, index=True)
+    file_path = Column(String(255), nullable=True)
+    hash = Column(String(64), nullable=True, index=True)
+    uploader_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+    upload_timestamp = Column(DateTime, default=datetime.datetime.utcnow, index=True)
+    votes = Column(Integer, default=0, index=True)
+    author = Column(String(100), nullable=True)
+    version_info = Column(Text, nullable=True)
+    source_type = Column(String(50), nullable=False, default='community', index=True)
+    source_metadata = Column(MutableDict.as_mutable(JSONType), nullable=True)
 
-    source_type = db.Column(db.String(50), nullable=False, default='community', index=True) # E.g., 'community', 'opensubtitles_link'
-    source_metadata = db.Column(MutableDict.as_mutable(JSONType), nullable=True) 
-
-    uploader = db.relationship('User', backref=db.backref('uploaded_subtitles', lazy=True))
+    uploader = relationship('User', back_populates='uploaded_subtitles')
+    user_votes = relationship('SubtitleVote', back_populates='subtitle')
 
     def __repr__(self):
         return f'<Subtitle id={self.id} lang={self.language} content={self.content_id} hash={self.video_hash} source={self.source_type}>'
 
 
-class UserActivity(db.Model):
+class UserActivity(Base):
     __tablename__ = 'user_activity'
-    id = db.Column(GUID(), primary_key=True, default=uuid.uuid4)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
-    content_id = db.Column(db.String(100), nullable=False, index=True)
-    content_type = db.Column(db.String(20), nullable=False)
-    timestamp = db.Column(db.DateTime, default=datetime.datetime.utcnow, index=True)
-    video_hash = db.Column(db.String(50), nullable=True)
-    video_size = db.Column(db.BigInteger, nullable=True)
-    video_filename = db.Column(db.Text, nullable=True)
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    user_id = Column(Integer, ForeignKey('users.id'), nullable=False, index=True)
+    content_id = Column(String(100), nullable=False, index=True)
+    content_type = Column(String(20), nullable=False)
+    timestamp = Column(DateTime, default=datetime.datetime.utcnow, index=True)
+    video_hash = Column(String(50), nullable=True)
+    video_size = Column(BigInteger, nullable=True)
+    video_filename = Column(Text, nullable=True)
 
-    user = db.relationship('User', backref=db.backref('activity_log', lazy=True))
+    user = relationship('User', back_populates='activity_log')
 
     def __repr__(self):
         return f'<Activity user={self.user_id} content={self.content_id} time={self.timestamp}>'
 
 
-class UserSubtitleSelection(db.Model):
+class UserSubtitleSelection(Base):
     __tablename__ = 'user_subtitle_selections'
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
-    content_id = db.Column(db.String(100), nullable=False, index=True) # e.g. imdb_id:season:episode or imdb_id
-    video_hash = db.Column(db.String(50), nullable=True, index=True) # OpenSubtitles hash or other video file hash
-    language = db.Column(db.String(10), nullable=False, index=True) # Added language column
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey('users.id'), nullable=False, index=True)
+    content_id = Column(String(100), nullable=False, index=True)
+    video_hash = Column(String(50), nullable=True, index=True)
+    language = Column(String(10), nullable=False, index=True)
+    selected_subtitle_id = Column(GUID(), ForeignKey('subtitles.id'), nullable=True)
+    selected_external_file_id = Column(Integer, nullable=True, index=True)
+    external_details_json = Column(MutableDict.as_mutable(JSONType), nullable=True)
+    timestamp = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
 
-    # Fields for selecting a subtitle from our own database
-    selected_subtitle_id = db.Column(GUID(), db.ForeignKey('subtitles.id'), nullable=True)
-    
-    # Fields for selecting a subtitle from OpenSubtitles
-    # This is the 'file_id' from OpenSubtitles API (attributes.files[].file_id)
-    selected_external_file_id = db.Column(db.Integer, nullable=True, index=True)
-    
-    # Store relevant details of the selected OpenSubtitle to avoid re-fetching constantly for display
-    external_details_json = db.Column(MutableDict.as_mutable(JSONType), nullable=True)
+    user = relationship('User', back_populates='selections')
+    selected_subtitle = relationship('Subtitle')
 
-    timestamp = db.Column(db.DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
-
-    user = db.relationship('User', backref=db.backref('selections', lazy='dynamic'))
-    selected_subtitle = db.relationship('Subtitle') # For locally hosted subtitles
-
-    # Ensure that for a given user, content_id, video_hash, and language, only one selection type is active.
     __table_args__ = (
-        db.UniqueConstraint('user_id', 'content_id', 'video_hash', 'language', name='uq_user_content_hash_language_selection'),
+        UniqueConstraint('user_id', 'content_id', 'video_hash', 'language', name='uq_user_content_hash_language_selection'),
     )
 
     def __repr__(self):
@@ -386,24 +389,19 @@ class UserSubtitleSelection(db.Model):
         return f'<UserSelection user={self.user_id} content={self.content_id} (no selection)>'
 
 
-class SubtitleVote(db.Model):
+class SubtitleVote(Base):
     __tablename__ = 'subtitle_votes'
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
-    subtitle_id = db.Column(GUID(), db.ForeignKey('subtitles.id'), nullable=False, index=True)
-    vote_value = db.Column(db.SmallInteger, nullable=False)
-    timestamp = db.Column(db.DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey('users.id'), nullable=False, index=True)
+    subtitle_id = Column(GUID(), ForeignKey('subtitles.id'), nullable=False, index=True)
+    vote_value = Column(SmallInteger, nullable=False)
+    timestamp = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
 
-    user = db.relationship('User', backref=db.backref('votes', lazy='dynamic'))
-    subtitle = db.relationship('Subtitle', backref=db.backref('user_votes', lazy='dynamic'))
+    user = relationship('User', back_populates='votes')
+    subtitle = relationship('Subtitle', back_populates='user_votes')
 
-    __table_args__ = (db.UniqueConstraint('user_id', 'subtitle_id', name='uq_user_subtitle_vote'),)
+    __table_args__ = (UniqueConstraint('user_id', 'subtitle_id', name='uq_user_subtitle_vote'),)
 
     def __repr__(self):
         return f'<SubtitleVote user={self.user_id} sub={self.subtitle_id} value={self.vote_value}>'
 
-
-# User loader for Flask-Login
-@login_manager.user_loader
-def load_user(user_id):
-    return User.query.get(int(user_id))
