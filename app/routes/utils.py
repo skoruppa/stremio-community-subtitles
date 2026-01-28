@@ -490,7 +490,7 @@ async def _search_providers_by_hash(user, imdb_id, video_hash, content_type, lan
             'content_type': content_type
         }
         
-        results_by_provider = await search_providers_parallel(user, active_providers, search_params, timeout=5)
+        results_by_provider = await search_providers_parallel(user, active_providers, search_params, timeout=8)
         
         for provider_name, results in results_by_provider.items():
             for result in results:
@@ -574,7 +574,7 @@ async def _find_best_match_by_filename(user, content_id, imdb_id, video_filename
                 'video_filename': video_filename
             }
             
-            results_by_provider = await search_providers_parallel(user, active_providers, search_params, timeout=5)
+            results_by_provider = await search_providers_parallel(user, active_providers, search_params, timeout=8)
             
             for provider_name, results in results_by_provider.items():
                 for result in results:
@@ -667,7 +667,7 @@ async def _find_fallback_subtitle(user, content_id, imdb_id, content_type, lang,
                 'content_type': content_type
             }
             
-            results_by_provider = await search_providers_parallel(user, active_providers, search_params, timeout=5)
+            results_by_provider = await search_providers_parallel(user, active_providers, search_params, timeout=8)
             results_by_provider = {k: [r for r in v if r.language == lang] for k, v in results_by_provider.items()}
         except:
             return None
