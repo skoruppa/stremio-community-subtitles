@@ -132,7 +132,7 @@ async def select_provider_subtitle(activity_id):
                 select(UserSubtitleSelection).filter_by(
                     user_id=user_id,
                     content_id=activity.content_id,
-                    video_hash=activity.video_hash,
+                    video_hash=activity.video_hash or '',
                     language=language
                 )
             )
@@ -147,7 +147,7 @@ async def select_provider_subtitle(activity_id):
                 selection = UserSubtitleSelection(
                     user_id=user_id,
                     content_id=activity.content_id,
-                    video_hash=activity.video_hash,
+                    video_hash=activity.video_hash or '',
                     language=language
                 )
                 session.add(selection)
@@ -226,7 +226,7 @@ async def link_provider_subtitle(activity_id):
                 select(UserSubtitleSelection).filter_by(
                     user_id=user_id,
                     content_id=activity.content_id,
-                    video_hash=activity.video_hash,
+                    video_hash=activity.video_hash or '',
                     language=language
                 )
             )
@@ -239,7 +239,7 @@ async def link_provider_subtitle(activity_id):
                 selection = UserSubtitleSelection(
                     user_id=user_id,
                     content_id=activity.content_id,
-                    video_hash=activity.video_hash,
+                    video_hash=activity.video_hash or '',
                     selected_subtitle_id=existing.id,
                     language=language
                 )

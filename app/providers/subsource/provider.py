@@ -222,7 +222,7 @@ class SubSourceProvider(BaseSubtitleProvider):
         
         try:
             client = SubSourceClient(creds['api_key'])
-            return client.download_subtitle(int(subtitle_id))
+            return await client.download_subtitle(int(subtitle_id))
         except Exception as e:
             current_app.logger.error(f"SubSource download failed: {e}")
             raise ProviderDownloadError(f"Failed to download subtitle: {str(e)}")

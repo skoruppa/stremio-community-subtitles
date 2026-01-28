@@ -367,7 +367,7 @@ class UserSubtitleSelection(Base):
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey('users.id'), nullable=False, index=True)
     content_id = Column(String(100), nullable=False, index=True)
-    video_hash = Column(String(50), nullable=True, index=True)
+    video_hash = Column(String(50), nullable=False, default='', index=True)  # Changed to NOT NULL with default ''
     language = Column(String(10), nullable=False, index=True)
     selected_subtitle_id = Column(GUID(), ForeignKey('subtitles.id'), nullable=True)
     selected_external_file_id = Column(Integer, nullable=True, index=True)

@@ -150,28 +150,7 @@ async def login(username, password, user=None):
             f"OpenSubtitles login successful for user: {data.get('user', {}).get('username', username)}. Base URL: {data['base_url']}")
         return data
     except aiohttp.ClientResponseError as e:
-        error_message = f"API error: {e.response.status}"
-        try:
-            # Try to get the error message from the HTML body if it's a 403 from Varnish/OpenSubtitles
-            if e.response.status == 403 and "User-Agent" in e.response.text:
-                # Extract the specific message if possible, or use a generic one
-                start_marker = "<h1>Error 403 "
-                end_marker = "</h1>"
-                start_index = e.response.text.find(start_marker)
-                if start_index != -1:
-                    start_index += len(start_marker)
-                    end_index = e.response.text.find(end_marker, start_index)
-                    if end_index != -1:
-                        error_message += f" - {e.response.text[start_index:end_index]}"
-                    else:
-                        error_message += f" - {e.response.text}"  # Fallback to full text
-                else:
-                    error_message += f" - {e.response.text}"  # Fallback to full text
-            else:
-                error_data = await e.response.json()
-                error_message += f" - {error_data.get('message', await e.response.text())}"
-        except ValueError:  # If error response is not JSON or parsing HTML failed
-            error_message += f" - {await e.response.text()}"
+        error_message = f"API error: {e.status} - {e.message}"
         
         # Log as warning for client errors (4xx), error for server errors (5xx)
         if 400 <= e.status < 500:
@@ -231,14 +210,9 @@ async def logout(token, user):
         current_app.logger.info("OpenSubtitles logout successful.")
         return data
     except aiohttp.ClientResponseError as e:
-        error_message = f"API error: {e.status}"
-        try:
-            error_data = await e.response.json()
-            error_message += f" - {error_data.get('message', await e.response.text())}"
-        except ValueError:
-            error_message += f" - {await e.response.text()}"
+        error_message = f"API error: {e.status} - {e.message}"
         current_app.logger.error(f"OpenSubtitles API HTTP error during logout: {error_message}")
-        raise OpenSubtitlesError(error_message, status_code=e.response.status)
+        raise OpenSubtitlesError(error_message, status_code=e.status)
     except aiohttp.ClientError as e:
         current_app.logger.error(f"OpenSubtitles API request error during logout: {e}")
         raise OpenSubtitlesError(f"Request failed during logout: {e}")
@@ -305,14 +279,9 @@ async def search_subtitles(imdb_id=None, query=None, languages=None, moviehash=N
         data = await make_request_with_retry(make_request)
         return data
     except aiohttp.ClientResponseError as e:
-        error_message = f"API error: {e.status}"
-        try:
-            error_data = await e.response.json()
-            error_message += f" - {error_data.get('message', await e.response.text())}"
-        except ValueError:
-            error_message += f" - {await e.response.text()}"
+        error_message = f"API error: {e.status} - {e.message}"
         current_app.logger.error(f"OpenSubtitles API HTTP error during authenticated search: {error_message} | Request params: {params}")
-        raise OpenSubtitlesError(error_message, status_code=e.response.status)
+        raise OpenSubtitlesError(error_message, status_code=e.status)
     except aiohttp.ClientError as e:
         current_app.logger.error(f"OpenSubtitles API request error during authenticated search: {e}")
         raise OpenSubtitlesError(f"Request failed during authenticated search: {e}")
@@ -368,13 +337,7 @@ async def request_download_link(file_id, user=None):
         data = await make_request_with_retry(make_request)
         return data
     except aiohttp.ClientResponseError as e:
-        error_message = f"API error: {e.status}"
-        try:
-            error_data = await e.response.json()
-            message = error_data.get("message", await e.response.text())
-            error_message += f" - {message}"
-        except ValueError:
-            error_message += f" - {await e.response.text()}"
+        error_message = f"API error: {e.status} - {e.message}"
         
         # Log as warning for client errors (4xx), error for server errors (5xx)
         if 400 <= e.status < 500:

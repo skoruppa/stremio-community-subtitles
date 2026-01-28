@@ -914,7 +914,7 @@ async def upload_subtitle(activity_id=None):
                         select(UserSubtitleSelection).filter_by(
                             user_id=(current_user.auth_id),
                             content_id=content_id,
-                            video_hash=video_hash,
+                            video_hash=video_hash or '',
                             language=form.language.data
                         )
                     )
@@ -928,7 +928,7 @@ async def upload_subtitle(activity_id=None):
                         new_selection = UserSubtitleSelection(
                             user_id=(current_user.auth_id),
                             content_id=content_id,
-                            video_hash=video_hash,
+                            video_hash=video_hash or '',
                             selected_subtitle_id=new_subtitle.id,
                             language=form.language.data
                         )
@@ -983,7 +983,7 @@ async def select_subtitle(activity_id, subtitle_id):
                 select(UserSubtitleSelection).filter_by(
                     user_id=(current_user.auth_id),
                     content_id=activity.content_id,
-                    video_hash=activity.video_hash,
+                    video_hash=activity.video_hash or '',
                     language=subtitle_to_select.language
                 )
             )
@@ -997,7 +997,7 @@ async def select_subtitle(activity_id, subtitle_id):
                 selection = UserSubtitleSelection(
                     user_id=(current_user.auth_id),
                     content_id=activity.content_id,
-                    video_hash=activity.video_hash,
+                    video_hash=activity.video_hash or '',
                     selected_subtitle_id=subtitle_to_select.id,
                     language=subtitle_to_select.language
                 )
@@ -1621,7 +1621,7 @@ async def mark_compatible_hash(subtitle_id):
             select(UserSubtitleSelection).filter_by(
                 user_id=(current_user.auth_id),
                 content_id=activity.content_id,
-                video_hash=target_video_hash,
+                video_hash=target_video_hash or '',
                 language=original_subtitle.language
             )
         )
@@ -1635,7 +1635,7 @@ async def mark_compatible_hash(subtitle_id):
             user_sel = UserSubtitleSelection(
                 user_id=(current_user.auth_id),
                 content_id=activity.content_id,
-                video_hash=target_video_hash,
+                video_hash=target_video_hash or '',
                 selected_subtitle_id=newly_created_sub.id,
                 language=original_subtitle.language
             )

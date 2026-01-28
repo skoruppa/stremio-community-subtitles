@@ -326,24 +326,33 @@ async def get_active_subtitle_details(user, content_id, video_hash=None, content
 
 async def _get_user_selection(user, content_id, video_hash, lang):
     async with async_session_maker() as session:
+        # Normalize video_hash: None -> ''
+        video_hash = video_hash or ''
+        
         stmt = select(UserSubtitleSelection).filter_by(
             user_id=user.id,
             content_id=content_id,
+            video_hash=video_hash,
             language=lang
-        ).options(selectinload(UserSubtitleSelection.selected_subtitle).selectinload(Subtitle.uploader))
+        ).options(selectinload(UserSubtitleSelection.selected_subtitle).selectinload(Subtitle.uploader)).limit(1)
         
+        result = await session.execute(stmt)
+        selection = result.scalar_one_or_none()
+        if selection:
+            return selection
+        
+        # Fallback: try with empty hash if we searched with a specific hash
         if video_hash:
-            # First try with video_hash
-            result = await session.execute(stmt.filter_by(video_hash=video_hash))
-            selection = result.scalar_one_or_none()
-            if selection:
-                return selection
-            # Fallback: try without video_hash
-            result = await session.execute(stmt.filter(UserSubtitleSelection.video_hash.is_(None)))
+            stmt_fallback = select(UserSubtitleSelection).filter_by(
+                user_id=user.id,
+                content_id=content_id,
+                video_hash='',
+                language=lang
+            ).options(selectinload(UserSubtitleSelection.selected_subtitle).selectinload(Subtitle.uploader)).limit(1)
+            result = await session.execute(stmt_fallback)
             return result.scalar_one_or_none()
-        else:
-            result = await session.execute(stmt.filter(UserSubtitleSelection.video_hash.is_(None)))
-            return result.scalar_one_or_none()
+        
+        return None
 
 
 async def _get_user_vote(user, subtitle_id):
