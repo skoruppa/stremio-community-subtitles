@@ -32,10 +32,10 @@ Every subtitle you upload helps build a community database that benefits all use
 
 Major performance upgrade with migration to async architecture:
 
-✅ **Async Framework Migration** – Migrated from Flask+gevent to Quart+Hypercorn with full async/await support
-✅ **Async HTTP Client** – Replaced synchronous requests with aiohttp for non-blocking I/O
-✅ **Parallel Language Processing** – Multiple preferred languages are now processed simultaneously
-✅ **Faster Response Times** – Significantly reduced latency for subtitle requests
+- **Async Framework Migration** – Migrated from Flask+gevent to Quart+Hypercorn with full async/await support
+- **Async HTTP Client** – Replaced synchronous requests with aiohttp for non-blocking I/O
+- **Parallel Language Processing** – Multiple preferred languages are now processed simultaneously
+- **Faster Response Times** – Significantly reduced latency for subtitle requests
 
 **Note:** SubDL and Subsource providers may experience slow response times. If content loading takes longer than expected, it's likely due to these external services. Consider disabling them in account settings if performance is critical.
 
