@@ -1447,9 +1447,18 @@ async def delete_subtitle(subtitle_id):
 @login_required
 async def download_subtitle(subtitle_id):
     from quart import send_file, abort
-    if not current_user.has_role('Admin'):
-        await flash('You do not have permission to download subtitles.', 'danger')
-        return redirect(url_for('main.dashboard'))
+    from sqlalchemy.orm import selectinload
+    
+    # Get full user object with roles to check permission
+    async with async_session_maker() as session:
+        user_result = await session.execute(
+            select(User).options(selectinload(User.roles)).filter_by(id=int(current_user.auth_id))
+        )
+        user = user_result.scalar_one_or_none()
+        
+        if not user or not user.has_role('Admin'):
+            await flash('You do not have permission to download subtitles.', 'danger')
+            return redirect(url_for('main.dashboard'))
 
     async with async_session_maker() as session:
         sub_result = await session.execute(select(Subtitle).filter_by(id=subtitle_id))
@@ -1472,20 +1481,25 @@ async def download_subtitle(subtitle_id):
             from ..providers.registry import ProviderRegistry
             from ..providers.base import ProviderDownloadError
             
+            # Get full user object for provider authentication
+            async with async_session_maker() as session:
+                user_result = await session.execute(select(User).filter_by(id=int(current_user.auth_id)))
+                admin_user = user_result.scalar_one_or_none()
+            
             provider = ProviderRegistry.get(provider_name)
-            if not provider or not provider.is_authenticated(current_user):
+            if not provider or not await provider.is_authenticated(admin_user):
                 await flash(f"Admin's {provider_name} account is not configured/active; cannot download this linked subtitle.", "warning")
                 return redirect(request.referrer or url_for('main.dashboard'))
             
             try:
-                provider_url = await provider.get_download_url(current_user, provider_subtitle_id)
+                provider_url = await provider.get_download_url(admin_user, provider_subtitle_id)
                 if provider_url:
                     current_app.logger.info(f"Serving {provider_name} direct url")
                     return no_cache_redirect(provider_url, code=302)
                 else:
                     current_app.logger.info(f"{provider_name} requires direct download")
                     try:
-                        zip_content = await provider.download_subtitle(current_user, provider_subtitle_id)
+                        zip_content = await provider.download_subtitle(admin_user, provider_subtitle_id)
                         return Response(zip_content, mimetype='application/zip', headers={"Content-Disposition": f"attachment;filename={content_id_display}_{subtitle.language}.zip"})
                     except Exception as e:
                         current_app.logger.error(f"Error processing {provider_name} download: {e}", exc_info=True)
