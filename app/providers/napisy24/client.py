@@ -54,7 +54,7 @@ async def search_by_hash(filehash, filesize, filename, api_user="subliminal", ap
         raise Napisy24Error(f"Hash search failed: {e}")
 
 
-async def search_by_title(title, season=None, episode=None, filename=None):
+async def search_by_title(title, season=None, episode=None, filename=None, year=None):
     """Search subtitles by title"""
     try:
         # Build search query
@@ -70,7 +70,7 @@ async def search_by_title(title, season=None, episode=None, filename=None):
                 text = await response.text()
                 if text == 'brak wynikow':
                     return []
-                return _parse_xml_response(text, season, episode, filename)
+                return _parse_xml_response(text, season, episode, filename, search_title=title, year=year)
     except Exception as e:
         current_app.logger.error(f"Napisy24 title search error: {e} | title={title}, season={season}, episode={episode}")
         raise Napisy24Error(f"Title search failed: {e}")
@@ -93,7 +93,7 @@ async def search_by_imdb(imdb_id, season=None, episode=None, filename=None):
         raise Napisy24Error(f"IMDb search failed: {e}")
 
 
-def _parse_xml_response(response_text, season=None, episode=None, filename=None):
+def _parse_xml_response(response_text, season=None, episode=None, filename=None, search_title=None, year=None):
     """Parse XML response from Napisy24 API"""
     try:
         subtitles = []
@@ -115,6 +115,29 @@ def _parse_xml_response(response_text, season=None, episode=None, filename=None)
             language_el = subtitle.find("language")
             if language_el is not None and language_el.text and language_el.text.lower() != 'pl':
                 continue
+            
+            # Filter by title if searching by title (not IMDb)
+            if search_title:
+                title_el = subtitle.find("title")
+                if title_el is not None and title_el.text:
+                    # Normalize both titles for comparison
+                    sub_title = title_el.text.lower().strip()
+                    search_title_norm = search_title.lower().strip()
+                    # Skip if title doesn't match (allow partial match at start)
+                    if not sub_title.startswith(search_title_norm) and search_title_norm not in sub_title:
+                        continue
+            
+            # Filter by year if provided
+            if year:
+                year_el = subtitle.find("year")
+                if year_el is not None and year_el.text:
+                    try:
+                        sub_year = int(year_el.text)
+                        # Skip if year doesn't match (allow ±1 year tolerance)
+                        if abs(sub_year - year) > 1:
+                            continue
+                    except ValueError:
+                        pass
             
             sub_id = subtitle.find("id").text
             try:

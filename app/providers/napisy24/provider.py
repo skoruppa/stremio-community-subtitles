@@ -98,6 +98,7 @@ class Napisy24Provider(BaseSubtitleProvider):
             
             # Try title search
             search_title = query
+            year = None
             if not search_title and imdb_id:
                 # Try to get title from metadata
                 try:
@@ -110,8 +111,11 @@ class Napisy24Provider(BaseSubtitleProvider):
                         content_id = f"{imdb_id}:{episode}"
                     
                     metadata = await get_metadata(content_id, content_type)
-                    if metadata and metadata.get('title'):
-                        search_title = metadata['title']
+                    if metadata:
+                        if metadata.get('title'):
+                            search_title = metadata['title']
+                        if metadata.get('year'):
+                            year = int(metadata['year'])
                 except:
                     pass
             
@@ -125,7 +129,8 @@ class Napisy24Provider(BaseSubtitleProvider):
                         title=search_title,
                         season=season,
                         episode=episode,
-                        filename=kwargs.get('video_filename')
+                        filename=kwargs.get('video_filename'),
+                        year=year
                     )
                     for item in title_results:
                         if item['id'] not in seen_ids:
