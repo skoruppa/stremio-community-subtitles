@@ -202,8 +202,13 @@ async def reset_password_request():
             result = await db_session.execute(select(User).filter_by(email=form.email.data))
             user = result.scalar_one_or_none()
             if user:
-                await send_password_reset_email(user)
-                await flash('Check your email for instructions', 'info')
+                try:
+                    current_app.logger.info(f"Attempting to send password reset email to {user.email}")
+                    await send_password_reset_email(user)
+                    await flash('Check your email for instructions', 'info')
+                except Exception as email_error:
+                    current_app.logger.error(f"Failed to send password reset email: {email_error}", exc_info=True)
+                    await flash('Failed to send reset email. Please try again later.', 'danger')
             else:
                 await flash('If that email is in our database, we sent a reset link', 'info')
         return redirect(url_for('auth.login'))

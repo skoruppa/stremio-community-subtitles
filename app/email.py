@@ -24,20 +24,20 @@ async def send_async_email_via_local_api(sender, recipients, subject, html_body)
     }
 
     headers = {
-        "Content-Type": "application/json",
         "X-API-Key": api_key
     }
 
     try:
         current_app.logger.info(f"[EMAIL] Sending POST request to {api_url}")
+        current_app.logger.info(f"[EMAIL] Payload keys: {list(payload.keys())}")
         async with aiohttp.ClientSession() as session:
             async with session.post(api_url, json=payload, headers=headers, timeout=aiohttp.ClientTimeout(total=10)) as response:
                 current_app.logger.info(f"[EMAIL] Response status: {response.status}")
+                response_text = await response.text()
                 if response.status == 200:
                     current_app.logger.info(f"[EMAIL] Email sent successfully via local API to: {recipients[0]}")
                 else:
-                    text = await response.text()
-                    current_app.logger.error(f"[EMAIL] Local API error: {response.status}, Response: {text}")
+                    current_app.logger.error(f"[EMAIL] Local API error: {response.status}, Response: {response_text[:500]}")
     except asyncio.TimeoutError:
         current_app.logger.error(f"[EMAIL] Timeout sending to local API: {api_url}")
     except Exception as e:
