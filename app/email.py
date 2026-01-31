@@ -1,18 +1,19 @@
 """Async email sending"""
 from quart import current_app, render_template
-import logging
 import aiohttp
 import asyncio
-
-logger = logging.getLogger(__name__)
 
 
 async def send_async_email_via_local_api(sender, recipients, subject, html_body):
     api_key = current_app.config.get('LOCAL_MAIL_API_KEY')
     api_url = current_app.config.get('LOCAL_MAIL_API_URL')
 
+    current_app.logger.info(f"[EMAIL] Attempting to send email via local API to: {recipients}")
+    current_app.logger.info(f"[EMAIL] API URL: {api_url}")
+    current_app.logger.info(f"[EMAIL] API Key configured: {bool(api_key)}")
+
     if not api_key or not api_url:
-        logger.error("Local mail API config missing")
+        current_app.logger.error("[EMAIL] Local mail API config missing")
         return
 
     payload = {
@@ -28,21 +29,25 @@ async def send_async_email_via_local_api(sender, recipients, subject, html_body)
     }
 
     try:
+        current_app.logger.info(f"[EMAIL] Sending POST request to {api_url}")
         async with aiohttp.ClientSession() as session:
             async with session.post(api_url, json=payload, headers=headers, timeout=aiohttp.ClientTimeout(total=10)) as response:
+                current_app.logger.info(f"[EMAIL] Response status: {response.status}")
                 if response.status == 200:
-                    logger.info(f"Email sent via local API to: {recipients[0]}")
+                    current_app.logger.info(f"[EMAIL] Email sent successfully via local API to: {recipients[0]}")
                 else:
                     text = await response.text()
-                    logger.error(f"Local API error: {response.status}, {text}")
+                    current_app.logger.error(f"[EMAIL] Local API error: {response.status}, Response: {text}")
+    except asyncio.TimeoutError:
+        current_app.logger.error(f"[EMAIL] Timeout sending to local API: {api_url}")
     except Exception as e:
-        logger.error(f"Failed to send via local API: {e}", exc_info=True)
+        current_app.logger.error(f"[EMAIL] Failed to send via local API: {e}", exc_info=True)
 
 
 async def send_async_email_with_resend(sender, recipients, subject, html_body):
     api_key = current_app.config.get('RESEND_API_KEY')
     if not api_key:
-        logger.error("RESEND_API_KEY not set")
+        current_app.logger.error("RESEND_API_KEY not set")
         return
 
     payload = {
@@ -62,12 +67,12 @@ async def send_async_email_with_resend(sender, recipients, subject, html_body):
             async with session.post('https://api.resend.com/emails', json=payload, headers=headers) as response:
                 if response.status == 200:
                     data = await response.json()
-                    logger.info(f"Email sent via Resend. ID: {data.get('id')}")
+                    current_app.logger.info(f"Email sent via Resend. ID: {data.get('id')}")
                 else:
                     text = await response.text()
-                    logger.error(f"Resend API error: {response.status}, {text}")
+                    current_app.logger.error(f"Resend API error: {response.status}, {text}")
     except Exception as e:
-        logger.error(f"Failed to send via Resend: {e}", exc_info=True)
+        current_app.logger.error(f"Failed to send via Resend: {e}", exc_info=True)
 
 
 async def send_async_email_with_smtp(sender, recipients, subject, text_body, html_body):
@@ -93,9 +98,9 @@ async def send_async_email_with_smtp(sender, recipients, subject, text_body, htm
             use_tls=current_app.config.get('MAIL_USE_TLS', False),
             start_tls=current_app.config.get('MAIL_USE_STARTTLS', True),
         )
-        logger.info(f"Email sent via SMTP to: {recipients[0]}")
+        current_app.logger.info(f"Email sent via SMTP to: {recipients[0]}")
     except Exception as e:
-        logger.error(f"Failed to send via SMTP: {e}", exc_info=True)
+        current_app.logger.error(f"Failed to send via SMTP: {e}", exc_info=True)
 
 
 async def send_email(subject, recipients, text_body, html_body, sender=None):
@@ -103,6 +108,7 @@ async def send_email(subject, recipients, text_body, html_body, sender=None):
         sender = current_app.config['MAIL_DEFAULT_SENDER']
 
     email_method = current_app.config.get('EMAIL_METHOD')
+    current_app.logger.info(f"[EMAIL] send_email called: method={email_method}, recipients={recipients}, subject={subject}")
 
     if email_method == 'resend':
         await send_async_email_with_resend(sender, recipients, subject, html_body)
