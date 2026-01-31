@@ -33,6 +33,7 @@ def create_app():
             app.logger.info("Cloudinary configured.")
 
     logging.basicConfig(level=logging.DEBUG if app.config['DEBUG'] else logging.INFO)
+    app.logger.setLevel(logging.DEBUG if app.config['DEBUG'] else logging.INFO)
 
     # Better Stack
     if app.config.get('USE_BETTERSTACK') and app.config.get('BETTERSTACK_SOURCE_TOKEN'):
