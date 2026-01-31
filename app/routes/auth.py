@@ -143,8 +143,13 @@ async def register():
                 await db_session.commit()
 
                 if not current_app.config.get('DISABLE_EMAIL_VERIFICATION', False):
-                    await send_confirmation_email(user)
-                    await flash('A confirmation email has been sent.', 'info')
+                    try:
+                        current_app.logger.info(f"Attempting to send confirmation email to {user.email}")
+                        await send_confirmation_email(user)
+                        await flash('A confirmation email has been sent.', 'info')
+                    except Exception as email_error:
+                        current_app.logger.error(f"Failed to send confirmation email: {email_error}", exc_info=True)
+                        await flash('Registration successful, but failed to send confirmation email. Please contact support.', 'warning')
                 else:
                     await flash('Registration successful! You can now log in.', 'success')
                 
@@ -228,8 +233,13 @@ async def resend_confirmation_post():
         result = await db_session.execute(select(User).filter_by(email=email))
         user = result.scalar_one_or_none()
         if user and not user.email_confirmed:
-            await send_confirmation_email(user)
-            await flash('A new confirmation email has been sent.', 'info')
+            try:
+                current_app.logger.info(f"Resending confirmation email to {user.email}")
+                await send_confirmation_email(user)
+                await flash('A new confirmation email has been sent.', 'info')
+            except Exception as email_error:
+                current_app.logger.error(f"Failed to resend confirmation email: {email_error}", exc_info=True)
+                await flash('Failed to send confirmation email. Please try again later.', 'danger')
         else:
             await flash('If that email is in our database and not confirmed, we sent a link.', 'info')
     
