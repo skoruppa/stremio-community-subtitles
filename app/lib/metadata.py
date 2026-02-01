@@ -1,8 +1,8 @@
 import themoviedb
-import kitsu
+from .kitsu import Client as KitsuClient
+from .kitsu.models import Title as KitsuTitle
 import asyncio
 from quart import current_app
-from kitsu.models import Title
 from pyMALv2.auth import Authorization
 from pyMALv2.services.anime_service.anime_service import AnimeService
 
@@ -144,7 +144,7 @@ async def _get_kitsu_metadata(content_id):
 
     client = None
     try:
-        client = kitsu.Client()
+        client = KitsuClient()
         anime = await client.get_anime(kitsu_anime_id)
 
         if not anime:

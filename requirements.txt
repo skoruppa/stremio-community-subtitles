@@ -25,7 +25,6 @@ cloudinary==1.44.0
 pysubs2==1.8.0
 lxml==5.3.0
 chardet==5.2.0
-kitsu-py==1.1.2
 themoviedb==1.0.2
 pyMALv2==0.0.3
 iso639-lang==2.6.0
