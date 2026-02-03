@@ -50,7 +50,9 @@ async def login():
             user.login_count = user.login_count + 1 if user.login_count else 1
             await db_session.commit()
             
-            login_user(AuthUser(user.id))
+            login_user(AuthUser(user.id), remember=form.remember_me.data)
+            if form.remember_me.data:
+                session.permanent = True
             current_app.logger.info(f"User {user.username} logged in")
 
             next_page = session.pop('next_url', None) or request.args.get('next')
