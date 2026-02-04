@@ -61,6 +61,28 @@ class OpenSubtitlesProvider(BaseSubtitleProvider):
         creds = await self.get_credentials(user)
         return bool(creds and creds.get('active') and creds.get('token') and creds.get('base_url'))
     
+    async def check_token_validity(self, user) -> bool:
+        """Check if OpenSubtitles token is still valid by making API request.
+        Returns True if valid, False if expired/invalid."""
+        if not await self.is_authenticated(user):
+            return False
+        
+        creds = await self.get_credentials(user)
+        
+        # Create temp user for client
+        class TempUser:
+            def __init__(self, token, base_url):
+                self.opensubtitles_token = token
+                self.opensubtitles_base_url = base_url
+        
+        temp_user = TempUser(creds['token'], creds['base_url'])
+        
+        try:
+            return await opensubtitles_client.get_user_info(temp_user)
+        except Exception as e:
+            current_app.logger.debug(f"OpenSubtitles token check failed: {e}")
+            return True  # Don't show error if check fails
+    
     async def search(
         self,
         user,

@@ -7,8 +7,8 @@ from ..models import UserActivity, Subtitle, UserSubtitleSelection, SubtitleVote
 from iso639 import Lang
 from ..lib.metadata import get_metadata
 from ..languages import LANGUAGES, LANGUAGE_DICT
-from .utils import get_active_subtitle_details
 from ..extensions import async_session_maker
+from .utils import get_active_subtitle_details, check_opensubtitles_token
 
 content_bp = Blueprint('content', __name__)
 
@@ -20,6 +20,13 @@ async def content_detail(activity_id):
     import time
     start_time = time.time()
     user_id = (current_user.auth_id)
+    
+    # Fetch user and check OpenSubtitles token
+    async with async_session_maker() as session:
+        result = await session.execute(select(User).filter_by(id=user_id))
+        user = result.scalar_one_or_none()
+        if user:
+            await check_opensubtitles_token(user)
     
     # Fetch the specific activity ensuring it belongs to the current user
     async with async_session_maker() as session:

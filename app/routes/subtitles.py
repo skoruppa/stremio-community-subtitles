@@ -1520,11 +1520,17 @@ async def download_subtitle(subtitle_id):
                     except Exception as e:
                         current_app.logger.error(f"Error processing {provider_name} download: {e}", exc_info=True)
                         await flash(f"Error downloading from {provider_name}: {str(e)}", "danger")
-                        abort(500)
+                        return redirect(request.referrer or url_for('main.dashboard'))
             except ProviderDownloadError as e:
-                current_app.logger.error(f"{provider_name} download error: {e}", exc_info=True)
-                await flash(f"Error downloading from {provider_name}: {str(e)}", "danger")
-                abort(500)
+                error_msg = str(e)
+                # Special handling for 401 Unauthorized
+                if hasattr(e, 'status_code') and e.status_code == 401:
+                    current_app.logger.warning(f"{provider_name} authentication expired: {error_msg}")
+                    await flash(f"{provider_name} authentication expired. Please log in again in account settings.", "warning")
+                else:
+                    current_app.logger.error(f"{provider_name} download error: {error_msg}", exc_info=True)
+                    await flash(f"Error downloading from {provider_name}: {error_msg}", "danger")
+                return redirect(request.referrer or url_for('main.dashboard'))
         except Exception as e:
             current_app.logger.error(f"Error downloading linked provider subtitle {provider_subtitle_id}: {e}", exc_info=True)
             abort(500)

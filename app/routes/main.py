@@ -12,6 +12,7 @@ from ..providers.registry import ProviderRegistry
 from ..lib.metadata import get_metadata
 from ..extensions import async_session_maker
 from ..languages import LANGUAGES, LANGUAGE_DICT
+from .utils import check_opensubtitles_token
 
 main_bp = Blueprint('main', __name__)
 
@@ -30,6 +31,13 @@ async def index():
 async def dashboard():
     """Displays the user's dashboard, showing recent activity."""
     user_id = (current_user.auth_id)
+    
+    # Fetch user and check OpenSubtitles token
+    async with async_session_maker() as session:
+        result = await session.execute(select(User).filter_by(id=user_id))
+        user = result.scalar_one_or_none()
+        if user:
+            await check_opensubtitles_token(user)
     
     # Fetch recent activity for the current user
     async with async_session_maker() as session:

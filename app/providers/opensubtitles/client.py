@@ -351,3 +351,51 @@ async def request_download_link(file_id, user=None):
     except ValueError as e:
         current_app.logger.error(f"OpenSubtitles API JSON decode error during authenticated download request: {e}")
         raise OpenSubtitlesError(f"Failed to decode API response during authenticated download request: {e}")
+
+
+
+async def get_user_info(user):
+    """Get user info from OpenSubtitles API to check token validity.
+    Returns True if token is valid, False if 401 (expired), raises exception for other errors."""
+    if not user or not hasattr(user, 'opensubtitles_token') or not user.opensubtitles_token or \
+            not hasattr(user, 'opensubtitles_base_url') or not user.opensubtitles_base_url:
+        current_app.logger.debug("OpenSubtitles get_user_info: user object missing token or base_url")
+        return False
+    
+    try:
+        api_key = _get_api_key()
+    except (ValueError, RuntimeError) as e:
+        current_app.logger.error(f"API key error: {e}")
+        raise OpenSubtitlesError(f"Configuration error: {e}")
+    
+    headers = {
+        'Api-Key': api_key,
+        'Authorization': f'Bearer {user.opensubtitles_token}',
+        'Content-Type': 'application/json',
+        'Accept': '*/*',
+        'User-Agent': USER_AGENT
+    }
+    
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(
+                f"https://{user.opensubtitles_base_url}/api/v1/infos/user",
+                headers=headers,
+                timeout=aiohttp.ClientTimeout(total=3)
+            ) as response:
+                current_app.logger.info(f"OpenSubtitles user info check: status={response.status}, url={response.url}")
+                if response.status == 401:
+                    current_app.logger.warning("OpenSubtitles token is expired (401)")
+                    return False
+                response.raise_for_status()
+                current_app.logger.info("OpenSubtitles token is valid")
+                return True
+    except aiohttp.ClientResponseError as e:
+        if e.status == 401:
+            current_app.logger.warning(f"OpenSubtitles token expired: {e.status} - {e.message}")
+            return False
+        current_app.logger.debug(f"OpenSubtitles user info check error: {e.status} - {e.message}")
+        return True  # Don't fail on other errors
+    except Exception as e:
+        current_app.logger.debug(f"OpenSubtitles user info check failed: {e}")
+        return True  # Don't fail on network errors
