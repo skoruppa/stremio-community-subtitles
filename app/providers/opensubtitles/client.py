@@ -383,12 +383,10 @@ async def get_user_info(user):
                 headers=headers,
                 timeout=aiohttp.ClientTimeout(total=3)
             ) as response:
-                current_app.logger.info(f"OpenSubtitles user info check: status={response.status}, url={response.url}")
                 if response.status == 401:
-                    current_app.logger.warning("OpenSubtitles token is expired (401)")
+                    current_app.logger.warning(f"OpenSubtitles token expired (401) for base_url={user.opensubtitles_base_url}")
                     return False
                 response.raise_for_status()
-                current_app.logger.info("OpenSubtitles token is valid")
                 return True
     except aiohttp.ClientResponseError as e:
         if e.status == 401:
