@@ -57,7 +57,7 @@ async def addon_stream(manifest_token: str, content_type: str, content_id: str, 
     user = await User.get_by_manifest_token(manifest_token)
     if not user:
         current_app.logger.warning(f"Subtitle request with invalid token: {manifest_token}")
-        return respond_with({'subtitles': []})
+        return respond_with_no_cache({'subtitles': []})
 
 
 
