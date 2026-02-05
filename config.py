@@ -35,7 +35,7 @@ class Config:
     QUART_AUTH_COOKIE_SECURE = False
     QUART_AUTH_COOKIE_HTTPONLY = True
     QUART_AUTH_COOKIE_SAMESITE = 'Lax'
-    QUART_AUTH_DURATION = datetime.timedelta(days=3650)  # 10 years
+    QUART_AUTH_DURATION = 3650 * 24 * 60 * 60  # 10 years in seconds
     
     # Mail configuration
     EMAIL_METHOD = os.environ.get('EMAIL_METHOD', 'smtp')  # 'smtp', 'resend', or 'local_api'
