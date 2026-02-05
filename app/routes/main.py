@@ -1,7 +1,7 @@
 import datetime
 
 from quart import Blueprint, render_template, redirect, url_for, flash, request, current_app
-from quart_auth import login_required, current_user, logout_user
+from quart_auth import login_required, current_user, logout_user, Unauthorized
 from markupsafe import Markup
 from sqlalchemy.orm import joinedload
 from sqlalchemy import func, select
@@ -15,6 +15,12 @@ from ..languages import LANGUAGES, LANGUAGE_DICT
 from .utils import check_opensubtitles_token
 
 main_bp = Blueprint('main', __name__)
+
+
+@main_bp.errorhandler(Unauthorized)
+async def redirect_to_login(e):
+    await flash('Please log in to access this page.', 'info')
+    return redirect(url_for('auth.login', next=request.path))
 
 
 @main_bp.route('/')
@@ -108,10 +114,9 @@ async def configure():
 
 
 @main_bp.route('/<manifest_token>/configure')
+@login_required
 async def configure_redirect(manifest_token):
     """Redirect to the addon "setting" - account settings."""
-    if not await current_user.is_authenticated:
-        return redirect(url_for('auth.login', next=request.url))
     return redirect(url_for('main.account_settings'))
 
 
