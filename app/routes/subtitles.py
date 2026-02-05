@@ -1141,7 +1141,7 @@ async def reset_selection(activity_id):
         if selections_to_delete:
             try:
                 for selection in selections_to_delete:
-                    await session.delete(selection)
+                    session.delete(selection)
                 await session.commit()
                 await flash('All subtitle selections for this content have been reset.', 'success')
             except Exception as e:
@@ -1446,7 +1446,7 @@ async def delete_subtitle(subtitle_id):
                 else:
                     current_app.logger.info(f"File {subtitle.file_path} not deleted as it's still used by other subtitles.")
 
-            await session.delete(subtitle)
+            session.delete(subtitle)
             await session.commit()
             await flash('Subtitle deleted successfully.', 'success')
         except Exception as e:
