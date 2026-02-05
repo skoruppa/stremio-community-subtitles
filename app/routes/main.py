@@ -111,7 +111,7 @@ async def configure():
 async def configure_redirect(manifest_token):
     """Redirect to the addon "setting" - account settings."""
     if not await current_user.is_authenticated:
-        return redirect(url_for('auth.login'))
+        return redirect(url_for('auth.login', next=request.url))
     return redirect(url_for('main.account_settings'))
 
 
