@@ -167,7 +167,7 @@ async def addon_stream(manifest_token: str, content_type: str, content_id: str, 
                     )
                     oldest_activities = oldest_result.scalars().all()
                     for old_activity in oldest_activities:
-                        session.delete(old_activity)
+                        await session.delete(old_activity)
                         current_app.logger.info(
                             f"Deleted oldest UserActivity ID {old_activity.id} for user {user.id} to maintain limit of {max_activities-1}.")
 
@@ -1057,7 +1057,7 @@ async def vote_subtitle(subtitle_id, vote_type):
             if existing_vote:
                 if existing_vote.vote_value == vote_value:
                     subtitle.votes -= existing_vote.vote_value
-                    session.delete(existing_vote)
+                    await session.delete(existing_vote)
                     removed = True
                     if not is_ajax:
                         await flash('Vote removed.', 'info')
@@ -1104,7 +1104,7 @@ async def delete_selection(selection_id):
             return redirect(url_for('subtitles.selected_subtitles'))
         
         try:
-            session.delete(selection)
+            await session.delete(selection)
             await session.commit()
             await flash('Selection deleted successfully.', 'success')
         except Exception as e:
