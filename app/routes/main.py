@@ -108,10 +108,9 @@ async def configure():
 
 
 @main_bp.route('/<manifest_token>/configure')
+@login_required
 async def configure_redirect(manifest_token):
     """Redirect to the addon "setting" - account settings."""
-    if not current_user.is_authenticated:
-        return redirect(url_for('auth.login'))
     return redirect(url_for('main.account_settings'))
 
 

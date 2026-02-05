@@ -25,10 +25,17 @@ class Config:
     CLOUDINARY_SUBTITLES_FOLDER = os.environ.get('CLOUDINARY_SUBTITLES_FOLDER', 'community_subtitles')
     
     # Session configuration
-    PERMANENT_SESSION_LIFETIME = datetime.timedelta(days=7)
+    PERMANENT_SESSION_LIFETIME = datetime.timedelta(days=3650)  # 10 years
     SESSION_COOKIE_SECURE = False  # Set to True in production with HTTPS
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = 'Lax'
+    
+    # Quart-Auth configuration
+    QUART_AUTH_COOKIE_NAME = 'remember_token'
+    QUART_AUTH_COOKIE_SECURE = False
+    QUART_AUTH_COOKIE_HTTPONLY = True
+    QUART_AUTH_COOKIE_SAMESITE = 'Lax'
+    QUART_AUTH_DURATION = datetime.timedelta(days=3650)  # 10 years
     
     # Mail configuration
     EMAIL_METHOD = os.environ.get('EMAIL_METHOD', 'smtp')  # 'smtp', 'resend', or 'local_api'
@@ -117,6 +124,7 @@ class ProductionConfig(Config):
     """Production configuration."""
     # Production specific settings
     SESSION_COOKIE_SECURE = True
+    QUART_AUTH_COOKIE_SECURE = True
 
 
 class TestingConfig(Config):

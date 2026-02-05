@@ -40,6 +40,11 @@ def init_async_db(app):
     return async_engine, async_session_maker
 
 auth_manager = QuartAuth()
+
+@auth_manager.unauthorized_handler
+async def redirect_to_login():
+    from quart import redirect, url_for
+    return redirect(url_for('auth.login'))
 csrf = CSRFProtect()
 
 def init_cors(app):
