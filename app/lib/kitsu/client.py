@@ -30,6 +30,8 @@ import aiohttp
 
 from .errors import BadRequest, HTTPException, NotFound
 from .models import Anime, Manga
+from ...version import USER_AGENT
+
 
 __all__ = ("Client",)
 __log__: logging.Logger = logging.getLogger(__name__)
@@ -53,7 +55,7 @@ class Client:
 
         headers["Accept"] = "application/vnd.api+json"
         headers["Content-Type"] = "application/vnd.api+json"
-        headers["User-Agent"] = "Kitsu.py (https://github.com/MrArkon/kitsu.py)"
+        headers["User-Agent"] = USER_AGENT
         kwargs["headers"] = headers
 
         __log__.debug("Request Headers: %s", headers)
