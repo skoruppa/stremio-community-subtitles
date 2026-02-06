@@ -1,6 +1,6 @@
 # Stremio Community Subtitles Addon
 
-![Version](https://img.shields.io/badge/version-0.6.1-blue.svg)
+![Version](https://img.shields.io/badge/version-0.6.3-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Status](https://img.shields.io/badge/status-Active-brightgreen.svg)
 
@@ -125,6 +125,7 @@ cp .env.docker.example .env
 docker-compose up -d
 docker-compose exec app python run.py init-db
 docker-compose exec app python run.py create-roles
+docker-compose exec app python run.py init-anime-db
 ```
 
 **Features:**
@@ -132,6 +133,8 @@ docker-compose exec app python run.py create-roles
 - Local subtitle storage (no cloud required)
 - Email verification disabled by default
 - Only SECRET_KEY required to start
+
+**Note:** Run `git submodule update --init --recursive` before starting to initialize anime-lists database.
 
 See **[DOCKER.md](DOCKER.md)** for complete deployment guide.
 

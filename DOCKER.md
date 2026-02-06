@@ -2,12 +2,23 @@
 
 ## Quick Start
 
-1. **Copy environment file:**
+1. **Clone with submodules:**
+   ```bash
+   git clone --recurse-submodules https://github.com/skoruppa/stremio-community-subtitles.git
+   cd stremio-community-subtitles
+   ```
+   
+   Or if already cloned:
+   ```bash
+   git submodule update --init --recursive
+   ```
+
+2. **Copy environment file:**
    ```bash
    cp .env.docker.example .env
    ```
 
-2. **Edit `.env` file and set REQUIRED credentials:**
+3. **Edit `.env` file and set REQUIRED credentials:**
    - Secret key (SECRET_KEY - min 32 characters)
    
    **That's it!** Email verification is disabled by default for easy self-hosting.
@@ -29,6 +40,7 @@
    ```bash
    docker-compose exec app python run.py init-db
    docker-compose exec app python run.py create-roles
+   docker-compose exec app python run.py init-anime-db
    ```
 
 5. **Create admin user (optional):**
@@ -36,7 +48,7 @@
    docker-compose exec app python run.py create-admin admin@example.com admin yourpassword
    ```
 
-6. **Access the application:****
+6. **Access the application:**
    - Application: http://localhost:4949
 
 ## Storage

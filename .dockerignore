@@ -31,3 +31,4 @@ README.md
 privacy.md
 LICENSE
 *.md
+!data/anime-lists/
