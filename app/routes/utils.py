@@ -217,15 +217,21 @@ async def get_active_subtitle_details(user, content_id, video_hash=None, content
     if content_id.startswith('tt'):
         imdb_id = content_id.split(':')[0]
     elif content_id.startswith('kitsu:'):
-        kitsu_base = content_id.split(':')[0] + ':' + content_id.split(':')[1]
-        imdb_id, kitsu_season = await _get_imdb_from_kitsu(kitsu_base, content_type)
-        if kitsu_season:
-            season = kitsu_season
+        from ..lib.anime_mapping import get_imdb_from_kitsu
+        kitsu_id = int(content_id.split(':')[1])
+        result = get_imdb_from_kitsu(kitsu_id)
+        if result:
+            imdb_id = result['imdb_id']
+            if result['season']:
+                season = result['season']
     elif content_id.startswith('mal:'):
-        mal_base = content_id.split(':')[0] + ':' + content_id.split(':')[1]
-        imdb_id, mal_season = await _get_imdb_from_mal(mal_base, content_type)
-        if mal_season:
-            season = mal_season
+        from ..lib.anime_mapping import get_imdb_from_mal
+        mal_id = int(content_id.split(':')[1])
+        result = get_imdb_from_mal(mal_id)
+        if result:
+            imdb_id = result['imdb_id']
+            if result['season']:
+                season = result['season']
     
     # Extract season and episode from content_id if not provided
     if season is None and episode is None and content_type == 'series' and ':' in content_id:
@@ -391,58 +397,6 @@ async def _find_local_by_hash(content_id, video_hash, lang):
             ).order_by(Subtitle.votes.desc()).limit(1)
         )
         return result.scalar_one_or_none()
-
-
-async def _get_imdb_from_kitsu(kitsu_id, content_type='series'):
-    """Fetch IMDb ID and season from Kitsu addon. Returns tuple: (imdb_id, season)"""
-    try:
-        base_url = current_app.config.get('KITSU_ADDON_URL', 'https://anime-kitsu.strem.fun')
-        url = f"{base_url}/meta/{content_type}/{kitsu_id}.json"
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url, timeout=aiohttp.ClientTimeout(total=5)) as r:
-                r.raise_for_status()
-                data = await r.json()
-                meta = data.get('meta', {})
-                imdb_id = meta.get('imdb_id')
-                season = None
-                
-                videos = meta.get('videos', [])
-                if not imdb_id and videos:
-                    imdb_id = videos[0].get('imdb_id')
-                
-                if videos:
-                    season = videos[0].get('imdbSeason')
-                
-                return (imdb_id, season)
-    except Exception as e:
-        current_app.logger.error(f"Error fetching IMDb from Kitsu for {kitsu_id}: {e}")
-        return (None, None)
-
-
-async def _get_imdb_from_mal(mal_id, content_type='series'):
-    """Fetch IMDb ID and season from MAL addon. Returns tuple: (imdb_id, season)"""
-    try:
-        base_url = current_app.config.get('KITSU_ADDON_URL', 'https://anime-kitsu.strem.fun')
-        url = f"{base_url}/meta/{content_type}/{mal_id}.json"
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url, timeout=aiohttp.ClientTimeout(total=5)) as r:
-                r.raise_for_status()
-                data = await r.json()
-                meta = data.get('meta', {})
-                imdb_id = meta.get('imdb_id')
-                season = None
-                
-                videos = meta.get('videos', [])
-                if not imdb_id and videos:
-                    imdb_id = videos[0].get('imdb_id')
-                
-                if videos:
-                    season = videos[0].get('imdbSeason')
-                
-                return (imdb_id, season)
-    except Exception as e:
-        current_app.logger.error(f"Error fetching IMDb from MAL for {mal_id}: {e}")
-        return (None, None)
 
 
 async def _search_providers_by_hash(user, imdb_id, video_hash, content_type, lang, season=None, episode=None, cached_results=None):

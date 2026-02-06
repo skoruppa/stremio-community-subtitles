@@ -90,9 +90,25 @@ def create_roles_command():
     with app.app_context():
         asyncio.run(_create())
 
+
+@cli.command('init-anime-db')
+def init_anime_db_command():
+    """Initialize anime mapping database"""
+    from app.lib.anime_mapping import update_database, ANIME_LISTS_JSON
+    
+    if not ANIME_LISTS_JSON.exists():
+        click.echo(f"Error: {ANIME_LISTS_JSON} not found")
+        click.echo("Run: git submodule update --init --recursive")
+        return
+    
+    if update_database():
+        click.echo("✓ Anime mapping database initialized")
+    else:
+        click.echo("✓ Anime mapping database already up to date")
+
 if __name__ == '__main__':
     # Check if running CLI commands
-    if len(sys.argv) > 1 and sys.argv[1] in ['create-admin', 'init-db', 'create-roles']:
+    if len(sys.argv) > 1 and sys.argv[1] in ['create-admin', 'init-db', 'create-roles', 'init-anime-db']:
         cli()
         sys.exit(0)
     

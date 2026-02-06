@@ -53,6 +53,13 @@ def create_app():
     csrf.init_app(app)
     init_cors(app)
 
+    # Initialize anime mapping database
+    try:
+        from .lib.anime_mapping import update_database
+        update_database()
+    except Exception as e:
+        app.logger.warning(f"Could not initialize anime mapping database: {e}")
+
     try:
         from .providers import init_providers
         init_providers(app)

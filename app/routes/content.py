@@ -124,17 +124,21 @@ async def content_detail(activity_id):
     if activity.content_id.startswith('tt'):
         imdb_id = activity.content_id.split(':')[0]
     elif activity.content_id.startswith('kitsu:'):
-        from .utils import _get_imdb_from_kitsu
-        kitsu_base = activity.content_id.split(':')[0] + ':' + activity.content_id.split(':')[1]
-        imdb_id, kitsu_season = await _get_imdb_from_kitsu(kitsu_base, activity.content_type)
-        if kitsu_season:
-            season = kitsu_season
+        from ..lib.anime_mapping import get_imdb_from_kitsu
+        kitsu_id = int(activity.content_id.split(':')[1])
+        result = get_imdb_from_kitsu(kitsu_id)
+        if result:
+            imdb_id = result['imdb_id']
+            if result['season']:
+                season = result['season']
     elif activity.content_id.startswith('mal:'):
-        from .utils import _get_imdb_from_mal
-        mal_base = activity.content_id.split(':')[0] + ':' + activity.content_id.split(':')[1]
-        imdb_id, mal_season = await _get_imdb_from_mal(mal_base, activity.content_type)
-        if mal_season:
-            season = mal_season
+        from ..lib.anime_mapping import get_imdb_from_mal
+        mal_id = int(activity.content_id.split(':')[1])
+        result = get_imdb_from_mal(mal_id)
+        if result:
+            imdb_id = result['imdb_id']
+            if result['season']:
+                season = result['season']
     
     # Fallback to title search if no IMDb ID
     if not imdb_id and metadata and metadata.get('title'):
