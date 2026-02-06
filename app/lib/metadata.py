@@ -207,7 +207,7 @@ async def _get_kitsu_metadata(content_id):
             await client.close()
 
 
-def _get_mal_metadata(content_id):
+async def _get_mal_metadata(content_id):
     """
     Fetches metadata from MyAnimeList based on MAL ID extracted from content_id.
     Handles anime (mal:ID) and specific episodes (mal:ID:EPISODE_NUM).
@@ -233,7 +233,19 @@ def _get_mal_metadata(content_id):
     mal_client_id = current_app.config.get('MAL_CLIENT_ID')
     
     if not mal_client_id:
-        current_app.logger.warning("MAL_CLIENT_ID not configured.")
+        current_app.logger.info(f"MAL_CLIENT_ID not configured, using IMDB mapping for MAL ID: {mal_anime_id}")
+        # Try to get IMDB ID from anime mapping
+        from ..lib.anime_mapping import get_imdb_from_mal
+        result = get_imdb_from_mal(mal_anime_id)
+        if result and result['imdb_id']:
+            # Fetch metadata using IMDB ID instead
+            imdb_content_id = result['imdb_id']
+            if result['season']:
+                imdb_content_id += f":{result['season']}"
+            if episode_num:
+                imdb_content_id += f":{episode_num}"
+            return await get_metadata(imdb_content_id, 'series')
+        current_app.logger.warning(f"No IMDB mapping found for MAL ID: {mal_anime_id}")
         return None
 
     metadata = {
@@ -304,7 +316,7 @@ async def get_metadata(content_id, content_type=None):
     elif content_id and content_id.startswith('kitsu:'):
         return await _get_kitsu_metadata(content_id)
     elif content_id and content_id.startswith('mal:'):
-        return _get_mal_metadata(content_id)
+        return await _get_mal_metadata(content_id)
     else:
         current_app.logger.info(f"Unsupported content_id format: {content_id}")
         return None
