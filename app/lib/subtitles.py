@@ -78,7 +78,14 @@ async def convert_to_vtt(file_data, file_extension, encoding=None, fps=None):
             except FormatAutodetectionError:
                 subs = load(temp_file_path, encoding=encoding, fps=fps, format_=file_extension)
             except UnicodeDecodeError:
-                subs = load(temp_file_path, encoding='utf-8', fps=fps)
+                # Re-detect encoding and try again
+                logger.warning(f"Failed to decode with {encoding}, re-detecting encoding")
+                detected_encoding = detect_encoding(file_data)
+                if detected_encoding != encoding:
+                    logger.info(f"Re-detected encoding: {detected_encoding}")
+                    subs = load(temp_file_path, encoding=detected_encoding, fps=fps)
+                else:
+                    raise
             except UnknownFPSError as e:
                 logger.warning(f"MicroDVD file without FPS, using default 23.976: {e}")
                 subs = load(temp_file_path, encoding=encoding, fps=23.976)
