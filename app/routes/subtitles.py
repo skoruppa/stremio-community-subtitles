@@ -1446,7 +1446,7 @@ async def delete_subtitle(subtitle_id):
                 else:
                     current_app.logger.info(f"File {subtitle.file_path} not deleted as it's still used by other subtitles.")
 
-            session.delete(subtitle)
+            await session.delete(subtitle)
             await session.commit()
             await flash('Subtitle deleted successfully.', 'success')
         except Exception as e:

@@ -120,12 +120,7 @@ def create_app():
                     )
                 )
                 user = result.scalar_one_or_none()
-                if user:
-                    # Access relationships to load them before session closes
-                    _ = user.uploaded_subtitles
-                    _ = user.selections
-                    _ = user.votes
-                    return {'user': user}
+                return {'user': user}
         return {'user': None}
 
     return app
