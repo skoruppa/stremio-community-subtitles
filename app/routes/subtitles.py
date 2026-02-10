@@ -39,7 +39,8 @@ import aiofiles
 subtitles_bp = Blueprint('subtitles', __name__)
 
 # Semaphore to limit concurrent DB connections
-_db_semaphore = asyncio.Semaphore(3)  # Max 3 concurrent DB queries
+# Increased to 5 to match pool_size for better throughput with 70k daily requests
+_db_semaphore = asyncio.Semaphore(5)  # Max 5 concurrent DB queries
 
 
 

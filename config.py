@@ -98,10 +98,10 @@ class Config:
     # Database connection pool settings
     SQLALCHEMY_ENGINE_OPTIONS = {
         'pool_pre_ping': True,
-        'pool_size': 3,
-        'max_overflow': 5,
+        'pool_size': 5,
+        'max_overflow': 10,
         'pool_recycle': 300,
-        'pool_timeout': 5,
+        'pool_timeout': 10,
         'pool_reset_on_return': 'rollback',
         'connect_args': {
             'ssl': {'ssl': True}
