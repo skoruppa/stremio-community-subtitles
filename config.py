@@ -102,7 +102,10 @@ class Config:
         'max_overflow': 5,
         'pool_recycle': 300,
         'pool_timeout': 5,
-        'pool_reset_on_return': 'rollback'
+        'pool_reset_on_return': 'rollback',
+        'connect_args': {
+            'ssl': {'ssl': True}
+        } if not USE_SQLITE and 'mysql' in os.environ.get('DATABASE_URL', '') else {}
     }
 
     MAX_USER_ACTIVITIES = int(os.environ.get('MAX_USER_ACTIVITIES') or '15')
