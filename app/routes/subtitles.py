@@ -821,7 +821,7 @@ async def upload_subtitle(activity_id=None):
                         select(Subtitle).filter_by(
                             hash=vtt_hash,
                             language=form.language.data
-                        )
+                        ).limit(1)
                     )
                     existing_subtitle_same_hash = check_result.scalar_one_or_none()
 
