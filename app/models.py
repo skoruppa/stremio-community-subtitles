@@ -349,7 +349,7 @@ class UserActivity(Base):
     __tablename__ = 'user_activity'
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
     user_id = Column(Integer, ForeignKey('users.id'), nullable=False, index=True)
-    content_id = Column(String(100), nullable=False, index=True)
+    content_id = Column(String(500), nullable=False, index=True)
     content_type = Column(String(20), nullable=False)
     timestamp = Column(DateTime, default=datetime.datetime.utcnow, index=True)
     video_hash = Column(String(50), nullable=True)
