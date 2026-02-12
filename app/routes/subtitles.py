@@ -541,6 +541,7 @@ async def unified_download(manifest_token: str, download_identifier: str):
                         try:
                             # Extract subtitle from ZIP
                             zip_data = await r.read()
+                            current_app.logger.info(f"Downloaded ZIP from {provider_subtitle_url}, size={len(zip_data)}, first_bytes={zip_data[:20].hex() if len(zip_data) >= 20 else zip_data.hex()}")
                             subtitle_content, filename, extension = extract_subtitle_from_zip(zip_data, episode=episode)
                             del zip_data  # Free memory
                             
