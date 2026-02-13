@@ -1,5 +1,12 @@
 // Voting functionality for subtitles
-function initVoting(csrfToken, voteUrlTemplate) {
+function initVoting(csrfToken, voteUrlTemplate, messages = {}) {
+    const msg = {
+        removed: messages.removed || 'Vote removed.',
+        recorded: messages.recorded || 'Vote recorded.',
+        updated: messages.updated || 'Vote updated.',
+        error: messages.error || 'Error processing vote.'
+    };
+    
     document.querySelectorAll('.vote-btn').forEach(function(btn) {
         btn.addEventListener('click', function(e) {
             this.blur();
@@ -39,7 +46,7 @@ function initVoting(csrfToken, voteUrlTemplate) {
                     downBtn.className = 'btn btn-sm vote-btn btn-outline-danger';
                     upBtn.blur();
                     downBtn.blur();
-                    showToast('Vote removed.', 'info');
+                    showToast(msg.removed, 'info');
                 } else {
                     // Vote added/changed
                     if (container.classList.contains('list-group-item') && container.dataset.voteId) {
@@ -58,14 +65,14 @@ function initVoting(csrfToken, voteUrlTemplate) {
                     }
                     
                     if (currentVote === 0) {
-                        showToast('Vote recorded.', 'success');
+                        showToast(msg.recorded, 'success');
                     } else {
-                        showToast('Vote updated.', 'success');
+                        showToast(msg.updated, 'success');
                     }
                 }
             }).catch(error => {
                 console.error('Error:', error);
-                showToast('Error processing vote.', 'danger');
+                showToast(msg.error, 'danger');
             });
         });
     });

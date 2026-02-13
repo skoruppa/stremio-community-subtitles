@@ -111,8 +111,8 @@
 
 {% block scripts %}
 {{ super() }}
-<script src="{{ url_for('static', filename='js/utils.js') }}"></script>
-<script src="{{ url_for('static', filename='js/voting.js') }}"></script>
+<script src="{{ url_for('static', filename='js/utils.js') }}?v={{ js_versions['utils.js'] }}"></script>
+<script src="{{ url_for('static', filename='js/voting.js') }}?v={{ js_versions['voting.js'] }}"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         document.querySelectorAll('.poster-wrapper').forEach(function(wrapper) {
@@ -136,7 +136,12 @@
             }
         });
 
-        initVoting('{{ csrf_token() }}', '{{ url_for('subtitles.vote_subtitle', subtitle_id='SUBTITLE_ID', vote_type='VOTE_TYPE') }}');
+        initVoting('{{ csrf_token() }}', '{{ url_for('subtitles.vote_subtitle', subtitle_id='SUBTITLE_ID', vote_type='VOTE_TYPE') }}', {
+            removed: '{{ _('Vote removed.') }}',
+            recorded: '{{ _('Vote recorded.') }}',
+            updated: '{{ _('Vote updated.') }}',
+            error: '{{ _('Error processing vote.') }}'
+        });
     });
 </script>
 {% endblock %}

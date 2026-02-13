@@ -207,7 +207,7 @@
 {% if is_advanced_upload %}
 {% block scripts %}
 {{ super() }}
-<script src="{{ url_for('static', filename='js/utils.js') }}"></script>
+<script src="{{ url_for('static', filename='js/utils.js') }}?v={{ js_versions['utils.js'] }}"></script>
 <script>
 function parseContentId() {
     const contentIdField = document.getElementById('content_id');

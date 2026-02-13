@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: stremio-community-subtitles\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-02-13 22:53+0100\n"
-"PO-Revision-Date: 2026-02-13 22:12\n"
+"POT-Creation-Date: 2026-02-13 23:14+0100\n"
+"PO-Revision-Date: 2026-02-13 19:43+0000\n"
 "Last-Translator: \n"
 "Language-Team: Polish\n"
 "MIME-Version: 1.0\n"
@@ -440,19 +440,31 @@ msgstr "Błąd podczas aktualizowania wyboru napisów."
 msgid "Voting is not available for this type of subtitle."
 msgstr "Głosowanie nie jest dostępne dla tego typu napisów."
 
-#: app/routes/subtitles.py:1069
+#: app/routes/subtitles.py:1069 templates/main/content_detail.html:327
+#: templates/main/my_subtitles.html:142
+#: templates/main/selected_subtitles.html:168
+#: templates/main/voted_subtitles.html:140
 msgid "Vote removed."
 msgstr "Głos został usunięty."
 
-#: app/routes/subtitles.py:1074
+#: app/routes/subtitles.py:1074 templates/main/content_detail.html:329
+#: templates/main/my_subtitles.html:144
+#: templates/main/selected_subtitles.html:170
+#: templates/main/voted_subtitles.html:142
 msgid "Vote updated."
 msgstr "Głos został zaktualizowany."
 
-#: app/routes/subtitles.py:1080
+#: app/routes/subtitles.py:1080 templates/main/content_detail.html:328
+#: templates/main/my_subtitles.html:143
+#: templates/main/selected_subtitles.html:169
+#: templates/main/voted_subtitles.html:141
 msgid "Vote recorded."
 msgstr "Głos został zapisany."
 
-#: app/routes/subtitles.py:1091
+#: app/routes/subtitles.py:1091 templates/main/content_detail.html:330
+#: templates/main/my_subtitles.html:145
+#: templates/main/selected_subtitles.html:171
+#: templates/main/voted_subtitles.html:143
 msgid "Error processing vote."
 msgstr "Błąd podczas przetwarzania głosu."
 
@@ -965,17 +977,17 @@ msgstr "Gdy włączone, wpis napisów zawsze pojawi się w Stremio, nawet jeśli
 #: templates/main/account_settings.html:51
 #: templates/main/account_settings.html:66
 msgid "Setting updated successfully"
-msgstr ""
+msgstr "Ustawienie zaktualizowane pomyślnie"
 
 #: templates/main/account_settings.html:52
 #: templates/main/account_settings.html:67
 msgid "Failed to update setting"
-msgstr ""
+msgstr "Nie udało się zaktualizować ustawienia"
 
 #: templates/main/account_settings.html:53
 #: templates/main/account_settings.html:68
 msgid "Error updating setting"
-msgstr ""
+msgstr "Błąd podczas aktualizacji ustawienia"
 
 #: templates/main/account_settings.html:60
 msgid "Prioritize .ass subtitles"
@@ -1766,6 +1778,22 @@ msgid "SubSource returns ZIP files that may contain ASS format. This option will
 msgstr "SubSource zwraca pliki ZIP, które mogą zawierać format ASS. Ta opcja zawsze doda wpis ASS w Stremio, nawet jeśli w pliku .zip nie ma napisów .ass."
 
 #: templates/providers/subsource_form.html:23
-msgid "SubSource offers API access for subtitle downloads. Check their website for current limits."
-msgstr "SubSource oferuje dostęp do API do pobierania napisów. Sprawdź ich stronę, aby poznać aktualne limity."
+msgid ""
+"SubSource offers API access for subtitle downloads. Check their website "
+"for current limits."
+msgstr ""
+"SubSource oferuje dostęp do API do pobierania napisów. Sprawdź ich "
+"stronę, aby poznać aktualne limity."
 
+
+msgid "Vote removed."
+msgstr "Głos usunięty."
+
+msgid "Vote recorded."
+msgstr "Głos zapisany."
+
+msgid "Vote updated."
+msgstr "Głos zaktualizowany."
+
+msgid "Error processing vote."
+msgstr "Błąd podczas przetwarzania głosu."
