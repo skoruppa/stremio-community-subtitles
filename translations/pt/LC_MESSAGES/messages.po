@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: stremio-community-subtitles\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-02-13 15:37+0100\n"
-"PO-Revision-Date: 2026-02-13 20:55\n"
+"POT-Creation-Date: 2026-02-13 22:53+0100\n"
+"PO-Revision-Date: 2026-02-13 22:12\n"
 "Last-Translator: \n"
 "Language-Team: Portuguese\n"
 "MIME-Version: 1.0\n"
@@ -154,7 +154,7 @@ msgid "Confirm New Password"
 msgstr "Confirmar nova palavra-passe"
 
 #: app/forms.py:129 templates/auth/change_password.html:11
-#: templates/main/account_settings.html:130
+#: templates/main/account_settings.html:142
 msgid "Change Password"
 msgstr "Alterar Palavra-passe"
 
@@ -590,7 +590,7 @@ msgid "Connect to %(name)s"
 msgstr "Conectar a %(name)s"
 
 #: templates/_provider_status.html:71 templates/_provider_status.html:119
-#: templates/main/account_settings.html:177
+#: templates/main/account_settings.html:189
 msgid "Cancel"
 msgstr "Cancelar"
 
@@ -617,6 +617,8 @@ msgid "Save"
 msgstr "Guardar"
 
 #: templates/_provider_subtitle_list_item.html:24
+#: templates/main/selected_subtitles.html:56
+#: templates/main/selected_subtitles.html:68
 #: templates/main/voted_subtitles.html:54
 msgid "Uploader:"
 msgstr "Autor do Upload"
@@ -630,10 +632,12 @@ msgid "Downloads:"
 msgstr "Transferências"
 
 #: templates/_provider_subtitle_list_item.html:34
+#: templates/main/selected_subtitles.html:93
 msgid "Hash Match"
 msgstr "Correspondência de hash"
 
 #: templates/_provider_subtitle_list_item.html:37
+#: templates/main/selected_subtitles.html:70
 msgid "AI Translated"
 msgstr "Traduzido por IA"
 
@@ -688,12 +692,14 @@ msgid "No Hash Specific"
 msgstr "Sem Hash Específico"
 
 #: templates/_subtitle_list_item.html:57 templates/main/my_subtitles.html:74
+#: templates/main/selected_subtitles.html:101
 #: templates/main/voted_subtitles.html:73
 #: templates/main/voted_subtitles.html:79
 msgid "Upvote"
 msgstr "Gosto"
 
 #: templates/_subtitle_list_item.html:60 templates/main/my_subtitles.html:77
+#: templates/main/selected_subtitles.html:104
 #: templates/main/voted_subtitles.html:73
 #: templates/main/voted_subtitles.html:82
 msgid "Downvote"
@@ -717,7 +723,7 @@ msgstr "Apagar a Legenda"
 msgid "Dashboard"
 msgstr "Painel de controlo"
 
-#: templates/base.html:56 templates/main/account_settings.html:118
+#: templates/base.html:56 templates/main/account_settings.html:130
 #: templates/main/dashboard.html:101
 msgid "Install Addon"
 msgstr "Instalar Addon"
@@ -957,121 +963,136 @@ msgstr "Não mostrar mensagem de legendas"
 msgid "When enabled, subtitles entry will always appear in Stremio, even if there are no subtitles available"
 msgstr "Quando ativado, a entrada de legendas sempre aparecerá no Stremio, mesmo que não haja legendas disponíveis"
 
-#: templates/main/account_settings.html:54
+#: templates/main/account_settings.html:51
+#: templates/main/account_settings.html:66
+msgid "Setting updated successfully"
+msgstr ""
+
+#: templates/main/account_settings.html:52
+#: templates/main/account_settings.html:67
+msgid "Failed to update setting"
+msgstr ""
+
+#: templates/main/account_settings.html:53
+#: templates/main/account_settings.html:68
+msgid "Error updating setting"
+msgstr ""
+
+#: templates/main/account_settings.html:60
 msgid "Prioritize .ass subtitles"
 msgstr "Dar preferência a legendas .ass"
 
-#: templates/main/account_settings.html:55
+#: templates/main/account_settings.html:61
 msgid "When enabled, .ass/.ssa subtitles will appear first in Stremio's subtitle list"
 msgstr "Quando selecionado, as legendas .ass/.ssa aparecerão primeiro na lista de legendas do Stremio"
 
-#: templates/main/account_settings.html:67
+#: templates/main/account_settings.html:79
 msgid "Subtitle Providers"
 msgstr "Fornecedores de legendas"
 
-#: templates/main/account_settings.html:70
+#: templates/main/account_settings.html:82
 msgid "Connect to external subtitle providers for enhanced search capabilities."
 msgstr "Conectar a provedores externos de legendas para capacidades de pesquisa aprimoradas."
 
-#: templates/main/account_settings.html:85
+#: templates/main/account_settings.html:97
 msgid "Account Information"
 msgstr "Informação da Conta"
 
-#: templates/main/account_settings.html:90
+#: templates/main/account_settings.html:102
 msgid "Username:"
 msgstr "Nome de utilizador:"
 
-#: templates/main/account_settings.html:93
+#: templates/main/account_settings.html:105
 msgid "Email:"
 msgstr "Email:"
 
-#: templates/main/account_settings.html:96
+#: templates/main/account_settings.html:108
 msgid "Member Since:"
 msgstr "Membro desde:"
 
-#: templates/main/account_settings.html:99
+#: templates/main/account_settings.html:111
 msgid "Current Languages:"
 msgstr "Idiomas atuais:"
 
-#: templates/main/account_settings.html:105
+#: templates/main/account_settings.html:117
 msgid "No languages selected"
 msgstr "Nenhum idioma selecionado"
 
-#: templates/main/account_settings.html:114 templates/main/dashboard.html:97
+#: templates/main/account_settings.html:126 templates/main/dashboard.html:97
 msgid "Addon Installation"
 msgstr "Instalação do Addon"
 
-#: templates/main/account_settings.html:117
+#: templates/main/account_settings.html:129
 msgid "Need to install your addon in Stremio?"
 msgstr "Precisa instalar o seu addon no Stremio?"
 
-#: templates/main/account_settings.html:124
+#: templates/main/account_settings.html:136
 msgid "Security"
 msgstr "Segurança"
 
-#: templates/main/account_settings.html:127
+#: templates/main/account_settings.html:139
 msgid "Manage your account security settings:"
 msgstr "Gerencie as configurações de segurança da sua conta:"
 
-#: templates/main/account_settings.html:137
+#: templates/main/account_settings.html:149
 msgid "Danger Zone"
 msgstr "Zona Perigosa"
 
-#: templates/main/account_settings.html:140
+#: templates/main/account_settings.html:152
 msgid "Warning:"
 msgstr "Atenção:"
 
-#: templates/main/account_settings.html:140
+#: templates/main/account_settings.html:152
 msgid "This action cannot be undone."
 msgstr "Esta ação não pode ser desfeita."
 
-#: templates/main/account_settings.html:141
+#: templates/main/account_settings.html:153
 msgid "Deleting your account will permanently remove all your data including uploaded subtitles, selections, and votes."
 msgstr "Excluir a sua conta irá remover permanentemente todos os seus dados, incluindo legendas, seleções e votos enviados."
 
-#: templates/main/account_settings.html:143
-#: templates/main/account_settings.html:154
+#: templates/main/account_settings.html:155
+#: templates/main/account_settings.html:166
 msgid "Delete Account"
 msgstr "Eliminar conta"
 
-#: templates/main/account_settings.html:158
+#: templates/main/account_settings.html:170
 msgid "Are you absolutely sure?"
 msgstr "Você tem a certeza absoluta?"
 
-#: templates/main/account_settings.html:159
+#: templates/main/account_settings.html:171
 msgid "This will permanently delete your account and all associated data:"
 msgstr "Isto irá apagar permanentemente a sua conta e todos os dados associados:"
 
-#: templates/main/account_settings.html:161
+#: templates/main/account_settings.html:173
 msgid "All uploaded subtitles"
 msgstr "Todas as legendas carregadas"
 
-#: templates/main/account_settings.html:162
+#: templates/main/account_settings.html:174
 msgid "All subtitle selections"
 msgstr "Todas as seleções de legendas"
 
-#: templates/main/account_settings.html:163
+#: templates/main/account_settings.html:175
 msgid "All votes"
 msgstr "Todos os Votos"
 
-#: templates/main/account_settings.html:164
+#: templates/main/account_settings.html:176
 msgid "Activity history"
 msgstr "Histórico da atividade"
 
-#: templates/main/account_settings.html:165
+#: templates/main/account_settings.html:177
 msgid "Provider connections"
 msgstr "Conexões de fornecedor"
 
-#: templates/main/account_settings.html:167
+#: templates/main/account_settings.html:179
 msgid "This action cannot be undone!"
 msgstr "Esta ação não pode ser desfeita!"
 
-#: templates/main/account_settings.html:171
+#: templates/main/account_settings.html:183
 #, python-format
 msgid "Type your username %(username)s to confirm:"
 msgstr "Introduza o seu nome de utilizador %(username)s para confirmar:"
 
-#: templates/main/account_settings.html:179
+#: templates/main/account_settings.html:191
 msgid "Delete My Account"
 msgstr "Apagar a minha conta"
 
@@ -1204,6 +1225,7 @@ msgid "ID:"
 msgstr "ID:"
 
 #: templates/main/content_detail.html:38
+#: templates/main/selected_subtitles.html:92
 #: templates/main/upload_subtitle.html:124
 msgid "Video Hash:"
 msgstr "Vídeo Hash:"
@@ -1346,7 +1368,8 @@ msgstr "As suas estatísticas"
 msgid "Uploaded Subtitles"
 msgstr "Legendas Enviadas"
 
-#: templates/main/dashboard.html:116
+#: templates/main/dashboard.html:116 templates/main/selected_subtitles.html:4
+#: templates/main/selected_subtitles.html:9
 msgid "Selected Subtitles"
 msgstr "Legendas Selecionadas"
 
@@ -1410,7 +1433,9 @@ msgstr "Carregue as suas próprias legendas ou vote nas já existentes"
 msgid "Manage all subtitles you've submitted to the community."
 msgstr "Gerir todas as legendas que submeteu à comunidade."
 
-#: templates/main/my_subtitles.html:51 templates/main/voted_subtitles.html:56
+#: templates/main/my_subtitles.html:51
+#: templates/main/selected_subtitles.html:58
+#: templates/main/voted_subtitles.html:56
 msgid "Author:"
 msgstr "Autor:"
 
@@ -1424,6 +1449,7 @@ msgid "Are you sure you want to delete this subtitle?"
 msgstr "Tem a certeza que pretende eliminar esta legenda?"
 
 #: templates/main/my_subtitles.html:82
+#: templates/main/selected_subtitles.html:110
 msgid "Delete"
 msgstr "Eliminar"
 
@@ -1438,6 +1464,35 @@ msgstr "Não carregou nenhuma legenda."
 #: templates/main/my_subtitles.html:107
 msgid "Upload Your First Subtitle"
 msgstr "Carregue a sua primeira legenda"
+
+#: templates/main/selected_subtitles.html:11
+msgid "View and manage all subtitles you've selected for your videos."
+msgstr ""
+
+#: templates/main/selected_subtitles.html:21
+#: templates/main/selected_subtitles.html:128
+msgid "My Selected Subtitles"
+msgstr ""
+
+#: templates/main/selected_subtitles.html:60
+msgid "Votes:"
+msgstr ""
+
+#: templates/main/selected_subtitles.html:97
+msgid "Selected:"
+msgstr ""
+
+#: templates/main/selected_subtitles.html:108
+msgid "Are you sure you want to delete this selection?"
+msgstr ""
+
+#: templates/main/selected_subtitles.html:132
+msgid "No Selections Yet"
+msgstr ""
+
+#: templates/main/selected_subtitles.html:133
+msgid "You haven't selected any subtitles yet."
+msgstr ""
 
 #: templates/main/upload_subtitle.html:12
 msgid "Advanced Users"
