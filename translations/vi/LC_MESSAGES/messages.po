@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: stremio-community-subtitles\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2026-02-13 15:37+0100\n"
-"PO-Revision-Date: 2026-02-13 19:43\n"
+"PO-Revision-Date: 2026-02-13 20:55\n"
 "Last-Translator: \n"
 "Language-Team: Vietnamese\n"
 "MIME-Version: 1.0\n"
@@ -44,7 +44,7 @@ msgstr "Đăng nhập"
 
 #: app/forms.py:19
 msgid "Username"
-msgstr "Tên đăng nhập"
+msgstr "Tên người dùng"
 
 #: app/forms.py:22 app/forms.py:139
 msgid "Confirm Password"
@@ -60,11 +60,11 @@ msgstr "Đăng ký"
 
 #: app/forms.py:49
 msgid "Subtitle File (.srt, .sub, .txt, .ass, .ssa)"
-msgstr "Tệp phụ đề (.srt, .sub, .txt, .ass, .ssa)"
+msgstr "Tập tin phụ đề (.srt, .sub, .txt, .ass, .ssa)"
 
 #: app/forms.py:51
 msgid "Only .srt, .sub, .txt, .ass, .ssa files allowed!"
-msgstr "Chỉ cho phép các tệp .srt, .sub, .txt, .ass, .ssa!"
+msgstr "Chỉ cho phép định dạng .srt, .sub, .txt, .ass, .ssa!"
 
 #: app/forms.py:53
 msgid "Subtitle Language"
@@ -72,11 +72,11 @@ msgstr "Ngôn ngữ phụ đề"
 
 #: app/forms.py:54
 msgid "Encoding"
-msgstr "Bảng mã (Encoding)"
+msgstr "Encoding"
 
 #: app/forms.py:55
 msgid "FPS (Frames Per Second)"
-msgstr "FPS (Số khung hình/giây)"
+msgstr "FPS (Số khung hình mỗi giây)"
 
 #: app/forms.py:56
 msgid "Auto"
@@ -84,11 +84,11 @@ msgstr "Tự động"
 
 #: app/forms.py:59
 msgid "Author (Optional)"
-msgstr "Tác giả (Không bắt buộc)"
+msgstr "Tác giả (Tùy chỉnh)"
 
 #: app/forms.py:60
 msgid "Version/Sync Info (Optional)"
-msgstr "Thông tin phiên bản/đồng bộ (Không bắt buộc)"
+msgstr "Phiên bản/Thông tin đồng bộ  (Tùy chỉnh)"
 
 #: app/forms.py:63
 msgid "Content ID"
@@ -96,7 +96,7 @@ msgstr "Content ID"
 
 #: app/forms.py:65
 msgid "IMDB ID (e.g., tt1234567) or Kitsu ID (e.g., kitsu:12345)"
-msgstr "IMDB ID (VD: tt1234567) hoặc Kitsu ID (VD: kitsu:12345)"
+msgstr "IMDB ID (vd: tt1234567) hoặc Kitsu ID (vd: kitsu:12345)"
 
 #: app/forms.py:66
 msgid "Content Type"
@@ -105,7 +105,7 @@ msgstr "Loại nội dung"
 #: app/forms.py:67 templates/main/content_detail.html:30
 #: templates/main/dashboard.html:63 templates/main/upload_subtitle.html:116
 msgid "Movie"
-msgstr "Phim lẻ"
+msgstr "Phim"
 
 #: app/forms.py:67
 msgid "TV Series"
@@ -113,19 +113,19 @@ msgstr "Phim bộ"
 
 #: app/forms.py:69
 msgid "Season Number"
-msgstr "Số mùa"
+msgstr "Số mùa"
 
 #: app/forms.py:71
 msgid "Required for TV series (default: 1)"
-msgstr "Bắt buộc đối với Phim bộ (mặc định: 1)"
+msgstr "Dùng cho Phim bộ (Mặc định: 1)"
 
 #: app/forms.py:72
 msgid "Episode Number"
-msgstr "Số tập"
+msgstr "Số tập"
 
 #: app/forms.py:74
 msgid "Required for TV series"
-msgstr "Bắt buộc đối với Phim bộ"
+msgstr "Dùng cho Phim bộ"
 
 #: app/forms.py:76 templates/main/upload_subtitle.html:4
 #: templates/main/upload_subtitle.html:11
@@ -156,7 +156,7 @@ msgstr "Xác nhận mật khẩu mới"
 #: app/forms.py:129 templates/auth/change_password.html:11
 #: templates/main/account_settings.html:130
 msgid "Change Password"
-msgstr "Đổi mật khẩu"
+msgstr "Thay đổi mật khẩu"
 
 #: app/forms.py:134
 msgid "Request Password Reset"
@@ -177,11 +177,11 @@ msgstr "Sử dụng tính năng tích hợp OpenSubtitles"
 
 #: app/forms.py:151 templates/providers/opensubtitles_form.html:3
 msgid "OpenSubtitles Username"
-msgstr "Tên đăng nhập OpenSubtitles"
+msgstr "Tên người dùng OpenSubtitles"
 
 #: app/forms.py:153
 msgid "Your OpenSubtitles.com Username"
-msgstr "Tên đăng nhập OpenSubtitles.com của bạn"
+msgstr "Tên người dùng OpenSubtitles.com của bạn"
 
 #: app/forms.py:157 templates/providers/opensubtitles_form.html:12
 msgid "OpenSubtitles Password"
@@ -193,7 +193,7 @@ msgstr "Mật khẩu OpenSubtitles.com của bạn"
 
 #: app/forms.py:162
 msgid "Save OpenSubtitles Settings"
-msgstr "Lưu cài đặt OpenSubtitles"
+msgstr "Lưu cài đặt OpenSubtitles "
 
 #: app/routes/auth.py:33
 msgid "Invalid email or password"
@@ -201,19 +201,19 @@ msgstr "Email hoặc mật khẩu không hợp lệ"
 
 #: app/routes/auth.py:37
 msgid "Please confirm your email address before logging in."
-msgstr "Vui lòng xác nhận địa chỉ Email của bạn trước khi đăng nhập."
+msgstr "Vui lòng xác nhận email của bạn trước khi đăng nhập"
 
 #: app/routes/auth.py:152
 msgid "A confirmation email has been sent."
-msgstr "Một Email xác nhận đã được gửi."
+msgstr "Đã gửi email xác nhận."
 
 #: app/routes/auth.py:155
 msgid "Registration successful, but failed to send confirmation email. Please contact support."
-msgstr "Đăng ký thành công nhưng không gửi được Email xác nhận. Vui lòng liên hệ bộ phận hỗ trợ."
+msgstr "Đăng ký thành công nhưng không thể gửi email xác nhận. Vui lòng liên hệ hỗ trợ."
 
 #: app/routes/auth.py:157
 msgid "Registration successful! You can now log in."
-msgstr "Đăng ký thành công! Bây giờ bạn có thể đăng nhập."
+msgstr "Đăng ký thành công! Đăng ký thành công! Bạn có thể đăng nhập ngay."
 
 #: app/routes/auth.py:164
 msgid "An error occurred during registration."
@@ -233,15 +233,15 @@ msgstr "Mật khẩu của bạn đã được cập nhật"
 
 #: app/routes/auth.py:211
 msgid "Check your email for instructions"
-msgstr "Kiểm tra Email của bạn để được hướng dẫn"
+msgstr "Kiểm tra email của bạn để xem hướng dẫn"
 
 #: app/routes/auth.py:214
 msgid "Failed to send reset email. Please try again later."
-msgstr "Không thể gửi Email đặt lại mật khẩu. Vui lòng thử lại sau."
+msgstr "Không thể gửi email đặt lại mật khẩu. Vui lòng thử lại sau."
 
 #: app/routes/auth.py:216
 msgid "If that email is in our database, we sent a reset link"
-msgstr "Nếu Email đó tồn tại trong hệ thống, chúng tôi đã gửi một liên kết đặt lại mật khẩu"
+msgstr "Nếu địa chỉ email đó có trong cơ sở dữ liệu của chúng tôi, chúng tôi sẽ gửi cho bạn một liên kết đặt lại mật khẩu"
 
 #: app/routes/auth.py:237
 msgid "Email is required."
@@ -249,15 +249,15 @@ msgstr "Email là bắt buộc."
 
 #: app/routes/auth.py:247
 msgid "A new confirmation email has been sent."
-msgstr "Một Email xác nhận mới đã được gửi."
+msgstr "Một email xác nhận mới đã được gửi."
 
 #: app/routes/auth.py:250
 msgid "Failed to send confirmation email. Please try again later."
-msgstr "Không thể gửi Email xác nhận. Vui lòng thử lại sau."
+msgstr "Không thể gửi email xác nhận. Vui lòng thử lại sau."
 
 #: app/routes/auth.py:252
 msgid "If that email is in our database and not confirmed, we sent a link."
-msgstr "Nếu Email đó có trong hệ thống và chưa được xác nhận, chúng tôi đã gửi một liên kết."
+msgstr "Nếu địa chỉ email đó có trong cơ sở dữ liệu của chúng tôi và chưa được xác nhận, chúng tôi sẽ gửi đường dẫn."
 
 #: app/routes/auth.py:264
 msgid "The confirmation link is invalid or has expired."
@@ -269,23 +269,23 @@ msgstr "Không tìm thấy người dùng."
 
 #: app/routes/auth.py:274
 msgid "Your email has already been confirmed."
-msgstr "Email của bạn đã được xác nhận trước đó."
+msgstr "Email của bạn đã được xác nhận."
 
 #: app/routes/auth.py:282
 msgid "Your email has been confirmed. You can now log in."
-msgstr "Email của bạn đã được xác nhận. Bây giờ bạn có thể đăng nhập."
+msgstr "Email của bạn đã được xác nhận. Bạn có thể đăng nhập ngay bây giờ."
 
 #: app/routes/auth.py:293
 msgid "The reset link is invalid or has expired."
-msgstr "Liên kết đặt lại mật khẩu không hợp lệ hoặc đã hết hạn."
+msgstr "Liên kết đặt lại không hợp lệ hoặc đã hết hạn."
 
 #: app/routes/auth.py:306
 msgid "Your password has been reset."
-msgstr "Mật khẩu của bạn đã được đặt lại thành công."
+msgstr "Mật khẩu của bạn đã được đặt lại."
 
 #: app/routes/content.py:205
 msgid "An error occurred while searching for subtitles."
-msgstr "Đã xảy ra lỗi khi tìm kiếm phụ đề."
+msgstr "Đã xảy ra lỗi trong quá trình tìm kiếm phụ đề."
 
 #: app/routes/main.py:23 app/routes/main.py:90
 msgid "Please log in to access this page."
@@ -293,31 +293,31 @@ msgstr "Vui lòng đăng nhập để truy cập trang này."
 
 #: app/routes/main.py:170
 msgid "Preferred languages updated successfully!"
-msgstr "Đã cập nhật ngôn ngữ ưu tiên thành công!"
+msgstr "Ngôn ngữ ưu tiên đã được cập nhật thành công!"
 
 #: app/routes/main.py:175
 msgid "Failed to update language."
-msgstr "Cập nhật ngôn ngữ thất bại."
+msgstr "Không thể cập nhật ngôn ngữ."
 
 #: app/routes/main.py:207
 msgid "Activity record not found."
-msgstr "Không tìm thấy hồ sơ hoạt động."
+msgstr "Không tìm thấy bản ghi hoạt động."
 
 #: app/routes/main.py:217
 msgid "You do not have permission to delete this activity record."
-msgstr "Bạn không có quyền xóa hồ sơ hoạt động này."
+msgstr "Bạn không có quyền xóa bản ghi hoạt động này."
 
 #: app/routes/main.py:223
 msgid "Activity record deleted successfully."
-msgstr "Đã xóa hồ sơ hoạt động thành công."
+msgstr "Bản ghi hoạt động đã được xóa thành công."
 
 #: app/routes/main.py:227
 msgid "Error deleting activity record. Please try again."
-msgstr "Lỗi khi xóa hồ sơ hoạt động. Vui lòng thử lại."
+msgstr "Không thể xóa bản ghi hoạt động. Vui lòng thử lại."
 
 #: app/routes/main.py:245
 msgid "Username confirmation does not match. Account not deleted."
-msgstr "Xác nhận tên đăng nhập không khớp. Tài khoản chưa được xóa."
+msgstr "Xác nhận tên người dùng không khớp. Tài khoản không bị xóa."
 
 #: app/routes/main.py:266
 msgid "Your account has been permanently deleted."
@@ -325,7 +325,7 @@ msgstr "Tài khoản của bạn đã bị xóa vĩnh viễn."
 
 #: app/routes/main.py:272
 msgid "Error deleting account. Please try again or contact support."
-msgstr "Lỗi khi xóa tài khoản. Vui lòng thử lại hoặc liên hệ bộ phận hỗ trợ."
+msgstr "Không thể xóa tài khoản. Vui lòng thử lại hoặc liên hệ hỗ trợ."
 
 #: app/routes/providers.py:22 app/routes/providers.py:75
 #, python-format
@@ -335,7 +335,7 @@ msgstr "Không tìm thấy nhà cung cấp %(name)s"
 #: app/routes/providers.py:49
 #, python-format
 msgid "%(name)s settings updated!"
-msgstr "Đã cập nhật cài đặt %(name)s!"
+msgstr "Cài đặt  %(name)s đã được cập nhật!"
 
 #: app/routes/providers.py:60
 #, python-format
@@ -345,12 +345,12 @@ msgstr "Đã kết nối thành công với %(name)s!"
 #: app/routes/providers.py:62
 #, python-format
 msgid "Authentication failed: %(error)s"
-msgstr "Xác thực thất bại: %(error)s"
+msgstr "Xác thực không thành công: %(error)s"
 
 #: app/routes/providers.py:64
 #, python-format
 msgid "Error connecting to %(name)s: %(error)s"
-msgstr "Lỗi khi kết nối với %(name)s: %(error)s"
+msgstr "Lỗi kết nối với %(name)s: %(error)s"
 
 #: app/routes/providers.py:91
 #, python-format
@@ -360,11 +360,11 @@ msgstr "Đã ngắt kết nối khỏi %(name)s"
 #: app/routes/providers.py:93
 #, python-format
 msgid "Error disconnecting: %(error)s"
-msgstr "Lỗi khi ngắt kết nối: %(error)s"
+msgstr "Lỗi ngắt kết nối: %(error)s"
 
 #: app/routes/providers.py:119 app/routes/providers.py:202
 msgid "Missing required parameters"
-msgstr "Thiếu các tham số bắt buộc"
+msgstr "Thiếu tham số bắt buộc"
 
 #: app/routes/providers.py:164
 msgid "Subtitle selected successfully!"
@@ -377,23 +377,23 @@ msgstr "Lỗi khi chọn phụ đề: %(error)s"
 
 #: app/routes/providers.py:189
 msgid "Cannot link subtitle: video has no hash"
-msgstr "Không thể liên kết phụ đề: video không có mã Hash"
+msgstr "Không thể liên kết phụ đề: video không có mã hash"
 
 #: app/routes/providers.py:225
 msgid "This subtitle is already linked to this video version"
-msgstr "Phụ đề này đã được liên kết với phiên bản video này"
+msgstr "Phụ đề này đã được liên kết với phiên bản video này."
 
 #: app/routes/providers.py:312
 msgid "Subtitle successfully linked to this video version!"
-msgstr "Đã liên kết thành công phụ đề với phiên bản video này!"
+msgstr "Phụ đề đã được liên kết thành công với phiên bản video này!"
 
 #: app/routes/providers.py:316
 msgid "Error linking subtitle"
-msgstr "Lỗi khi liên kết phụ đề"
+msgstr "Lỗi liên kết phụ đề"
 
 #: app/routes/subtitles.py:734
 msgid "Content ID must be either IMDB ID (starting with \"tt\") or Kitsu ID (format \"kitsu:12345\") or MAL ID (format \"mal:12345\")"
-msgstr "Content ID phải là IMDB ID (bắt đầu bằng \"tt\") hoặc Kitsu ID (định dạng \"kitsu:12345\") hoặc MAL ID (định dạng \"mal:12345\")"
+msgstr "Content ID phải là IMDB ID (bắt đầu bằng \"tt\") hoặc Kitsu ID (định dạng \"kitsu:12345\") hoặc MAL ID (định dạng \"mal:12345\")."
 
 #: app/routes/subtitles.py:744
 msgid "Episode number is required for series"
@@ -401,16 +401,16 @@ msgstr "Phim bộ bắt buộc phải có Số tập"
 
 #: app/routes/subtitles.py:835
 msgid "These subtitles already exist for this content and video version."
-msgstr "Phụ đề này đã tồn tại cho nội dung và phiên bản video này."
+msgstr "Phụ đề cho nội dung và phiên bản video này đã có sẵn."
 
 #: app/routes/subtitles.py:866
 msgid "Server error: Cloudinary storage is not properly configured."
-msgstr "Lỗi máy chủ: Bộ lưu trữ Cloudinary chưa được cấu hình đúng."
+msgstr "Lỗi máy chủ: Cấu hình lưu trữ Cloudinary chưa chính xác."
 
 #: app/routes/subtitles.py:892
 #, python-format
 msgid "Error processing/uploading subtitle: %(error)s"
-msgstr "Lỗi khi xử lý/tải lên phụ đề: %(error)s"
+msgstr "Lỗi khi xử lý/tải phụ đề: %(error)s"
 
 #: app/routes/subtitles.py:901
 msgid "Internal error: Subtitle path not determined."
@@ -418,19 +418,19 @@ msgstr "Lỗi nội bộ: Không xác định được đường dẫn phụ đ�
 
 #: app/routes/subtitles.py:959
 msgid "Subtitle uploaded and selected successfully!"
-msgstr "Đã tải lên và chọn phụ đề thành công!"
+msgstr "Phụ đề đã được tải lên và chọn thành công!"
 
 #: app/routes/subtitles.py:963
 msgid "Subtitle uploaded, but failed to auto-select."
-msgstr "Đã tải lên phụ đề, nhưng tự động chọn thất bại."
+msgstr "Phụ đề đã được tải lên nhưng không tự động chọn được."
 
 #: app/routes/subtitles.py:975
 msgid "Error uploading subtitle. Please try again."
-msgstr "Lỗi khi tải lên phụ đề. Vui lòng thử lại."
+msgstr "Lỗi khi tải phụ đề lên. Vui lòng thử lại."
 
 #: app/routes/subtitles.py:1028
 msgid "Subtitle selection updated."
-msgstr "Đã cập nhật lựa chọn phụ đề."
+msgstr "Đã cập nhật tùy chọn phụ đề."
 
 #: app/routes/subtitles.py:1032
 msgid "Error updating subtitle selection."
@@ -438,7 +438,7 @@ msgstr "Lỗi khi cập nhật lựa chọn phụ đề."
 
 #: app/routes/subtitles.py:1054
 msgid "Voting is not available for this type of subtitle."
-msgstr "Tính năng bình chọn không khả dụng cho loại phụ đề này."
+msgstr "Chức năng bình chọn không khả dụng cho loại phụ đề này."
 
 #: app/routes/subtitles.py:1069
 msgid "Vote removed."
