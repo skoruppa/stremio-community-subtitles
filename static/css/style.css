@@ -202,4 +202,13 @@ body {
     #langDropdownMobile::after {
         display: none;
     }
+    
+    .navbar .container {
+        flex-wrap: wrap;
+        justify-content: space-between;
+    }
+    
+    .navbar .d-flex.align-items-center {
+        margin-left: auto;
+    }
 }

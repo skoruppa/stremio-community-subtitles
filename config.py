@@ -113,7 +113,7 @@ class Config:
     # Babel i18n
     BABEL_DEFAULT_LOCALE = 'en'
     BABEL_TRANSLATION_DIRECTORIES = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'translations')
-    LANGUAGES = ['en', 'pl', 'es', 'fr', 'de', 'it', 'pt', 'pt_BR', 'ru', 'ja', 'zh', 'tr']
+    LANGUAGES = ['en', 'pl', 'es', 'fr', 'de', 'it', 'pt', 'pt_BR', 'ru', 'ja', 'zh', 'tr', 'ar', 'he', 'vi']
     
     # Gevent support (disabled in development for debugger compatibility)
     USE_GEVENT = True

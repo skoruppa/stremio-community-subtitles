@@ -151,7 +151,10 @@ def create_app():
             'ru': {'flag': '🇷🇺', 'name': 'Русский'},
             'ja': {'flag': '🇯🇵', 'name': '日本語'},
             'zh': {'flag': '🇨🇳', 'name': '中文'},
-            'tr': {'flag': '🇹🇷', 'name': 'Türkçe'}
+            'tr': {'flag': '🇹🇷', 'name': 'Türkçe'},
+            'ar': {'flag': '🇸🇦', 'name': 'العربية'},
+            'he': {'flag': '🇮🇱', 'name': 'עברית'},
+            'vi': {'flag': '🇻🇳', 'name': 'Tiếng Việt'}
         }
         # Use same logic as get_locale()
         current_lang = request.cookies.get('lang')

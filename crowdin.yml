@@ -9,3 +9,6 @@ files:
       two_letters_code:
         pt-BR: pt_BR
         zh-CN: zh
+        ar-SA: ar
+        he-IL: he
+        vi-VN: vi
