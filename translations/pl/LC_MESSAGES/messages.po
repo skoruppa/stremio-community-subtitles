@@ -1042,22 +1042,13 @@ msgstr ""
 
 #: templates/main/account_settings.html:51
 #: templates/main/account_settings.html:66
-#, fuzzy
-msgid "Setting updated successfully"
 msgstr "Ustawienie zaktualizowane pomyślnie"
 
 #: templates/main/account_settings.html:52
 #: templates/main/account_settings.html:67
-#, fuzzy
-msgid "Failed to update setting"
-msgstr "Nie udało się zaktualizować języka."
 
 #: templates/main/account_settings.html:53
 #: templates/main/account_settings.html:68
-#, fuzzy
-msgid "Error updating setting"
-msgstr "Błąd podczas usuwania wyboru."
-
 #: templates/main/account_settings.html:60
 msgid "Prioritize .ass subtitles"
 msgstr "Priorytetyzuj napisy .ass"
@@ -1948,3 +1939,15 @@ msgstr ""
 "SubSource oferuje dostęp do API do pobierania napisów. Sprawdź ich "
 "stronę, aby poznać aktualne limity."
 
+
+#: templates/main/account_settings.html:51 templates/main/account_settings.html:66
+msgid "Setting updated successfully"
+msgstr "Ustawienie zaktualizowane pomyślnie"
+
+#: templates/main/account_settings.html:52 templates/main/account_settings.html:67
+msgid "Failed to update setting"
+msgstr "Nie udało się zaktualizować ustawienia"
+
+#: templates/main/account_settings.html:53 templates/main/account_settings.html:68
+msgid "Error updating setting"
+msgstr "Błąd podczas aktualizacji ustawienia"
