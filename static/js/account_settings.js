@@ -37,15 +37,15 @@ document.addEventListener('DOMContentLoaded', function () {
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        showToast('Setting updated successfully', 'success');
+                        showToast(this.getAttribute('data-success-msg') || 'Setting updated successfully', 'success');
                     } else {
-                        showToast('Failed to update setting', 'danger');
+                        showToast(this.getAttribute('data-error-msg') || 'Failed to update setting', 'danger');
                         this.checked = !this.checked;
                     }
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    showToast('Error updating setting', 'danger');
+                    showToast(this.getAttribute('data-error-general') || 'Error updating setting', 'danger');
                     this.checked = !this.checked;
                 });
             });
