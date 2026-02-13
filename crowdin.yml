@@ -7,6 +7,7 @@ files:
     update_option: update_as_unapproved
     languages_mapping:
       two_letters_code:
+        pt-PT: pt
         pt-BR: pt_BR
         zh-CN: zh
         ar-SA: ar
