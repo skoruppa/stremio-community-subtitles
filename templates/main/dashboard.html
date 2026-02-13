@@ -1,13 +1,17 @@
 {% extends "base.html" %}
 
-{% block title %}Dashboard - {{ super() }}{% endblock %}
+{% block title %}{{ _('Dashboard') }} - {{ super() }}{% endblock %}
 
 {% block content %}
 <div class="row mb-4">
     <div class="col">
-        <h1 class="mb-3">Your Dashboard</h1>
+        <h1 class="mb-3">{{ _('Your Dashboard') }}</h1>
         <p class="lead">
-            Welcome back, {{ user.username if user else 'Guest' }}! Here's your recent activity and subtitle history.
+            {% if user %}
+                {{ _('Welcome back, %(username)s! Here\'s your recent activity and subtitle history.', username=user.username) }}
+            {% else %}
+                {{ _('Welcome back, Guest! Here\'s your recent activity and subtitle history.') }}
+            {% endif %}
         </p>
     </div>
 </div>
@@ -16,11 +20,11 @@
     <div class="col-md-8">
         <div class="card shadow-sm">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">Recent Activity</h5>
-                <span class="badge bg-primary">{{ activities|length }} items</span>
+                <h5 class="mb-0">{{ _('Recent Activity') }}</h5>
+                <span class="badge bg-primary">{{ ngettext('%(count)s element', '%(count)s elementy', activities|length, count=activities|length) }}</span>
             </div>
             <div class="card-body p-0">
-                <p class="text-muted small mb-0 p-3 border-bottom">We store only your last {{ max_activities }} activities.</p>
+                <p class="text-muted small mb-0 p-3 border-bottom">{{ _('We store only your last %(max)s activities.', max=max_activities) }}</p>
                 {% if activities %}
                 <div class="list-group list-group-flush">
                     {% for activity in activities %}
@@ -56,16 +60,16 @@
                                         <div class="d-flex justify-content-between align-items-center mt-2">
                                             <p class="mb-0 me-2"> <!-- Badges -->
                                                 <span class="badge {% if activity.content_type == 'movie' %}bg-info{% else %}bg-warning{% endif %}">
-                                                    {{ activity.content_type|capitalize }}
+                                                    {% if activity.content_type == 'movie' %}{{ _('Movie') }}{% elif activity.content_type == 'series' %}{{ _('Series') }}{% else %}{{ activity.content_type|capitalize }}{% endif %}
                                                 </span>
                                                 {% if activity.video_hash %}
                                                 <span class="badge bg-secondary">Hash: {{ activity.video_hash }}</span>
                                                 {% endif %}
                                                 <span class="badge bg-dark">ID: {{ activity.content_id }}</span>
                                             </p>
-                                            <form action="{{ url_for('main.delete_activity', activity_id=activity.id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this activity record?');">
+                                            <form action="{{ url_for('main.delete_activity', activity_id=activity.id) }}" method="POST" onsubmit="return confirm('{{ _('Are you sure you want to delete this activity record?') }}');">
                                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete Activity">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger" title="{{ _('Delete Activity') }}">
                                                     <i class="fas fa-trash-alt"></i>
                                                 </button>
                                             </form>
@@ -80,7 +84,7 @@
                 </div>
                 {% else %}
                 <div class="p-4 text-center">
-                    <p class="mb-0">No recent activity found. Start watching content in Stremio with the addon installed!</p>
+                    <p class="mb-0">{{ _('No recent activity found. Start watching content in Stremio with the addon installed!') }}</p>
                 </div>
                 {% endif %}
             </div>
@@ -90,30 +94,30 @@
     <div class="col-md-4">
         <div class="card shadow-sm mb-4">
             <div class="card-header bg-success text-white">
-                <h5 class="mb-0">Addon Installation</h5>
+                <h5 class="mb-0">{{ _('Addon Installation') }}</h5>
             </div>
             <div class="card-body">
-                <p>Install the addon in Stremio to start using community subtitles:</p>
-                <a href="{{ url_for('main.configure') }}" class="btn btn-primary d-block">Install Addon</a>
+                <p>{{ _('Install the addon in Stremio to start using community subtitles:') }}</p>
+                <a href="{{ url_for('main.configure') }}" class="btn btn-primary d-block">{{ _('Install Addon') }}</a>
             </div>
         </div>
         
         <div class="card shadow-sm">
             <div class="card-header bg-info text-white">
-                <h5 class="mb-0">Your Stats</h5>
+                <h5 class="mb-0">{{ _('Your Stats') }}</h5>
             </div>
             <div class="card-body">
                 <div class="d-grid gap-2">
                     <a href="{{ url_for('subtitles.my_subtitles') }}" class="btn btn-outline-primary d-flex justify-content-between align-items-center">
-                        <span>Uploaded Subtitles</span>
+                        <span>{{ _('Uploaded Subtitles') }}</span>
                         <span class="badge bg-primary rounded-pill">{{ user.uploaded_subtitles|length if user else 0 }}</span>
                     </a>
                     <a href="{{ url_for('subtitles.selected_subtitles') }}" class="btn btn-outline-primary d-flex justify-content-between align-items-center">
-                        <span>Selected Subtitles</span>
+                        <span>{{ _('Selected Subtitles') }}</span>
                         <span class="badge bg-primary rounded-pill">{{ user.selections|length if user else 0 }}</span>
                     </a>
                     <a href="{{ url_for('subtitles.voted_subtitles') }}" class="btn btn-outline-primary d-flex justify-content-between align-items-center">
-                        <span>Votes Cast</span>
+                        <span>{{ _('Votes Cast') }}</span>
                         <span class="badge bg-primary rounded-pill">{{ user.votes|length if user else 0 }}</span>
                     </a>
                 </div>

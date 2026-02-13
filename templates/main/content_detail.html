@@ -20,55 +20,55 @@
         
         <div class="card shadow-sm">
             <div class="card-header bg-primary text-white">
-                <h5 class="mb-0">Content Information</h5>
+                <h5 class="mb-0">{{ _('Content Information') }}</h5>
             </div>
             <div class="card-body">
                 <ul class="list-group list-group-flush">
                     <li class="list-group-item">
-                        <strong>Type:</strong> 
+                        <strong>{{ _('Type:') }}</strong> 
                         <span class="badge {% if activity.content_type == 'movie' %}bg-info{% else %}bg-warning{% endif %}">
-                            {{ activity.content_type|capitalize }}
+                            {% if activity.content_type == 'movie' %}{{ _('Movie') }}{% elif activity.content_type == 'series' %}{{ _('Series') }}{% else %}{{ activity.content_type|capitalize }}{% endif %}
                         </span>
                     </li>
                     <li class="list-group-item">
-                        <strong>ID:</strong> {{ activity.content_id }}
+                        <strong>{{ _('ID:') }}</strong> {{ activity.content_id }}
                     </li>
                     {% if activity.video_hash %}
                     <li class="list-group-item">
-                        <strong>Video Hash:</strong> 
+                        <strong>{{ _('Video Hash:') }}</strong> 
                         <span class="text-monospace">{{ activity.video_hash }}</span>
                     </li>
                     {% endif %}
                     {% if activity.video_filename %}
                     <li class="list-group-item">
-                        <strong>Filename:</strong> 
+                        <strong>{{ _('Filename:') }}</strong> 
                         <span class="text-break">{{ activity.video_filename }}</span>
                     </li>
                     {% endif %}
                     {% if season is not none %}
                     <li class="list-group-item">
-                        <strong>Season:</strong> {{ season }}
+                        <strong>{{ _('Season:') }}</strong> {{ season }}
                     </li>
                     {% endif %}
                     {% if episode is not none %}
                     <li class="list-group-item">
-                        <strong>Episode:</strong> {{ episode }}
+                        <strong>{{ _('Episode:') }}</strong> {{ episode }}
                     </li>
                     {% endif %}
                     {% if metadata %}
                     {% if metadata.year %}
                     <li class="list-group-item">
-                        <strong>Year:</strong> {{ metadata.year }}
+                        <strong>{{ _('Year:') }}</strong> {{ metadata.year }}
                     </li>
                     {% endif %}
                     {% if metadata.runtime %}
                     <li class="list-group-item">
-                        <strong>Runtime:</strong> {{ metadata.runtime }} min
+                        <strong>{{ _('Runtime:') }}</strong> {{ metadata.runtime }} min
                     </li>
                     {% endif %}
                     {% if metadata.genres %}
                     <li class="list-group-item">
-                        <strong>Genres:</strong> 
+                        <strong>{{ _('Genres:') }}</strong> 
                         {% for genre in metadata.genres %}
                         <span class="badge bg-secondary">{{ genre }}</span>
                         {% endfor %}
@@ -93,7 +93,7 @@
             </div>
             {% if metadata and metadata.overview %}
             <div class="card-body">
-                <h5>Overview</h5>
+                <h5>{{ _('Overview') }}</h5>
                 <p>{{ metadata.overview }}</p>
             </div>
             {% endif %}
@@ -102,19 +102,17 @@
         {# Community Subtitles Section #}
         <div class="card shadow-sm mb-4">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">Community Subtitles</h5>
+                <h5 class="mb-0">{{ _('Community Subtitles') }}</h5>
                 <div class="text-end d-flex gap-2 justify-content-end">
                     {% if has_any_user_selection %}
                         <form method="POST" action="{{ url_for('subtitles.reset_selection', activity_id=activity.id) }}" class="d-inline-block">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure you want to reset ALL your subtitle selections for this content?')">
-                                <i class="fas fa-times me-1"></i>Reset All Selections
-                            </button>
+                                <i class="fas fa-times me-1"></i>{{ _('Reset All Selections') }}</button>
                         </form>
                     {% endif %}
                     <a href="{{ url_for('subtitles.upload_subtitle', activity_id=activity.id) }}" class="btn btn-sm btn-success d-inline-block">
-                        <i class="fas fa-upload me-1"></i>Upload New
-                    </a>
+                        <i class="fas fa-upload me-1"></i>{{ _('Upload New') }}</a>
                 </div>
             </div>
             <div class="card-body p-0">
@@ -129,20 +127,20 @@
 
                     <div class="list-group list-group-flush">
                         <h6 class="list-group-item bg-light d-flex justify-content-between align-items-center">
-                            <span>Currently Selected ({{ LANGUAGE_DICT.get(lang_code, lang_code) }})</span>
+                            <span>{{ _('Currently Selected') }} ({{ LANGUAGE_DICT.get(lang_code, lang_code) }})</span>
                             <div class="text-nowrap">
                                 {% if active_subtitle %}
                                     {% if auto_selected %}
-                                    <span class="badge bg-info ms-1">Auto Selected</span>
+                                    <span class="badge bg-info ms-1">{{ _('Auto Selected') }}</span>
                                     {% else %}
-                                    <span class="badge bg-success ms-1">User Selected</span>
+                                    <span class="badge bg-success ms-1">{{ _('User Selected') }}</span>
                                     {% endif %}
                                 {% elif active_provider_details %}
-                                    <span class="badge bg-warning ms-1">Provider</span>
+                                    <span class="badge bg-warning ms-1">{{ _('Provider') }}</span>
                                     {% if auto_selected %}
-                                    <span class="badge bg-info ms-1">Auto Selected</span>
+                                    <span class="badge bg-info ms-1">{{ _('Auto Selected') }}</span>
                                     {% else %}
-                                    <span class="badge bg-success ms-1">User Selected</span>
+                                    <span class="badge bg-success ms-1">{{ _('User Selected') }}</span>
                                     {% endif %}
                                 {% endif %}
                             </div>
@@ -169,7 +167,7 @@
                             </div>
                         {% else %}
                             <div class="p-3 text-muted">
-                                <small>No subtitle selected for this language.</small>
+                                <small>{{ _('No subtitle selected for this language.') }}</small>
                             </div>
                         {% endif %}
                     </div>
@@ -217,10 +215,9 @@
                 
                 {% if not active_details_by_lang and not all_subs_matching_hash and not all_subs_no_hash and not all_subs_other_hash and not provider_results_by_lang %}
                 <div class="p-4 text-center">
-                    <p class="mb-3">No community subtitles available for this content yet.</p>
+                    <p class="mb-3">{{ _('No community subtitles available for this content yet.') }}</p>
                     <a href="{{ url_for('subtitles.upload_subtitle', activity_id=activity.id) }}" class="btn btn-primary">
-                        <i class="fas fa-upload me-1"></i>Be the first to upload subtitles
-                    </a>
+                        <i class="fas fa-upload me-1"></i>{{ _('Be the first to upload subtitles') }}</a>
                 </div>
                 {% endif %}
             </div>
@@ -229,7 +226,7 @@
         {# Provider Results Section - Displayed once for all languages #}
         <div class="card shadow-sm mb-4">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">Provider Results</h5>
+                <h5 class="mb-0">{{ _('Provider Results') }}</h5>
             </div>
             <div class="card-body p-0">
                 <div class="list-group list-group-flush">
@@ -264,8 +261,7 @@
                 </div>
                 {% if not has_provider_results %}
                     <div class="p-3 text-center text-muted">
-                        <p class="mb-0">No subtitles found from providers for your criteria and preferred languages.</p>
-                        <p class="mb-0"><a href="{{ url_for('main.account_settings') }}">Configure providers in your account settings</a> to see results here.</p>
+                        <p class="mb-0">{{ _('No subtitles found from providers for your criteria and preferred languages.') }} <a href="{{ url_for('main.account_settings') }}">{{ _('Configure providers in your account settings') }}</a> {{ _('to see results here.') }}</p>
                     </div>
                 {% endif %}
             </div>

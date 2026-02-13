@@ -110,6 +110,11 @@ class Config:
 
     MAX_USER_ACTIVITIES = int(os.environ.get('MAX_USER_ACTIVITIES') or '15')
     
+    # Babel i18n
+    BABEL_DEFAULT_LOCALE = 'en'
+    BABEL_TRANSLATION_DIRECTORIES = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'translations')
+    LANGUAGES = ['en', 'pl', 'es', 'fr', 'de', 'it', 'pt', 'pt_BR', 'ru', 'ja', 'zh', 'tr']
+    
     # Gevent support (disabled in development for debugger compatibility)
     USE_GEVENT = True
     

@@ -1,3 +1,4 @@
+from quart_babel import gettext as _
 from quart import jsonify, Response, current_app
 from rapidfuzz import fuzz
 from sqlalchemy import select
@@ -824,12 +825,13 @@ async def process_subtitle_content(content: bytes, extension: str, encoding=None
 async def check_opensubtitles_token(user):
     """Check if OpenSubtitles token is valid, flash warning if expired."""
     from quart import flash
+    from quart_babel import gettext as _
     try:
         from ..providers.registry import ProviderRegistry
         provider = ProviderRegistry.get('opensubtitles')
         if provider and await provider.is_authenticated(user):
             is_valid = await provider.check_token_validity(user)
             if not is_valid:
-                await flash('OpenSubtitles authentication expired. Please log in again in account settings.', 'warning')
+                await flash(_('OpenSubtitles authentication expired. Please log in again in account settings.'), 'warning')
     except Exception as e:
         current_app.logger.debug(f"OpenSubtitles token check error: {e}")

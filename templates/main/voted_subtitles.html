@@ -1,14 +1,14 @@
 {% extends "base.html" %}
 {% from "_pagination.html" import render_pagination %}
 
-{% block title %}Voted Subtitles - {{ super() }}{% endblock %}
+{% block title %}{{ _('Voted Subtitles') }} - {{ super() }}{% endblock %}
 
 {% block content %}
 <div class="row mb-4">
     <div class="col">
-        <h1 class="mb-3">Voted Subtitles</h1>
+        <h1 class="mb-3">{{ _('Voted Subtitles') }}</h1>
         <p class="lead">
-            View and manage all your subtitle votes.
+            {{ _('View and manage all your subtitle votes.') }}
         </p>
     </div>
 </div>
@@ -18,7 +18,7 @@
     <div class="col">
         <div class="card shadow-sm mb-4">
             <div class="card-header">
-                <h5 class="mb-0">My Voted Subtitles</h5>
+                <h5 class="mb-0">{{ _('My Voted Subtitles') }}</h5>
             </div>
             <div class="card-body p-0">
         <div class="list-group list-group-flush">
@@ -51,11 +51,11 @@
                         {% endif %}
                         
                         <small class="text-muted">
-                            Uploader: {{ vote.subtitle.uploader.username if vote.subtitle.uploader else 'N/A' }}
+                            {{ _('Uploader:') }} {{ vote.subtitle.uploader.username if vote.subtitle.uploader else 'N/A' }}
                             {% if vote.subtitle.author and vote.subtitle.author != (vote.subtitle.uploader.username if vote.subtitle.uploader else None) %}
-                                | Author: {{ vote.subtitle.author }}
+                                | {{ _('Author:') }} {{ vote.subtitle.author }}
                             {% endif %}
-                            | Total Votes: <span class="fw-bold">{{ vote.subtitle.votes }}</span>
+                            | {{ _('Total Votes:') }} <span class="fw-bold">{{ vote.subtitle.votes }}</span>
                         </small>
                         
                         <div class="mt-1">
@@ -70,16 +70,16 @@
                                 <span class="badge bg-info">{{ vote.subtitle.source_type | capitalize }}</span>
                             {% endif %}
                             <span class="badge {% if vote.vote_value == 1 %}bg-success{% else %}bg-danger{% endif %}">
-                                Your Vote: {% if vote.vote_value == 1 %}Upvote{% else %}Downvote{% endif %}
+                                {{ _('Your Vote:') }} {% if vote.vote_value == 1 %}{{ _('Upvote') }}{% else %}{{ _('Downvote') }}{% endif %}
                             </span>
                         </div>
-                        <small class="text-muted d-block mt-1">Voted: {{ vote.timestamp.strftime('%Y-%m-%d %H:%M') }}</small>
+                        <small class="text-muted d-block mt-1">{{ _('Voted:') }} {{ vote.timestamp.strftime('%Y-%m-%d %H:%M') }}</small>
                     </div>
                     <div class="ms-2 d-flex flex-column flex-sm-row gap-1 text-nowrap">
-                        <button type="button" class="btn btn-sm vote-btn {% if vote.vote_value == 1 %}btn-success{% else %}btn-outline-success{% endif %}" data-vote-type="up" title="Upvote">
+                        <button type="button" class="btn btn-sm vote-btn {% if vote.vote_value == 1 %}btn-success{% else %}btn-outline-success{% endif %}" data-vote-type="up" title="{{ _('Upvote') }}">
                             <i class="fas fa-thumbs-up"></i>
                         </button>
-                        <button type="button" class="btn btn-sm vote-btn {% if vote.vote_value == -1 %}btn-danger{% else %}btn-outline-danger{% endif %}" data-vote-type="down" title="Downvote">
+                        <button type="button" class="btn btn-sm vote-btn {% if vote.vote_value == -1 %}btn-danger{% else %}btn-outline-danger{% endif %}" data-vote-type="down" title="{{ _('Downvote') }}">
                             <i class="fas fa-thumbs-down"></i>
                         </button>
                     </div>
@@ -97,12 +97,12 @@
     <div class="col">
         <div class="card shadow-sm mb-4">
             <div class="card-header">
-                <h5 class="mb-0">My Voted Subtitles</h5>
+                <h5 class="mb-0">{{ _('My Voted Subtitles') }}</h5>
             </div>
             <div class="card-body text-center py-5">
         <i class="fas fa-vote-yea fa-3x text-muted mb-3"></i>
-        <h4>No Votes Yet</h4>
-            <p class="text-muted">You haven't voted on any subtitles yet.</p>
+        <h4>{{ _('No Votes Yet') }}</h4>
+            <p class="text-muted">{{ _("You haven't voted on any subtitles yet.") }}</p>
         </div>
     </div>
 </div>

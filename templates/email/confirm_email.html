@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Confirm Your Email</title>
+    <title>{{ _('Confirm Your Email') }}</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -44,27 +44,27 @@
 </head>
 <body>
     <div class="header">
-        <h1>Stremio Community Subs</h1>
+        <h1>Stremio Community Subtitles</h1>
     </div>
     <div class="content">
-        <h2>Hello {{ user.username }},</h2>
-        <p>Thank you for registering with Stremio Community Subs! Please confirm your email address by clicking the button below:</p>
+        <h2>{{ _('Hello %(username)s,', username=user.username) }}</h2>
+        <p>{{ _('Thank you for registering with Stremio Community Subtitles! Please confirm your email address by clicking the button below:') }}</p>
         
         <p style="text-align: center;">
-            <a href="{{ url_for('auth.confirm_email', token=token, _external=True) }}" class="button">Confirm Email</a>
+            <a href="{{ url_for('auth.confirm_email', token=token, _external=True) }}" class="button">{{ _('Confirm Email') }}</a>
         </p>
         
-        <p>If the button doesn't work, you can also copy and paste the following link into your browser:</p>
+        <p>{{ _("If the button doesn't work, you can also copy and paste the following link into your browser:") }}</p>
         <p>{{ url_for('auth.confirm_email', token=token, _external=True) }}</p>
         
-        <p>This link will expire in 24 hours.</p>
+        <p>{{ _('This link will expire in 24 hours.') }}</p>
         
-        <p>If you did not register for Stremio Community Subs, please ignore this email.</p>
+        <p>{{ _('If you did not register for Stremio Community Subtitles, please ignore this email.') }}</p>
         
-        <p>Best regards,<br>The Stremio Community Subs Team</p>
+        <p>{{ _('Best regards,') }}<br>{{ _('The Stremio Community Subtitles Team') }}</p>
     </div>
     <div class="footer">
-        <p>This is an automated message, please do not reply to this email.</p>
+        <p>{{ _('This is an automated message, please do not reply to this email.') }}</p>
     </div>
 </body>
 </html>

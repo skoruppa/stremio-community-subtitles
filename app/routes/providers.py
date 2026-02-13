@@ -1,4 +1,5 @@
 """Provider management routes"""
+from quart_babel import gettext as _
 from quart import Blueprint, request, flash, redirect, url_for, render_template, current_app
 from quart_auth import login_required, current_user
 from sqlalchemy import select, func, delete as sql_delete
@@ -18,7 +19,7 @@ async def connect_provider(provider_name):
     """Connect to a provider or update settings"""
     provider = ProviderRegistry.get(provider_name)
     if not provider:
-        await flash(f'Provider {provider_name} not found', 'danger')
+        await flash(_('Provider %(name)s not found', name=provider_name), 'danger')
         return redirect(url_for('main.account_settings'))
     
     user_id = (current_user.auth_id)
@@ -45,7 +46,7 @@ async def connect_provider(provider_name):
                 user.provider_credentials[provider_name]['try_provide_ass'] = try_provide_ass
                 flag_modified(user, 'provider_credentials')
                 await session.commit()
-                await flash(f'{provider.display_name} settings updated!', 'success')
+                await flash(_('%(name)s settings updated!', name=provider.display_name), 'success')
             else:
                 # Full authentication
                 auth_result = await provider.authenticate(user, credentials)
@@ -56,11 +57,11 @@ async def connect_provider(provider_name):
                 await provider.save_credentials(user, auth_result)
                 await session.commit()
                 
-                await flash(f'Successfully connected to {provider.display_name}!', 'success')
+                await flash(_('Successfully connected to %(name)s!', name=provider.display_name), 'success')
     except ProviderAuthError as e:
-        await flash(f'Authentication failed: {str(e)}', 'danger')
+        await flash(_('Authentication failed: %(error)s', error=str(e)), 'danger')
     except Exception as e:
-        await flash(f'Error connecting to {provider.display_name}: {str(e)}', 'danger')
+        await flash(_('Error connecting to %(name)s: %(error)s', name=provider.display_name, error=str(e)), 'danger')
     
     return redirect(url_for('main.account_settings'))
 
@@ -71,7 +72,7 @@ async def disconnect_provider(provider_name):
     """Disconnect from a provider"""
     provider = ProviderRegistry.get(provider_name)
     if not provider:
-        await flash(f'Provider {provider_name} not found', 'danger')
+        await flash(_('Provider %(name)s not found', name=provider_name), 'danger')
         return redirect(url_for('main.account_settings'))
     
     user_id = (current_user.auth_id)
@@ -87,9 +88,9 @@ async def disconnect_provider(provider_name):
                 user.provider_credentials.pop(provider_name, None)
                 await session.commit()
             
-            await flash(f'Disconnected from {provider.display_name}', 'success')
+            await flash(_('Disconnected from %(name)s', name=provider.display_name), 'success')
     except Exception as e:
-        await flash(f'Error disconnecting: {str(e)}', 'danger')
+        await flash(_('Error disconnecting: %(error)s', error=str(e)), 'danger')
     
     return redirect(url_for('main.account_settings'))
 
@@ -115,7 +116,7 @@ async def select_provider_subtitle(activity_id):
         language = form_data.get('language')
         
         if not all([provider_name, subtitle_id, language]):
-            await flash('Missing required parameters', 'danger')
+            await flash(_('Missing required parameters'), 'danger')
             return redirect(url_for('content.content_detail', activity_id=activity_id))
         
         try:
@@ -160,10 +161,10 @@ async def select_provider_subtitle(activity_id):
             }
             
             await session.commit()
-            await flash('Subtitle selected successfully!', 'success')
+            await flash(_('Subtitle selected successfully!'), 'success')
         except Exception as e:
             await session.rollback()
-            await flash(f'Error selecting subtitle: {str(e)}', 'danger')
+            await flash(_('Error selecting subtitle: %(error)s', error=str(e)), 'danger')
     
     return redirect(url_for('content.content_detail', activity_id=activity_id))
 
@@ -182,9 +183,10 @@ async def link_provider_subtitle(activity_id):
         if not activity:
             from quart import abort
             abort(404)
+            abort(404)
         
         if not activity.video_hash:
-            await flash('Cannot link subtitle: video has no hash', 'warning')
+            await flash(_('Cannot link subtitle: video has no hash'), 'warning')
             return redirect(url_for('content.content_detail', activity_id=activity_id))
         
         form_data = await request.form
@@ -197,7 +199,7 @@ async def link_provider_subtitle(activity_id):
         url = form_data.get('url')
         
         if not all([provider_name, subtitle_id, language, release_name]):
-            await flash('Missing required parameters', 'danger')
+            await flash(_('Missing required parameters'), 'danger')
             return redirect(url_for('content.content_detail', activity_id=activity_id))
         
         # Check if already linked
@@ -220,7 +222,7 @@ async def link_provider_subtitle(activity_id):
         existing = result.scalar_one_or_none()
         
         if existing:
-            await flash('This subtitle is already linked to this video version', 'info')
+            await flash(_('This subtitle is already linked to this video version'), 'info')
             # Auto-select existing
             result = await session.execute(
                 select(UserSubtitleSelection).filter_by(
@@ -307,10 +309,10 @@ async def link_provider_subtitle(activity_id):
                 session.add(selection)
             
             await session.commit()
-            await flash('Subtitle successfully linked to this video version!', 'success')
+            await flash(_('Subtitle successfully linked to this video version!'), 'success')
         except Exception as e:
             await session.rollback()
             current_app.logger.error(f'Error linking subtitle: {e}', exc_info=True)
-            await flash('Error linking subtitle', 'danger')
+            await flash(_('Error linking subtitle'), 'danger')
     
     return redirect(url_for('content.content_detail', activity_id=activity_id))

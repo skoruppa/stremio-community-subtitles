@@ -15,6 +15,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY . .
 
+# Compile translations
+RUN pybabel compile -d translations
+
 # Create directories for data
 RUN mkdir -p /app/data /app/logs /app/subtitles
 

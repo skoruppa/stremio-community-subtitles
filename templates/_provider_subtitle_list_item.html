@@ -21,30 +21,30 @@
                 <span class="badge bg-{{ provider.badge_color if provider else 'primary' }}">{{ provider_result.provider_name | capitalize }}</span>
             </h6>
             <small class="text-muted">
-                Uploader: {{ provider_result.uploader if provider_result.uploader else 'N/A' }}
+                {{ _('Uploader:') }} {{ provider_result.uploader if provider_result.uploader else 'N/A' }}
                 {% if provider_result.rating is not none %}
-                    | Rating: {{ "%.1f"|format(provider_result.rating) }}/10
+                    | {{ _('Rating:') }} {{ "%.1f"|format(provider_result.rating) }}/10
                 {% endif %}
                 {% if provider_result.download_count %}
-                    | Downloads: {{ provider_result.download_count }}
+                    | {{ _('Downloads:') }} {{ provider_result.download_count }}
                 {% endif %}
             </small>
             <div>
                 {% if provider_result.metadata and provider_result.metadata.get('hash_match') %}
-                    <span class="badge bg-success mt-1">Hash Match</span>
+                    <span class="badge bg-success mt-1">{{ _('Hash Match') }}</span>
                 {% endif %}
                 {% if provider_result.ai_translated %}
-                    <span class="badge bg-warning mt-1">AI Translated</span>
+                    <span class="badge bg-warning mt-1">{{ _('AI Translated') }}</span>
                 {% endif %}
                 {% if provider_result.hearing_impaired %}
-                    <span class="badge bg-info mt-1" title="Hearing Impaired"><i class="fas fa-deaf"></i></span>
+                    <span class="badge bg-info mt-1" title="{{ _('Hearing Impaired') }}"><i class="fas fa-deaf"></i></span>
                 {% endif %}
             </div>
         </div>
         <div class="col-md-4 text-end gap-1 pt-2 pt-md-0">
             {% if is_active_selection %}
                 <button class="btn btn-sm btn-success disabled" disabled>
-                    <i class="fas fa-check-circle"></i> Selected
+                    <i class="fas fa-check-circle"></i> {{ _('Selected') }}
                 </button>
                 {% if activity.video_hash and provider_result.metadata and not provider_result.metadata.get('hash_match') %}
                     <form action="{{ url_for('providers.link_provider_subtitle', activity_id=activity.id) }}" method="POST" class="d-inline ms-2">
@@ -56,8 +56,8 @@
                         <input type="hidden" name="uploader" value="{{ provider_result.uploader if provider_result.uploader else 'N/A' }}">
                         <input type="hidden" name="ai_translated" value="{{ 'true' if provider_result.ai_translated else 'false' }}">
                         <input type="hidden" name="url" value="{{ provider_result.metadata.get('url', '') if provider_result.metadata else '' }}">
-                        <button type="submit" class="btn btn-sm btn-outline-secondary" title="Link this subtitle to the current video version for the community">
-                            <i class="fas fa-link"></i> Link
+                        <button type="submit" class="btn btn-sm btn-outline-secondary" title="{{ _('Link this subtitle to the current video version for the community') }}">
+                            <i class="fas fa-link"></i> {{ _('Link') }}
                         </button>
                     </form>
                 {% endif %}
@@ -72,7 +72,7 @@
                     <input type="hidden" name="ai_translated" value="{{ 'true' if provider_result.ai_translated else 'false' }}">
                     <input type="hidden" name="hash_match" value="{{ 'true' if provider_result.metadata and provider_result.metadata.get('hash_match') else 'false' }}">
                     <button type="submit" class="btn btn-sm btn-outline-primary">
-                        <i class="fas fa-check"></i> Select
+                        <i class="fas fa-check"></i> {{ _('Select') }}
                     </button>
                 </form>
             {% endif %}

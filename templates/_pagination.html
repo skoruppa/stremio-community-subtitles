@@ -3,7 +3,7 @@
 <nav aria-label="Pagination" class="mt-4">
     <ul class="pagination justify-content-center">
         <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
-            <a class="page-link" href="{{ url_for(endpoint, page=pagination.prev_num) if pagination.has_prev else '#' }}">Previous</a>
+            <a class="page-link" href="{{ url_for(endpoint, page=pagination.prev_num) if pagination.has_prev else '#' }}">{{ _('Previous') }}</a>
         </li>
         
         {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
@@ -17,7 +17,7 @@
         {% endfor %}
         
         <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
-            <a class="page-link" href="{{ url_for(endpoint, page=pagination.next_num) if pagination.has_next else '#' }}">Next</a>
+            <a class="page-link" href="{{ url_for(endpoint, page=pagination.next_num) if pagination.has_next else '#' }}">{{ _('Next') }}</a>
         </li>
     </ul>
 </nav>

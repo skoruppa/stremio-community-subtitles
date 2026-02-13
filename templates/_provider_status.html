@@ -13,15 +13,15 @@
                 <small class="text-muted">
                     {% if is_authenticated %}
                         <span class="badge bg-success">
-                            <i class="fas fa-check-circle"></i> Connected
+                            <i class="fas fa-check-circle"></i> {{ _('Connected') }}
                         </span>
                     {% else %}
                         <span class="badge bg-secondary">
-                            <i class="fas fa-times-circle"></i> Not Connected
+                            <i class="fas fa-times-circle"></i> {{ _('Not Connected') }}
                         </span>
                     {% endif %}
                     {% if provider.supports_hash_matching %}
-                        <span class="badge bg-info">Hash Matching</span>
+                        <span class="badge bg-info">{{ _('Hash Matching') }}</span>
                     {% endif %}
                 </small>
             </div>
@@ -31,21 +31,22 @@
                     <button type="button" class="btn btn-sm btn-outline-primary me-1"
                             data-bs-toggle="modal"
                             data-bs-target="#settingsModal{{ provider.name }}">
-                        <i class="fas fa-cog"></i><span class="d-none d-sm-inline"> Settings</span>
+                        <i class="fas fa-cog"></i><span class="d-none d-sm-inline"> {{ _('Settings') }}</span>
                     </button>
                     {% endif %}
                     <form action="{{ url_for('providers.disconnect_provider', provider_name=provider.name) }}" method="POST" class="d-inline">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        {% set disconnect_msg = _('Disconnect from %(name)s?', name=provider.display_name) %}
                         <button type="submit" class="btn btn-sm btn-outline-danger"
-                                onclick="return confirm('Disconnect from {{ provider.display_name }}?');">
-                            <i class="fas fa-unlink"></i><span class="d-none d-sm-inline"> Disconnect</span>
+                                onclick="return confirm('{{ disconnect_msg }}');">
+                            <i class="fas fa-unlink"></i><span class="d-none d-sm-inline"> {{ _('Disconnect') }}</span>
                         </button>
                     </form>
                 {% else %}
                     <button type="button" class="btn btn-sm btn-primary"
                             data-bs-toggle="modal"
                             data-bs-target="#connectModal{{ provider.name }}">
-                        <i class="fas fa-link"></i><span class="d-none d-sm-inline"> Connect</span>
+                        <i class="fas fa-link"></i><span class="d-none d-sm-inline"> {{ _('Connect') }}</span>
                     </button>
                 {% endif %}
             </div>
@@ -58,7 +59,7 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Connect to {{ provider.display_name }}</h5>
+                <h5 class="modal-title">{{ _('Connect to %(name)s', name=provider.display_name) }}</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <form action="{{ url_for('providers.connect_provider', provider_name=provider.name) }}" method="POST">
@@ -67,9 +68,9 @@
                     {% include provider.get_settings_template() %}
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Cancel') }}</button>
                     <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-link"></i> Connect
+                        <i class="fas fa-link"></i> {{ _('Connect') }}
                     </button>
                 </div>
             </form>
@@ -83,7 +84,7 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">{{ provider.display_name }} Settings</h5>
+                <h5 class="modal-title">{{ _('%(name)s Settings', name=provider.display_name) }}</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <form action="{{ url_for('providers.connect_provider', provider_name=provider.name) }}" method="POST">
@@ -100,24 +101,24 @@
                                    value="true"
                                    {% if provider_config.get('try_provide_ass', False) %}checked{% endif %}>
                             <label class="form-check-label" for="{{ provider.name }}_try_provide_ass_edit">
-                                Try to provide ASS/SSA format
+                                {{ _('Try to provide ASS/SSA format') }}
                             </label>
                             <div class="form-text">
-                                Enable this to always offer ASS format option for this provider.
+                                {{ _('Enable this to always offer ASS format option for this provider.') }}
                             </div>
                         </div>
                     </div>
                     {% else %}
                     <div class="alert alert-info">
                         <i class="fas fa-info-circle me-2"></i>
-                        No additional settings available for this provider.
+                        {{ _('No additional settings available for this provider.') }}
                     </div>
                     {% endif %}
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Cancel') }}</button>
                     <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-save"></i> Save
+                        <i class="fas fa-save"></i> {{ _('Save') }}
                     </button>
                 </div>
             </form>

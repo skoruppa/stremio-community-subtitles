@@ -1,8 +1,8 @@
 """Async Quart application factory"""
 import os
 import logging
-from quart import Quart
-from .extensions import init_async_db, auth_manager, init_cors, cache, csrf
+from quart import Quart, request
+from .extensions import init_async_db, auth_manager, init_cors, cache, csrf, babel
 from config import get_config
 
 
@@ -52,6 +52,15 @@ def create_app():
     auth_manager.init_app(app)
     csrf.init_app(app)
     init_cors(app)
+    
+    # Locale selector for babel
+    def get_locale():
+        lang = request.cookies.get('lang')
+        if lang:
+            return lang
+        return request.accept_languages.best_match(app.config['LANGUAGES'])
+    
+    babel.init_app(app, locale_selector=get_locale)
 
     # Initialize anime mapping database
     try:
@@ -72,6 +81,7 @@ def create_app():
     from .routes.subtitles import subtitles_bp
     from .routes.content import content_bp
     from .routes.providers import providers_bp
+    from .routes.language import language_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(main_bp)
@@ -79,6 +89,7 @@ def create_app():
     app.register_blueprint(subtitles_bp)
     app.register_blueprint(content_bp)
     app.register_blueprint(providers_bp)
+    app.register_blueprint(language_bp)
 
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
@@ -122,5 +133,29 @@ def create_app():
                 user = result.scalar_one_or_none()
                 return {'user': user}
         return {'user': None}
+    
+    @app.context_processor
+    def inject_language_info():
+        lang_map = {
+            'en': {'flag': '🇬🇧', 'name': 'English'},
+            'pl': {'flag': '🇵🇱', 'name': 'Polski'},
+            'es': {'flag': '🇪🇸', 'name': 'Español'},
+            'fr': {'flag': '🇫🇷', 'name': 'Français'},
+            'de': {'flag': '🇩🇪', 'name': 'Deutsch'},
+            'it': {'flag': '🇮🇹', 'name': 'Italiano'},
+            'pt': {'flag': '🇵🇹', 'name': 'Português'},
+            'pt_BR': {'flag': '🇧🇷', 'name': 'Português (BR)'},
+            'ru': {'flag': '🇷🇺', 'name': 'Русский'},
+            'ja': {'flag': '🇯🇵', 'name': '日本語'},
+            'zh': {'flag': '🇨🇳', 'name': '中文'},
+            'tr': {'flag': '🇹🇷', 'name': 'Türkçe'}
+        }
+        current_lang = request.cookies.get('lang', 'en')
+        supported_langs = app.config.get('LANGUAGES', ['en'])
+        return {
+            'language_map': lang_map,
+            'current_language': current_lang,
+            'supported_languages': supported_langs
+        }
 
     return app

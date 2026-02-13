@@ -8,7 +8,7 @@
     <div class="col-md-8 col-lg-6">
         <div class="card shadow-sm">
             <div class="card-header bg-success text-white">
-                <h4 class="mb-0">Create an Account</h4>
+                <h4 class="mb-0">{{ _('Create an Account') }}</h4>
             </div>
             <div class="card-body">
                 <form method="POST" action="{{ url_for('auth.register') }}" novalidate>
@@ -25,7 +25,7 @@
                 
                 <div class="mt-3 text-center">
                     <p>
-                        Already have an account? <a href="{{ url_for('auth.login') }}">Login here</a>
+                        {{ _("Already have an account?") }} <a href="{{ url_for('auth.login') }}">{{ _('Login here') }}</a>
                     </p>
                 </div>
             </div>
@@ -37,25 +37,25 @@
     <div class="col-md-8 offset-md-2">
         <div class="card">
             <div class="card-header">
-                <h5 class="mb-0">Why Register?</h5>
+                <h5 class="mb-0">{{ _('Why Register?') }}</h5>
             </div>
             <div class="card-body">
                 <ul class="list-group list-group-flush">
                     <li class="list-group-item">
                         <i class="fas fa-check-circle text-success me-2"></i>
-                        Get your personal Stremio addon installation link
+                        {{ _("Get your personal Stremio addon installation link") }}
                     </li>
                     <li class="list-group-item">
                         <i class="fas fa-check-circle text-success me-2"></i>
-                        Upload and share subtitles with the community
+                        {{ _("Upload and share subtitles with the community") }}
                     </li>
                     <li class="list-group-item">
                         <i class="fas fa-check-circle text-success me-2"></i>
-                        Vote on subtitle quality to help others find the best translations
+                        {{ _("Vote on subtitle quality to help others find the best translations") }}
                     </li>
                     <li class="list-group-item">
                         <i class="fas fa-check-circle text-success me-2"></i>
-                        Track your subtitle history and contributions
+                        {{ _("Track your subtitle history and contributions") }}
                     </li>
                 </ul>
             </div>

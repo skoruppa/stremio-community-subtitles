@@ -1,5 +1,6 @@
 import datetime
 
+from quart_babel import gettext as _
 from quart import Blueprint, render_template, redirect, url_for, flash, request, current_app
 from quart_auth import login_required, current_user, logout_user, Unauthorized
 from markupsafe import Markup
@@ -19,7 +20,7 @@ main_bp = Blueprint('main', __name__)
 
 @main_bp.errorhandler(Unauthorized)
 async def redirect_to_login(e):
-    await flash('Please log in to access this page.', 'info')
+    await flash(_('Please log in to access this page.'), 'info')
     return redirect(url_for('auth.login', next=request.path))
 
 
@@ -86,7 +87,7 @@ async def configure():
     if not await current_user.is_authenticated:
         from ..forms import LoginForm
         form = await LoginForm.create_form()
-        await flash('Please log in to access this page.', 'info')
+        await flash(_('Please log in to access this page.'), 'info')
         return await render_template('auth/login.html', form=form, embedded=True)
     
     # Generate manifest URL parts
@@ -166,12 +167,12 @@ async def account_settings():
             try:
                 user.preferred_languages = lang_form.preferred_languages.data
                 await session.commit()
-                await flash('Preferred languages updated successfully!', 'success')
+                await flash(_('Preferred languages updated successfully!'), 'success')
                 return redirect(url_for('main.account_settings'))
             except Exception as e:
                 await session.rollback()
                 current_app.logger.error(f"Failed to update language for user {user_id}: {e}")
-                await flash('Failed to update language.', 'danger')
+                await flash(_('Failed to update language.'), 'danger')
         elif request.method == 'POST':
             current_app.logger.error(f"Form validation failed: {lang_form.errors}")
             current_app.logger.error(f"Form data: {await request.form}")
@@ -203,7 +204,7 @@ async def delete_activity(activity_id):
         activity_to_delete = result.scalar_one_or_none()
 
         if not activity_to_delete:
-            await flash('Activity record not found.', 'warning')
+            await flash(_('Activity record not found.'), 'warning')
             return redirect(url_for('main.dashboard'))
 
         if activity_to_delete.user_id != user_id:
@@ -213,17 +214,17 @@ async def delete_activity(activity_id):
                 f"attempted to delete activity {activity_id} "
                 f"belonging to user {activity_to_delete.user_id}."
             )
-            await flash('You do not have permission to delete this activity record.', 'danger')
+            await flash(_('You do not have permission to delete this activity record.'), 'danger')
             return redirect(url_for('main.dashboard'))
 
         try:
             await session.delete(activity_to_delete)
             await session.commit()
-            await flash('Activity record deleted successfully.', 'success')
+            await flash(_('Activity record deleted successfully.'), 'success')
         except Exception as e:
             await session.rollback()
             current_app.logger.error(f"Error deleting activity {activity_id} for user {user_id}: {e}")
-            await flash('Error deleting activity record. Please try again.', 'danger')
+            await flash(_('Error deleting activity record. Please try again.'), 'danger')
 
     return redirect(url_for('main.dashboard'))
 
@@ -241,7 +242,7 @@ async def delete_account():
         user = result.scalar_one_or_none()
         
         if confirm_username != user.username:
-            await flash('Username confirmation does not match. Account not deleted.', 'danger')
+            await flash(_('Username confirmation does not match. Account not deleted.'), 'danger')
             return redirect(url_for('main.account_settings'))
         
         username = user.username
@@ -262,11 +263,11 @@ async def delete_account():
             logout_user()
             
             current_app.logger.info(f"User account deleted: {username} (ID: {user_id})")
-            await flash('Your account has been permanently deleted.', 'info')
+            await flash(_('Your account has been permanently deleted.'), 'info')
             return redirect(url_for('main.index'))
             
         except Exception as e:
             await session.rollback()
             current_app.logger.error(f"Error deleting account for user {user_id}: {e}")
-            await flash('Error deleting account. Please try again or contact support.', 'danger')
+            await flash(_('Error deleting account. Please try again or contact support.'), 'danger')
             return redirect(url_for('main.account_settings'))

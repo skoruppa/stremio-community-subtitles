@@ -4,15 +4,14 @@
 
 {% block content %}
 <div class="px-4 py-5 my-5 text-center">
-    <h1 class="display-5 fw-bold text-body-emphasis">Stremio Community Subtitles Addon</h1>
+    <h1 class="display-5 fw-bold text-body-emphasis">{{ _('Stremio Community Subtitles Addon') }}</h1>
     <div class="col-lg-8 mx-auto">
         <p class="lead mb-4">
-            Find, share, and vote on subtitles provided by the community for Stremio. 
-            Log in or register to get started and receive your personalized addon installation link.
+            {{ _('Find, share, and vote on subtitles provided by the community for Stremio. Log in or register to get started and receive your personalized addon installation link.') }}
         </p>
         <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
-            <a href="{{ url_for('auth.login') }}" class="btn btn-primary btn-lg px-4 gap-3">Login</a>
-            <a href="{{ url_for('auth.register') }}" class="btn btn-outline-primary btn-lg px-4">Register</a>
+            <a href="{{ url_for('auth.login') }}" class="btn btn-primary btn-lg px-4 gap-3">{{ _('Login') }}</a>
+            <a href="{{ url_for('auth.register') }}" class="btn btn-outline-primary btn-lg px-4">{{ _('Register') }}</a>
         </div>
     </div>
 </div>
@@ -22,8 +21,8 @@
         <div class="card h-100">
             <div class="card-body text-center">
                 <i class="fas fa-search fa-3x mb-3 text-primary"></i>
-                <h5 class="card-title">Find Subtitles</h5>
-                <p class="card-text">Easily find subtitles for your favorite movies and TV shows directly in Stremio.</p>
+                <h5 class="card-title">{{ _('Find Subtitles') }}</h5>
+                <p class="card-text">{{ _('Easily find subtitles for your favorite movies and TV shows directly in Stremio.') }}</p>
             </div>
         </div>
     </div>
@@ -31,8 +30,8 @@
         <div class="card h-100">
             <div class="card-body text-center">
                 <i class="fas fa-upload fa-3x mb-3 text-primary"></i>
-                <h5 class="card-title">Share Subtitles</h5>
-                <p class="card-text">Upload and share your subtitles with the community to help others enjoy content in their language.</p>
+                <h5 class="card-title">{{ _('Share Subtitles') }}</h5>
+                <p class="card-text">{{ _('Upload and share your subtitles with the community to help others enjoy content in their language.') }}</p>
             </div>
         </div>
     </div>
@@ -40,8 +39,8 @@
         <div class="card h-100">
             <div class="card-body text-center">
                 <i class="fas fa-thumbs-up fa-3x mb-3 text-primary"></i>
-                <h5 class="card-title">Vote on Quality</h5>
-                <p class="card-text">Vote on subtitles to help others find the best quality translations for their viewing experience.</p>
+                <h5 class="card-title">{{ _('Vote on Quality') }}</h5>
+                <p class="card-text">{{ _('Vote on subtitles to help others find the best quality translations for their viewing experience.') }}</p>
             </div>
         </div>
     </div>
@@ -49,16 +48,16 @@
 
 <div class="row mt-5">
     <div class="col-12 text-center">
-        <h2 class="mb-4">How It Works</h2>
+        <h2 class="mb-4">{{ _('How It Works') }}</h2>
     </div>
     <div class="col-md-6 offset-md-3">
         <div class="card">
             <div class="card-body">
                 <ol class="list-group list-group-numbered mb-0">
-                    <li class="list-group-item border-0">Register for an account</li>
-                    <li class="list-group-item border-0">Install the addon in Stremio using your personal link</li>
-                    <li class="list-group-item border-0">Start watching content with community subtitles</li>
-                    <li class="list-group-item border-0">Upload your own subtitles or vote on existing ones</li>
+                    <li class="list-group-item border-0">{{ _('Register for an account') }}</li>
+                    <li class="list-group-item border-0">{{ _('Install the addon in Stremio using your personal link') }}</li>
+                    <li class="list-group-item border-0">{{ _('Start watching content with community subtitles') }}</li>
+                    <li class="list-group-item border-0">{{ _('Upload your own subtitles or vote on existing ones') }}</li>
                 </ol>
             </div>
         </div>

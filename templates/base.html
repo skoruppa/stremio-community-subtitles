@@ -28,25 +28,52 @@
             <a class="navbar-brand" href="{{ url_for('main.index') }}">
                 <i class="fas fa-closed-captioning me-2"></i>Community Subtitles
             </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse">
-                <span class="navbar-toggler-icon"></span>
-            </button>
+            <div class="d-flex align-items-center">
+                <!-- Language selector - visible only on mobile (< lg) -->
+                <div class="dropdown me-2 d-lg-none">
+                    <a class="nav-link dropdown-toggle" href="#" id="langDropdownMobile" role="button" data-bs-toggle="dropdown">
+                        {{ language_map.get(current_language, language_map['en'])['flag'] }}
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        {% for lang_code in supported_languages %}
+                        <li><a class="dropdown-item" href="{{ url_for('language.set_language', lang_code=lang_code) }}">
+                            {{ language_map[lang_code]['flag'] }} {{ language_map[lang_code]['name'] }}
+                        </a></li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+            </div>
             <div class="collapse navbar-collapse" id="navbarCollapse">
                 <ul class="navbar-nav me-auto mb-2 mb-md-0">
                     {% if current_user.is_authenticated %}
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('main.dashboard') }}">Dashboard</a>
+                        <a class="nav-link" href="{{ url_for('main.dashboard') }}">{{ _('Dashboard') }}</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('main.configure') }}">Install Addon</a>
+                        <a class="nav-link" href="{{ url_for('main.configure') }}">{{ _('Install Addon') }}</a>
                     </li>
                     {% endif %}
                 </ul>
                 <ul class="navbar-nav">
                     {% if current_user.is_authenticated %}
+                    <li class="nav-item dropdown d-none d-lg-block">
+                        <a class="nav-link dropdown-toggle" href="#" id="langDropdownDesktop" role="button" data-bs-toggle="dropdown">
+                            {{ language_map.get(current_language, language_map['en'])['flag'] }}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            {% for lang_code in supported_languages %}
+                            <li><a class="dropdown-item" href="{{ url_for('language.set_language', lang_code=lang_code) }}">
+                                {{ language_map[lang_code]['flag'] }} {{ language_map[lang_code]['name'] }}
+                            </a></li>
+                            {% endfor %}
+                        </ul>
+                    </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('subtitles.upload_subtitle') }}">
-                            <i class="fas fa-upload me-1"></i>Upload Subtitles
+                            <i class="fas fa-upload me-1"></i>{{ _('Upload Subtitles') }}
                         </a>
                     </li>
                     <li class="nav-item dropdown">
@@ -54,19 +81,32 @@
                             <i class="fas fa-user me-1"></i>{{ user.username if user else 'User' }}
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" href="{{ url_for('subtitles.my_subtitles') }}">My Subtitles</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('subtitles.my_subtitles') }}">{{ _('My Subtitles') }}</a></li>
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="{{ url_for('main.account_settings') }}">Account Settings</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('main.account_settings') }}">{{ _('Account Settings') }}</a></li>
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}">Logout</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}">{{ _('Logout') }}</a></li>
                         </ul>
                     </li>
                     {% else %}
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('auth.login') }}">Login</a>
+                        <a class="nav-link" href="{{ url_for('auth.login') }}">{{ _('Login') }}</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('auth.register') }}">Register</a>
+                        <a class="nav-link" href="{{ url_for('auth.register') }}">{{ _('Register') }}</a>
+                    </li>
+                    <!-- Language selector - visible only on desktop (>= lg) for guests -->
+                    <li class="nav-item dropdown d-none d-lg-block">
+                        <a class="nav-link dropdown-toggle" href="#" id="langDropdownDesktopGuest" role="button" data-bs-toggle="dropdown">
+                            {{ language_map.get(current_language, language_map['en'])['flag'] }}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            {% for lang_code in supported_languages %}
+                            <li><a class="dropdown-item" href="{{ url_for('language.set_language', lang_code=lang_code) }}">
+                                {{ language_map[lang_code]['flag'] }} {{ language_map[lang_code]['name'] }}
+                            </a></li>
+                            {% endfor %}
+                        </ul>
                     </li>
                     {% endif %}
                 </ul>
@@ -77,7 +117,7 @@
     <!-- Coffee Banner (Floating) -->
     <div id="coffeeBanner" class="coffee-banner alert alert-info alert-dismissible fade show shadow" role="alert">
         <i class="fa-solid fa-mug-saucer me-2"></i>
-        Like my addon? Consider <a href="https://buymeacoffee.com/skoruppa" target="_blank" class="alert-link">buying me a coffee</a>
+        {{ _('Like my addon? Consider') }} <a href="https://buymeacoffee.com/skoruppa" target="_blank" class="alert-link">{{ _('buying me a coffee') }}</a>
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close" onclick="dismissCoffeeBanner()"></button>
     </div>
 

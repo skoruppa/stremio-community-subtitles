@@ -7,6 +7,7 @@ import uuid
 import gc
 import asyncio
 import aiohttp
+from quart_babel import gettext as _
 from quart import Blueprint, url_for, Response, request, current_app, flash, redirect, render_template, jsonify
 from quart_auth import current_user, login_required
 from sqlalchemy import select, delete as sql_delete, func
@@ -730,8 +731,7 @@ async def upload_subtitle(activity_id=None):
 
                 # Validate content_id format
                 if not (base_content_id.startswith('tt') or base_content_id.startswith('kitsu:') or base_content_id.startswith('mal:')):
-                    await flash('Content ID must be either IMDB ID (starting with "tt") or Kitsu ID (format "kitsu:12345") or MAL ID (format "mal:12345")',
-                          'danger')
+                    await flash(_('Content ID must be either IMDB ID (starting with "tt") or Kitsu ID (format "kitsu:12345") or MAL ID (format "mal:12345")'), 'danger')
                     return await render_template('main/upload_subtitle.html', form=form, activity=activity,
                                            metadata=metadata, season=season, episode=episode,
                                            is_advanced_upload=is_advanced_upload)
@@ -741,7 +741,7 @@ async def upload_subtitle(activity_id=None):
                     episode_num = form.episode_number.data
 
                     if not episode_num:
-                        await flash('Episode number is required for series', 'danger')
+                        await flash(_('Episode number is required for series'), 'danger')
                         return await render_template('main/upload_subtitle.html', form=form, activity=activity,
                                                metadata=metadata, season=season, episode=episode,
                                                is_advanced_upload=is_advanced_upload)
@@ -832,7 +832,7 @@ async def upload_subtitle(activity_id=None):
                 if existing_subtitle_same_hash:
                     if existing_subtitle_same_hash.video_hash == video_hash:
                         # Exact duplicate: same content, same video hash
-                        await flash('These subtitles already exist for this content and video version.', 'info')
+                        await flash(_('These subtitles already exist for this content and video version.'), 'info')
                         redirect_url = url_for('subtitles.upload_subtitle') if is_advanced_upload else url_for(
                             'content.content_detail', activity_id=activity_id)
                         return redirect(redirect_url)
@@ -863,7 +863,7 @@ async def upload_subtitle(activity_id=None):
                 if not skip_file_upload:
                     if current_app.config['STORAGE_BACKEND'] == 'cloudinary':
                         if not CLOUDINARY_AVAILABLE or not cloudinary.config().api_key:
-                            await flash('Server error: Cloudinary storage is not properly configured.', 'danger')
+                            await flash(_('Server error: Cloudinary storage is not properly configured.'), 'danger')
                             redirect_url = url_for('subtitles.upload_subtitle') if is_advanced_upload else url_for(
                                 'content.content_detail', activity_id=activity_id)
                             return redirect(redirect_url)
@@ -889,7 +889,7 @@ async def upload_subtitle(activity_id=None):
                 # No db.session.rollback() needed here - no session yet
                 current_app.logger.error(f"Error processing/uploading subtitle '{original_filename}': {e}",
                                          exc_info=True)
-                await flash(f'Error processing/uploading subtitle: {str(e)}', 'danger')
+                await flash(_('Error processing/uploading subtitle: %(error)s', error=str(e)), 'danger')
                 redirect_url = url_for('subtitles.upload_subtitle') if is_advanced_upload else url_for(
                     'content.content_detail', activity_id=activity_id)
                 return redirect(redirect_url)
@@ -898,7 +898,7 @@ async def upload_subtitle(activity_id=None):
                     os.unlink(temp_file_path)
 
             if not db_file_path:
-                await flash('Internal error: Subtitle path not determined.', 'danger')
+                await flash(_('Internal error: Subtitle path not determined.'), 'danger')
                 redirect_url = url_for('subtitles.upload_subtitle') if is_advanced_upload else url_for(
                     'content.content_detail', activity_id=activity_id)
                 return redirect(redirect_url)
@@ -956,11 +956,11 @@ async def upload_subtitle(activity_id=None):
                         )
                         session.add(new_selection)
                     await session.commit()
-                    await flash('Subtitle uploaded and selected successfully!', 'success')
+                    await flash(_('Subtitle uploaded and selected successfully!'), 'success')
                 except Exception as sel_e:
                     await session.rollback()
                     current_app.logger.error(f"Error auto-selecting uploaded subtitle: {sel_e}", exc_info=True)
-                    await flash('Subtitle uploaded, but failed to auto-select.', 'warning')
+                    await flash(_('Subtitle uploaded, but failed to auto-select.'), 'warning')
 
             # Redirect appropriately
             if is_advanced_upload:
@@ -972,7 +972,7 @@ async def upload_subtitle(activity_id=None):
         except Exception as e:
             # No db.session.rollback() needed - handled in inner try/except
             current_app.logger.error(f"Error in upload_subtitle route: {e}", exc_info=True)
-            await flash('Error uploading subtitle. Please try again.', 'danger')
+            await flash(_('Error uploading subtitle. Please try again.'), 'danger')
 
     return await render_template('main/upload_subtitle.html', form=form, activity=activity, metadata=metadata,
                            season=season, episode=episode, is_advanced_upload=is_advanced_upload)
@@ -1025,11 +1025,11 @@ async def select_subtitle(activity_id, subtitle_id):
                 )
                 session.add(selection)
             await session.commit()
-            await flash('Subtitle selection updated.', 'success')
+            await flash(_('Subtitle selection updated.'), 'success')
         except Exception as e:
             await session.rollback()
             current_app.logger.error(f"Error selecting subtitle: {e}", exc_info=True)
-            await flash('Error updating subtitle selection.', 'danger')
+            await flash(_('Error updating subtitle selection.'), 'danger')
     return redirect(url_for('content.content_detail', activity_id=activity_id))
 
 
@@ -1051,7 +1051,7 @@ async def vote_subtitle(subtitle_id, vote_type):
         if not (subtitle.source_type == 'community' or subtitle.source_type.endswith('_community_link')):
             if is_ajax:
                 return jsonify({'error': 'Voting not available'}), 400
-            await flash('Voting is not available for this type of subtitle.', 'warning')
+            await flash(_('Voting is not available for this type of subtitle.'), 'warning')
             return redirect(request.referrer or url_for('main.dashboard'))
 
         vote_result = await session.execute(
@@ -1066,18 +1066,18 @@ async def vote_subtitle(subtitle_id, vote_type):
                     await session.delete(existing_vote)
                     removed = True
                     if not is_ajax:
-                        await flash('Vote removed.', 'info')
+                        await flash(_('Vote removed.'), 'info')
                 else:
                     subtitle.votes = subtitle.votes - existing_vote.vote_value + vote_value
                     existing_vote.vote_value = vote_value
                     if not is_ajax:
-                        await flash('Vote updated.', 'success')
+                        await flash(_('Vote updated.'), 'success')
             else:
                 new_vote = SubtitleVote(user_id=(current_user.auth_id), subtitle_id=subtitle_id, vote_value=vote_value)
                 subtitle.votes += vote_value
                 session.add(new_vote)
                 if not is_ajax:
-                    await flash('Vote recorded.', 'success')
+                    await flash(_('Vote recorded.'), 'success')
             await session.commit()
             
             if is_ajax:
@@ -1088,7 +1088,7 @@ async def vote_subtitle(subtitle_id, vote_type):
             if is_ajax:
                 return jsonify({'error': 'Error processing vote'}), 500
             if not is_ajax:
-                await flash('Error processing vote.', 'danger')
+                await flash(_('Error processing vote.'), 'danger')
 
     if activity_id: 
         return redirect(url_for('content.content_detail', activity_id=activity_id))
@@ -1106,17 +1106,17 @@ async def delete_selection(selection_id):
             abort(404)
         
         if selection.user_id != (current_user.auth_id):
-            await flash('You do not have permission to delete this selection.', 'danger')
+            await flash(_('You do not have permission to delete this selection.'), 'danger')
             return redirect(url_for('subtitles.selected_subtitles'))
         
         try:
             await session.delete(selection)
             await session.commit()
-            await flash('Selection deleted successfully.', 'success')
+            await flash(_('Selection deleted successfully.'), 'success')
         except Exception as e:
             await session.rollback()
             current_app.logger.error(f"Error deleting selection {selection_id}: {e}", exc_info=True)
-            await flash('Error deleting selection.', 'danger')
+            await flash(_('Error deleting selection.'), 'danger')
     
     return redirect(url_for('subtitles.selected_subtitles'))
 
@@ -1149,13 +1149,13 @@ async def reset_selection(activity_id):
                 for selection in selections_to_delete:
                     session.delete(selection)
                 await session.commit()
-                await flash('All subtitle selections for this content have been reset.', 'success')
+                await flash(_('All subtitle selections for this content have been reset.'), 'success')
             except Exception as e:
                 await session.rollback()
                 current_app.logger.error(f"Error resetting selections: {e}", exc_info=True)
                 await flash('Error resetting selections.', 'danger')
         else:
-            await flash('No selections to reset for this content.', 'info')
+            await flash(_('No selections to reset for this content.'), 'info')
     return redirect(url_for('content.content_detail', activity_id=activity_id))
 
 
@@ -1390,7 +1390,7 @@ async def delete_subtitle(subtitle_id):
         user = user_result.scalar_one_or_none()
         
         if subtitle.uploader_id != int(current_user.auth_id) and not (user and user.has_role('Admin')):
-            await flash('You do not have permission to delete this subtitle.', 'danger')
+            await flash(_('You do not have permission to delete this subtitle.'), 'danger')
             return redirect(request.referrer or url_for('main.dashboard'))
 
         try:
@@ -1454,11 +1454,11 @@ async def delete_subtitle(subtitle_id):
 
             await session.delete(subtitle)
             await session.commit()
-            await flash('Subtitle deleted successfully.', 'success')
+            await flash(_('Subtitle deleted successfully.'), 'success')
         except Exception as e:
             await session.rollback()
             current_app.logger.error(f"Error deleting subtitle {subtitle_id}: {e}", exc_info=True)
-            await flash('Error deleting subtitle.', 'danger')
+            await flash(_('Error deleting subtitle.'), 'danger')
 
     if activity_id: 
         return redirect(url_for('content.content_detail', activity_id=activity_id))
@@ -1479,7 +1479,7 @@ async def download_subtitle(subtitle_id):
         user = user_result.scalar_one_or_none()
         
         if not user or not user.has_role('Admin'):
-            await flash('You do not have permission to download subtitles.', 'danger')
+            await flash(_('You do not have permission to download subtitles.'), 'danger')
             return redirect(url_for('main.dashboard'))
 
     async with async_session_maker() as session:
@@ -1510,7 +1510,7 @@ async def download_subtitle(subtitle_id):
             
             provider = ProviderRegistry.get(provider_name)
             if not provider or not await provider.is_authenticated(admin_user):
-                await flash(f"Admin's {provider_name} account is not configured/active; cannot download this linked subtitle.", "warning")
+                await flash(_("Admin's %(provider)s account is not configured/active; cannot download this linked subtitle.", provider=provider_name), "warning")
                 return redirect(request.referrer or url_for('main.dashboard'))
             
             try:
@@ -1525,17 +1525,17 @@ async def download_subtitle(subtitle_id):
                         return Response(zip_content, mimetype='application/zip', headers={"Content-Disposition": f"attachment;filename={content_id_display}_{subtitle.language}.zip"})
                     except Exception as e:
                         current_app.logger.error(f"Error processing {provider_name} download: {e}", exc_info=True)
-                        await flash(f"Error downloading from {provider_name}: {str(e)}", "danger")
+                        await flash(_("Error downloading from %(provider)s: %(error)s", provider=provider_name, error=str(e)), "danger")
                         return redirect(request.referrer or url_for('main.dashboard'))
             except ProviderDownloadError as e:
                 error_msg = str(e)
                 # Special handling for 401 Unauthorized
                 if hasattr(e, 'status_code') and e.status_code == 401:
                     current_app.logger.warning(f"{provider_name} authentication expired: {error_msg}")
-                    await flash(f"{provider_name} authentication expired. Please log in again in account settings.", "warning")
+                    await flash(_("%(provider)s authentication expired. Please log in again in account settings.", provider=provider_name), "warning")
                 else:
                     current_app.logger.error(f"{provider_name} download error: {error_msg}", exc_info=True)
-                    await flash(f"Error downloading from {provider_name}: {error_msg}", "danger")
+                    await flash(_("Error downloading from %(provider)s: %(error)s", provider=provider_name, error=error_msg), "danger")
                 return redirect(request.referrer or url_for('main.dashboard'))
         except Exception as e:
             current_app.logger.error(f"Error downloading linked provider subtitle {provider_subtitle_id}: {e}", exc_info=True)
@@ -1561,16 +1561,16 @@ async def mark_compatible_hash(subtitle_id):
     activity_id_str = (await request.form).get('activity_id')
 
     if not target_video_hash:
-        await flash('Target video hash is missing.', 'danger')
+        await flash(_('Target video hash is missing.'), 'danger')
         return redirect(request.referrer or url_for('main.dashboard'))
     if not activity_id_str:
-        await flash('Activity ID is missing.', 'danger')
+        await flash(_('Activity ID is missing.'), 'danger')
         return redirect(request.referrer or url_for('main.dashboard'))
 
     try:
         activity_id_uuid = uuid.UUID(activity_id_str)
     except ValueError:
-        await flash('Invalid Activity ID format.', 'danger')
+        await flash(_('Invalid Activity ID format.'), 'danger')
         return redirect(request.referrer or url_for('main.dashboard'))
 
     async with async_session_maker() as session:
@@ -1589,14 +1589,14 @@ async def mark_compatible_hash(subtitle_id):
             abort(404)
 
         if activity.content_id != original_subtitle.content_id:
-            await flash('Content ID mismatch between subtitle and activity.', 'danger')
+            await flash(_('Content ID mismatch between subtitle and activity.'), 'danger')
             return redirect(url_for('content.content_detail', activity_id=activity.id))
 
         if original_subtitle.source_type.endswith('_community_link'):
-            await flash('This operation is not applicable to provider-linked entries in this manner.', 'warning')
+            await flash(_('This operation is not applicable to provider-linked entries in this manner.'), 'warning')
             return redirect(url_for('content.content_detail', activity_id=activity.id))
         if not original_subtitle.file_path:
-            await flash('Original subtitle does not have a file path, cannot mark as compatible.', 'danger')
+            await flash(_('Original subtitle does not have a file path, cannot mark as compatible.'), 'danger')
             return redirect(url_for('content.content_detail', activity_id=activity.id))
 
         # Check for existing compatible subtitle
@@ -1614,7 +1614,7 @@ async def mark_compatible_hash(subtitle_id):
         newly_created_sub = None
         if existing_compatible_sub:
             newly_created_sub = existing_compatible_sub
-            await flash('A compatible subtitle entry for this hash already exists. Selecting it.', 'info')
+            await flash(_('A compatible subtitle entry for this hash already exists. Selecting it.'), 'info')
         else:
             new_compatible_subtitle_entry = Subtitle(
                 id=uuid.uuid4(),
@@ -1633,7 +1633,7 @@ async def mark_compatible_hash(subtitle_id):
             )
             session.add(new_compatible_subtitle_entry)
             newly_created_sub = new_compatible_subtitle_entry
-            await flash('Subtitle marked as compatible with the current video version.', 'success')
+            await flash(_('Subtitle marked as compatible with the current video version.'), 'success')
 
             # Add the initial vote
             await session.flush()
@@ -1674,6 +1674,6 @@ async def mark_compatible_hash(subtitle_id):
         except Exception as e:
             await session.rollback()
             current_app.logger.error(f"Error in mark_compatible_hash: {e}", exc_info=True)
-            await flash('An error occurred.', 'danger')
+            await flash(_('An error occurred.'), 'danger')
 
     return redirect(url_for('content.content_detail', activity_id=activity.id))

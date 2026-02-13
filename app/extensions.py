@@ -4,6 +4,7 @@ from sqlalchemy.orm import declarative_base
 from quart_auth import QuartAuth
 from quart_cors import cors as quart_cors
 from quart_wtf import CSRFProtect
+from quart_babel import Babel
 
 # SQLAlchemy async
 Base = declarative_base()
@@ -42,6 +43,7 @@ def init_async_db(app):
 
 auth_manager = QuartAuth()
 csrf = CSRFProtect()
+babel = Babel()
 
 def init_cors(app):
     cors_origins = app.config.get('CORS_ORIGINS', '*')

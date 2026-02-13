@@ -1,14 +1,14 @@
 {% extends "base.html" %}
 {% from "_pagination.html" import render_pagination %}
 
-{% block title %}My Subtitles - {{ super() }}{% endblock %}
+{% block title %}{{ _('My Subtitles') }} - {{ super() }}{% endblock %}
 
 {% block content %}
 <div class="row mb-4">
     <div class="col">
-        <h1 class="mb-3">My Subtitles</h1>
+        <h1 class="mb-3">{{ _('My Subtitles') }}</h1>
         <p class="lead">
-            Manage all subtitles you've submitted to the community.
+            {{ _('Manage all subtitles you\'ve submitted to the community.') }}
         </p>
     </div>
 </div>
@@ -48,7 +48,7 @@
                         <p class="mb-1 small text-muted text-break">{{ subtitle.version_info | truncate(100) }}</p>
                         {% endif %}
                         {% if subtitle.author %}
-                        <small class="text-muted d-block mb-1">Author: {{ subtitle.author }}</small>
+                        <small class="text-muted d-block mb-1">{{ _('Author:') }} {{ subtitle.author }}</small>
                         {% endif %}
                         <div class="mb-1">
                             <span class="badge bg-secondary">{{ subtitle.language }}</span>
@@ -62,7 +62,7 @@
                                 <span class="badge bg-info">{{ subtitle.source_type | capitalize }}</span>
                             {% endif %}
                             <span class="badge {% if subtitle.votes > 0 %}bg-success{% elif subtitle.votes < 0 %}bg-danger{% else %}bg-secondary{% endif %}">
-                                {{ subtitle.votes }} votes
+                                {{ _('%(votes)s votes', votes=subtitle.votes) }}
                             </span>
                             {% if subtitle.video_hash %}
                             <span class="badge bg-dark">Hash: {{ subtitle.video_hash }}</span>
@@ -71,15 +71,15 @@
                         <small class="text-muted">{{ subtitle.upload_timestamp.strftime('%Y-%m-%d %H:%M') }}</small>
                     </div>
                     <div class="ms-2 d-flex flex-column flex-sm-row gap-1 text-nowrap" data-subtitle-id="{{ subtitle.id }}" data-current-vote="{{ user_votes.get(subtitle.id, 0) }}">
-                        <button type="button" class="btn btn-sm vote-btn {% if subtitle.id in user_votes and user_votes[subtitle.id] == 1 %}btn-success{% else %}btn-outline-success{% endif %}" data-vote-type="up" title="Upvote">
+                        <button type="button" class="btn btn-sm vote-btn {% if subtitle.id in user_votes and user_votes[subtitle.id] == 1 %}btn-success{% else %}btn-outline-success{% endif %}" data-vote-type="up" title="{{ _('Upvote') }}">
                             <i class="fas fa-thumbs-up"></i>
                         </button>
-                        <button type="button" class="btn btn-sm vote-btn {% if subtitle.id in user_votes and user_votes[subtitle.id] == -1 %}btn-danger{% else %}btn-outline-danger{% endif %}" data-vote-type="down" title="Downvote">
+                        <button type="button" class="btn btn-sm vote-btn {% if subtitle.id in user_votes and user_votes[subtitle.id] == -1 %}btn-danger{% else %}btn-outline-danger{% endif %}" data-vote-type="down" title="{{ _('Downvote') }}">
                             <i class="fas fa-thumbs-down"></i>
                         </button>
-                        <form action="{{ url_for('subtitles.delete_subtitle', subtitle_id=subtitle.id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this subtitle?');">
+                        <form action="{{ url_for('subtitles.delete_subtitle', subtitle_id=subtitle.id) }}" method="POST" class="d-inline" onsubmit="return confirm('{{ _('Are you sure you want to delete this subtitle?') }}');">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete">
+                            <button type="submit" class="btn btn-sm btn-outline-danger" title="{{ _('Delete') }}">
                                 <i class="fas fa-trash-alt"></i>
                             </button>
                         </form>
@@ -101,11 +101,10 @@
             </div>
             <div class="card-body text-center py-5">
         <i class="fas fa-file-video fa-3x text-muted mb-3"></i>
-        <h4>No Subtitles Yet</h4>
-        <p class="text-muted">You haven't uploaded any subtitles yet.</p>
+        <h4>{{ _('No Subtitles Yet') }}</h4>
+        <p class="text-muted">{{ _('You haven\'t uploaded any subtitles yet.') }}</p>
         <a href="{{ url_for('subtitles.upload_subtitle') }}" class="btn btn-primary">
-            <i class="fas fa-upload me-1"></i>Upload Your First Subtitle
-            </a>
+            <i class="fas fa-upload me-1"></i>{{ _('Upload Your First Subtitle') }}</a>
         </div>
     </div>
 </div>

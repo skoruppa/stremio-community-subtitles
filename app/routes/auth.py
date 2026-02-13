@@ -1,3 +1,4 @@
+from quart_babel import gettext as _
 from quart import Blueprint, render_template, redirect, url_for, flash, request, current_app, session
 from quart_auth import login_user, logout_user, current_user, login_required, AuthUser
 from urllib.parse import urlparse
@@ -29,11 +30,11 @@ async def login():
             user = result.scalar_one_or_none()
             
             if user is None or not user.check_password(form.password.data):
-                await flash('Invalid email or password', 'danger')
+                await flash(_('Invalid email or password'), 'danger')
                 return redirect(url_for('auth.login'))
             
             if not user.active:
-                await flash('Please confirm your email address before logging in.', 'warning')
+                await flash(_('Please confirm your email address before logging in.'), 'warning')
                 return redirect(url_for('auth.login'))
             
             # Update login tracking
@@ -148,25 +149,25 @@ async def register():
                     try:
                         current_app.logger.info(f"Attempting to send confirmation email to {user.email}")
                         await send_confirmation_email(user)
-                        await flash('A confirmation email has been sent.', 'info')
+                        await flash(_('A confirmation email has been sent.'), 'info')
                     except Exception as email_error:
                         current_app.logger.error(f"Failed to send confirmation email: {email_error}", exc_info=True)
-                        await flash('Registration successful, but failed to send confirmation email. Please contact support.', 'warning')
+                        await flash(_('Registration successful, but failed to send confirmation email. Please contact support.'), 'warning')
                 else:
-                    await flash('Registration successful! You can now log in.', 'success')
+                    await flash(_('Registration successful! You can now log in.'), 'success')
                 
                 return redirect(url_for('auth.login'))
 
             except IntegrityError as e:
                 await db_session.rollback()
                 current_app.logger.warning(f"IntegrityError: {str(e)}")
-                await flash('An error occurred during registration.', 'danger')
+                await flash(_('An error occurred during registration.'), 'danger')
                 return await render_template('auth/register.html', title='Register', form=form)
 
             except Exception as e:
                 await db_session.rollback()
                 current_app.logger.error(f"Registration error: {str(e)}")
-                await flash('An unexpected error occurred.', 'danger')
+                await flash(_('An unexpected error occurred.'), 'danger')
                 return await render_template('auth/register.html', title='Register', form=form)
 
     return await render_template('auth/register.html', title='Register', form=form)
@@ -181,13 +182,13 @@ async def change_password():
         async with async_session_maker() as db_session:
             user = await db_session.get(User, user_id)
             if not user.check_password(form.current_password.data):
-                await flash('Current password is incorrect', 'danger')
+                await flash(_('Current password is incorrect'), 'danger')
                 return redirect(url_for('auth.change_password'))
             
             user.set_password(form.new_password.data)
             await db_session.commit()
             
-        await flash('Your password has been updated', 'success')
+        await flash(_('Your password has been updated'), 'success')
         return redirect(url_for('main.dashboard'))
     
     return await render_template('auth/change_password.html', title='Change Password', form=form)
@@ -207,12 +208,12 @@ async def reset_password_request():
                 try:
                     current_app.logger.info(f"Attempting to send password reset email to {user.email}")
                     await send_password_reset_email(user)
-                    await flash('Check your email for instructions', 'info')
+                    await flash(_('Check your email for instructions'), 'info')
                 except Exception as email_error:
                     current_app.logger.error(f"Failed to send password reset email: {email_error}", exc_info=True)
-                    await flash('Failed to send reset email. Please try again later.', 'danger')
+                    await flash(_('Failed to send reset email. Please try again later.'), 'danger')
             else:
-                await flash('If that email is in our database, we sent a reset link', 'info')
+                await flash(_('If that email is in our database, we sent a reset link'), 'info')
         return redirect(url_for('auth.login'))
     
     return await render_template('auth/reset_password_request.html', title='Reset Password', form=form)
@@ -233,7 +234,7 @@ async def resend_confirmation_post():
     form = await request.form
     email = form.get('email')
     if not email:
-        await flash('Email is required.', 'danger')
+        await flash(_('Email is required.'), 'danger')
         return redirect(url_for('auth.resend_confirmation'))
     
     async with async_session_maker() as db_session:
@@ -243,12 +244,12 @@ async def resend_confirmation_post():
             try:
                 current_app.logger.info(f"Resending confirmation email to {user.email}")
                 await send_confirmation_email(user)
-                await flash('A new confirmation email has been sent.', 'info')
+                await flash(_('A new confirmation email has been sent.'), 'info')
             except Exception as email_error:
                 current_app.logger.error(f"Failed to resend confirmation email: {email_error}", exc_info=True)
-                await flash('Failed to send confirmation email. Please try again later.', 'danger')
+                await flash(_('Failed to send confirmation email. Please try again later.'), 'danger')
         else:
-            await flash('If that email is in our database and not confirmed, we sent a link.', 'info')
+            await flash(_('If that email is in our database and not confirmed, we sent a link.'), 'info')
     
     return redirect(url_for('auth.login'))
 
@@ -260,17 +261,17 @@ async def confirm_email(token):
     
     user_id = User.verify_email_confirmation_token(token)
     if not user_id:
-        await flash('The confirmation link is invalid or has expired.', 'danger')
+        await flash(_('The confirmation link is invalid or has expired.'), 'danger')
         return redirect(url_for('auth.login'))
     
     async with async_session_maker() as db_session:
         user = await db_session.get(User, user_id)
         if not user:
-            await flash('User not found.', 'danger')
+            await flash(_('User not found.'), 'danger')
             return redirect(url_for('auth.login'))
         
         if user.email_confirmed:
-            await flash('Your email has already been confirmed.', 'info')
+            await flash(_('Your email has already been confirmed.'), 'info')
             return redirect(url_for('auth.login'))
         
         user.email_confirmed = True
@@ -278,7 +279,7 @@ async def confirm_email(token):
         user.active = True
         await db_session.commit()
     
-    await flash('Your email has been confirmed. You can now log in.', 'success')
+    await flash(_('Your email has been confirmed. You can now log in.'), 'success')
     return redirect(url_for('auth.login'))
 
 
@@ -289,20 +290,20 @@ async def reset_password(token):
     
     user_id = User.verify_reset_password_token(token)
     if not user_id:
-        await flash('The reset link is invalid or has expired.', 'danger')
+        await flash(_('The reset link is invalid or has expired.'), 'danger')
         return redirect(url_for('auth.reset_password_request'))
     
     async with async_session_maker() as db_session:
         user = await db_session.get(User, user_id)
         if not user:
-            await flash('User not found.', 'danger')
+            await flash(_('User not found.'), 'danger')
             return redirect(url_for('auth.reset_password_request'))
         
         form = await ResetPasswordForm.create_form()
         if await form.validate_on_submit():
             user.set_password(form.password.data)
             await db_session.commit()
-            await flash('Your password has been reset.', 'success')
+            await flash(_('Your password has been reset.'), 'success')
             return redirect(url_for('auth.login'))
     
     return await render_template('auth/reset_password.html', title='Reset Password', form=form, token=token)
