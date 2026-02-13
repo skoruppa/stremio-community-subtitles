@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: stremio-community-subtitles\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2026-02-13 15:37+0100\n"
-"PO-Revision-Date: 2026-02-13 19:43\n"
+"PO-Revision-Date: 2026-02-13 20:19\n"
 "Last-Translator: \n"
 "Language-Team: Portuguese, Brazilian\n"
 "MIME-Version: 1.0\n"
@@ -422,35 +422,35 @@ msgstr "Legenda selecionada com sucesso!"
 
 #: app/routes/subtitles.py:963
 msgid "Subtitle uploaded, but failed to auto-select."
-msgstr ""
+msgstr "Subtítulo enviado, mas falha ao selecionar automaticamente."
 
 #: app/routes/subtitles.py:975
 msgid "Error uploading subtitle. Please try again."
-msgstr ""
+msgstr "Erro ao enviar a legenda. Por favor, tente novamente."
 
 #: app/routes/subtitles.py:1028
 msgid "Subtitle selection updated."
-msgstr ""
+msgstr "Seleção de legenda atualizada."
 
 #: app/routes/subtitles.py:1032
 msgid "Error updating subtitle selection."
-msgstr ""
+msgstr "Erro ao atualizar seleção de legenda."
 
 #: app/routes/subtitles.py:1054
 msgid "Voting is not available for this type of subtitle."
-msgstr ""
+msgstr "A votação não está disponível para este tipo de legenda."
 
 #: app/routes/subtitles.py:1069
 msgid "Vote removed."
-msgstr ""
+msgstr "Voto removido."
 
 #: app/routes/subtitles.py:1074
 msgid "Vote updated."
-msgstr ""
+msgstr "Voto atualizado."
 
 #: app/routes/subtitles.py:1080
 msgid "Vote recorded."
-msgstr ""
+msgstr "Voto registado."
 
 #: app/routes/subtitles.py:1091
 msgid "Error processing vote."
@@ -458,19 +458,19 @@ msgstr ""
 
 #: app/routes/subtitles.py:1109
 msgid "You do not have permission to delete this selection."
-msgstr ""
+msgstr "Você não tem permissão para excluir este registro de atividade."
 
 #: app/routes/subtitles.py:1115
 msgid "Selection deleted successfully."
-msgstr ""
+msgstr "Seleção excluída com sucesso."
 
 #: app/routes/subtitles.py:1119
 msgid "Error deleting selection."
-msgstr ""
+msgstr "Erro ao excluir seleção."
 
 #: app/routes/subtitles.py:1152
 msgid "All subtitle selections for this content have been reset."
-msgstr ""
+msgstr "Todas as seleções de legendas para este conteúdo foram redefinidas."
 
 #: app/routes/subtitles.py:1158
 msgid "No selections to reset for this content."
@@ -478,7 +478,7 @@ msgstr "Sem seleções para redefinir nesse conteúdo."
 
 #: app/routes/subtitles.py:1393
 msgid "You do not have permission to delete this subtitle."
-msgstr ""
+msgstr "Você não tem permissão para remover essa citação."
 
 #: app/routes/subtitles.py:1457
 msgid "Subtitle deleted successfully."
@@ -486,11 +486,11 @@ msgstr "Legenda apagada com sucesso."
 
 #: app/routes/subtitles.py:1461
 msgid "Error deleting subtitle."
-msgstr ""
+msgstr "Erro ao excluir legenda."
 
 #: app/routes/subtitles.py:1482
 msgid "You do not have permission to download subtitles."
-msgstr ""
+msgstr "Você não tem permissão para baixar legendas."
 
 #: app/routes/subtitles.py:1513
 #, python-format
@@ -500,20 +500,20 @@ msgstr "A conta de administrador "
 #: app/routes/subtitles.py:1528 app/routes/subtitles.py:1538
 #, python-format
 msgid "Error downloading from %(provider)s: %(error)s"
-msgstr ""
+msgstr "Erro ao baixar de %(provider)s: %(error)s"
 
 #: app/routes/subtitles.py:1535
 #, python-format
 msgid "%(provider)s authentication expired. Please log in again in account settings."
-msgstr ""
+msgstr "A autenticação %(provider)s expirou. Efetue o login novamente nas configurações da conta."
 
 #: app/routes/subtitles.py:1564
 msgid "Target video hash is missing."
-msgstr ""
+msgstr "O hash de vídeo alvo está faltando."
 
 #: app/routes/subtitles.py:1567
 msgid "Activity ID is missing."
-msgstr ""
+msgstr "ID da atividade está faltando."
 
 #: app/routes/subtitles.py:1573
 msgid "Invalid Activity ID format."
@@ -525,7 +525,7 @@ msgstr ""
 
 #: app/routes/subtitles.py:1596
 msgid "This operation is not applicable to provider-linked entries in this manner."
-msgstr ""
+msgstr "Esta operação não é aplicável às entradas vinculadas ao provedor desta forma."
 
 #: app/routes/subtitles.py:1599
 msgid "Original subtitle does not have a file path, cannot mark as compatible."
@@ -724,7 +724,7 @@ msgstr "Instalar o Addon."
 
 #: templates/base.html:76
 msgid "Upload Subtitles"
-msgstr "Carregar legendas"
+msgstr "Fazer upload"
 
 #: templates/base.html:84 templates/main/my_subtitles.html:4
 #: templates/main/my_subtitles.html:9
@@ -1140,15 +1140,15 @@ msgstr "Começar a acompanhar conteúdo"
 
 #: templates/main/configure.html:66
 msgid "with community subtitles"
-msgstr ""
+msgstr "com legendas da comunidade"
 
 #: templates/main/configure.html:76
 msgid "Addon Features"
-msgstr ""
+msgstr "Recursos de Addon"
 
 #: templates/main/configure.html:82
 msgid "Automatic subtitle detection"
-msgstr ""
+msgstr "Detecção automática de legenda"
 
 #: templates/main/configure.html:86
 msgid "Community-contributed subtitles"
@@ -1156,11 +1156,11 @@ msgstr ""
 
 #: templates/main/configure.html:90
 msgid "Quality voting system"
-msgstr ""
+msgstr "Sistema de votação de qualidade"
 
 #: templates/main/configure.html:94
 msgid "Multiple language support"
-msgstr ""
+msgstr "Suporte a múltiplos idiomas"
 
 #: templates/main/configure.html:102
 msgid "Need Help?"
@@ -1168,7 +1168,7 @@ msgstr "Precisa de ajuda?"
 
 #: templates/main/configure.html:105
 msgid "If you're having trouble installing the addon, try these steps:"
-msgstr ""
+msgstr "Se você estiver tendo problemas para instalar o addon, tente estas etapas:"
 
 #: templates/main/configure.html:107
 msgid "Make sure you have the latest version of Stremio"
@@ -1176,11 +1176,11 @@ msgstr "Certifique-se de que está usando a última versão do Stremio."
 
 #: templates/main/configure.html:108
 msgid "Try copying the URL and adding it manually in Stremio"
-msgstr ""
+msgstr "Tente copiar a URL e adicioná-la manualmente no Stremio"
 
 #: templates/main/configure.html:109
 msgid "Restart Stremio and try again"
-msgstr ""
+msgstr "Reinicie o Stremio e tente novamente"
 
 #: templates/main/content_detail.html:23
 #: templates/main/upload_subtitle.html:101
@@ -1190,22 +1190,22 @@ msgstr "Informações do conteúdo:"
 #: templates/main/content_detail.html:28
 #: templates/main/upload_subtitle.html:114
 msgid "Type:"
-msgstr ""
+msgstr "Digite:"
 
 #: templates/main/content_detail.html:30 templates/main/dashboard.html:63
 #: templates/main/upload_subtitle.html:116
 msgid "Series"
-msgstr ""
+msgstr "Série"
 
 #: templates/main/content_detail.html:34
 #: templates/main/upload_subtitle.html:120
 msgid "ID:"
-msgstr ""
+msgstr "ID:"
 
 #: templates/main/content_detail.html:38
 #: templates/main/upload_subtitle.html:124
 msgid "Video Hash:"
-msgstr ""
+msgstr "Vídeo Hash:"
 
 #: templates/main/content_detail.html:44
 msgid "Filename:"
@@ -1214,16 +1214,16 @@ msgstr "Nome do arquivo:"
 #: templates/main/content_detail.html:50
 #: templates/main/upload_subtitle.html:130
 msgid "Season:"
-msgstr ""
+msgstr "Temporada:"
 
 #: templates/main/content_detail.html:55
 #: templates/main/upload_subtitle.html:135
 msgid "Episode:"
-msgstr ""
+msgstr "Episódio:"
 
 #: templates/main/content_detail.html:61
 msgid "Year:"
-msgstr ""
+msgstr "Ano:"
 
 #: templates/main/content_detail.html:66
 msgid "Runtime:"
@@ -1231,19 +1231,19 @@ msgstr ""
 
 #: templates/main/content_detail.html:71
 msgid "Genres:"
-msgstr ""
+msgstr "Gêneros:"
 
 #: templates/main/content_detail.html:96
 msgid "Overview"
-msgstr ""
+msgstr "Visão Geral"
 
 #: templates/main/content_detail.html:105
 msgid "Community Subtitles"
-msgstr ""
+msgstr "Legendas da Comunidade"
 
 #: templates/main/content_detail.html:111
 msgid "Reset All Selections"
-msgstr ""
+msgstr "Redefinir todas as seleções"
 
 #: templates/main/content_detail.html:115
 msgid "Upload New"
@@ -1251,37 +1251,37 @@ msgstr "Fazer novo upload"
 
 #: templates/main/content_detail.html:130
 msgid "Currently Selected"
-msgstr ""
+msgstr "Atualmente selecionado"
 
 #: templates/main/content_detail.html:134
 #: templates/main/content_detail.html:141
 msgid "Auto Selected"
-msgstr ""
+msgstr "Selecionado automaticamente"
 
 #: templates/main/content_detail.html:136
 #: templates/main/content_detail.html:143
 msgid "User Selected"
-msgstr ""
+msgstr "Usuário Selecionado"
 
 #: templates/main/content_detail.html:139
 msgid "Provider"
-msgstr ""
+msgstr "Provedor"
 
 #: templates/main/content_detail.html:170
 msgid "No subtitle selected for this language."
-msgstr ""
+msgstr "Nenhuma legenda selecionada para este idioma."
 
 #: templates/main/content_detail.html:218
 msgid "No community subtitles available for this content yet."
-msgstr ""
+msgstr "Ainda não há legendas da comunidade disponíveis para este conteúdo."
 
 #: templates/main/content_detail.html:220
 msgid "Be the first to upload subtitles"
-msgstr ""
+msgstr "Seja o primeiro a enviar legendas"
 
 #: templates/main/content_detail.html:229
 msgid "Provider Results"
-msgstr ""
+msgstr "Resultados do provedor"
 
 #: templates/main/content_detail.html:264
 msgid "No subtitles found from providers for your criteria and preferred languages."
@@ -1289,37 +1289,37 @@ msgstr "Não foram encontradas legendas dos provedores para seus critérios e id
 
 #: templates/main/content_detail.html:264
 msgid "Configure providers in your account settings"
-msgstr ""
+msgstr "Configure provedores nas configurações da sua conta"
 
 #: templates/main/content_detail.html:264
 msgid "to see results here."
-msgstr ""
+msgstr "para ver resultados aqui."
 
 #: templates/main/dashboard.html:8
 msgid "Your Dashboard"
-msgstr ""
+msgstr "Seu Painel"
 
 #: templates/main/dashboard.html:11
 #, python-format
 msgid "Welcome back, %(username)s! Here's your recent activity and subtitle history."
-msgstr ""
+msgstr "Bem-vindo de volta, %(username)s! Aqui está sua atividade recente e seu histórico de legendas."
 
 #: templates/main/dashboard.html:13
 msgid "Welcome back, Guest! Here's your recent activity and subtitle history."
-msgstr ""
+msgstr "Bem-vindo de volta, convidado! Aqui está sua atividade recente e histórico de legendas."
 
 #: templates/main/dashboard.html:23
 msgid "Recent Activity"
-msgstr ""
+msgstr "Atividade recente"
 
 #: templates/main/dashboard.html:24
 msgid "Elements:"
-msgstr ""
+msgstr "Elementos:"
 
 #: templates/main/dashboard.html:27
 #, python-format
 msgid "We store only your last %(max)s activities."
-msgstr ""
+msgstr "Nós armazenamos apenas suas últimas atividades %(max)s."
 
 #: templates/main/dashboard.html:70
 msgid "Are you sure you want to delete this activity record?"
@@ -1534,7 +1534,7 @@ msgstr ""
 
 #: templates/main/upload_subtitle.html:159
 msgid "Copy the ID from URL (e.g.,"
-msgstr ""
+msgstr "Copie o ID do URL (Ex:"
 
 #: templates/main/upload_subtitle.html:162
 msgid "Kitsu ID (Anime):"
@@ -1610,7 +1610,7 @@ msgstr ""
 
 #: templates/main/voted_subtitles.html:11
 msgid "View and manage all your subtitle votes."
-msgstr ""
+msgstr "Ver e gerenciar todas suas legendas votadas."
 
 #: templates/main/voted_subtitles.html:21
 #: templates/main/voted_subtitles.html:100
@@ -1619,11 +1619,11 @@ msgstr ""
 
 #: templates/main/voted_subtitles.html:58
 msgid "Total Votes:"
-msgstr ""
+msgstr "Total de votos:"
 
 #: templates/main/voted_subtitles.html:73
 msgid "Your Vote:"
-msgstr ""
+msgstr "Seu voto:"
 
 #: templates/main/voted_subtitles.html:76
 msgid "Voted:"

@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: stremio-community-subtitles\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2026-02-13 15:37+0100\n"
-"PO-Revision-Date: 2026-02-13 19:43\n"
+"PO-Revision-Date: 2026-02-13 20:19\n"
 "Last-Translator: \n"
 "Language-Team: Hebrew\n"
 "MIME-Version: 1.0\n"
@@ -20,43 +20,43 @@ msgstr ""
 
 #: app/email.py:125
 msgid "Stremio Community Subtitles - Confirm Your Email"
-msgstr ""
+msgstr "Stremio Community Subtitles - אנא אשר את כתובת הדוא\"ל שלך"
 
 #: app/email.py:135
 msgid "Stremio Community Subtitles - Reset Your Password"
-msgstr ""
+msgstr "Stremio Community Subtitles - איפוס סיסמא"
 
 #: app/forms.py:12 app/forms.py:20 app/forms.py:133
 msgid "Email"
-msgstr ""
+msgstr "כתובת דוא\"ל"
 
 #: app/forms.py:13 app/forms.py:21
 msgid "Password"
-msgstr ""
+msgstr "סיסמה"
 
 #: app/forms.py:14
 msgid "Remember Me"
-msgstr ""
+msgstr "זכור אותי"
 
 #: app/forms.py:15
 msgid "Sign In"
-msgstr ""
+msgstr "התחברות"
 
 #: app/forms.py:19
 msgid "Username"
-msgstr ""
+msgstr "שם משתמש"
 
 #: app/forms.py:22 app/forms.py:139
 msgid "Confirm Password"
-msgstr ""
+msgstr "אשר סיסמה"
 
 #: app/forms.py:23 app/forms.py:144
 msgid "Preferred Subtitle Languages"
-msgstr ""
+msgstr "שפה מועדפת לכתוביות"
 
 #: app/forms.py:24 templates/base.html:96 templates/main/index.html:14
 msgid "Register"
-msgstr ""
+msgstr "הרשמה"
 
 #: app/forms.py:49
 msgid "Subtitle File (.srt, .sub, .txt, .ass, .ssa)"
@@ -64,27 +64,27 @@ msgstr ""
 
 #: app/forms.py:51
 msgid "Only .srt, .sub, .txt, .ass, .ssa files allowed!"
-msgstr ""
+msgstr "רק קבצי .srt, .sub, .txt, .ass, .ssa files מותרים!"
 
 #: app/forms.py:53
 msgid "Subtitle Language"
-msgstr ""
+msgstr "שפת כתוביות"
 
 #: app/forms.py:54
 msgid "Encoding"
-msgstr ""
+msgstr "קידוד"
 
 #: app/forms.py:55
 msgid "FPS (Frames Per Second)"
-msgstr ""
+msgstr "FPS (Frames Per Second)"
 
 #: app/forms.py:56
 msgid "Auto"
-msgstr ""
+msgstr "אוטומטי"
 
 #: app/forms.py:59
 msgid "Author (Optional)"
-msgstr ""
+msgstr "יוצר (לא חובה)"
 
 #: app/forms.py:60
 msgid "Version/Sync Info (Optional)"
@@ -92,88 +92,88 @@ msgstr ""
 
 #: app/forms.py:63
 msgid "Content ID"
-msgstr ""
+msgstr "מספר הזיהוי של התוכן"
 
 #: app/forms.py:65
 msgid "IMDB ID (e.g., tt1234567) or Kitsu ID (e.g., kitsu:12345)"
-msgstr ""
+msgstr "IMDB ID (e.g., tt1234567) או Kitsu ID (e.g., kitsu:12345)"
 
 #: app/forms.py:66
 msgid "Content Type"
-msgstr ""
+msgstr "סוג תוכן"
 
 #: app/forms.py:67 templates/main/content_detail.html:30
 #: templates/main/dashboard.html:63 templates/main/upload_subtitle.html:116
 msgid "Movie"
-msgstr ""
+msgstr "סרט"
 
 #: app/forms.py:67
 msgid "TV Series"
-msgstr ""
+msgstr "סדרת טלוויזיה"
 
 #: app/forms.py:69
 msgid "Season Number"
-msgstr ""
+msgstr "מספר עונה"
 
 #: app/forms.py:71
 msgid "Required for TV series (default: 1)"
-msgstr ""
+msgstr "דרוש עבור סדרת טלוויזיה (ברירת מחדל: 1)"
 
 #: app/forms.py:72
 msgid "Episode Number"
-msgstr ""
+msgstr "מספר פרק"
 
 #: app/forms.py:74
 msgid "Required for TV series"
-msgstr ""
+msgstr "נדרש עבור סדרת טלוויזיה"
 
 #: app/forms.py:76 templates/main/upload_subtitle.html:4
 #: templates/main/upload_subtitle.html:11
 #: templates/main/upload_subtitle.html:21
 msgid "Upload Subtitle"
-msgstr ""
+msgstr "העלאת כתוביות"
 
 #: app/forms.py:116
 msgid "Content ID must be either IMDB ID (starting with \"tt\") or Kitsu ID (format \"kitsu:12345\")"
-msgstr ""
+msgstr "מספר המזהה של התוכן חייב להיות IMDB ID (מתחיל ב\"tt\") או Kitsu ID (פורמט \"kitsu:12345\")"
 
 #: app/forms.py:122
 msgid "Episode number is required for TV series"
-msgstr ""
+msgstr "מספר הפרק דרוש עבור סדרת טלוויזיה"
 
 #: app/forms.py:126
 msgid "Current Password"
-msgstr ""
+msgstr "סיסמה נוכחית"
 
 #: app/forms.py:127 app/forms.py:138
 msgid "New Password"
-msgstr ""
+msgstr "סיסמה חדשה"
 
 #: app/forms.py:128
 msgid "Confirm New Password"
-msgstr ""
+msgstr "אשר סיסמה חדשה"
 
 #: app/forms.py:129 templates/auth/change_password.html:11
 #: templates/main/account_settings.html:130
 msgid "Change Password"
-msgstr ""
+msgstr "שנה סיסמה"
 
 #: app/forms.py:134
 msgid "Request Password Reset"
-msgstr ""
+msgstr "בקש איפוס סיסמה"
 
 #: app/forms.py:140 templates/auth/reset_password_request.html:11
 #: templates/email/reset_password.html:54
 msgid "Reset Password"
-msgstr ""
+msgstr "אפס סיסמה"
 
 #: app/forms.py:145
 msgid "Update Preference"
-msgstr ""
+msgstr "עדכן העדפה"
 
 #: app/forms.py:149
 msgid "Use OpenSubtitles Integration"
-msgstr ""
+msgstr "השתמש באינטגרציית OpenSubtitles"
 
 #: app/forms.py:151 templates/providers/opensubtitles_form.html:3
 msgid "OpenSubtitles Username"
