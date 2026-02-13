@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: stremio-community-subtitles\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2026-02-13 23:14+0100\n"
-"PO-Revision-Date: 2026-02-13 19:43+0000\n"
+"PO-Revision-Date: 2026-02-13 22:29\n"
 "Last-Translator: \n"
 "Language-Team: Polish\n"
 "MIME-Version: 1.0\n"
@@ -1478,32 +1478,32 @@ msgstr "Prześlij napisy"
 
 #: templates/main/selected_subtitles.html:11
 msgid "View and manage all subtitles you've selected for your videos."
-msgstr ""
+msgstr "Zobacz i zarządzaj wszystkimi napisami, które wybrałeś dla swoich filmów."
 
 #: templates/main/selected_subtitles.html:21
 #: templates/main/selected_subtitles.html:128
 msgid "My Selected Subtitles"
-msgstr ""
+msgstr "Moje wybrane napisy"
 
 #: templates/main/selected_subtitles.html:60
 msgid "Votes:"
-msgstr ""
+msgstr "Głosy:"
 
 #: templates/main/selected_subtitles.html:97
 msgid "Selected:"
-msgstr ""
+msgstr "Wybrane:"
 
 #: templates/main/selected_subtitles.html:108
 msgid "Are you sure you want to delete this selection?"
-msgstr ""
+msgstr "Czy na pewno chcesz usunąć ten wybór?"
 
 #: templates/main/selected_subtitles.html:132
 msgid "No Selections Yet"
-msgstr ""
+msgstr "Brak wyborów"
 
 #: templates/main/selected_subtitles.html:133
 msgid "You haven't selected any subtitles yet."
-msgstr ""
+msgstr "Nie wybrałeś jeszcze żadnych napisów."
 
 #: templates/main/upload_subtitle.html:12
 msgid "Advanced Users"
@@ -1778,22 +1778,6 @@ msgid "SubSource returns ZIP files that may contain ASS format. This option will
 msgstr "SubSource zwraca pliki ZIP, które mogą zawierać format ASS. Ta opcja zawsze doda wpis ASS w Stremio, nawet jeśli w pliku .zip nie ma napisów .ass."
 
 #: templates/providers/subsource_form.html:23
-msgid ""
-"SubSource offers API access for subtitle downloads. Check their website "
-"for current limits."
-msgstr ""
-"SubSource oferuje dostęp do API do pobierania napisów. Sprawdź ich "
-"stronę, aby poznać aktualne limity."
+msgid "SubSource offers API access for subtitle downloads. Check their website for current limits."
+msgstr "SubSource oferuje dostęp do API do pobierania napisów. Sprawdź ich stronę, aby poznać aktualne limity."
 
-
-msgid "Vote removed."
-msgstr "Głos usunięty."
-
-msgid "Vote recorded."
-msgstr "Głos zapisany."
-
-msgid "Vote updated."
-msgstr "Głos zaktualizowany."
-
-msgid "Error processing vote."
-msgstr "Błąd podczas przetwarzania głosu."
