@@ -150,7 +150,10 @@ def create_app():
             'zh': {'flag': '🇨🇳', 'name': '中文'},
             'tr': {'flag': '🇹🇷', 'name': 'Türkçe'}
         }
-        current_lang = request.cookies.get('lang', 'en')
+        # Use same logic as get_locale()
+        current_lang = request.cookies.get('lang')
+        if not current_lang:
+            current_lang = request.accept_languages.best_match(app.config.get('LANGUAGES', ['en'])) or 'en'
         supported_langs = app.config.get('LANGUAGES', ['en'])
         return {
             'language_map': lang_map,
