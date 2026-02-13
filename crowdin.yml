@@ -3,5 +3,9 @@ api_token_env: CROWDIN_PERSONAL_TOKEN
 
 files:
   - source: translations/messages.pot
-    translation: translations/%locale_with_underscore%/LC_MESSAGES/messages.po
+    translation: translations/%locale%/LC_MESSAGES/messages.po
     update_option: update_as_unapproved
+    languages_mapping:
+      locale:
+        pt-BR: pt_BR
+        zh-CN: zh
