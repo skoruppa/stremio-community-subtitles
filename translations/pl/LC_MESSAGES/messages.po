@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: stremio-community-subtitles\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2026-02-13 11:41+0100\n"
-"PO-Revision-Date: 2026-02-13 11:39\n"
+"PO-Revision-Date: 2026-02-13 12:53\n"
 "Last-Translator: \n"
 "Language-Team: Polish\n"
 "MIME-Version: 1.0\n"
@@ -28,7 +28,7 @@ msgstr "Stremio Community Subtitles - Zresetuj swoje hasło"
 
 #: app/forms.py:12 app/forms.py:20 app/forms.py:133
 msgid "Email"
-msgstr ""
+msgstr "Email"
 
 #: app/forms.py:13 app/forms.py:21
 msgid "Password"
@@ -80,7 +80,7 @@ msgstr "FPS (klatki na sekundę)"
 
 #: app/forms.py:56
 msgid "Auto"
-msgstr ""
+msgstr "Auto"
 
 #: app/forms.py:59
 msgid "Author (Optional)"
@@ -135,7 +135,7 @@ msgstr "Prześlij napisy"
 
 #: app/forms.py:116
 msgid "Content ID must be either IMDB ID (starting with \"tt\") or Kitsu ID (format \"kitsu:12345\")"
-msgstr "ID treści musi być albo IMDB ID (zaczynające się od \"tt\") albo Kitsu ID (format \"kitsu:12345\") albo MAL ID (format \"mal:12345\")"
+msgstr "ID treści musi być albo IMDB ID (zaczynające się od \"tt\") albo Kitsu ID (format \"kitsu:12345\")"
 
 #: app/forms.py:122
 msgid "Episode number is required for TV series"
@@ -241,7 +241,7 @@ msgstr "Nie udało się wysłać emaila resetującego. Spróbuj ponownie późni
 
 #: app/routes/auth.py:216
 msgid "If that email is in our database, we sent a reset link"
-msgstr "Jeśli ten email jest w naszej bazie, wysłaliśmy link resetującyJeśli ten email znajduje się w naszej bazie danych, wysłaliśmy link resetujący"
+msgstr "Jeśli ten email znajduje się w naszej bazie danych, wysłaliśmy link resetujący"
 
 #: app/routes/auth.py:237
 msgid "Email is required."
@@ -257,7 +257,7 @@ msgstr "Nie udało się wysłać emaila potwierdzającego. Spróbuj ponownie pó
 
 #: app/routes/auth.py:252
 msgid "If that email is in our database and not confirmed, we sent a link."
-msgstr "Jeśli ten email jest w naszej bazie i nie jest potwierdzony, wysłaliśmy link.Jeśli ten email znajduje się w naszej bazie danych i nie został potwierdzony, wysłaliśmy link."
+msgstr "Jeśli ten email jest w naszej bazie i nie jest potwierdzony, wysłaliśmy link."
 
 #: app/routes/auth.py:264
 msgid "The confirmation link is invalid or has expired."
@@ -325,7 +325,7 @@ msgstr "Twoje konto zostało trwale usunięte."
 
 #: app/routes/main.py:272
 msgid "Error deleting account. Please try again or contact support."
-msgstr "Błąd usuwania konta. Spróbuj ponownie lub skontaktuj się z pomocą techniczną.Błąd podczas usuwania konta. Spróbuj ponownie lub skontaktuj się z pomocą techniczną."
+msgstr "Błąd podczas usuwania konta. Spróbuj ponownie lub skontaktuj się z pomocą techniczną."
 
 #: app/routes/providers.py:22 app/routes/providers.py:75
 #, python-format
@@ -529,7 +529,7 @@ msgstr "Ta operacja nie ma zastosowania do wpisów powiązanych z dostawcą w te
 
 #: app/routes/subtitles.py:1599
 msgid "Original subtitle does not have a file path, cannot mark as compatible."
-msgstr "Oryginalny napis nie ma ścieżki pliku, nie można oznaczyć jako kompatybilny.Oryginalne napisy nie mają ścieżki pliku, nie można oznaczyć jako kompatybilne."
+msgstr "Oryginalne napisy nie mają ścieżki pliku, nie można oznaczyć jako kompatybilne."
 
 #: app/routes/subtitles.py:1617
 msgid "A compatible subtitle entry for this hash already exists. Selecting it."
@@ -702,7 +702,7 @@ msgstr "Głos przeciw"
 #: templates/_subtitle_list_item.html:85
 #, python-format
 msgid "Mark this subtitle as compatible with the current video version (%(hash)s...)"
-msgstr ""
+msgstr "Oznacz te napisy jako zgodne z obecną wersją wideo (%(hash)s...)"
 
 #: templates/_subtitle_list_item.html:100
 msgid "Are you sure you want to delete this subtitle? This action cannot be undone."
@@ -779,7 +779,7 @@ msgstr "Ustawienia konta"
 
 #: templates/auth/login.html:26
 msgid "Forgot your password?"
-msgstr "Zresetuj swoje hasło"
+msgstr "Nie pamiętasz hasła?"
 
 #: templates/auth/login.html:29
 msgid "Didn't receive confirmation email?"
@@ -853,7 +853,7 @@ msgstr "Zresetuj hasło"
 
 #: templates/auth/reset_password.html:14
 msgid "Please enter your new password."
-msgstr "Zresetuj swoje hasło"
+msgstr "Podaj swoje nowe hasło."
 
 #: templates/auth/reset_password_request.html:14
 msgid "Enter your email address and we'll send you instructions to reset your password."
@@ -875,7 +875,7 @@ msgstr "Witaj %(username)s,"
 
 #: templates/email/confirm_email.html:51
 msgid "Thank you for registering with Stremio Community Subtitles! Please confirm your email address by clicking the button below:"
-msgstr ""
+msgstr "Dziękujemy za rejestrację w Stremio Community Subtitles! Aby potwierdzić swój adres e-mail, kliknij poniższy przycisk:"
 
 #: templates/email/confirm_email.html:54
 msgid "Confirm Email"
@@ -883,7 +883,7 @@ msgstr "Potwierdź email"
 
 #: templates/email/confirm_email.html:57 templates/email/reset_password.html:57
 msgid "If the button doesn't work, you can also copy and paste the following link into your browser:"
-msgstr ""
+msgstr "Jeśli przycisk nie działa, możesz również skopiować i wkleić poniższy link do przeglądarki:"
 
 #: templates/email/confirm_email.html:60 templates/email/confirm_email.txt:7
 msgid "This link will expire in 24 hours."
@@ -891,7 +891,7 @@ msgstr "Ten link wygaśnie za 24 godziny."
 
 #: templates/email/confirm_email.html:62 templates/email/confirm_email.txt:9
 msgid "If you did not register for Stremio Community Subtitles, please ignore this email."
-msgstr ""
+msgstr "Jeśli nie rejestrowałeś się w Stremio Community Subtitles, zignoruj tę wiadomość."
 
 #: templates/email/confirm_email.html:64 templates/email/confirm_email.txt:11
 #: templates/email/reset_password.html:64 templates/email/reset_password.txt:11
@@ -910,7 +910,7 @@ msgstr "To jest automatyczna wiadomość, proszę nie odpowiadać na ten email."
 
 #: templates/email/confirm_email.txt:3
 msgid "Thank you for registering with Stremio Community Subtitles! Please confirm your email address by clicking the link below:"
-msgstr ""
+msgstr "Dziękujemy za rejestrację w Stremio Community Subtitles! Proszę potwierdzić swój adres e-mail, klikając poniższy link:"
 
 #: templates/email/reset_password.html:5
 msgid "Reset Your Password"
@@ -918,7 +918,7 @@ msgstr "Zresetuj swoje hasło"
 
 #: templates/email/reset_password.html:51
 msgid "You have requested to reset your password. Please click the button below to set a new password:"
-msgstr ""
+msgstr "Zażądano zresetowania hasła. Kliknij poniższy przycisk, aby ustawić nowe hasło:"
 
 #: templates/email/reset_password.html:60 templates/email/reset_password.txt:7
 msgid "This link will expire in 1 hour."
@@ -970,7 +970,7 @@ msgstr "Dostawcy napisów"
 
 #: templates/main/account_settings.html:70
 msgid "Connect to external subtitle providers for enhanced search capabilities."
-msgstr "Połącz się z zewnętrznymi dostawcami napisów, aby uzyskać lepsze możliwości wyszukiwania.Połącz się z zewnętrznymi dostawcami napisów, aby rozszerzyć możliwości wyszukiwania."
+msgstr "Połącz się z zewnętrznymi dostawcami napisów, aby rozszerzyć możliwości wyszukiwania."
 
 #: templates/main/account_settings.html:85
 msgid "Account Information"
@@ -982,7 +982,7 @@ msgstr "Nazwa użytkownika:"
 
 #: templates/main/account_settings.html:93
 msgid "Email:"
-msgstr ""
+msgstr "Email:"
 
 #: templates/main/account_settings.html:96
 msgid "Member Since:"
@@ -1199,7 +1199,7 @@ msgstr "Serial"
 #: templates/main/content_detail.html:34
 #: templates/main/upload_subtitle.html:120
 msgid "ID:"
-msgstr ""
+msgstr "ID:"
 
 #: templates/main/content_detail.html:38
 #: templates/main/upload_subtitle.html:124
@@ -1314,7 +1314,7 @@ msgstr "Ostatnia aktywność"
 #: templates/main/dashboard.html:24
 #, python-format
 msgid "%(count)s element"
-msgstr ""
+msgstr "Elementów: %(count)s"
 
 #: templates/main/dashboard.html:27
 #, python-format
@@ -1331,11 +1331,11 @@ msgstr "Usuń aktywność"
 
 #: templates/main/dashboard.html:87
 msgid "No recent activity found. Start watching content in Stremio with the addon installed!"
-msgstr ""
+msgstr "Nie znaleziono ostatniej aktywności. Zacznij oglądać treści na Stremio z zainstalowanym dodatkiem!"
 
 #: templates/main/dashboard.html:100
 msgid "Install the addon in Stremio to start using community subtitles:"
-msgstr "Zainstaluj dodatek w Stremio używając swojego osobistego linku"
+msgstr "Zainstaluj dodatek w Stremio używając swojego osobistego linku:"
 
 #: templates/main/dashboard.html:107
 msgid "Your Stats"
@@ -1432,7 +1432,7 @@ msgstr "Brak napisów"
 
 #: templates/main/my_subtitles.html:105
 msgid "You haven't uploaded any subtitles yet."
-msgstr "Prześlij napisy"
+msgstr "Nie przesłano jeszcze żadnych napisów."
 
 #: templates/main/my_subtitles.html:107
 msgid "Upload Your First Subtitle"
@@ -1472,7 +1472,7 @@ msgstr "Podaj ID treści i typ treści, dla której chcesz przesłać napisy:"
 
 #: templates/main/upload_subtitle.html:53
 msgid "IMDB ID:"
-msgstr ""
+msgstr "IMDB ID:"
 
 #: templates/main/upload_subtitle.html:53
 #: templates/main/upload_subtitle.html:54
@@ -1485,7 +1485,7 @@ msgstr "(dla filmów i seriali TV)"
 
 #: templates/main/upload_subtitle.html:54
 msgid "Kitsu ID:"
-msgstr "Kitsu ID (Anime):"
+msgstr "Kitsu ID:"
 
 #: templates/main/upload_subtitle.html:54
 msgid "(for anime)"
@@ -1501,7 +1501,7 @@ msgstr "Numer sezonu (domyślnie: 1). Ignoruj dla kitsu"
 
 #: templates/main/upload_subtitle.html:74
 msgid "Episode number (required for series)"
-msgstr "Numer odcinka jest wymagany dla seriali"
+msgstr "Numer odcinka (wymagany dla seriali)"
 
 #: templates/main/upload_subtitle.html:84
 msgid "Enter 'utf8' (default), 'auto' for automatic detection, or a specific encoding like 'cp1250', 'latin1', etc."
@@ -1538,7 +1538,7 @@ msgstr "Skopiuj ID z URL (np."
 
 #: templates/main/upload_subtitle.html:162
 msgid "Kitsu ID (Anime):"
-msgstr ""
+msgstr "Kitsu ID (Anime):"
 
 #: templates/main/upload_subtitle.html:165
 msgid "Search for your anime"
@@ -1546,7 +1546,7 @@ msgstr "Wyszukaj swoje anime"
 
 #: templates/main/upload_subtitle.html:166
 msgid "Investigate url of the thumbnail"
-msgstr "Sprawdź URL miniatury"
+msgstr "Sprawdź url miniatury"
 
 #: templates/main/upload_subtitle.html:167
 msgid "Copy the ID from thumbnail's"
@@ -1590,7 +1590,7 @@ msgstr "Szanuj prawa autorskie i własność intelektualną"
 
 #: templates/main/upload_subtitle.html:187
 msgid "Advanced:"
-msgstr "Zaawansowani użytkownicy"
+msgstr "Zaawansowane:"
 
 #: templates/main/upload_subtitle.html:187
 msgid "No video hash association"
@@ -1635,11 +1635,11 @@ msgstr "Brak głosów"
 
 #: templates/main/voted_subtitles.html:105
 msgid "You haven't voted on any subtitles yet."
-msgstr "Prześlij napisy"
+msgstr "Nie głosowałeś jeszcze na żadne napisy."
 
 #: templates/providers/napisy24_settings.html:4
 msgid "is a Polish subtitle database. No authentication required - just click Connect to activate."
-msgstr ""
+msgstr "jest polską bazą napisów. Nie jest wymagane uwierzytelnianie - po prostu kliknij przycisk Połącz aby aktywować."
 
 #: templates/providers/opensubtitles_form.html:5
 msgid "Your OpenSubtitles.com username"
@@ -1659,7 +1659,7 @@ msgstr "Ważne:"
 
 #: templates/providers/opensubtitles_form.html:22
 msgid "OpenSubtitles has download limits."
-msgstr "Nazwa użytkownika OpenSubtitles"
+msgstr "OpenSubtitles posiada limity pobierania."
 
 #: templates/providers/opensubtitles_form.html:23
 msgid "Free accounts: 200 downloads/day. VIP accounts: Unlimited."
