@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: stremio-community-subtitles\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2026-02-13 11:41+0100\n"
-"PO-Revision-Date: 2026-02-13 12:53\n"
+"PO-Revision-Date: 2026-02-13 14:17\n"
 "Last-Translator: \n"
 "Language-Team: Polish\n"
 "MIME-Version: 1.0\n"
@@ -1296,7 +1296,7 @@ msgstr "aby zobaczyć wyniki tutaj."
 
 #: templates/main/dashboard.html:8
 msgid "Your Dashboard"
-msgstr "Panel"
+msgstr "Twój Panel Główny"
 
 #: templates/main/dashboard.html:11
 #, python-format
