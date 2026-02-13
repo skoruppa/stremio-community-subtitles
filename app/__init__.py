@@ -139,6 +139,7 @@ def create_app():
     
     @app.context_processor
     def inject_language_info():
+        import os
         lang_map = {
             'en': {'flag': '🇬🇧', 'name': 'English'},
             'pl': {'flag': '🇵🇱', 'name': 'Polski'},
@@ -161,10 +162,16 @@ def create_app():
         if not current_lang:
             current_lang = request.accept_languages.best_match(app.config.get('LANGUAGES', ['en'])) or 'en'
         supported_langs = app.config.get('LANGUAGES', ['en'])
+        
+        # Get CSS file mtime for cache busting
+        css_path = os.path.join(app.static_folder, 'css', 'style.css')
+        css_mtime = int(os.path.getmtime(css_path)) if os.path.exists(css_path) else 0
+        
         return {
             'language_map': lang_map,
             'current_language': current_lang,
-            'supported_languages': supported_langs
+            'supported_languages': supported_langs,
+            'css_version': css_mtime
         }
 
     return app
