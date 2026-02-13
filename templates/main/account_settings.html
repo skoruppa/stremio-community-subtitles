@@ -197,8 +197,8 @@
 
 {% block scripts %}
 {{ super() }}
-<script src="{{ url_for('static', filename='js/utils.js') }}"></script>
-<script src="{{ url_for('static', filename='js/account_settings.js') }}"></script>
+<script src="{{ url_for('static', filename='js/utils.js') }}?v={{ js_versions['utils.js'] }}"></script>
+<script src="{{ url_for('static', filename='js/account_settings.js') }}?v={{ js_versions['account_settings.js'] }}"></script>
 <script>
 // Enable delete button only when username matches
 document.getElementById('confirmUsername').addEventListener('input', function(e) {

@@ -167,11 +167,19 @@ def create_app():
         css_path = os.path.join(app.static_folder, 'css', 'style.css')
         css_mtime = int(os.path.getmtime(css_path)) if os.path.exists(css_path) else 0
         
+        # Get JS files mtime for cache busting
+        js_files = ['utils.js', 'account_settings.js', 'voting.js']
+        js_versions = {}
+        for js_file in js_files:
+            js_path = os.path.join(app.static_folder, 'js', js_file)
+            js_versions[js_file] = int(os.path.getmtime(js_path)) if os.path.exists(js_path) else 0
+        
         return {
             'language_map': lang_map,
             'current_language': current_lang,
             'supported_languages': supported_langs,
-            'css_version': css_mtime
+            'css_version': css_mtime,
+            'js_versions': js_versions
         }
 
     return app
