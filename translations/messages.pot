@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-02-13 11:41+0100\n"
+"POT-Creation-Date: 2026-02-13 15:37+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -102,7 +102,7 @@ msgid "Content Type"
 msgstr ""
 
 #: app/forms.py:67 templates/main/content_detail.html:30
-#: templates/main/dashboard.html:63
+#: templates/main/dashboard.html:63 templates/main/upload_subtitle.html:116
 msgid "Movie"
 msgstr ""
 
@@ -1240,6 +1240,7 @@ msgid "Type:"
 msgstr ""
 
 #: templates/main/content_detail.html:30 templates/main/dashboard.html:63
+#: templates/main/upload_subtitle.html:116
 msgid "Series"
 msgstr ""
 
@@ -1363,8 +1364,7 @@ msgid "Recent Activity"
 msgstr ""
 
 #: templates/main/dashboard.html:24
-#, python-format
-msgid "%(count)s element"
+msgid "Elements:"
 msgstr ""
 
 #: templates/main/dashboard.html:27

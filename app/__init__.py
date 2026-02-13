@@ -56,9 +56,12 @@ def create_app():
     # Locale selector for babel
     def get_locale():
         lang = request.cookies.get('lang')
-        if lang:
-            return lang
-        return request.accept_languages.best_match(app.config['LANGUAGES'])
+        if not lang:
+            lang = request.accept_languages.best_match(app.config['LANGUAGES'])
+        # Normalize: browser may send 'pl-pl', we need 'pl'
+        if lang and '-' in lang:
+            lang = lang.split('-')[0]
+        return lang
     
     babel.init_app(app, locale_selector=get_locale)
 

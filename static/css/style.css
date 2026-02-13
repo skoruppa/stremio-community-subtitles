@@ -181,3 +181,25 @@ body {
         width: auto;
     }
 }
+
+/* Mobile navbar adjustments */
+@media (max-width: 991.98px) {
+    .navbar-toggler {
+        padding: 0.15rem 0.4rem;
+        font-size: 1rem;
+    }
+    
+    .navbar-toggler-icon {
+        width: 1.2em;
+        height: 1.2em;
+    }
+    
+    #langDropdownMobile {
+        padding: 0.25rem 0.25rem 0.25rem 0.5rem;
+        font-size: 1.2rem;
+    }
+    
+    #langDropdownMobile::after {
+        display: none;
+    }
+}
