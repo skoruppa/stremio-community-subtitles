@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: stremio-community-subtitles\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-02-13 22:53+0100\n"
-"PO-Revision-Date: 2026-02-13 22:12\n"
+"POT-Creation-Date: 2026-02-13 23:14+0100\n"
+"PO-Revision-Date: 2026-02-13 22:29\n"
 "Last-Translator: \n"
 "Language-Team: German\n"
 "MIME-Version: 1.0\n"
@@ -440,19 +440,31 @@ msgstr ""
 msgid "Voting is not available for this type of subtitle."
 msgstr ""
 
-#: app/routes/subtitles.py:1069
+#: app/routes/subtitles.py:1069 templates/main/content_detail.html:327
+#: templates/main/my_subtitles.html:142
+#: templates/main/selected_subtitles.html:168
+#: templates/main/voted_subtitles.html:140
 msgid "Vote removed."
 msgstr ""
 
-#: app/routes/subtitles.py:1074
+#: app/routes/subtitles.py:1074 templates/main/content_detail.html:329
+#: templates/main/my_subtitles.html:144
+#: templates/main/selected_subtitles.html:170
+#: templates/main/voted_subtitles.html:142
 msgid "Vote updated."
 msgstr ""
 
-#: app/routes/subtitles.py:1080
+#: app/routes/subtitles.py:1080 templates/main/content_detail.html:328
+#: templates/main/my_subtitles.html:143
+#: templates/main/selected_subtitles.html:169
+#: templates/main/voted_subtitles.html:141
 msgid "Vote recorded."
 msgstr ""
 
-#: app/routes/subtitles.py:1091
+#: app/routes/subtitles.py:1091 templates/main/content_detail.html:330
+#: templates/main/my_subtitles.html:145
+#: templates/main/selected_subtitles.html:171
+#: templates/main/voted_subtitles.html:143
 msgid "Error processing vote."
 msgstr ""
 
