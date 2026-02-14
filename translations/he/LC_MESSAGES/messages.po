@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: stremio-community-subtitles\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2026-02-13 23:14+0100\n"
-"PO-Revision-Date: 2026-02-13 22:29\n"
+"PO-Revision-Date: 2026-02-14 23:37\n"
 "Last-Translator: \n"
 "Language-Team: Hebrew\n"
 "MIME-Version: 1.0\n"
@@ -209,7 +209,7 @@ msgstr "אימייל האישור נשלח"
 
 #: app/routes/auth.py:155
 msgid "Registration successful, but failed to send confirmation email. Please contact support."
-msgstr ""
+msgstr "הרישום הסתיים בהצלחה, אבל שליחת דוא\"ל האימות נכשלה. אנא פנה לתמיכה."
 
 #: app/routes/auth.py:157
 msgid "Registration successful! You can now log in."
@@ -217,191 +217,191 @@ msgstr "ההרשמה הסתיימה בהצלחה! ניתן להתחבר כעת"
 
 #: app/routes/auth.py:164
 msgid "An error occurred during registration."
-msgstr ""
+msgstr "אירעה שגיאה בעת הרישום."
 
 #: app/routes/auth.py:170
 msgid "An unexpected error occurred."
-msgstr ""
+msgstr "אירעה שגיאה בלתי צפויה."
 
 #: app/routes/auth.py:185
 msgid "Current password is incorrect"
-msgstr ""
+msgstr "הסיסמה הנוכחית שגויה"
 
 #: app/routes/auth.py:191
 msgid "Your password has been updated"
-msgstr ""
+msgstr "הסיסמה שלך עודכנה"
 
 #: app/routes/auth.py:211
 msgid "Check your email for instructions"
-msgstr ""
+msgstr "בדוק את הדוא\"ל שלך להוראות"
 
 #: app/routes/auth.py:214
 msgid "Failed to send reset email. Please try again later."
-msgstr ""
+msgstr "שליחת דוא\"ל האיפוס נכשלה. אנא נסה שוב מאוחר יותר."
 
 #: app/routes/auth.py:216
 msgid "If that email is in our database, we sent a reset link"
-msgstr ""
+msgstr "אם כתובת הדוא\"ל רשומה במאגר שלנו, נשלח דוא\"ל איפוס"
 
 #: app/routes/auth.py:237
 msgid "Email is required."
-msgstr ""
+msgstr "נדרשת כתובת דוא\"ל."
 
 #: app/routes/auth.py:247
 msgid "A new confirmation email has been sent."
-msgstr ""
+msgstr "נשלח דוא\"ל אימות חדש."
 
 #: app/routes/auth.py:250
 msgid "Failed to send confirmation email. Please try again later."
-msgstr ""
+msgstr "שליחת דוא\"ל אימות נכשלה. אנא נסה שוב מאוחר יותר."
 
 #: app/routes/auth.py:252
 msgid "If that email is in our database and not confirmed, we sent a link."
-msgstr ""
+msgstr "אם כתובת הדוא\"ל רשומה במאגר שלנו ולא אומתה, נשלח קישור."
 
 #: app/routes/auth.py:264
 msgid "The confirmation link is invalid or has expired."
-msgstr ""
+msgstr "קישור האימות אינו תקין או שפג תוקפו."
 
 #: app/routes/auth.py:270 app/routes/auth.py:299
 msgid "User not found."
-msgstr ""
+msgstr "משתמש לא נמצא."
 
 #: app/routes/auth.py:274
 msgid "Your email has already been confirmed."
-msgstr ""
+msgstr "כתובת הדוא\"ל שלך כבר אומתה."
 
 #: app/routes/auth.py:282
 msgid "Your email has been confirmed. You can now log in."
-msgstr ""
+msgstr "כתובת הדוא\"ל שלך אומתה. כעת תוכל להתחבר."
 
 #: app/routes/auth.py:293
 msgid "The reset link is invalid or has expired."
-msgstr ""
+msgstr "קישור האיפוס אינו תקין או שפג תוקפו."
 
 #: app/routes/auth.py:306
 msgid "Your password has been reset."
-msgstr ""
+msgstr "הסיסמה שלך אופסה."
 
 #: app/routes/content.py:205
 msgid "An error occurred while searching for subtitles."
-msgstr ""
+msgstr "אירעה שגיאה בעת חיפוש אחר כתוביות."
 
 #: app/routes/main.py:23 app/routes/main.py:90
 msgid "Please log in to access this page."
-msgstr ""
+msgstr "אנא התחבר בכדי לגשת לדף זה."
 
 #: app/routes/main.py:170
 msgid "Preferred languages updated successfully!"
-msgstr ""
+msgstr "שפות מועדפות עודכנו בהצלחה!"
 
 #: app/routes/main.py:175
 msgid "Failed to update language."
-msgstr ""
+msgstr "עדכון השפה נכשל."
 
 #: app/routes/main.py:207
 msgid "Activity record not found."
-msgstr ""
+msgstr "דו\"ח פעילות אינו נמצא."
 
 #: app/routes/main.py:217
 msgid "You do not have permission to delete this activity record."
-msgstr ""
+msgstr "אין לך הרשאה למחוק את דו\"ח פעילות זה."
 
 #: app/routes/main.py:223
 msgid "Activity record deleted successfully."
-msgstr ""
+msgstr "דו\"ח פעילות נמחק בהצלחה."
 
 #: app/routes/main.py:227
 msgid "Error deleting activity record. Please try again."
-msgstr ""
+msgstr "שגיאה בעת מחיקת דו\"ח פעילות. אנא נסה שוב."
 
 #: app/routes/main.py:245
 msgid "Username confirmation does not match. Account not deleted."
-msgstr ""
+msgstr "אימות שם משתמש אינו תואם. החשבון לא נמחק."
 
 #: app/routes/main.py:266
 msgid "Your account has been permanently deleted."
-msgstr ""
+msgstr "החשבון שלך נמחק לצמיתות."
 
 #: app/routes/main.py:272
 msgid "Error deleting account. Please try again or contact support."
-msgstr ""
+msgstr "שגיאה בעת מחיקת חשבון. אנא נסה שוב או פנה לתמיכה."
 
 #: app/routes/providers.py:22 app/routes/providers.py:75
 #, python-format
 msgid "Provider %(name)s not found"
-msgstr ""
+msgstr "ספק %(name)s לא נמצא"
 
 #: app/routes/providers.py:49
 #, python-format
 msgid "%(name)s settings updated!"
-msgstr ""
+msgstr "הגדרות %(name)s עודכנו!"
 
 #: app/routes/providers.py:60
 #, python-format
 msgid "Successfully connected to %(name)s!"
-msgstr ""
+msgstr "התחברת בהצלחה ל%(name)s!"
 
 #: app/routes/providers.py:62
 #, python-format
 msgid "Authentication failed: %(error)s"
-msgstr ""
+msgstr "אימות נכשל: %(error)s"
 
 #: app/routes/providers.py:64
 #, python-format
 msgid "Error connecting to %(name)s: %(error)s"
-msgstr ""
+msgstr "שגיאה בעת חיבור ל%(name)s: שגיאה %(error)s"
 
 #: app/routes/providers.py:91
 #, python-format
 msgid "Disconnected from %(name)s"
-msgstr ""
+msgstr "נותקת מ%(name)s"
 
 #: app/routes/providers.py:93
 #, python-format
 msgid "Error disconnecting: %(error)s"
-msgstr ""
+msgstr "שגיאה בעת התנתקות: %(error)s"
 
 #: app/routes/providers.py:119 app/routes/providers.py:202
 msgid "Missing required parameters"
-msgstr ""
+msgstr "פרמטרים דרושים חסרים"
 
 #: app/routes/providers.py:164
 msgid "Subtitle selected successfully!"
-msgstr ""
+msgstr "כתוביות נבחרו בהצלחה!"
 
 #: app/routes/providers.py:167
 #, python-format
 msgid "Error selecting subtitle: %(error)s"
-msgstr ""
+msgstr "שגיאה בעת בחירת כתוביות: %(error)s"
 
 #: app/routes/providers.py:189
 msgid "Cannot link subtitle: video has no hash"
-msgstr ""
+msgstr "בלתי אפשרי לקשר כתוביות: לסרטון אין גיבוב"
 
 #: app/routes/providers.py:225
 msgid "This subtitle is already linked to this video version"
-msgstr ""
+msgstr "כתוביות אלה כבר קושרו לגרסת הסרטון הזו"
 
 #: app/routes/providers.py:312
 msgid "Subtitle successfully linked to this video version!"
-msgstr ""
+msgstr "כתוביות קושרו בהצלחה לגרסת הסרטון הזו!"
 
 #: app/routes/providers.py:316
 msgid "Error linking subtitle"
-msgstr ""
+msgstr "שגיאה בעת קישור כתוביות"
 
 #: app/routes/subtitles.py:734
 msgid "Content ID must be either IMDB ID (starting with \"tt\") or Kitsu ID (format \"kitsu:12345\") or MAL ID (format \"mal:12345\")"
-msgstr ""
+msgstr "מזהה התוכן חייב להיות מזהה IMDB (שמתחיל ב-\"tt\") או מזהה Kitsu (פורמט \"kitsu:12345\") או מזהה MAL (פורמט \"mal:12345\")"
 
 #: app/routes/subtitles.py:744
 msgid "Episode number is required for series"
-msgstr ""
+msgstr "מספר הפרש דרוש עבור סדרה"
 
 #: app/routes/subtitles.py:835
 msgid "These subtitles already exist for this content and video version."
-msgstr ""
+msgstr "כתוביות אלה כבר קיימות עבור התוכן הזה וגרסת הסרטון."
 
 #: app/routes/subtitles.py:866
 msgid "Server error: Cloudinary storage is not properly configured."
@@ -410,11 +410,11 @@ msgstr ""
 #: app/routes/subtitles.py:892
 #, python-format
 msgid "Error processing/uploading subtitle: %(error)s"
-msgstr ""
+msgstr "שגיאה בעת עיבוד/העלאת כתוביות: %(error)s"
 
 #: app/routes/subtitles.py:901
 msgid "Internal error: Subtitle path not determined."
-msgstr ""
+msgstr "שגיאה פנימית: נתיב הכתוביות לא נקבע."
 
 #: app/routes/subtitles.py:959
 msgid "Subtitle uploaded and selected successfully!"

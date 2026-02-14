@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: stremio-community-subtitles\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2026-02-13 23:14+0100\n"
-"PO-Revision-Date: 2026-02-14 00:56\n"
+"PO-Revision-Date: 2026-02-14 23:37\n"
 "Last-Translator: \n"
 "Language-Team: Portuguese, Brazilian\n"
 "MIME-Version: 1.0\n"
@@ -614,7 +614,7 @@ msgstr "Configurações do %(name)s"
 #: templates/_provider_status.html:104 templates/providers/subdl_form.html:15
 #: templates/providers/subsource_form.html:14
 msgid "Try to provide ASS/SSA format"
-msgstr "Tentar fornecer formato ASS/SSA"
+msgstr "Tentar fornecer formato ass/ssa"
 
 #: templates/_provider_status.html:107
 msgid "Enable this to always offer ASS format option for this provider."
@@ -761,7 +761,7 @@ msgstr "Sair"
 #: templates/auth/login.html:11 templates/base.html:93
 #: templates/main/index.html:13
 msgid "Login"
-msgstr "Login"
+msgstr "Entrar"
 
 #: templates/base.html:120
 msgid "Like my addon? Consider"
@@ -1121,11 +1121,11 @@ msgstr "Siga as instruções abaixo para instalar o Addon do Community Subtitles
 
 #: templates/main/configure.html:19
 msgid "Your Personal Addon Link"
-msgstr "Seu link particular do Addon"
+msgstr "Seu link próprio do Addon:"
 
 #: templates/main/configure.html:25
 msgid "This is your personal addon link. Do not share it with others as it's tied to your account."
-msgstr "Esse é seu link particular do Addon. Não compartilhe com os outros, pois é associado com a sua conta."
+msgstr "Esse é seu link próprio do Addon. Não compartilhe com os outros, pois é associado com a sua conta."
 
 #: templates/main/configure.html:31
 msgid "Copy"
@@ -1430,7 +1430,7 @@ msgstr "Cadastre uma conta"
 
 #: templates/main/index.html:58
 msgid "Install the addon in Stremio using your personal link"
-msgstr "Instale o Addon no Stremio usando seu link particular"
+msgstr "Instale o Addon no Stremio usando seu link próprio."
 
 #: templates/main/index.html:59
 msgid "Start watching content with community subtitles"
@@ -1487,7 +1487,7 @@ msgstr ""
 
 #: templates/main/selected_subtitles.html:60
 msgid "Votes:"
-msgstr ""
+msgstr "Votada:"
 
 #: templates/main/selected_subtitles.html:97
 msgid "Selected:"
@@ -1535,7 +1535,7 @@ msgstr "Identificação do conteúdo"
 
 #: templates/main/upload_subtitle.html:51
 msgid "Provide the Content ID and type for the content you want to upload subtitles for:"
-msgstr "Forneça o ID do Conteúdo e o tipo de conteúdo para qual você quer faer upload:"
+msgstr "Forneça o ID do Conteúdo e o tipo de conteúdo para qual você quer fazer upload:"
 
 #: templates/main/upload_subtitle.html:53
 msgid "IMDB ID:"
