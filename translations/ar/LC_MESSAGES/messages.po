@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: stremio-community-subtitles\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2026-02-13 23:14+0100\n"
-"PO-Revision-Date: 2026-02-14 00:56\n"
+"PO-Revision-Date: 2026-02-14 01:43\n"
 "Last-Translator: \n"
 "Language-Team: Arabic\n"
 "MIME-Version: 1.0\n"
@@ -1377,36 +1377,36 @@ msgstr "إحصائياتك"
 
 #: templates/main/dashboard.html:112
 msgid "Uploaded Subtitles"
-msgstr ""
+msgstr "الترجمات المرفوعة"
 
 #: templates/main/dashboard.html:116 templates/main/selected_subtitles.html:4
 #: templates/main/selected_subtitles.html:9
 msgid "Selected Subtitles"
-msgstr ""
+msgstr "الترجمات المحددة"
 
 #: templates/main/dashboard.html:120
 msgid "Votes Cast"
-msgstr ""
+msgstr "الأصوات المقدمة"
 
 #: templates/main/index.html:7
 msgid "Stremio Community Subtitles Addon"
-msgstr ""
+msgstr "إضافة ترجمة مجتمع البث"
 
 #: templates/main/index.html:10
 msgid "Find, share, and vote on subtitles provided by the community for Stremio. Log in or register to get started and receive your personalized addon installation link."
-msgstr ""
+msgstr "البحث عن الترجمة المقدمة من المجتمع لستريميو ومشاركتها والتصويت عليها. قم بتسجيل الدخول أو التسجيل للبدء واستلام رابط تثبيت الإضافات الشخصية الخاص بك."
 
 #: templates/main/index.html:24
 msgid "Find Subtitles"
-msgstr ""
+msgstr "البحث عن الترجمات"
 
 #: templates/main/index.html:25
 msgid "Easily find subtitles for your favorite movies and TV shows directly in Stremio."
-msgstr ""
+msgstr "ابحث بسهولة عن ترجمات للأفلام والبرامج التلفزيونية المفضلة لديك مباشرة في ستريميو."
 
 #: templates/main/index.html:33
 msgid "Share Subtitles"
-msgstr ""
+msgstr "مشاركة الترجمة"
 
 #: templates/main/index.html:34
 msgid "Upload and share your subtitles with the community to help others enjoy content in their language."

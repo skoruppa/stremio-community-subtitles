@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: stremio-community-subtitles\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2026-02-13 23:14+0100\n"
-"PO-Revision-Date: 2026-02-14 00:56\n"
+"PO-Revision-Date: 2026-02-14 01:43\n"
 "Last-Translator: \n"
 "Language-Team: Vietnamese\n"
 "MIME-Version: 1.0\n"
@@ -193,7 +193,7 @@ msgstr "Mật khẩu OpenSubtitles.com của bạn"
 
 #: app/forms.py:162
 msgid "Save OpenSubtitles Settings"
-msgstr "Lưu cài đặt OpenSubtitles"
+msgstr "Lưu cài đặt OpenSubtitles "
 
 #: app/routes/auth.py:33
 msgid "Invalid email or password"
@@ -201,7 +201,7 @@ msgstr "Email hoặc mật khẩu không hợp lệ"
 
 #: app/routes/auth.py:37
 msgid "Please confirm your email address before logging in."
-msgstr "Vui lòng xác nhận địa chỉ Email của bạn trước khi đăng nhập."
+msgstr "Vui lòng xác nhận email của bạn trước khi đăng nhập"
 
 #: app/routes/auth.py:152
 msgid "A confirmation email has been sent."
@@ -335,7 +335,7 @@ msgstr "Không tìm thấy nhà cung cấp %(name)s"
 #: app/routes/providers.py:49
 #, python-format
 msgid "%(name)s settings updated!"
-msgstr "Đã cập nhật cài đặt %(name)s!"
+msgstr "Cài đặt  %(name)s đã được cập nhật!"
 
 #: app/routes/providers.py:60
 #, python-format
@@ -381,7 +381,7 @@ msgstr "Không thể liên kết phụ đề: video không có mã hash"
 
 #: app/routes/providers.py:225
 msgid "This subtitle is already linked to this video version"
-msgstr "Phụ đề này đã được liên kết với phiên bản video này"
+msgstr "Phụ đề này đã được liên kết với phiên bản video này."
 
 #: app/routes/providers.py:312
 msgid "Subtitle successfully linked to this video version!"
@@ -393,7 +393,7 @@ msgstr "Lỗi liên kết phụ đề"
 
 #: app/routes/subtitles.py:734
 msgid "Content ID must be either IMDB ID (starting with \"tt\") or Kitsu ID (format \"kitsu:12345\") or MAL ID (format \"mal:12345\")"
-msgstr "Content ID phải là IMDB ID (bắt đầu bằng \"tt\") hoặc Kitsu ID (định dạng \"kitsu:12345\") hoặc MAL ID (định dạng \"mal:12345\")"
+msgstr "Content ID phải là IMDB ID (bắt đầu bằng \"tt\") hoặc Kitsu ID (định dạng \"kitsu:12345\") hoặc MAL ID (định dạng \"mal:12345\")."
 
 #: app/routes/subtitles.py:744
 msgid "Episode number is required for series"
