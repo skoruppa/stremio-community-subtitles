@@ -157,11 +157,21 @@ def create_app():
             'he': {'flag': '🇮🇱', 'name': 'עברית'},
             'vi': {'flag': '🇻🇳', 'name': 'Tiếng Việt'}
         }
+        
+        # Check which languages have translations (have .mo files)
+        available_languages = ['en']  # English is always available
+        translations_dir = os.path.join(os.path.dirname(__file__), '..', 'translations')
+        for lang_code in app.config.get('LANGUAGES', []):
+            if lang_code == 'en':
+                continue
+            mo_file = os.path.join(translations_dir, lang_code, 'LC_MESSAGES', 'messages.mo')
+            if os.path.exists(mo_file) and os.path.getsize(mo_file) > 700:  # Check if file has any translations (>700B)
+                available_languages.append(lang_code)
+        
         # Use same logic as get_locale()
         current_lang = request.cookies.get('lang')
         if not current_lang:
-            current_lang = request.accept_languages.best_match(app.config.get('LANGUAGES', ['en'])) or 'en'
-        supported_langs = app.config.get('LANGUAGES', ['en'])
+            current_lang = request.accept_languages.best_match(available_languages) or 'en'
         
         # Get CSS file mtime for cache busting
         css_path = os.path.join(app.static_folder, 'css', 'style.css')
@@ -177,7 +187,7 @@ def create_app():
         return {
             'language_map': lang_map,
             'current_language': current_lang,
-            'supported_languages': supported_langs,
+            'supported_languages': available_languages,
             'css_version': css_mtime,
             'js_versions': js_versions
         }
