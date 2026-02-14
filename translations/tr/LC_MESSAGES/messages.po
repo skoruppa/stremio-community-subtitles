@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: stremio-community-subtitles\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2026-02-13 23:14+0100\n"
-"PO-Revision-Date: 2026-02-14 00:56\n"
+"PO-Revision-Date: 2026-02-14 01:43\n"
 "Last-Translator: \n"
 "Language-Team: Turkish\n"
 "MIME-Version: 1.0\n"
@@ -261,135 +261,135 @@ msgstr "Eğer veritabanımızda böyle bir e-posta varsa ve onaylanmadıysa bağ
 
 #: app/routes/auth.py:264
 msgid "The confirmation link is invalid or has expired."
-msgstr ""
+msgstr "Onay bağlantısı geçersiz veya süresi dolmuş."
 
 #: app/routes/auth.py:270 app/routes/auth.py:299
 msgid "User not found."
-msgstr ""
+msgstr "Kullanıcı bulunamadı."
 
 #: app/routes/auth.py:274
 msgid "Your email has already been confirmed."
-msgstr ""
+msgstr "E-postan adresiniz zaten onaylanmış."
 
 #: app/routes/auth.py:282
 msgid "Your email has been confirmed. You can now log in."
-msgstr ""
+msgstr "E-postanız onaylandı. Artık giriş yapabilirsiniz."
 
 #: app/routes/auth.py:293
 msgid "The reset link is invalid or has expired."
-msgstr ""
+msgstr "Sıfırlama bağlantısı geçersiz veya süresi dolmuş."
 
 #: app/routes/auth.py:306
 msgid "Your password has been reset."
-msgstr ""
+msgstr "Şifreniz sıfırlandı."
 
 #: app/routes/content.py:205
 msgid "An error occurred while searching for subtitles."
-msgstr ""
+msgstr "Altyazılar aranırken bir hata oluştu."
 
 #: app/routes/main.py:23 app/routes/main.py:90
 msgid "Please log in to access this page."
-msgstr ""
+msgstr "Bu sayfaya ulaşabilmek için lütfen giriş yapın."
 
 #: app/routes/main.py:170
 msgid "Preferred languages updated successfully!"
-msgstr ""
+msgstr "Tercih edilen diller başarıyla güncellendi!"
 
 #: app/routes/main.py:175
 msgid "Failed to update language."
-msgstr ""
+msgstr "Dil güncellenirken hata oluştu."
 
 #: app/routes/main.py:207
 msgid "Activity record not found."
-msgstr ""
+msgstr "Faaliyet kaydı bulunamadı."
 
 #: app/routes/main.py:217
 msgid "You do not have permission to delete this activity record."
-msgstr ""
+msgstr "Bu faaliyet kaydını silmeye yetkiniz yok."
 
 #: app/routes/main.py:223
 msgid "Activity record deleted successfully."
-msgstr ""
+msgstr "Faaliyet kaydı başarıyla silindi."
 
 #: app/routes/main.py:227
 msgid "Error deleting activity record. Please try again."
-msgstr ""
+msgstr "Faaliyet kaydını silerken hata oluştu. Lütfen tekrar deneyin."
 
 #: app/routes/main.py:245
 msgid "Username confirmation does not match. Account not deleted."
-msgstr ""
+msgstr "Kullanıcı adı onayı eşleşmiyor. Hesap silinmedi."
 
 #: app/routes/main.py:266
 msgid "Your account has been permanently deleted."
-msgstr ""
+msgstr "Hesabınız kalıcı olarak silindi."
 
 #: app/routes/main.py:272
 msgid "Error deleting account. Please try again or contact support."
-msgstr ""
+msgstr "Hesabınızı silerken hata oluştu. Lütfen tekrar deneyin veya destekle iletişime geçin."
 
 #: app/routes/providers.py:22 app/routes/providers.py:75
 #, python-format
 msgid "Provider %(name)s not found"
-msgstr ""
+msgstr "Sağlayıcı %(name)s bulunamadı"
 
 #: app/routes/providers.py:49
 #, python-format
 msgid "%(name)s settings updated!"
-msgstr ""
+msgstr "%(name)s ayarları güncellendi!"
 
 #: app/routes/providers.py:60
 #, python-format
 msgid "Successfully connected to %(name)s!"
-msgstr ""
+msgstr "Başarıyla %(name)s bağlandı!"
 
 #: app/routes/providers.py:62
 #, python-format
 msgid "Authentication failed: %(error)s"
-msgstr ""
+msgstr "Doğrulama başarısız: %(error)s"
 
 #: app/routes/providers.py:64
 #, python-format
 msgid "Error connecting to %(name)s: %(error)s"
-msgstr ""
+msgstr "%(name)s ile bağlanırken hata: %(error)s"
 
 #: app/routes/providers.py:91
 #, python-format
 msgid "Disconnected from %(name)s"
-msgstr ""
+msgstr "%(name)s ile bağlantı kesildi"
 
 #: app/routes/providers.py:93
 #, python-format
 msgid "Error disconnecting: %(error)s"
-msgstr ""
+msgstr "Bağlantı kesilme hatası: %(error)s"
 
 #: app/routes/providers.py:119 app/routes/providers.py:202
 msgid "Missing required parameters"
-msgstr ""
+msgstr "Gerekli parametreler eksik"
 
 #: app/routes/providers.py:164
 msgid "Subtitle selected successfully!"
-msgstr ""
+msgstr "Atlyazı başarıyla seçildi!"
 
 #: app/routes/providers.py:167
 #, python-format
 msgid "Error selecting subtitle: %(error)s"
-msgstr ""
+msgstr "Altyazı seçerken hata oluştu: %(error)s"
 
 #: app/routes/providers.py:189
 msgid "Cannot link subtitle: video has no hash"
-msgstr ""
+msgstr "Altyazı bağlaştırılamadı: videoda hash yok"
 
 #: app/routes/providers.py:225
 msgid "This subtitle is already linked to this video version"
-msgstr ""
+msgstr "Bu altyazı zaten bu video sürümüyle bağlanmış"
 
 #: app/routes/providers.py:312
 msgid "Subtitle successfully linked to this video version!"
-msgstr ""
+msgstr "Altyazı bu video sürümüne başarıyla eklendi!"
 
 #: app/routes/providers.py:316
 msgid "Error linking subtitle"
-msgstr ""
+msgstr "Altyazıyı bağlanma hatası"
 
 #: app/routes/subtitles.py:734
 msgid "Content ID must be either IMDB ID (starting with \"tt\") or Kitsu ID (format \"kitsu:12345\") or MAL ID (format \"mal:12345\")"
