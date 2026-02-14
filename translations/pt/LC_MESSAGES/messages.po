@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: stremio-community-subtitles\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2026-02-13 23:14+0100\n"
-"PO-Revision-Date: 2026-02-13 22:29\n"
+"PO-Revision-Date: 2026-02-14 00:56\n"
 "Last-Translator: \n"
 "Language-Team: Portuguese\n"
 "MIME-Version: 1.0\n"
@@ -60,7 +60,7 @@ msgstr "Registar"
 
 #: app/forms.py:49
 msgid "Subtitle File (.srt, .sub, .txt, .ass, .ssa)"
-msgstr "Ficheiro de Legenda"
+msgstr "Arquivo de Legenda (.srt, .sub, .txt, .ass, .ssa)"
 
 #: app/forms.py:51
 msgid "Only .srt, .sub, .txt, .ass, .ssa files allowed!"
@@ -261,7 +261,7 @@ msgstr "Se este email constar da nossa base dados e não tiver sido confirmado, 
 
 #: app/routes/auth.py:264
 msgid "The confirmation link is invalid or has expired."
-msgstr "O link de confirmação é inválido ou expirou"
+msgstr "O link de confirmação é inválido ou expirou."
 
 #: app/routes/auth.py:270 app/routes/auth.py:299
 msgid "User not found."
@@ -321,7 +321,7 @@ msgstr "Confirmação de nome de utilizador não corresponde. Conta não excluí
 
 #: app/routes/main.py:266
 msgid "Your account has been permanently deleted."
-msgstr "A sua conta foi permanentemente eliminada"
+msgstr "A sua conta foi permanentemente eliminada."
 
 #: app/routes/main.py:272
 msgid "Error deleting account. Please try again or contact support."
@@ -445,7 +445,7 @@ msgstr "O voto não está disponível para este tipo de legenda."
 #: templates/main/selected_subtitles.html:168
 #: templates/main/voted_subtitles.html:140
 msgid "Vote removed."
-msgstr "Voto removido"
+msgstr "Voto removido."
 
 #: app/routes/subtitles.py:1074 templates/main/content_detail.html:329
 #: templates/main/my_subtitles.html:144
@@ -633,7 +633,7 @@ msgstr "Guardar"
 #: templates/main/selected_subtitles.html:68
 #: templates/main/voted_subtitles.html:54
 msgid "Uploader:"
-msgstr "Autor do Upload"
+msgstr "Autor do Upload:"
 
 #: templates/_provider_subtitle_list_item.html:26
 msgid "Rating:"
@@ -641,7 +641,7 @@ msgstr "Avaliação:"
 
 #: templates/_provider_subtitle_list_item.html:29
 msgid "Downloads:"
-msgstr "Transferências"
+msgstr "Transferências:"
 
 #: templates/_provider_subtitle_list_item.html:34
 #: templates/main/selected_subtitles.html:93
@@ -769,11 +769,11 @@ msgstr "Gostou do meu addon? Considere"
 
 #: templates/base.html:120
 msgid "buying me a coffee"
-msgstr "Compra-me um café!"
+msgstr "compra-me um café"
 
 #: templates/auth/change_password.html:26 templates/auth/reset_password.html:27
 msgid "Password Tips"
-msgstr "Dicas para palavras-passe:"
+msgstr "Dicas para palavras-passe"
 
 #: templates/auth/change_password.html:28 templates/auth/reset_password.html:29
 msgid "Use at least 8 characters"
@@ -830,7 +830,7 @@ msgstr "Porquê Registar?"
 
 #: templates/auth/register.html:46
 msgid "Get your personal Stremio addon installation link"
-msgstr "Obtenha o seu link de instalação do addon único para o Stremio."
+msgstr "Obtenha o seu link de instalação do addon único para o Stremio"
 
 #: templates/auth/register.html:50
 msgid "Upload and share subtitles with the community"
@@ -851,7 +851,7 @@ msgstr "Reenviar o E-mail de Confirmação"
 
 #: templates/auth/resend_confirmation.html:13
 msgid "If you didn't receive the confirmation email or the link has expired, you can request a new one."
-msgstr "Se não recebeu o e-mail de confirmação ou o link expirou,  pode solicitar um novo."
+msgstr "Se não recebeu o e-mail de confirmação ou o link expirou, pode solicitar um novo."
 
 #: templates/auth/resend_confirmation.html:19
 msgid "Email Address"
@@ -871,7 +871,7 @@ msgstr "Definir nova palavra-passe"
 
 #: templates/auth/reset_password.html:14
 msgid "Please enter your new password."
-msgstr "Por favor, introduza a sua nova palavra-passe "
+msgstr "Por favor, introduza a sua nova palavra-passe."
 
 #: templates/auth/reset_password_request.html:14
 msgid "Enter your email address and we'll send you instructions to reset your password."
@@ -901,7 +901,7 @@ msgstr "Confirmar endereço de e-mail"
 
 #: templates/email/confirm_email.html:57 templates/email/reset_password.html:57
 msgid "If the button doesn't work, you can also copy and paste the following link into your browser:"
-msgstr "Se o botão não funcionar, pode copiar e colar o seguinte link no seu navegador."
+msgstr "Se o botão não funcionar, pode copiar e colar o seguinte link no seu navegador:"
 
 #: templates/email/confirm_email.html:60 templates/email/confirm_email.txt:7
 msgid "This link will expire in 24 hours."
@@ -928,7 +928,7 @@ msgstr "Esta é uma mensagem automática, por favor, não responda a este e-mail
 
 #: templates/email/confirm_email.txt:3
 msgid "Thank you for registering with Stremio Community Subtitles! Please confirm your email address by clicking the link below:"
-msgstr "Obrigado por se registar na comunidade Stremio Subtitles! Por favor confirme o seu endereço de email ao clicar na ligação abaixo."
+msgstr "Obrigado por se registar na comunidade Stremio Subtitles! Por favor confirme o seu endereço de email ao clicar na ligação abaixo:"
 
 #: templates/email/reset_password.html:5
 msgid "Reset Your Password"
@@ -949,7 +949,7 @@ msgstr "Se não solicitou uma redefinição de senha, ignore este e-mail e a sua
 #: templates/email/reset_password.txt:3
 msgid "You have requested to reset your password. Please click the link below to set a new password:"
 msgstr "Solicitou a alteração da palavra passe.\n"
-"Por favor, clique na ligação abaixo para definir uma nova palavra passe."
+"Por favor, clique na ligação abaixo para definir uma nova palavra passe:"
 
 #: templates/main/account_settings.html:11
 msgid "Manage your account preferences and settings."
@@ -1687,7 +1687,7 @@ msgstr "As minhas Legendas Votadas"
 
 #: templates/main/voted_subtitles.html:58
 msgid "Total Votes:"
-msgstr "Total de Votos"
+msgstr "Total de Votos:"
 
 #: templates/main/voted_subtitles.html:73
 msgid "Your Vote:"

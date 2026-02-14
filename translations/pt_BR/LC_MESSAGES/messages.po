@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: stremio-community-subtitles\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2026-02-13 23:14+0100\n"
-"PO-Revision-Date: 2026-02-13 22:29\n"
+"PO-Revision-Date: 2026-02-14 00:56\n"
 "Last-Translator: \n"
 "Language-Team: Portuguese, Brazilian\n"
 "MIME-Version: 1.0\n"
@@ -32,7 +32,7 @@ msgstr "E-mail"
 
 #: app/forms.py:13 app/forms.py:21
 msgid "Password"
-msgstr "Senha:"
+msgstr "Senha"
 
 #: app/forms.py:14
 msgid "Remember Me"
@@ -44,23 +44,23 @@ msgstr "Entrar"
 
 #: app/forms.py:19
 msgid "Username"
-msgstr "Usuário:"
+msgstr "Usuário"
 
 #: app/forms.py:22 app/forms.py:139
 msgid "Confirm Password"
-msgstr "Confirmar senha:"
+msgstr "Confirmar senha"
 
 #: app/forms.py:23 app/forms.py:144
 msgid "Preferred Subtitle Languages"
-msgstr "Idiomas preferidos para as legendas:"
+msgstr "Idiomas preferidos para as legendas"
 
 #: app/forms.py:24 templates/base.html:96 templates/main/index.html:14
 msgid "Register"
-msgstr "Cadastrar:"
+msgstr "Cadastrar"
 
 #: app/forms.py:49
 msgid "Subtitle File (.srt, .sub, .txt, .ass, .ssa)"
-msgstr "Arquivo da legenda (.srt, .sub, .txt, .ass, .ssa):"
+msgstr "Arquivo da legenda (.srt, .sub, .txt, .ass, .ssa)"
 
 #: app/forms.py:51
 msgid "Only .srt, .sub, .txt, .ass, .ssa files allowed!"
@@ -68,15 +68,15 @@ msgstr "Apenas arquivos .srt, .sub, .txt, .ass, .ssa são permitidos!"
 
 #: app/forms.py:53
 msgid "Subtitle Language"
-msgstr "Idioma da legenda:"
+msgstr "Idioma da legenda"
 
 #: app/forms.py:54
 msgid "Encoding"
-msgstr "Codificação:"
+msgstr "Codificação"
 
 #: app/forms.py:55
 msgid "FPS (Frames Per Second)"
-msgstr "FPS (Quadros por segundo):"
+msgstr "FPS (Quadros por segundo)"
 
 #: app/forms.py:56
 msgid "Auto"
@@ -84,15 +84,15 @@ msgstr "Automático"
 
 #: app/forms.py:59
 msgid "Author (Optional)"
-msgstr "Autor (Opcional):"
+msgstr "Autor (Opcional)"
 
 #: app/forms.py:60
 msgid "Version/Sync Info (Optional)"
-msgstr "Informação da versão/sincronia (Opcional):"
+msgstr "Informação da versão/sincronia (Opcional)"
 
 #: app/forms.py:63
 msgid "Content ID"
-msgstr "ID do conteúdo:"
+msgstr "ID do conteúdo"
 
 #: app/forms.py:65
 msgid "IMDB ID (e.g., tt1234567) or Kitsu ID (e.g., kitsu:12345)"
@@ -100,7 +100,7 @@ msgstr "ID do IMDB (Ex: tt1234567) ou ID do Kitsu (Ex: kitsu:12345)"
 
 #: app/forms.py:66
 msgid "Content Type"
-msgstr "Tipo do conteúdo:"
+msgstr "Tipo do conteúdo"
 
 #: app/forms.py:67 templates/main/content_detail.html:30
 #: templates/main/dashboard.html:63 templates/main/upload_subtitle.html:116
@@ -113,7 +113,7 @@ msgstr "Série de TV"
 
 #: app/forms.py:69
 msgid "Season Number"
-msgstr "Número da temporada:"
+msgstr "Número da temporada"
 
 #: app/forms.py:71
 msgid "Required for TV series (default: 1)"
@@ -121,79 +121,79 @@ msgstr "Necessário para séries de TV (padrão: 1)"
 
 #: app/forms.py:72
 msgid "Episode Number"
-msgstr "Número do episódio:"
+msgstr "Número do episódio"
 
 #: app/forms.py:74
 msgid "Required for TV series"
-msgstr "Necessário para séries de TV."
+msgstr "Necessário para séries de TV"
 
 #: app/forms.py:76 templates/main/upload_subtitle.html:4
 #: templates/main/upload_subtitle.html:11
 #: templates/main/upload_subtitle.html:21
 msgid "Upload Subtitle"
-msgstr "Fazer upload!"
+msgstr "Fazer upload"
 
 #: app/forms.py:116
 msgid "Content ID must be either IMDB ID (starting with \"tt\") or Kitsu ID (format \"kitsu:12345\")"
-msgstr "O ID do conteúdo deve ser o ID do IMDB (começando com \"tt\") ou ID do Kitsu (Formato \"kitsu:12345\")."
+msgstr "O ID do conteúdo deve ser o ID do IMDB (começando com \"tt\") ou ID do Kitsu (Formato \"kitsu:12345\")"
 
 #: app/forms.py:122
 msgid "Episode number is required for TV series"
-msgstr "O número do episódio é necessário para séries de TV."
+msgstr "O número do episódio é necessário para séries de TV"
 
 #: app/forms.py:126
 msgid "Current Password"
-msgstr "Senha atual:"
+msgstr "Senha atual"
 
 #: app/forms.py:127 app/forms.py:138
 msgid "New Password"
-msgstr "Nova senha:"
+msgstr "Nova senha"
 
 #: app/forms.py:128
 msgid "Confirm New Password"
-msgstr "Confirmar nova senha:"
+msgstr "Confirmar nova senha"
 
 #: app/forms.py:129 templates/auth/change_password.html:11
 #: templates/main/account_settings.html:142
 msgid "Change Password"
-msgstr "Mudar senha:"
+msgstr "Mudar senha"
 
 #: app/forms.py:134
 msgid "Request Password Reset"
-msgstr "Solicitar redefinição de senha:"
+msgstr "Solicitar redefinição de senha"
 
 #: app/forms.py:140 templates/auth/reset_password_request.html:11
 #: templates/email/reset_password.html:54
 msgid "Reset Password"
-msgstr "Redefinir senha:"
+msgstr "Redefinir senha"
 
 #: app/forms.py:145
 msgid "Update Preference"
-msgstr "Atualizar preferências!"
+msgstr "Atualizar preferências"
 
 #: app/forms.py:149
 msgid "Use OpenSubtitles Integration"
-msgstr "Abrir integração do OpenSubtitles."
+msgstr "Abrir integração do OpenSubtitles"
 
 #: app/forms.py:151 templates/providers/opensubtitles_form.html:3
 msgid "OpenSubtitles Username"
-msgstr "Usuário do OpenSubtitles:"
+msgstr "Usuário do OpenSubtitles"
 
 #: app/forms.py:153
 msgid "Your OpenSubtitles.com Username"
-msgstr "Usuário do OpenSubtitles:"
+msgstr "Usuário do OpenSubtitles"
 
 #: app/forms.py:157 templates/providers/opensubtitles_form.html:12
 msgid "OpenSubtitles Password"
-msgstr "Senha do OpenSubtitles:"
+msgstr "Senha do OpenSubtitles"
 
 #: app/forms.py:159
 msgid "Your OpenSubtitles.com Password"
-msgstr "Sua senha do OpenSubtitles.com:"
+msgstr "Sua senha do OpenSubtitles.com"
 
 #: app/forms.py:162
 msgid "Save OpenSubtitles Settings"
-msgstr "Salvar configurações do OpenSubtitles."
+msgstr "Salvar configurações do OpenSubtitles"
 
 #: app/routes/auth.py:33
 msgid "Invalid email or password"
@@ -225,15 +225,15 @@ msgstr "Ocorreu um erro inesperado."
 
 #: app/routes/auth.py:185
 msgid "Current password is incorrect"
-msgstr "A senha atual está incorreta."
+msgstr "A senha atual está incorreta"
 
 #: app/routes/auth.py:191
 msgid "Your password has been updated"
-msgstr "Sua senha foi atualizada."
+msgstr "Sua senha foi atualizada"
 
 #: app/routes/auth.py:211
 msgid "Check your email for instructions"
-msgstr "Verifique seu e-mail para instruções."
+msgstr "Verifique seu e-mail para instruções"
 
 #: app/routes/auth.py:214
 msgid "Failed to send reset email. Please try again later."
@@ -241,7 +241,7 @@ msgstr "Não foi possível enviar o e-mail de redefinição. Por favor tente nov
 
 #: app/routes/auth.py:216
 msgid "If that email is in our database, we sent a reset link"
-msgstr "Se o e-mail estiver no nosso banco de dados, nós enviamos um link de redefinição."
+msgstr "Se o e-mail estiver no nosso banco de dados, nós enviamos um link de redefinição"
 
 #: app/routes/auth.py:237
 msgid "Email is required."
@@ -330,7 +330,7 @@ msgstr "Erro ao deletar a conta. Por favor, tente novamente ou entre em contato 
 #: app/routes/providers.py:22 app/routes/providers.py:75
 #, python-format
 msgid "Provider %(name)s not found"
-msgstr "Provedor %(name)s não encontrado."
+msgstr "Provedor %(name)s não encontrado"
 
 #: app/routes/providers.py:49
 #, python-format
@@ -345,26 +345,26 @@ msgstr "Conectado com sucesso ao %(name)s!"
 #: app/routes/providers.py:62
 #, python-format
 msgid "Authentication failed: %(error)s"
-msgstr "Falha de autenticação: %(error)s."
+msgstr "Falha de autenticação: %(error)s"
 
 #: app/routes/providers.py:64
 #, python-format
 msgid "Error connecting to %(name)s: %(error)s"
-msgstr "Erro ao conectar ao %(name)s: %(error)s."
+msgstr "Erro ao conectar ao %(name)s: %(error)s"
 
 #: app/routes/providers.py:91
 #, python-format
 msgid "Disconnected from %(name)s"
-msgstr "Desconectado do %(name)s."
+msgstr "Desconectado do %(name)s"
 
 #: app/routes/providers.py:93
 #, python-format
 msgid "Error disconnecting: %(error)s"
-msgstr "Erro ao desconectar do %(error)s."
+msgstr "Erro ao desconectar do %(error)s"
 
 #: app/routes/providers.py:119 app/routes/providers.py:202
 msgid "Missing required parameters"
-msgstr "Faltando parâmetros necessários."
+msgstr "Faltando parâmetros necessários"
 
 #: app/routes/providers.py:164
 msgid "Subtitle selected successfully!"
@@ -377,27 +377,27 @@ msgstr "Erro ao selecionar a legenda: %(error)s"
 
 #: app/routes/providers.py:189
 msgid "Cannot link subtitle: video has no hash"
-msgstr "Não foi possível linkar a legenda: O vídeo não possui hash."
+msgstr "Não foi possível linkar a legenda: O vídeo não possui hash"
 
 #: app/routes/providers.py:225
 msgid "This subtitle is already linked to this video version"
-msgstr "Essa legenda já está linkada essa versão do vídeo."
+msgstr "Essa legenda já está linkada essa versão do vídeo"
 
 #: app/routes/providers.py:312
 msgid "Subtitle successfully linked to this video version!"
-msgstr "Legenda linkada com sucesso a essa versão do vídeo."
+msgstr "Legenda linkada com sucesso a essa versão do vídeo!"
 
 #: app/routes/providers.py:316
 msgid "Error linking subtitle"
-msgstr "Erro ao linkar a legenda."
+msgstr "Erro ao linkar a legenda"
 
 #: app/routes/subtitles.py:734
 msgid "Content ID must be either IMDB ID (starting with \"tt\") or Kitsu ID (format \"kitsu:12345\") or MAL ID (format \"mal:12345\")"
-msgstr "O ID do conteúdo deve ser o ID do IMDB (começando com \"tt\") ou ID do Kitsu (Formato \"kitsu:12345\") ou ID do MAL (formato \"mal:12345\")."
+msgstr "O ID do conteúdo deve ser o ID do IMDB (começando com \"tt\") ou ID do Kitsu (Formato \"kitsu:12345\") ou ID do MAL (formato \"mal:12345\")"
 
 #: app/routes/subtitles.py:744
 msgid "Episode number is required for series"
-msgstr "O número do episódio é necessário para séries de TV."
+msgstr "Número do episódio é necessário para séries de TV"
 
 #: app/routes/subtitles.py:835
 msgid "These subtitles already exist for this content and video version."
@@ -545,7 +545,7 @@ msgstr "A legenda original não possui um caminho de arquivo, não é possível 
 
 #: app/routes/subtitles.py:1617
 msgid "A compatible subtitle entry for this hash already exists. Selecting it."
-msgstr "Já existe uma entrada de legenda compatível para esse hash. Selecionando ela..."
+msgstr "Já existe uma entrada de legenda compatível para esse hash. Selecionando ela."
 
 #: app/routes/subtitles.py:1636
 msgid "Subtitle marked as compatible with the current video version."
@@ -651,11 +651,11 @@ msgstr "Compatibilidade por hash"
 #: templates/_provider_subtitle_list_item.html:37
 #: templates/main/selected_subtitles.html:70
 msgid "AI Translated"
-msgstr "Traduzida por I.A."
+msgstr "Traduzido por IA"
 
 #: templates/_provider_subtitle_list_item.html:40
 msgid "Hearing Impaired"
-msgstr "Para deficientes auditivos."
+msgstr "Para deficientes auditivos"
 
 #: templates/_provider_subtitle_list_item.html:47
 #: templates/_subtitle_list_item.html:69
@@ -664,7 +664,7 @@ msgstr "Selecionada"
 
 #: templates/_provider_subtitle_list_item.html:59
 msgid "Link this subtitle to the current video version for the community"
-msgstr "Linkar essa legenda com a versão atual do vídeo para a comunidade."
+msgstr "Linkar essa legenda com a versão atual do vídeo para a comunidade"
 
 #: templates/_provider_subtitle_list_item.html:60
 #: templates/_subtitle_list_item.html:86
@@ -679,7 +679,7 @@ msgstr "Selecionar"
 #: templates/_subtitle_list_item.html:28
 #, python-format
 msgid "Sourced from %(provider)s by %(user)s"
-msgstr "Fornecida através do %(provider)s pelo %(user)s."
+msgstr "Fornecida através do %(provider)s pelo %(user)s"
 
 #: templates/_subtitle_list_item.html:30
 #, python-format
@@ -693,29 +693,29 @@ msgstr "Hash do vídeo: %(hash)s"
 
 #: templates/_subtitle_list_item.html:45
 msgid "Matches Current Video"
-msgstr "Compatível com o vídeo atual."
+msgstr "Compatível com o vídeo atual"
 
 #: templates/_subtitle_list_item.html:45
 msgid "Different Video Version"
-msgstr "Versão diferente do vídeo."
+msgstr "Versão diferente do vídeo"
 
 #: templates/_subtitle_list_item.html:48
 msgid "No Hash Specific"
-msgstr "Sem hash específico."
+msgstr "Sem hash específico"
 
 #: templates/_subtitle_list_item.html:57 templates/main/my_subtitles.html:74
 #: templates/main/selected_subtitles.html:101
 #: templates/main/voted_subtitles.html:73
 #: templates/main/voted_subtitles.html:79
 msgid "Upvote"
-msgstr "Voto positivo."
+msgstr "Voto positivo"
 
 #: templates/_subtitle_list_item.html:60 templates/main/my_subtitles.html:77
 #: templates/main/selected_subtitles.html:104
 #: templates/main/voted_subtitles.html:73
 #: templates/main/voted_subtitles.html:82
 msgid "Downvote"
-msgstr "Voto negativo."
+msgstr "Voto negativo"
 
 #: templates/_subtitle_list_item.html:85
 #, python-format
@@ -769,7 +769,7 @@ msgstr "Gostou do meu Addon? Considere"
 
 #: templates/base.html:120
 msgid "buying me a coffee"
-msgstr "comprar um café para mim!"
+msgstr "comprar um café para mim"
 
 #: templates/auth/change_password.html:26 templates/auth/reset_password.html:27
 msgid "Password Tips"
@@ -777,23 +777,23 @@ msgstr "Dicas de senha"
 
 #: templates/auth/change_password.html:28 templates/auth/reset_password.html:29
 msgid "Use at least 8 characters"
-msgstr "Use no mínimo 8 caracteres."
+msgstr "Use no mínimo 8 caracteres"
 
 #: templates/auth/change_password.html:29 templates/auth/reset_password.html:30
 msgid "Include uppercase and lowercase letters"
-msgstr "Inclua letras maiúsculas e minúsculas."
+msgstr "Inclua letras maiúsculas e minúsculas"
 
 #: templates/auth/change_password.html:30 templates/auth/reset_password.html:31
 msgid "Add numbers and special characters"
-msgstr "Adicione números e caracteres especiais."
+msgstr "Adicione números e caracteres especiais"
 
 #: templates/auth/change_password.html:31 templates/auth/reset_password.html:32
 msgid "Avoid using personal information"
-msgstr "Evite usar informações pessoais."
+msgstr "Evite usar informações pessoais"
 
 #: templates/auth/change_password.html:40
 msgid "Back to Account Settings"
-msgstr "Voltar às configurações de conta."
+msgstr "Voltar às configurações de conta"
 
 #: templates/auth/login.html:26
 msgid "Forgot your password?"
@@ -809,11 +809,11 @@ msgstr "Não possui uma conta?"
 
 #: templates/auth/login.html:32 templates/providers/opensubtitles_form.html:7
 msgid "Register here"
-msgstr "Cadastre-se aqui."
+msgstr "Cadastre-se aqui"
 
 #: templates/auth/register.html:11
 msgid "Create an Account"
-msgstr "Criar uma conta:"
+msgstr "Criar uma Conta"
 
 #: templates/auth/register.html:28
 msgid "Already have an account?"
@@ -822,7 +822,7 @@ msgstr "Já possui uma conta?"
 #: templates/auth/register.html:28
 #: templates/auth/reset_password_request.html:26
 msgid "Login here"
-msgstr "Faça login aqui."
+msgstr "Faça login aqui"
 
 #: templates/auth/register.html:40
 msgid "Why Register?"
@@ -830,24 +830,24 @@ msgstr "Por que cadastrar?"
 
 #: templates/auth/register.html:46
 msgid "Get your personal Stremio addon installation link"
-msgstr "Pegue seu link próprio de instalação do Addon no Stremio."
+msgstr "Pegue seu link próprio de instalação do Addon no Stremio"
 
 #: templates/auth/register.html:50
 msgid "Upload and share subtitles with the community"
-msgstr "Faça upload e compartilhe legendas com a comunidade."
+msgstr "Faça upload e compartilhe legendas com a comunidade"
 
 #: templates/auth/register.html:54
 msgid "Vote on subtitle quality to help others find the best translations"
-msgstr "Vote em legendas de qualidade para ajudar os outros a encontrarem as melhores traduções."
+msgstr "Vote em legendas de qualidade para ajudar os outros a encontrarem as melhores traduções"
 
 #: templates/auth/register.html:58
 msgid "Track your subtitle history and contributions"
-msgstr "Registre seu histórico de legendas e contribuições."
+msgstr "Registre seu histórico de legendas e contribuições"
 
 #: templates/auth/resend_confirmation.html:10
 #: templates/auth/resend_confirmation.html:26
 msgid "Resend Confirmation Email"
-msgstr "Re-enviar e-mail de confirmação."
+msgstr "Re-enviar e-mail de confirmação"
 
 #: templates/auth/resend_confirmation.html:13
 msgid "If you didn't receive the confirmation email or the link has expired, you can request a new one."
@@ -855,7 +855,7 @@ msgstr "Se você não recebeu o e-mail de confirmação ou o link expirou, você
 
 #: templates/auth/resend_confirmation.html:19
 msgid "Email Address"
-msgstr "E-mail:"
+msgstr "E-mail"
 
 #: templates/auth/resend_confirmation.html:21
 msgid "Enter the email address you used to register."
@@ -919,7 +919,7 @@ msgstr "Atenciosamente,"
 #: templates/email/confirm_email.html:64 templates/email/confirm_email.txt:12
 #: templates/email/reset_password.html:64 templates/email/reset_password.txt:12
 msgid "The Stremio Community Subtitles Team"
-msgstr "a equipe do Stremio Community Subtitles"
+msgstr "A Equipe de Legendas da Comunidade Stremio"
 
 #: templates/email/confirm_email.html:67 templates/email/confirm_email.txt:15
 #: templates/email/reset_password.html:67 templates/email/reset_password.txt:15
@@ -948,7 +948,7 @@ msgstr "Se você não solicitou uma redefinição de senha, por favor, ignore es
 
 #: templates/email/reset_password.txt:3
 msgid "You have requested to reset your password. Please click the link below to set a new password:"
-msgstr "Você solicitou redefinir sua senha. Por favor, clique no botão abaixo para definir uma nova senha."
+msgstr "Você solicitou redefinir sua senha. Por favor, clique no botão abaixo para definir uma nova senha:"
 
 #: templates/main/account_settings.html:11
 msgid "Manage your account preferences and settings."
@@ -956,7 +956,7 @@ msgstr "Gerenciar suas preferências e configurações de conta."
 
 #: templates/main/account_settings.html:20
 msgid "Language Preferences"
-msgstr "Preferências de idioma:"
+msgstr "Preferências de idioma"
 
 #: templates/main/account_settings.html:30
 msgid "This setting determines which languages will be used to search subtitles by the addon."
@@ -964,20 +964,20 @@ msgstr "Essa configuração determina qual idioma vai ser usado para o Addon pes
 
 #: templates/main/account_settings.html:40
 msgid "Options"
-msgstr "Opções:"
+msgstr "Opções"
 
 #: templates/main/account_settings.html:45
 msgid "Show no subtitles message"
-msgstr "Não mostrar mensagem \"Sem legendas\"."
+msgstr "Não mostrar mensagem \"Sem legendas\""
 
 #: templates/main/account_settings.html:46
 msgid "When enabled, subtitles entry will always appear in Stremio, even if there are no subtitles available"
-msgstr "Quando ativado, a opção de legendas continuará aparecendo no Stremio, mesmo que não haja legendas disponíveis."
+msgstr "Quando ativado, a opção de legendas continuará aparecendo no Stremio, mesmo que não haja legendas disponíveis"
 
 #: templates/main/account_settings.html:51
 #: templates/main/account_settings.html:66
 msgid "Setting updated successfully"
-msgstr ""
+msgstr "Configurações atualizadas"
 
 #: templates/main/account_settings.html:52
 #: templates/main/account_settings.html:67
@@ -991,15 +991,15 @@ msgstr ""
 
 #: templates/main/account_settings.html:60
 msgid "Prioritize .ass subtitles"
-msgstr "Priorizar legendas ASS"
+msgstr "Priorizar legendas .ass"
 
 #: templates/main/account_settings.html:61
 msgid "When enabled, .ass/.ssa subtitles will appear first in Stremio's subtitle list"
-msgstr "Quando ativado, as legendas ASS e SSA vão aparecer primeiro na lista de legendas do Stremio."
+msgstr "Quando ativado, legendas .ass/.ssa aparecerão primeiro na lista de legendas do Stremio"
 
 #: templates/main/account_settings.html:79
 msgid "Subtitle Providers"
-msgstr "Provedores de legendas:"
+msgstr "Provedores de legendas"
 
 #: templates/main/account_settings.html:82
 msgid "Connect to external subtitle providers for enhanced search capabilities."
@@ -1007,7 +1007,7 @@ msgstr "Conecte-se a provedores externos de legenda para ampliar as opções de 
 
 #: templates/main/account_settings.html:97
 msgid "Account Information"
-msgstr "Informações da conta:"
+msgstr "Informações da conta"
 
 #: templates/main/account_settings.html:102
 msgid "Username:"
@@ -1031,7 +1031,7 @@ msgstr "Nenhum idioma selecionado"
 
 #: templates/main/account_settings.html:126 templates/main/dashboard.html:97
 msgid "Addon Installation"
-msgstr "Instalação do Addon:"
+msgstr "Instalação do Addon"
 
 #: templates/main/account_settings.html:129
 msgid "Need to install your addon in Stremio?"
@@ -1039,15 +1039,15 @@ msgstr "Precisa instalar o Addon no Stremio?"
 
 #: templates/main/account_settings.html:136
 msgid "Security"
-msgstr "Segurança:"
+msgstr "Segurança"
 
 #: templates/main/account_settings.html:139
 msgid "Manage your account security settings:"
-msgstr "Gerenciar configurações de segurança da sua conta."
+msgstr "Gerenciar configurações de segurança da sua conta:"
 
 #: templates/main/account_settings.html:149
 msgid "Danger Zone"
-msgstr "Área de risco:"
+msgstr "Área de risco"
 
 #: templates/main/account_settings.html:152
 msgid "Warning:"
@@ -1055,7 +1055,7 @@ msgstr "Aviso:"
 
 #: templates/main/account_settings.html:152
 msgid "This action cannot be undone."
-msgstr "Essa ação não pode ser desfeita!"
+msgstr "Essa ação não pode ser desfeita."
 
 #: templates/main/account_settings.html:153
 msgid "Deleting your account will permanently remove all your data including uploaded subtitles, selections, and votes."
@@ -1064,7 +1064,7 @@ msgstr "Deletar sua conta vai remover permanentemente todos seus dados, incluind
 #: templates/main/account_settings.html:155
 #: templates/main/account_settings.html:166
 msgid "Delete Account"
-msgstr "Deletar conta."
+msgstr "Deletar conta"
 
 #: templates/main/account_settings.html:170
 msgid "Are you absolutely sure?"
@@ -1076,23 +1076,23 @@ msgstr "Isso vai deletar sua conta permanentemente e todos dados associados:"
 
 #: templates/main/account_settings.html:173
 msgid "All uploaded subtitles"
-msgstr "Upload de todas legendas."
+msgstr "Upload de todas legendas"
 
 #: templates/main/account_settings.html:174
 msgid "All subtitle selections"
-msgstr "Todas seleções de legendas."
+msgstr "Todas seleções de legendas"
 
 #: templates/main/account_settings.html:175
 msgid "All votes"
-msgstr "Todos votos."
+msgstr "Todos votos"
 
 #: templates/main/account_settings.html:176
 msgid "Activity history"
-msgstr "Histórico de atividade."
+msgstr "Histórico de atividade"
 
 #: templates/main/account_settings.html:177
 msgid "Provider connections"
-msgstr "Conexões de provedores."
+msgstr "Conexões de provedores"
 
 #: templates/main/account_settings.html:179
 msgid "This action cannot be undone!"
@@ -1101,11 +1101,11 @@ msgstr "Essa ação não pode ser desfeita!"
 #: templates/main/account_settings.html:183
 #, python-format
 msgid "Type your username %(username)s to confirm:"
-msgstr "Digite seu usuário %(username)s) para confirmar:"
+msgstr "Digite seu usuário %(username)s para confirmar:"
 
 #: templates/main/account_settings.html:191
 msgid "Delete My Account"
-msgstr "Apagar minha conta."
+msgstr "Apagar minha conta"
 
 #: templates/main/configure.html:3
 msgid "Configure Addon"
@@ -1121,7 +1121,7 @@ msgstr "Siga as instruções abaixo para instalar o Addon do Community Subtitles
 
 #: templates/main/configure.html:19
 msgid "Your Personal Addon Link"
-msgstr "Seu link particular do Addon:"
+msgstr "Seu link particular do Addon"
 
 #: templates/main/configure.html:25
 msgid "This is your personal addon link. Do not share it with others as it's tied to your account."
@@ -1141,7 +1141,7 @@ msgstr "Ocorreu um problema ao gerar seu link do Addon. Por favor, entre em cont
 
 #: templates/main/configure.html:52
 msgid "Installation Instructions"
-msgstr "Instruções para instalação:"
+msgstr "Instruções para instalação"
 
 #: templates/main/configure.html:57
 msgid "Open Stremio"
@@ -1149,7 +1149,7 @@ msgstr "Abra o Stremio"
 
 #: templates/main/configure.html:57
 msgid "on your device"
-msgstr "no seu dispositivo."
+msgstr "no seu dispositivo"
 
 #: templates/main/configure.html:60
 msgid "Click the \"Install in Stremio\" button"
@@ -1157,7 +1157,7 @@ msgstr "Clique no botão \"Instalar no Stremio\""
 
 #: templates/main/configure.html:60
 msgid "above, or copy the addon URL and add it manually in Stremio"
-msgstr "acima, ou copie o URL do Addon e adicione manualmente no Stremio."
+msgstr "acima, ou copie o URL do Addon e adicione manualmente no Stremio"
 
 #: templates/main/configure.html:63
 msgid "Confirm the installation"
@@ -1165,7 +1165,7 @@ msgstr "Confirme a instalação"
 
 #: templates/main/configure.html:63
 msgid "when prompted by Stremio"
-msgstr "quando for solicitado pelo Stremio."
+msgstr "quando for solicitado pelo Stremio"
 
 #: templates/main/configure.html:66
 msgid "Start watching content"
@@ -1173,27 +1173,27 @@ msgstr "Comece a assistir conteúdos"
 
 #: templates/main/configure.html:66
 msgid "with community subtitles"
-msgstr "com as legendas da comunidade."
+msgstr "com as legendas da comunidade"
 
 #: templates/main/configure.html:76
 msgid "Addon Features"
-msgstr "Recursos do Addon:"
+msgstr "Recursos do Addon"
 
 #: templates/main/configure.html:82
 msgid "Automatic subtitle detection"
-msgstr "Detecção automática de legendas."
+msgstr "Detecção automática de legendas"
 
 #: templates/main/configure.html:86
 msgid "Community-contributed subtitles"
-msgstr "Legendas contribuídas pela comunidade."
+msgstr "Legendas contribuídas pela comunidade"
 
 #: templates/main/configure.html:90
 msgid "Quality voting system"
-msgstr "Sistema de votos de qualidade."
+msgstr "Sistema de votos de qualidade"
 
 #: templates/main/configure.html:94
 msgid "Multiple language support"
-msgstr "Suporte a vários idiomas."
+msgstr "Suporte a vários idiomas"
 
 #: templates/main/configure.html:102
 msgid "Need Help?"
@@ -1205,20 +1205,20 @@ msgstr "Se você estiver tendo problemas para instalar o Addon, tente fazer isso
 
 #: templates/main/configure.html:107
 msgid "Make sure you have the latest version of Stremio"
-msgstr "Certifique-se de que está usando a última versão do Stremio."
+msgstr "Certifique-se de que está usando a última versão do Stremio"
 
 #: templates/main/configure.html:108
 msgid "Try copying the URL and adding it manually in Stremio"
-msgstr "Tente copiar a URL e adicionar manualmente no Stremio."
+msgstr "Tente copiar a URL e adicionar manualmente no Stremio"
 
 #: templates/main/configure.html:109
 msgid "Restart Stremio and try again"
-msgstr "Reinicie o Stremio e tente novamente."
+msgstr "Reinicie o Stremio e tente novamente"
 
 #: templates/main/content_detail.html:23
 #: templates/main/upload_subtitle.html:101
 msgid "Content Information"
-msgstr "Informações do conteúdo:"
+msgstr "Informações do conteúdo"
 
 #: templates/main/content_detail.html:28
 #: templates/main/upload_subtitle.html:114
@@ -1228,7 +1228,7 @@ msgstr "Tipo:"
 #: templates/main/content_detail.html:30 templates/main/dashboard.html:63
 #: templates/main/upload_subtitle.html:116
 msgid "Series"
-msgstr "Séries de TV"
+msgstr "Série"
 
 #: templates/main/content_detail.html:34
 #: templates/main/upload_subtitle.html:120
@@ -1269,7 +1269,7 @@ msgstr "Gêneros:"
 
 #: templates/main/content_detail.html:96
 msgid "Overview"
-msgstr "Resumo:"
+msgstr "Resumo"
 
 #: templates/main/content_detail.html:105
 msgid "Community Subtitles"
@@ -1311,11 +1311,11 @@ msgstr "Nenhuma legenda da comunidade disponível para esse conteúdo ainda."
 
 #: templates/main/content_detail.html:220
 msgid "Be the first to upload subtitles"
-msgstr "Seja o primeiro a fazer upload das legendas."
+msgstr "Seja o primeiro a fazer upload das legendas"
 
 #: templates/main/content_detail.html:229
 msgid "Provider Results"
-msgstr "Resultados dos provedores:"
+msgstr "Resultados dos provedores"
 
 #: templates/main/content_detail.html:264
 msgid "No subtitles found from providers for your criteria and preferred languages."
@@ -1344,7 +1344,7 @@ msgstr "Bem-vindo de volta, convidado! Aqui está sua atividade recente e histó
 
 #: templates/main/dashboard.html:23
 msgid "Recent Activity"
-msgstr "Atividade recente:"
+msgstr "Atividade recente"
 
 #: templates/main/dashboard.html:24
 msgid "Elements:"
@@ -1373,20 +1373,20 @@ msgstr "Instale o Addon no Stremio para começar a usar as legendas da comunidad
 
 #: templates/main/dashboard.html:107
 msgid "Your Stats"
-msgstr "Suas estatísticas:"
+msgstr "Suas estatísticas"
 
 #: templates/main/dashboard.html:112
 msgid "Uploaded Subtitles"
-msgstr "Upload de legendas:"
+msgstr "Upload de legendas"
 
 #: templates/main/dashboard.html:116 templates/main/selected_subtitles.html:4
 #: templates/main/selected_subtitles.html:9
 msgid "Selected Subtitles"
-msgstr "Legendas selecionadas:"
+msgstr "Legendas selecionadas"
 
 #: templates/main/dashboard.html:120
 msgid "Votes Cast"
-msgstr "Votos:"
+msgstr "Votos"
 
 #: templates/main/index.html:7
 msgid "Stremio Community Subtitles Addon"
@@ -1422,23 +1422,23 @@ msgstr "Vote em legendas para ajudar os outros a acharem as melhores traduções
 
 #: templates/main/index.html:51
 msgid "How It Works"
-msgstr "Como funciona:"
+msgstr "Como funciona"
 
 #: templates/main/index.html:57
 msgid "Register for an account"
-msgstr "Cadastre uma conta."
+msgstr "Cadastre uma conta"
 
 #: templates/main/index.html:58
 msgid "Install the addon in Stremio using your personal link"
-msgstr "Instale o Addon no Stremio usando seu link particular."
+msgstr "Instale o Addon no Stremio usando seu link particular"
 
 #: templates/main/index.html:59
 msgid "Start watching content with community subtitles"
-msgstr "Comece a assistir conteúdo com as legendas da comunidade."
+msgstr "Comece a assistir conteúdo com as legendas da comunidade"
 
 #: templates/main/index.html:60
 msgid "Upload your own subtitles or vote on existing ones"
-msgstr "Faça upload das suas próprias legendas ou vote nas já existentes."
+msgstr "Faça upload das suas próprias legendas ou vote nas já existentes"
 
 #: templates/main/my_subtitles.html:11
 msgid "Manage all subtitles you've submitted to the community."
@@ -1466,7 +1466,7 @@ msgstr "Apagar"
 
 #: templates/main/my_subtitles.html:104
 msgid "No Subtitles Yet"
-msgstr "Sem legendas ainda."
+msgstr "Sem legendas ainda"
 
 #: templates/main/my_subtitles.html:105
 msgid "You haven't uploaded any subtitles yet."
@@ -1527,7 +1527,7 @@ msgstr "Faça upload de um arquivo de legenda para"
 
 #: templates/main/upload_subtitle.html:39
 msgid "Subtitle Information"
-msgstr "Informações da legenda:"
+msgstr "Informações da legenda"
 
 #: templates/main/upload_subtitle.html:50
 msgid "Content Identification"
@@ -1564,15 +1564,15 @@ msgstr "Insira o ID do IMDB (tt1234567) ou ID do Kitsu (kitsu:12345)"
 
 #: templates/main/upload_subtitle.html:71
 msgid "Season number (default: 1). Ignore for kitsu"
-msgstr "Número da temporada (padrão: 1). Ignore se for Kitsu."
+msgstr "Número da temporada (padrão: 1). Ignore se for Kitsu"
 
 #: templates/main/upload_subtitle.html:74
 msgid "Episode number (required for series)"
-msgstr "Número do episódio (Necessário para séries de TV)"
+msgstr "Número do episódio (necessário para séries)"
 
 #: templates/main/upload_subtitle.html:84
 msgid "Enter 'utf8' (default), 'auto' for automatic detection, or a specific encoding like 'cp1250', 'latin1', etc."
-msgstr "Insira 'utf8'' (Padrão), 'auto' para detecção automática, ou uma codificação específica tipo 'cp1250', 'latin1', etc..."
+msgstr "Insira 'utf8'' (Padrão), 'auto' para detecção automática, ou uma codificação específica tipo 'cp1250', 'latin1', etc."
 
 #: templates/main/upload_subtitle.html:85
 msgid "Select FPS only for subtitle formats that use frames. Leave as 'Auto' if unsure."
@@ -1584,7 +1584,7 @@ msgstr "Título:"
 
 #: templates/main/upload_subtitle.html:152
 msgid "How to Find Content IDs"
-msgstr "Como achar IDs de Conteúdos:"
+msgstr "Como achar IDs de Conteúdos"
 
 #: templates/main/upload_subtitle.html:155
 msgid "IMDB ID (Movies & TV Shows):"
@@ -1601,7 +1601,7 @@ msgstr "Procure o seu conteúdo"
 
 #: templates/main/upload_subtitle.html:159
 msgid "Copy the ID from URL (e.g.,"
-msgstr "Copie o ID do URL (Ex:"
+msgstr "Copie o ID do URL (ex:"
 
 #: templates/main/upload_subtitle.html:162
 msgid "Kitsu ID (Anime):"
@@ -1633,27 +1633,27 @@ msgstr "Exemplo:"
 
 #: templates/main/upload_subtitle.html:177
 msgid "Subtitle Guidelines"
-msgstr "Diretrizes das legendas:"
+msgstr "Diretrizes das legendas"
 
 #: templates/main/upload_subtitle.html:181
 msgid "Supported formats: SRT, SUB, ASS, SSA, TXT"
-msgstr "Formatos suportados: SRT, SUB, ASS, SSA e TXT."
+msgstr "Formatos suportados: SRT, SUB, ASS, SSA e TXT"
 
 #: templates/main/upload_subtitle.html:182
 msgid "Maximum file size: 2MB"
-msgstr "Tamanho máximo: 2 MB"
+msgstr "Tamanho máximo: 2MB"
 
 #: templates/main/upload_subtitle.html:183
 msgid "Ensure proper timing and formatting"
-msgstr "Garanta formatação e sincronização adequadas."
+msgstr "Garanta formatação e sincronização adequadas"
 
 #: templates/main/upload_subtitle.html:184
 msgid "Avoid hardcoded advertisements"
-msgstr "Evite anúncios embutidos."
+msgstr "Evite anúncios embutidos"
 
 #: templates/main/upload_subtitle.html:185
 msgid "Respect copyright and intellectual property"
-msgstr "Respeite os direitos autorais e a propriedade intelectual."
+msgstr "Respeite os direitos autorais e a propriedade intelectual"
 
 #: templates/main/upload_subtitle.html:187
 msgid "Advanced:"
@@ -1661,7 +1661,7 @@ msgstr "Avançado:"
 
 #: templates/main/upload_subtitle.html:187
 msgid "No video hash association"
-msgstr "Sem associação ao hash do vídeo."
+msgstr "Sem associação ao hash do vídeo"
 
 #: templates/main/upload_subtitle.html:199
 msgid "Back to Home"
@@ -1698,7 +1698,7 @@ msgstr "Votada:"
 
 #: templates/main/voted_subtitles.html:104
 msgid "No Votes Yet"
-msgstr "Sem votos ainda."
+msgstr "Sem votos ainda"
 
 #: templates/main/voted_subtitles.html:105
 msgid "You haven't voted on any subtitles yet."
@@ -1706,15 +1706,15 @@ msgstr "Você ainda não votou em nenhuma legenda."
 
 #: templates/providers/napisy24_settings.html:4
 msgid "is a Polish subtitle database. No authentication required - just click Connect to activate."
-msgstr ""
+msgstr "é um banco de dados de legendas polonesas. Não é necessária autenticação - basta Conectar para ativar."
 
 #: templates/providers/opensubtitles_form.html:5
 msgid "Your OpenSubtitles.com username"
-msgstr "Seu usuário do OpenSubtitles.com:"
+msgstr "Seu usuário do OpenSubtitles.com"
 
 #: templates/providers/opensubtitles_form.html:14
 msgid "Your OpenSubtitles.com password"
-msgstr "Sua senha do OpenSubtitles.com:"
+msgstr "Sua senha do OpenSubtitles.com"
 
 #: templates/providers/opensubtitles_form.html:16
 msgid "Your password is transmitted securely and stored encrypted."

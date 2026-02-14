@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: stremio-community-subtitles\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2026-02-13 23:14+0100\n"
-"PO-Revision-Date: 2026-02-13 22:29\n"
+"PO-Revision-Date: 2026-02-14 00:56\n"
 "Last-Translator: \n"
 "Language-Team: Turkish\n"
 "MIME-Version: 1.0\n"
@@ -20,244 +20,244 @@ msgstr ""
 
 #: app/email.py:125
 msgid "Stremio Community Subtitles - Confirm Your Email"
-msgstr ""
+msgstr "Stremio Community Subtitles - E-posta adresinizi onaylayın"
 
 #: app/email.py:135
 msgid "Stremio Community Subtitles - Reset Your Password"
-msgstr ""
+msgstr "Stremio Community Subtitles - Şifrenizi Sıfırlayın"
 
 #: app/forms.py:12 app/forms.py:20 app/forms.py:133
 msgid "Email"
-msgstr ""
+msgstr "E-posta"
 
 #: app/forms.py:13 app/forms.py:21
 msgid "Password"
-msgstr ""
+msgstr "Şifre"
 
 #: app/forms.py:14
 msgid "Remember Me"
-msgstr ""
+msgstr "Beni Hatırla"
 
 #: app/forms.py:15
 msgid "Sign In"
-msgstr ""
+msgstr "Giriş Yap"
 
 #: app/forms.py:19
 msgid "Username"
-msgstr ""
+msgstr "Kullanıcı Adı"
 
 #: app/forms.py:22 app/forms.py:139
 msgid "Confirm Password"
-msgstr ""
+msgstr "Şifreyi Onayla"
 
 #: app/forms.py:23 app/forms.py:144
 msgid "Preferred Subtitle Languages"
-msgstr ""
+msgstr "Tercih Edilen Altyazı Dili"
 
 #: app/forms.py:24 templates/base.html:96 templates/main/index.html:14
 msgid "Register"
-msgstr ""
+msgstr "Kayıt ol"
 
 #: app/forms.py:49
 msgid "Subtitle File (.srt, .sub, .txt, .ass, .ssa)"
-msgstr ""
+msgstr "Altyazı Dosyası (.srt, .sub, .txt, .ass, .ssa)"
 
 #: app/forms.py:51
 msgid "Only .srt, .sub, .txt, .ass, .ssa files allowed!"
-msgstr ""
+msgstr "Sadece .srt, .sub, .txt, .ass, .ssa uzantılı dosyalar kullanılabilir!"
 
 #: app/forms.py:53
 msgid "Subtitle Language"
-msgstr ""
+msgstr "Altyazı Dili"
 
 #: app/forms.py:54
 msgid "Encoding"
-msgstr ""
+msgstr "Kodlama"
 
 #: app/forms.py:55
 msgid "FPS (Frames Per Second)"
-msgstr ""
+msgstr "FPS (Saniye Başına Kare)"
 
 #: app/forms.py:56
 msgid "Auto"
-msgstr ""
+msgstr "Otomatik"
 
 #: app/forms.py:59
 msgid "Author (Optional)"
-msgstr ""
+msgstr "Yazar (Opsiyonel)"
 
 #: app/forms.py:60
 msgid "Version/Sync Info (Optional)"
-msgstr ""
+msgstr "Versiyon/Senkron Bilgisi (Opsyionel)"
 
 #: app/forms.py:63
 msgid "Content ID"
-msgstr ""
+msgstr "İçerik Kimliği"
 
 #: app/forms.py:65
 msgid "IMDB ID (e.g., tt1234567) or Kitsu ID (e.g., kitsu:12345)"
-msgstr ""
+msgstr "IMDB Kimliği (ör. tt1234567) veya Kitsu Kimliği (ör. kitsu:12345)"
 
 #: app/forms.py:66
 msgid "Content Type"
-msgstr ""
+msgstr "İçerik Türü"
 
 #: app/forms.py:67 templates/main/content_detail.html:30
 #: templates/main/dashboard.html:63 templates/main/upload_subtitle.html:116
 msgid "Movie"
-msgstr ""
+msgstr "Film"
 
 #: app/forms.py:67
 msgid "TV Series"
-msgstr ""
+msgstr "Diziler"
 
 #: app/forms.py:69
 msgid "Season Number"
-msgstr ""
+msgstr "Sezon Numarası"
 
 #: app/forms.py:71
 msgid "Required for TV series (default: 1)"
-msgstr ""
+msgstr "Diziler için gerekli (Varsayılan: 1)"
 
 #: app/forms.py:72
 msgid "Episode Number"
-msgstr ""
+msgstr "Bölüm Numarası"
 
 #: app/forms.py:74
 msgid "Required for TV series"
-msgstr ""
+msgstr "Diziler için gerekenler"
 
 #: app/forms.py:76 templates/main/upload_subtitle.html:4
 #: templates/main/upload_subtitle.html:11
 #: templates/main/upload_subtitle.html:21
 msgid "Upload Subtitle"
-msgstr ""
+msgstr "Altyazı Yükle"
 
 #: app/forms.py:116
 msgid "Content ID must be either IMDB ID (starting with \"tt\") or Kitsu ID (format \"kitsu:12345\")"
-msgstr ""
+msgstr "İçerik kimliği, IMDB Kimliği (\"tt\" ile başlayan) veya Kitsu Kimliği (\"kitsu:12345\" formatında) olmalıdır"
 
 #: app/forms.py:122
 msgid "Episode number is required for TV series"
-msgstr ""
+msgstr "Bölüm numarası diziler için gerekli"
 
 #: app/forms.py:126
 msgid "Current Password"
-msgstr ""
+msgstr "Mevcut Şifre"
 
 #: app/forms.py:127 app/forms.py:138
 msgid "New Password"
-msgstr ""
+msgstr "Yeni Şifre"
 
 #: app/forms.py:128
 msgid "Confirm New Password"
-msgstr ""
+msgstr "Yeni Şifreyi Onaylayın"
 
 #: app/forms.py:129 templates/auth/change_password.html:11
 #: templates/main/account_settings.html:142
 msgid "Change Password"
-msgstr ""
+msgstr "Şifreyi Değiştir"
 
 #: app/forms.py:134
 msgid "Request Password Reset"
-msgstr ""
+msgstr "Şifre Sıfırlama Talebi Oluştur"
 
 #: app/forms.py:140 templates/auth/reset_password_request.html:11
 #: templates/email/reset_password.html:54
 msgid "Reset Password"
-msgstr ""
+msgstr "Şifreyi Sıfırla"
 
 #: app/forms.py:145
 msgid "Update Preference"
-msgstr ""
+msgstr "Tercihleri Güncelle"
 
 #: app/forms.py:149
 msgid "Use OpenSubtitles Integration"
-msgstr ""
+msgstr "OpenSubtitles Entegrasyonunu Kullan"
 
 #: app/forms.py:151 templates/providers/opensubtitles_form.html:3
 msgid "OpenSubtitles Username"
-msgstr ""
+msgstr "OpenSubtitles Kullanıcı Adı"
 
 #: app/forms.py:153
 msgid "Your OpenSubtitles.com Username"
-msgstr ""
+msgstr "Opensubtitles.com Kullanıcı Adın"
 
 #: app/forms.py:157 templates/providers/opensubtitles_form.html:12
 msgid "OpenSubtitles Password"
-msgstr ""
+msgstr "OpenSubtitles Şifren"
 
 #: app/forms.py:159
 msgid "Your OpenSubtitles.com Password"
-msgstr ""
+msgstr "OpenSubtitles.com Şifren"
 
 #: app/forms.py:162
 msgid "Save OpenSubtitles Settings"
-msgstr ""
+msgstr "OpenSubtitles Ayarlarını Kaydet"
 
 #: app/routes/auth.py:33
 msgid "Invalid email or password"
-msgstr ""
+msgstr "Geçersiz e-posta veya şifre"
 
 #: app/routes/auth.py:37
 msgid "Please confirm your email address before logging in."
-msgstr ""
+msgstr "Lütfen giriş yapmadan önce e-posta adresinizi onaylayın."
 
 #: app/routes/auth.py:152
 msgid "A confirmation email has been sent."
-msgstr ""
+msgstr "Bir onay e-postası gönderildi."
 
 #: app/routes/auth.py:155
 msgid "Registration successful, but failed to send confirmation email. Please contact support."
-msgstr ""
+msgstr "Kayıt başarılı fakat onay e-postası gönderilirken hata oluştu. Lütfen destek ile iletişime geçin."
 
 #: app/routes/auth.py:157
 msgid "Registration successful! You can now log in."
-msgstr ""
+msgstr "Kayıt başarılı! Giriş yapabilirsiniz."
 
 #: app/routes/auth.py:164
 msgid "An error occurred during registration."
-msgstr ""
+msgstr "Kayıt olma sırsaında hata meydana geldi."
 
 #: app/routes/auth.py:170
 msgid "An unexpected error occurred."
-msgstr ""
+msgstr "Bilinmeyen bir hata oluştu."
 
 #: app/routes/auth.py:185
 msgid "Current password is incorrect"
-msgstr ""
+msgstr "Mevcut şifre hatalı"
 
 #: app/routes/auth.py:191
 msgid "Your password has been updated"
-msgstr ""
+msgstr "Şifreniz güncellendi"
 
 #: app/routes/auth.py:211
 msgid "Check your email for instructions"
-msgstr ""
+msgstr "Taliamatlar için e-postanızı kontrol edin"
 
 #: app/routes/auth.py:214
 msgid "Failed to send reset email. Please try again later."
-msgstr ""
+msgstr "Sıfırlama e-postası yollanamadı. Lütfen tekrar deneyin."
 
 #: app/routes/auth.py:216
 msgid "If that email is in our database, we sent a reset link"
-msgstr ""
+msgstr "Eğer veritabanımızda böyle bir e-posta varsa sıfırlama bağlantısını gönderdik"
 
 #: app/routes/auth.py:237
 msgid "Email is required."
-msgstr ""
+msgstr "E-posta gerekli."
 
 #: app/routes/auth.py:247
 msgid "A new confirmation email has been sent."
-msgstr ""
+msgstr "Yeni bir onay e-postası başarıyla gönderildi."
 
 #: app/routes/auth.py:250
 msgid "Failed to send confirmation email. Please try again later."
-msgstr ""
+msgstr "Onay e-postası yollanırken hata oluştu. Lütfen daha sonra tekrar deneyin."
 
 #: app/routes/auth.py:252
 msgid "If that email is in our database and not confirmed, we sent a link."
-msgstr ""
+msgstr "Eğer veritabanımızda böyle bir e-posta varsa ve onaylanmadıysa bağlantı gönderildi."
 
 #: app/routes/auth.py:264
 msgid "The confirmation link is invalid or has expired."
