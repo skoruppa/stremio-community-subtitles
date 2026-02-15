@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: stremio-community-subtitles\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2026-02-13 23:14+0100\n"
-"PO-Revision-Date: 2026-02-14 23:37\n"
+"PO-Revision-Date: 2026-02-15 01:52\n"
 "Last-Translator: \n"
 "Language-Team: Portuguese\n"
 "MIME-Version: 1.0\n"
@@ -64,7 +64,7 @@ msgstr "Arquivo de Legenda (.srt, .sub, .txt, .ass, .ssa)"
 
 #: app/forms.py:51
 msgid "Only .srt, .sub, .txt, .ass, .ssa files allowed!"
-msgstr "Apenas .srt, .sub, .txt, .ass, .ssa permitidos!"
+msgstr "Apenas .srt, .sub, .txt, .ass, .ssa  permitidos!"
 
 #: app/forms.py:53
 msgid "Subtitle Language"
@@ -241,11 +241,11 @@ msgstr "Falha ao enviar o e-mail de redefinição. Por favor, tente novamente ma
 
 #: app/routes/auth.py:216
 msgid "If that email is in our database, we sent a reset link"
-msgstr "Se este email constar da nossa base dados, enviaremos um email com o link de reset"
+msgstr "Se este email constar da nossa base dados, enviaremos um email com o link de reset."
 
 #: app/routes/auth.py:237
 msgid "Email is required."
-msgstr "É obrigatório preencher o campo E-mail."
+msgstr "É obrigatório preencher o campo E-mail"
 
 #: app/routes/auth.py:247
 msgid "A new confirmation email has been sent."
