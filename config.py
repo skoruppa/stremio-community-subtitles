@@ -96,17 +96,11 @@ class Config:
     CACHE_DEFAULT_TIMEOUT = 300
     
     # Database connection pool settings
-    SQLALCHEMY_ENGINE_OPTIONS = {
-        'pool_pre_ping': True,
-        'pool_size': 10,
-        'max_overflow': 20,
-        'pool_recycle': 300,
-        'pool_timeout': 30,
-        'pool_reset_on_return': 'rollback',
-        'connect_args': {
-            'ssl': {'ssl': True}
-        } if not USE_SQLITE and 'mysql' in os.environ.get('DATABASE_URL', '') else {}
-    }
+    SQLALCHEMY_POOL_SIZE = 5
+    SQLALCHEMY_MAX_OVERFLOW = 10
+    SQLALCHEMY_POOL_PRE_PING = True
+    SQLALCHEMY_POOL_RECYCLE = 300
+    SQLALCHEMY_POOL_TIMEOUT = 30
 
     MAX_USER_ACTIVITIES = int(os.environ.get('MAX_USER_ACTIVITIES') or '15')
     

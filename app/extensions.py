@@ -26,11 +26,11 @@ def init_async_db(app):
     async_engine = create_async_engine(
         database_url,
         echo=app.config.get('SQLALCHEMY_ECHO', False),
-        pool_size=app.config.get('SQLALCHEMY_POOL_SIZE', 3),
-        max_overflow=app.config.get('SQLALCHEMY_MAX_OVERFLOW', 5),
-        pool_pre_ping=True,
-        pool_recycle=300,
-        pool_timeout=5,
+        pool_size=app.config.get('SQLALCHEMY_POOL_SIZE', 5),
+        max_overflow=app.config.get('SQLALCHEMY_MAX_OVERFLOW', 10),
+        pool_pre_ping=app.config.get('SQLALCHEMY_POOL_PRE_PING', True),
+        pool_recycle=app.config.get('SQLALCHEMY_POOL_RECYCLE', 300),
+        pool_timeout=app.config.get('SQLALCHEMY_POOL_TIMEOUT', 30),
     )
     
     async_session_maker = async_sessionmaker(
