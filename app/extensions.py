@@ -31,6 +31,7 @@ def init_async_db(app):
         pool_pre_ping=app.config.get('SQLALCHEMY_POOL_PRE_PING', True),
         pool_recycle=app.config.get('SQLALCHEMY_POOL_RECYCLE', 300),
         pool_timeout=app.config.get('SQLALCHEMY_POOL_TIMEOUT', 30),
+        pool_reset_on_return='rollback',
     )
     
     async_session_maker = async_sessionmaker(
