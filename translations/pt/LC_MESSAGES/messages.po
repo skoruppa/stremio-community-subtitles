@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: stremio-community-subtitles\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2026-02-13 23:14+0100\n"
-"PO-Revision-Date: 2026-02-14 00:56\n"
+"PO-Revision-Date: 2026-02-14 23:37\n"
 "Last-Translator: \n"
 "Language-Team: Portuguese\n"
 "MIME-Version: 1.0\n"
@@ -64,7 +64,7 @@ msgstr "Arquivo de Legenda (.srt, .sub, .txt, .ass, .ssa)"
 
 #: app/forms.py:51
 msgid "Only .srt, .sub, .txt, .ass, .ssa files allowed!"
-msgstr "Apenas .srt, .sub, .txt, .ass, .ssa  permitidos!"
+msgstr "Apenas .srt, .sub, .txt, .ass, .ssa permitidos!"
 
 #: app/forms.py:53
 msgid "Subtitle Language"
@@ -117,7 +117,7 @@ msgstr "Número da temporada"
 
 #: app/forms.py:71
 msgid "Required for TV series (default: 1)"
-msgstr "Necessário para Séries de TV"
+msgstr "Necessário para a série de TV (padrão: 1)"
 
 #: app/forms.py:72
 msgid "Episode Number"
@@ -241,11 +241,11 @@ msgstr "Falha ao enviar o e-mail de redefinição. Por favor, tente novamente ma
 
 #: app/routes/auth.py:216
 msgid "If that email is in our database, we sent a reset link"
-msgstr "Se este email constar da nossa base dados, enviaremos um email com o link de reset."
+msgstr "Se este email constar da nossa base dados, enviaremos um email com o link de reset"
 
 #: app/routes/auth.py:237
 msgid "Email is required."
-msgstr "É obrigatório preencher o campo E-mail"
+msgstr "É obrigatório preencher o campo E-mail."
 
 #: app/routes/auth.py:247
 msgid "A new confirmation email has been sent."
@@ -978,17 +978,17 @@ msgstr "Quando ativado, a entrada de legendas sempre aparecerá no Stremio, mesm
 #: templates/main/account_settings.html:51
 #: templates/main/account_settings.html:66
 msgid "Setting updated successfully"
-msgstr ""
+msgstr "Configuração atualizada com sucesso"
 
 #: templates/main/account_settings.html:52
 #: templates/main/account_settings.html:67
 msgid "Failed to update setting"
-msgstr ""
+msgstr "Falha ao atualizar configurações"
 
 #: templates/main/account_settings.html:53
 #: templates/main/account_settings.html:68
 msgid "Error updating setting"
-msgstr ""
+msgstr "Erro ao atualizar a configuração"
 
 #: templates/main/account_settings.html:60
 msgid "Prioritize .ass subtitles"
@@ -1479,32 +1479,32 @@ msgstr "Carregue a sua primeira legenda"
 
 #: templates/main/selected_subtitles.html:11
 msgid "View and manage all subtitles you've selected for your videos."
-msgstr ""
+msgstr "Veja e gerencie todas as legendas selecionadas para os seus vídeos."
 
 #: templates/main/selected_subtitles.html:21
 #: templates/main/selected_subtitles.html:128
 msgid "My Selected Subtitles"
-msgstr ""
+msgstr "Minhas legendas selecionadas"
 
 #: templates/main/selected_subtitles.html:60
 msgid "Votes:"
-msgstr ""
+msgstr "Votos:"
 
 #: templates/main/selected_subtitles.html:97
 msgid "Selected:"
-msgstr ""
+msgstr "Selecionado:"
 
 #: templates/main/selected_subtitles.html:108
 msgid "Are you sure you want to delete this selection?"
-msgstr ""
+msgstr "Tem certeza que deseja excluir esta seleção?"
 
 #: templates/main/selected_subtitles.html:132
 msgid "No Selections Yet"
-msgstr ""
+msgstr "Sem seleções"
 
 #: templates/main/selected_subtitles.html:133
 msgid "You haven't selected any subtitles yet."
-msgstr ""
+msgstr "Nenhuma legenda selecionada."
 
 #: templates/main/upload_subtitle.html:12
 msgid "Advanced Users"

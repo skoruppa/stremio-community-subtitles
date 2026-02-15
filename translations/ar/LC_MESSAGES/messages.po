@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: stremio-community-subtitles\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2026-02-13 23:14+0100\n"
-"PO-Revision-Date: 2026-02-14 01:43\n"
+"PO-Revision-Date: 2026-02-14 23:37\n"
 "Last-Translator: \n"
 "Language-Team: Arabic\n"
 "MIME-Version: 1.0\n"
@@ -233,212 +233,212 @@ msgstr "تم تغيير كلمة المرور الخاصه بك"
 
 #: app/routes/auth.py:211
 msgid "Check your email for instructions"
-msgstr ""
+msgstr "تحقق من بريدك الإلكتروني للحصول على التعليمات"
 
 #: app/routes/auth.py:214
 msgid "Failed to send reset email. Please try again later."
-msgstr ""
+msgstr "فشل في إرسال رسالة إعادة الضبط. الرجاء المحاولة مرة أخرى لاحقاً."
 
 #: app/routes/auth.py:216
 msgid "If that email is in our database, we sent a reset link"
-msgstr ""
+msgstr "إذا كان هذا البريد الإلكتروني في قاعدة بياناتنا، فقد أرسلنا رابط إعادة تعيين"
 
 #: app/routes/auth.py:237
 msgid "Email is required."
-msgstr ""
+msgstr "البريد الإلكتروني مطلوب."
 
 #: app/routes/auth.py:247
 msgid "A new confirmation email has been sent."
-msgstr ""
+msgstr "تم إرسال رسالة تأكيد بالبريد الإلكتروني."
 
 #: app/routes/auth.py:250
 msgid "Failed to send confirmation email. Please try again later."
-msgstr ""
+msgstr "فشل في إرسال رسالة تأكيد البريد الإلكتروني. الرجاء المحاولة مرة أخرى لاحقاً."
 
 #: app/routes/auth.py:252
 msgid "If that email is in our database and not confirmed, we sent a link."
-msgstr ""
+msgstr "إذا كان هذا البريد الإلكتروني في قاعدة بياناتنا ولم يتم تأكيده، فقد أرسلنا رابط."
 
 #: app/routes/auth.py:264
 msgid "The confirmation link is invalid or has expired."
-msgstr ""
+msgstr "رابط التأكيد غير صالح أو انتهت صلاحيته."
 
 #: app/routes/auth.py:270 app/routes/auth.py:299
 msgid "User not found."
-msgstr ""
+msgstr "لم يتم العثور على المستخدم."
 
 #: app/routes/auth.py:274
 msgid "Your email has already been confirmed."
-msgstr ""
+msgstr "تم بالفعل تأكيد بريدك الإلكتروني."
 
 #: app/routes/auth.py:282
 msgid "Your email has been confirmed. You can now log in."
-msgstr ""
+msgstr "تم تأكيد بريدك الإلكتروني. يمكنك الآن تسجيل الدخول."
 
 #: app/routes/auth.py:293
 msgid "The reset link is invalid or has expired."
-msgstr ""
+msgstr "رابط إعادة التعيين غير صالح أو انتهت صلاحيته."
 
 #: app/routes/auth.py:306
 msgid "Your password has been reset."
-msgstr ""
+msgstr "تم إعادة تعيين كلمة المرور الخاصة بك."
 
 #: app/routes/content.py:205
 msgid "An error occurred while searching for subtitles."
-msgstr ""
+msgstr "حدث خطأ أثناء البحث عن الترجمة."
 
 #: app/routes/main.py:23 app/routes/main.py:90
 msgid "Please log in to access this page."
-msgstr ""
+msgstr "الرجاء تسجيل الدخول للوصول إلى هذه الصفحة."
 
 #: app/routes/main.py:170
 msgid "Preferred languages updated successfully!"
-msgstr ""
+msgstr "تم تحديث اللغات المفضلة بنجاح!"
 
 #: app/routes/main.py:175
 msgid "Failed to update language."
-msgstr ""
+msgstr "فشل في تحديث اللغة."
 
 #: app/routes/main.py:207
 msgid "Activity record not found."
-msgstr ""
+msgstr "لم يتم العثور على سجل الأنشطة."
 
 #: app/routes/main.py:217
 msgid "You do not have permission to delete this activity record."
-msgstr ""
+msgstr "ليس لديك الصلاحية لحذف سجل النشاط هذا."
 
 #: app/routes/main.py:223
 msgid "Activity record deleted successfully."
-msgstr ""
+msgstr "تم حذف سجل النشاط بنجاح."
 
 #: app/routes/main.py:227
 msgid "Error deleting activity record. Please try again."
-msgstr ""
+msgstr "حدث خطأ أثناء حذف سجل النشاط. الرجاء المحاولة مرة أخرى."
 
 #: app/routes/main.py:245
 msgid "Username confirmation does not match. Account not deleted."
-msgstr ""
+msgstr "تأكيد اسم المستخدم غير متطابق. لم يتم حذف الحساب."
 
 #: app/routes/main.py:266
 msgid "Your account has been permanently deleted."
-msgstr ""
+msgstr "تم حذف حسابك بشكل دائم."
 
 #: app/routes/main.py:272
 msgid "Error deleting account. Please try again or contact support."
-msgstr ""
+msgstr "حدث خطأ أثناء حذف الحساب. الرجاء المحاولة مرة أخرى أو الاتصال بالدعم."
 
 #: app/routes/providers.py:22 app/routes/providers.py:75
 #, python-format
 msgid "Provider %(name)s not found"
-msgstr ""
+msgstr "لم يتم العثور على مقدم الخدمة %(name)s"
 
 #: app/routes/providers.py:49
 #, python-format
 msgid "%(name)s settings updated!"
-msgstr ""
+msgstr "تم تحديث إعدادات %(name)s!"
 
 #: app/routes/providers.py:60
 #, python-format
 msgid "Successfully connected to %(name)s!"
-msgstr ""
+msgstr "تم الاتصال بنجاح بـ %(name)s!"
 
 #: app/routes/providers.py:62
 #, python-format
 msgid "Authentication failed: %(error)s"
-msgstr ""
+msgstr "فشلت المصادقة: %(error)s"
 
 #: app/routes/providers.py:64
 #, python-format
 msgid "Error connecting to %(name)s: %(error)s"
-msgstr ""
+msgstr "خطأ في الاتصال بـ %(name)s: %(error)s"
 
 #: app/routes/providers.py:91
 #, python-format
 msgid "Disconnected from %(name)s"
-msgstr ""
+msgstr "غير متصل بـ %(name)s"
 
 #: app/routes/providers.py:93
 #, python-format
 msgid "Error disconnecting: %(error)s"
-msgstr ""
+msgstr "خطأ في قطع الاتصال: %(error)s"
 
 #: app/routes/providers.py:119 app/routes/providers.py:202
 msgid "Missing required parameters"
-msgstr ""
+msgstr "الإعدادات المطلوبة مفقودة"
 
 #: app/routes/providers.py:164
 msgid "Subtitle selected successfully!"
-msgstr ""
+msgstr "تم اختيار الترجمة بنجاح!"
 
 #: app/routes/providers.py:167
 #, python-format
 msgid "Error selecting subtitle: %(error)s"
-msgstr ""
+msgstr "خطأ في اختيار العنوان الفرعي: %(error)s"
 
 #: app/routes/providers.py:189
 msgid "Cannot link subtitle: video has no hash"
-msgstr ""
+msgstr "لا يمكن ربط subtitle: الفيديو ليس لديه هاش"
 
 #: app/routes/providers.py:225
 msgid "This subtitle is already linked to this video version"
-msgstr ""
+msgstr "هذه الترجمة مرتبطة مسبقاً بهذا الإصدار من الفيديو"
 
 #: app/routes/providers.py:312
 msgid "Subtitle successfully linked to this video version!"
-msgstr ""
+msgstr "تم ربط الترجمة بنجاح بنسخة الفيديو هذه!"
 
 #: app/routes/providers.py:316
 msgid "Error linking subtitle"
-msgstr ""
+msgstr "خطأ أثناء ربط الترجمة"
 
 #: app/routes/subtitles.py:734
 msgid "Content ID must be either IMDB ID (starting with \"tt\") or Kitsu ID (format \"kitsu:12345\") or MAL ID (format \"mal:12345\")"
-msgstr ""
+msgstr "يجب أن يكون معرف المحتوى إما معرف IMDB (بدءاً ب \"tt\") أو معرف Kitsu (تنسيق \"kitsu:12345\") أو معرف MAL (تنسيق \"mal:12345\")"
 
 #: app/routes/subtitles.py:744
 msgid "Episode number is required for series"
-msgstr ""
+msgstr "رقم الحلقة مطلوب للمسلسل"
 
 #: app/routes/subtitles.py:835
 msgid "These subtitles already exist for this content and video version."
-msgstr ""
+msgstr "هذه الترجمات موجودة بالفعل لهذا المحتوى و إصدار الفيديو."
 
 #: app/routes/subtitles.py:866
 msgid "Server error: Cloudinary storage is not properly configured."
-msgstr ""
+msgstr "خطأ في الخادم: التخزين السحابي غير معد بشكل صحيح."
 
 #: app/routes/subtitles.py:892
 #, python-format
 msgid "Error processing/uploading subtitle: %(error)s"
-msgstr ""
+msgstr "خطأ في معالجة/تحميل العنوان الفرعي: %(error)s"
 
 #: app/routes/subtitles.py:901
 msgid "Internal error: Subtitle path not determined."
-msgstr ""
+msgstr "خطأ داخلي: لم يتم تحديد مسار الترجمة."
 
 #: app/routes/subtitles.py:959
 msgid "Subtitle uploaded and selected successfully!"
-msgstr ""
+msgstr "تم تحميل الترجمة واختيار بنجاح!"
 
 #: app/routes/subtitles.py:963
 msgid "Subtitle uploaded, but failed to auto-select."
-msgstr ""
+msgstr "تم رفع الترجمة ، ولكن فشل في التحديد التلقائي."
 
 #: app/routes/subtitles.py:975
 msgid "Error uploading subtitle. Please try again."
-msgstr ""
+msgstr "خطأ في تحميل الترجمة. الرجاء المحاولة مرة أخرى."
 
 #: app/routes/subtitles.py:1028
 msgid "Subtitle selection updated."
-msgstr ""
+msgstr "تم تحديث اختيار الترجمة."
 
 #: app/routes/subtitles.py:1032
 msgid "Error updating subtitle selection."
-msgstr ""
+msgstr "حدث خطأ أثناء تحديث اختيار الترجمة."
 
 #: app/routes/subtitles.py:1054
 msgid "Voting is not available for this type of subtitle."
-msgstr ""
+msgstr "التصويت غير متوفر لهذا النوع من الترجمة."
 
 #: app/routes/subtitles.py:1069 templates/main/content_detail.html:327
 #: templates/main/my_subtitles.html:142
@@ -669,221 +669,221 @@ msgstr "اربط هذه الترجمة إلى إصدار الفيديو الحا
 #: templates/_provider_subtitle_list_item.html:60
 #: templates/_subtitle_list_item.html:86
 msgid "Link"
-msgstr ""
+msgstr "الرابط"
 
 #: templates/_provider_subtitle_list_item.html:75
 #: templates/_subtitle_list_item.html:74
 msgid "Select"
-msgstr ""
+msgstr "تحديد"
 
 #: templates/_subtitle_list_item.html:28
 #, python-format
 msgid "Sourced from %(provider)s by %(user)s"
-msgstr ""
+msgstr "مصدر من %(provider)s بواسطة %(user)s"
 
 #: templates/_subtitle_list_item.html:30
 #, python-format
 msgid "Sourced from %(source)s"
-msgstr ""
+msgstr "مصدر من %(source)s"
 
 #: templates/_subtitle_list_item.html:43
 #, python-format
 msgid "Video Hash: %(hash)s"
-msgstr ""
+msgstr "فيديو هاش: %(hash)s"
 
 #: templates/_subtitle_list_item.html:45
 msgid "Matches Current Video"
-msgstr ""
+msgstr "مطابقة الفيديو الحالي"
 
 #: templates/_subtitle_list_item.html:45
 msgid "Different Video Version"
-msgstr ""
+msgstr "نسخة فيديو مختلفة"
 
 #: templates/_subtitle_list_item.html:48
 msgid "No Hash Specific"
-msgstr ""
+msgstr "لا يوجد هاش محدد"
 
 #: templates/_subtitle_list_item.html:57 templates/main/my_subtitles.html:74
 #: templates/main/selected_subtitles.html:101
 #: templates/main/voted_subtitles.html:73
 #: templates/main/voted_subtitles.html:79
 msgid "Upvote"
-msgstr ""
+msgstr "تصويت إيجابي"
 
 #: templates/_subtitle_list_item.html:60 templates/main/my_subtitles.html:77
 #: templates/main/selected_subtitles.html:104
 #: templates/main/voted_subtitles.html:73
 #: templates/main/voted_subtitles.html:82
 msgid "Downvote"
-msgstr ""
+msgstr "تصويت سلبي"
 
 #: templates/_subtitle_list_item.html:85
 #, python-format
 msgid "Mark this subtitle as compatible with the current video version (%(hash)s...)"
-msgstr ""
+msgstr "ضع علامة على هذه الترجمة بأنها متوافقة مع إصدار الفيديو الحالي (%(hash)s...)"
 
 #: templates/_subtitle_list_item.html:100
 msgid "Are you sure you want to delete this subtitle? This action cannot be undone."
-msgstr ""
+msgstr "هل أنت متأكد من حذف هذا الملف؟ لا يمكن التراجع عن هذا الإجراء."
 
 #: templates/_subtitle_list_item.html:103
 msgid "Delete Subtitle"
-msgstr ""
+msgstr "حذف الترجمة"
 
 #: templates/base.html:53 templates/main/dashboard.html:3
 #: templates/main/upload_subtitle.html:18
 msgid "Dashboard"
-msgstr ""
+msgstr "لوحة التحكم"
 
 #: templates/base.html:56 templates/main/account_settings.html:130
 #: templates/main/dashboard.html:101
 msgid "Install Addon"
-msgstr ""
+msgstr "Install Addon"
 
 #: templates/base.html:76
 msgid "Upload Subtitles"
-msgstr ""
+msgstr "رفع الترجمة"
 
 #: templates/base.html:84 templates/main/my_subtitles.html:4
 #: templates/main/my_subtitles.html:9
 msgid "My Subtitles"
-msgstr ""
+msgstr "ترجماتي"
 
 #: templates/base.html:86 templates/main/account_settings.html:4
 #: templates/main/account_settings.html:9
 msgid "Account Settings"
-msgstr ""
+msgstr "إعدادات الحساب"
 
 #: templates/base.html:88
 msgid "Logout"
-msgstr ""
+msgstr "تسجيل خروج"
 
 #: templates/auth/login.html:11 templates/base.html:93
 #: templates/main/index.html:13
 msgid "Login"
-msgstr ""
+msgstr "تسجيل دخول"
 
 #: templates/base.html:120
 msgid "Like my addon? Consider"
-msgstr ""
+msgstr "هل أعجبني إضافتي؟ فكّر"
 
 #: templates/base.html:120
 msgid "buying me a coffee"
-msgstr ""
+msgstr "اشتري لي قهوة"
 
 #: templates/auth/change_password.html:26 templates/auth/reset_password.html:27
 msgid "Password Tips"
-msgstr ""
+msgstr "نصائح كلمة المرور"
 
 #: templates/auth/change_password.html:28 templates/auth/reset_password.html:29
 msgid "Use at least 8 characters"
-msgstr ""
+msgstr "استخدم 8 أحرف على الأقل"
 
 #: templates/auth/change_password.html:29 templates/auth/reset_password.html:30
 msgid "Include uppercase and lowercase letters"
-msgstr ""
+msgstr "تتضمن أحرفًا كبيرة وصغيرة"
 
 #: templates/auth/change_password.html:30 templates/auth/reset_password.html:31
 msgid "Add numbers and special characters"
-msgstr ""
+msgstr "إضافة أرقام وحروف خاصة"
 
 #: templates/auth/change_password.html:31 templates/auth/reset_password.html:32
 msgid "Avoid using personal information"
-msgstr ""
+msgstr "تجنب استخدام المعلومات الشخصية"
 
 #: templates/auth/change_password.html:40
 msgid "Back to Account Settings"
-msgstr ""
+msgstr "العودة إلى إعدادات الحساب"
 
 #: templates/auth/login.html:26
 msgid "Forgot your password?"
-msgstr ""
+msgstr "نسيت كلمة المرور؟"
 
 #: templates/auth/login.html:29
 msgid "Didn't receive confirmation email?"
-msgstr ""
+msgstr "لم تتلق رسالة تأكيد بالبريد الإلكتروني؟"
 
 #: templates/auth/login.html:32 templates/providers/opensubtitles_form.html:7
 msgid "Don't have an account?"
-msgstr ""
+msgstr "ليس لديك حساب؟"
 
 #: templates/auth/login.html:32 templates/providers/opensubtitles_form.html:7
 msgid "Register here"
-msgstr ""
+msgstr "التسجيل هنا"
 
 #: templates/auth/register.html:11
 msgid "Create an Account"
-msgstr ""
+msgstr "إنشاء حساب"
 
 #: templates/auth/register.html:28
 msgid "Already have an account?"
-msgstr ""
+msgstr "لديك حساب من قبل؟"
 
 #: templates/auth/register.html:28
 #: templates/auth/reset_password_request.html:26
 msgid "Login here"
-msgstr ""
+msgstr "تسجيل الدخول هنا"
 
 #: templates/auth/register.html:40
 msgid "Why Register?"
-msgstr ""
+msgstr "لماذا التسجيل؟"
 
 #: templates/auth/register.html:46
 msgid "Get your personal Stremio addon installation link"
-msgstr ""
+msgstr "احصل على رابط تثبيت إضافة ستريميو الخاص بك"
 
 #: templates/auth/register.html:50
 msgid "Upload and share subtitles with the community"
-msgstr ""
+msgstr "تحميل ومشاركة الترجمة مع المجتمع"
 
 #: templates/auth/register.html:54
 msgid "Vote on subtitle quality to help others find the best translations"
-msgstr ""
+msgstr "التصويت على جودة الترجمة لمساعدة الآخرين على العثور على أفضل الترجمات"
 
 #: templates/auth/register.html:58
 msgid "Track your subtitle history and contributions"
-msgstr ""
+msgstr "تتبع تاريخ الترجمة ومساهماتك"
 
 #: templates/auth/resend_confirmation.html:10
 #: templates/auth/resend_confirmation.html:26
 msgid "Resend Confirmation Email"
-msgstr ""
+msgstr "إعادة إرسال رسالة التأكيد"
 
 #: templates/auth/resend_confirmation.html:13
 msgid "If you didn't receive the confirmation email or the link has expired, you can request a new one."
-msgstr ""
+msgstr "إذا لم تستلم رسالة التأكيد أو انتهت صلاحية الرابط، يمكنك طلب رسالة جديدة."
 
 #: templates/auth/resend_confirmation.html:19
 msgid "Email Address"
-msgstr ""
+msgstr "عنوان البريد الإلكتروني"
 
 #: templates/auth/resend_confirmation.html:21
 msgid "Enter the email address you used to register."
-msgstr ""
+msgstr "أدخل عنوان البريد الإلكتروني الذي استخدمته للتسجيل."
 
 #: templates/auth/resend_confirmation.html:32
 msgid "Back to Login"
-msgstr ""
+msgstr "العودة إلى تسجيل الدخول"
 
 #: templates/auth/reset_password.html:11
 msgid "Set New Password"
-msgstr ""
+msgstr "تعيين كلمة سر جديدة"
 
 #: templates/auth/reset_password.html:14
 msgid "Please enter your new password."
-msgstr ""
+msgstr "يرجى إدخال كلمة المرور الجديدة."
 
 #: templates/auth/reset_password_request.html:14
 msgid "Enter your email address and we'll send you instructions to reset your password."
-msgstr ""
+msgstr "أدخل عنوان بريدك الإلكتروني وسوف نرسل لك تعليمات لإعادة تعيين كلمة المرور الخاصة بك."
 
 #: templates/auth/reset_password_request.html:26
 msgid "Remember your password?"
-msgstr ""
+msgstr "تذكر كلمة المرور الخاصة بك؟"
 
 #: templates/email/confirm_email.html:5
 msgid "Confirm Your Email"
-msgstr ""
+msgstr "تأكيد بريدك الإلكتروني"
 
 #: templates/email/confirm_email.html:50 templates/email/confirm_email.txt:1
 #: templates/email/reset_password.html:50 templates/email/reset_password.txt:1
@@ -1096,20 +1096,20 @@ msgstr "اتصالات موفر الخدمة"
 
 #: templates/main/account_settings.html:179
 msgid "This action cannot be undone!"
-msgstr ""
+msgstr "لا يمكن التراجع عن هذا الإجراء!"
 
 #: templates/main/account_settings.html:183
 #, python-format
 msgid "Type your username %(username)s to confirm:"
-msgstr ""
+msgstr "اكتب اسم المستخدم %(username)s للتأكيد:"
 
 #: templates/main/account_settings.html:191
 msgid "Delete My Account"
-msgstr ""
+msgstr "حذف حسابي"
 
 #: templates/main/configure.html:3
 msgid "Configure Addon"
-msgstr ""
+msgstr "Configure Addon"
 
 #: templates/main/configure.html:8
 msgid "Configure Stremio Addon"
@@ -1426,190 +1426,190 @@ msgstr ""
 
 #: templates/main/index.html:57
 msgid "Register for an account"
-msgstr ""
+msgstr "سجل للحصول على حساب"
 
 #: templates/main/index.html:58
 msgid "Install the addon in Stremio using your personal link"
-msgstr ""
+msgstr "قم بتثبيت الإضافة في ستريميو باستخدام رابطك الشخصي"
 
 #: templates/main/index.html:59
 msgid "Start watching content with community subtitles"
-msgstr ""
+msgstr "البدء في مشاهدة المحتوى مع ترجمة المجتمع"
 
 #: templates/main/index.html:60
 msgid "Upload your own subtitles or vote on existing ones"
-msgstr ""
+msgstr "قم بتحميل الترجمات الخاصة بك أو التصويت على الترجمات الموجودة"
 
 #: templates/main/my_subtitles.html:11
 msgid "Manage all subtitles you've submitted to the community."
-msgstr ""
+msgstr "إدارة جميع الترجمات التي قمت بتقديمها للمجتمع."
 
 #: templates/main/my_subtitles.html:51
 #: templates/main/selected_subtitles.html:58
 #: templates/main/voted_subtitles.html:56
 msgid "Author:"
-msgstr ""
+msgstr "المؤلّف:"
 
 #: templates/main/my_subtitles.html:65
 #, python-format
 msgid "%(votes)s votes"
-msgstr ""
+msgstr "%(votes)s أصوات"
 
 #: templates/main/my_subtitles.html:80
 msgid "Are you sure you want to delete this subtitle?"
-msgstr ""
+msgstr "هل أنت متأكد من أنك تريد حذف هذا العنوان الفرعي؟"
 
 #: templates/main/my_subtitles.html:82
 #: templates/main/selected_subtitles.html:110
 msgid "Delete"
-msgstr ""
+msgstr "حذف"
 
 #: templates/main/my_subtitles.html:104
 msgid "No Subtitles Yet"
-msgstr ""
+msgstr "لا يوجد ترجمات بعد"
 
 #: templates/main/my_subtitles.html:105
 msgid "You haven't uploaded any subtitles yet."
-msgstr ""
+msgstr "لم تقم بتحميل أي ترجمات حتى الآن."
 
 #: templates/main/my_subtitles.html:107
 msgid "Upload Your First Subtitle"
-msgstr ""
+msgstr "تحميل العنوان الفرعي الأول الخاص بك"
 
 #: templates/main/selected_subtitles.html:11
 msgid "View and manage all subtitles you've selected for your videos."
-msgstr ""
+msgstr "عرض وإدارة جميع الترجمات التي اخترتها للفيديوهات الخاصة بك."
 
 #: templates/main/selected_subtitles.html:21
 #: templates/main/selected_subtitles.html:128
 msgid "My Selected Subtitles"
-msgstr ""
+msgstr "ترجمتي المحددة"
 
 #: templates/main/selected_subtitles.html:60
 msgid "Votes:"
-msgstr ""
+msgstr "التصويتات:"
 
 #: templates/main/selected_subtitles.html:97
 msgid "Selected:"
-msgstr ""
+msgstr "تحديد:"
 
 #: templates/main/selected_subtitles.html:108
 msgid "Are you sure you want to delete this selection?"
-msgstr ""
+msgstr "هل أنت متأكد من أنك تريد حذف هذا الاختيار؟"
 
 #: templates/main/selected_subtitles.html:132
 msgid "No Selections Yet"
-msgstr ""
+msgstr "لا يوجد اختيار بعد"
 
 #: templates/main/selected_subtitles.html:133
 msgid "You haven't selected any subtitles yet."
-msgstr ""
+msgstr "لم تقم باختيار أي ترجمات بعد."
 
 #: templates/main/upload_subtitle.html:12
 msgid "Advanced Users"
-msgstr ""
+msgstr "المستخدمين المتقدمين"
 
 #: templates/main/upload_subtitle.html:16
 msgid "Advanced Upload Mode:"
-msgstr ""
+msgstr "وضع التحميل المتقدم:"
 
 #: templates/main/upload_subtitle.html:16
 msgid "This feature is for experienced users who want to upload subtitles without having an activity entry in their dashboard."
-msgstr ""
+msgstr "هذه الميزة للمستخدمين ذوي الخبرة الذين يريدون تحميل الترجمات دون إدخال نشاط في لوحة التحكم الخاصة بهم."
 
 #: templates/main/upload_subtitle.html:18
 msgid "You'll need to provide the Content ID manually. To upload subtitles for what you are watching right now, open the activity entry for it from the"
-msgstr ""
+msgstr "سوف تحتاج إلى توفير معرف المحتوى يدوياً. لتحميل الترجمات لما تشاهده الآن، افتح إدخال النشاط له من"
 
 #: templates/main/upload_subtitle.html:23
 msgid "Upload a subtitle file for"
-msgstr ""
+msgstr "تحميل ملف الترجمة لـ"
 
 #: templates/main/upload_subtitle.html:39
 msgid "Subtitle Information"
-msgstr ""
+msgstr "معلومات الترجمة"
 
 #: templates/main/upload_subtitle.html:50
 msgid "Content Identification"
-msgstr ""
+msgstr "تعريف المحتوى"
 
 #: templates/main/upload_subtitle.html:51
 msgid "Provide the Content ID and type for the content you want to upload subtitles for:"
-msgstr ""
+msgstr "توفير معرف المحتوى وكتابة المحتوى الذي تريد تحميل الترجمة لـ:"
 
 #: templates/main/upload_subtitle.html:53
 msgid "IMDB ID:"
-msgstr ""
+msgstr "IMDB ID:"
 
 #: templates/main/upload_subtitle.html:53
 #: templates/main/upload_subtitle.html:54
 msgid "Format like"
-msgstr ""
+msgstr "التنسيق مثل"
 
 #: templates/main/upload_subtitle.html:53
 msgid "(for movies and TV series)"
-msgstr ""
+msgstr "(بالنسبة لسلسلة الأفلام والتلفزيون)"
 
 #: templates/main/upload_subtitle.html:54
 msgid "Kitsu ID:"
-msgstr ""
+msgstr "Kitsu ID:"
 
 #: templates/main/upload_subtitle.html:54
 msgid "(for anime)"
-msgstr ""
+msgstr "(للرابط)"
 
 #: templates/main/upload_subtitle.html:62
 msgid "Enter IMDB ID (tt1234567) or Kitsu ID (kitsu:12345)"
-msgstr ""
+msgstr "Enter IMDB ID (tt1234567) or Kitsu ID (kitsu:12345)"
 
 #: templates/main/upload_subtitle.html:71
 msgid "Season number (default: 1). Ignore for kitsu"
-msgstr ""
+msgstr "رقم الموسم (الافتراضي: 1). تجاهل لـ kitsu"
 
 #: templates/main/upload_subtitle.html:74
 msgid "Episode number (required for series)"
-msgstr ""
+msgstr "رقم الحلقة (مطلوب للسلسلة)"
 
 #: templates/main/upload_subtitle.html:84
 msgid "Enter 'utf8' (default), 'auto' for automatic detection, or a specific encoding like 'cp1250', 'latin1', etc."
-msgstr ""
+msgstr "أدخل 'utf8' (الافتراضي)، 'تلقائي' للكشف التلقائي، أو ترميز محدد مثل 'cp1250', 'latin1', الخ."
 
 #: templates/main/upload_subtitle.html:85
 msgid "Select FPS only for subtitle formats that use frames. Leave as 'Auto' if unsure."
-msgstr ""
+msgstr "حدد FPS فقط لتنسيقات الترجمة التي تستخدم الإطار. اتركه كـ \"تلقائي\" إذا لم يكن مؤكداً."
 
 #: templates/main/upload_subtitle.html:106
 msgid "Title:"
-msgstr ""
+msgstr "العنوان:"
 
 #: templates/main/upload_subtitle.html:152
 msgid "How to Find Content IDs"
-msgstr ""
+msgstr "كيفية العثور على معرفات المحتوى"
 
 #: templates/main/upload_subtitle.html:155
 msgid "IMDB ID (Movies & TV Shows):"
-msgstr ""
+msgstr "معرف IMDB (الأفلام و البرامج التلفزيونية):"
 
 #: templates/main/upload_subtitle.html:157
 #: templates/main/upload_subtitle.html:164
 msgid "Go to"
-msgstr ""
+msgstr "الذهاب إلى"
 
 #: templates/main/upload_subtitle.html:158
 msgid "Search for your content"
-msgstr ""
+msgstr "البحث عن المحتوى الخاص بك"
 
 #: templates/main/upload_subtitle.html:159
 msgid "Copy the ID from URL (e.g.,"
-msgstr ""
+msgstr "نسخ الـ ID من عنوان URL (على سبيل المثال"
 
 #: templates/main/upload_subtitle.html:162
 msgid "Kitsu ID (Anime):"
-msgstr ""
+msgstr "Kitsu ID (Anime):"
 
 #: templates/main/upload_subtitle.html:165
 msgid "Search for your anime"
-msgstr ""
+msgstr "البحث عن أنمي"
 
 #: templates/main/upload_subtitle.html:166
 msgid "Investigate url of the thumbnail"
