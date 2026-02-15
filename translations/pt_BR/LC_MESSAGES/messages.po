@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: stremio-community-subtitles\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2026-02-13 23:14+0100\n"
-"PO-Revision-Date: 2026-02-14 23:37\n"
+"PO-Revision-Date: 2026-02-15 01:52\n"
 "Last-Translator: \n"
 "Language-Team: Portuguese, Brazilian\n"
 "MIME-Version: 1.0\n"
@@ -1125,7 +1125,7 @@ msgstr "Seu link próprio do Addon:"
 
 #: templates/main/configure.html:25
 msgid "This is your personal addon link. Do not share it with others as it's tied to your account."
-msgstr "Esse é seu link próprio do Addon. Não compartilhe com os outros, pois é associado com a sua conta."
+msgstr "Esse é seu link particular do Addon. Não compartilhe com os outros, pois é associado com a sua conta."
 
 #: templates/main/configure.html:31
 msgid "Copy"
