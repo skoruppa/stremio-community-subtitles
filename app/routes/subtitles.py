@@ -253,8 +253,15 @@ async def addon_stream(manifest_token: str, content_type: str, content_id: str, 
             current_app.logger.error(f"Error generating download URL for identifier {download_identifier}: {e}")
             return []
     
-    # Process all languages in parallel
-    results = await asyncio.gather(*[process_language(lang) for lang in preferred_langs], return_exceptions=True)
+    # Process languages with limited concurrency to avoid exhausting connection pool
+    # Process max 3 languages at a time to prevent pool exhaustion
+    semaphore = asyncio.Semaphore(3)
+    
+    async def process_with_limit(lang):
+        async with semaphore:
+            return await process_language(lang)
+    
+    results = await asyncio.gather(*[process_with_limit(lang) for lang in preferred_langs], return_exceptions=True)
     
     subtitles_list = []
     for result in results:
