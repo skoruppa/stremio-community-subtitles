@@ -27,8 +27,6 @@ def init_async_db(app):
     if database_url.startswith('mysql+aiomysql://'):
         connect_args = {
             'connect_timeout': 10,
-            'read_timeout': 30,
-            'write_timeout': 30,
         }
     
     async_engine = create_async_engine(
