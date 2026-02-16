@@ -36,7 +36,7 @@ def init_async_db(app):
         echo=app.config.get('SQLALCHEMY_ECHO', False),
         pool_size=app.config.get('SQLALCHEMY_POOL_SIZE', 5),
         max_overflow=app.config.get('SQLALCHEMY_MAX_OVERFLOW', 10),
-        pool_pre_ping=app.config.get('SQLALCHEMY_POOL_PRE_PING', True),
+        pool_pre_ping=app.config.get('SQLALCHEMY_POOL_PRE_PING', False),
         pool_recycle=app.config.get('SQLALCHEMY_POOL_RECYCLE', 150),
         pool_timeout=app.config.get('SQLALCHEMY_POOL_TIMEOUT', 30),
         pool_reset_on_return='rollback',

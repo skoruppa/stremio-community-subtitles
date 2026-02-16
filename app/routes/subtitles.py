@@ -39,16 +39,6 @@ import aiofiles
 
 subtitles_bp = Blueprint('subtitles', __name__)
 
-# Semaphore to limit concurrent DB connections
-# Increased to 5 to match pool_size for better throughput with 70k daily requests
-_db_semaphore = asyncio.Semaphore(5)  # Max 5 concurrent DB queries
-
-
-
-
-
-
-
 
 @subtitles_bp.route('/<manifest_token>/subtitles/<content_type>/<content_id>/<params>.json')
 @subtitles_bp.route('/<manifest_token>/subtitles/<content_type>/<content_id>/<path:params>')
@@ -199,8 +189,7 @@ async def addon_stream(manifest_token: str, content_type: str, content_id: str, 
             return None
 
         try:
-            async with _db_semaphore:  # Limit concurrent DB connections
-                active_subtitle_info = await get_active_subtitle_details(user, content_id, video_hash, content_type, video_filename, preferred_lang)
+            active_subtitle_info = await get_active_subtitle_details(user, content_id, video_hash, content_type, video_filename, preferred_lang)
             
             # Check if we should add subtitle entry
             has_subtitles = active_subtitle_info['type'] != 'none'

@@ -98,7 +98,7 @@ class Config:
     # Database connection pool settings
     SQLALCHEMY_POOL_SIZE = 5
     SQLALCHEMY_MAX_OVERFLOW = 10
-    SQLALCHEMY_POOL_PRE_PING = True
+    SQLALCHEMY_POOL_PRE_PING = False  # Disabled for aiomysql - rely on pool_recycle instead
     SQLALCHEMY_POOL_RECYCLE = 150 
     SQLALCHEMY_POOL_TIMEOUT = 30
 
