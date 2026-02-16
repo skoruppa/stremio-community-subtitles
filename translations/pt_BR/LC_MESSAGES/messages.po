@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: stremio-community-subtitles\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2026-02-13 23:14+0100\n"
-"PO-Revision-Date: 2026-02-15 01:52\n"
+"PO-Revision-Date: 2026-02-16 01:48\n"
 "Last-Translator: \n"
 "Language-Team: Portuguese, Brazilian\n"
 "MIME-Version: 1.0\n"
@@ -982,12 +982,12 @@ msgstr "Configurações atualizadas"
 #: templates/main/account_settings.html:52
 #: templates/main/account_settings.html:67
 msgid "Failed to update setting"
-msgstr ""
+msgstr "Falha ao atualizar configuração"
 
 #: templates/main/account_settings.html:53
 #: templates/main/account_settings.html:68
 msgid "Error updating setting"
-msgstr ""
+msgstr "Erro ao atualizar configuração"
 
 #: templates/main/account_settings.html:60
 msgid "Prioritize .ass subtitles"
@@ -1478,12 +1478,12 @@ msgstr "Upload da minha primeira legenda"
 
 #: templates/main/selected_subtitles.html:11
 msgid "View and manage all subtitles you've selected for your videos."
-msgstr ""
+msgstr "Visualize e gerencie todas as legendas que você selecionou para seus vídeos."
 
 #: templates/main/selected_subtitles.html:21
 #: templates/main/selected_subtitles.html:128
 msgid "My Selected Subtitles"
-msgstr ""
+msgstr "Minhas legendas selecionadas"
 
 #: templates/main/selected_subtitles.html:60
 msgid "Votes:"
@@ -1491,19 +1491,19 @@ msgstr "Votada:"
 
 #: templates/main/selected_subtitles.html:97
 msgid "Selected:"
-msgstr ""
+msgstr "Selecionado:"
 
 #: templates/main/selected_subtitles.html:108
 msgid "Are you sure you want to delete this selection?"
-msgstr ""
+msgstr "Você tem certeza de que deseja excluir esta seleção?"
 
 #: templates/main/selected_subtitles.html:132
 msgid "No Selections Yet"
-msgstr ""
+msgstr "Nada foi selecionado ainda"
 
 #: templates/main/selected_subtitles.html:133
 msgid "You haven't selected any subtitles yet."
-msgstr ""
+msgstr "Você ainda não selecionou nenhuma legenda"
 
 #: templates/main/upload_subtitle.html:12
 msgid "Advanced Users"
