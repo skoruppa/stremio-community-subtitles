@@ -32,8 +32,8 @@ Every subtitle you upload helps build a community database that benefits all use
 
 Multi-language interface support with community translations:
 
-- **🌐 Interface Translation System** – Full internationalization support with 12 languages
-- **🤝 Help Us Translate!** – We need your help to translate the interface to other languages. Join us on [Crowdin](https://crowdin.com/project/stremio-community-subtitles) to contribute translations for Spanish, French, German, Italian, Portuguese, Russian, Japanese, Chinese, Turkish, and more!
+- **🌐 Interface Translation System** – Full internationalization support with 15 languages
+- **🤝 Help Us Translate!** – We need your help to translate the interface to other languages. Join us on [Crowdin](https://crowdin.com/project/stremio-community-subtitles) to contribute translations for Spanish, French, German, Italian, Portuguese, Russian, Japanese, Chinese, Turkish, Arabic, Hebrew, Vietnamese, and more!
 
 ---
 
@@ -111,16 +111,19 @@ Read the privacy policy here:
 **Translation Status:**
 - 🇬🇧 English — ✅ Complete (base language)
 - 🇵🇱 Polski (Polish) — ✅ Complete
+- 🇵🇹 Português (Portuguese) — ✅ Complete
+- 🇧🇷 Português (BR) — ✅ Complete
+- 🇸🇦 العربية (Arabic) — ✅ Complete
+- 🇻🇳 Tiếng Việt (Vietnamese) — ✅ Complete
 - 🇪🇸 Español (Spanish) — 🔄 Help needed
 - 🇫🇷 Français (French) — 🔄 Help needed
 - 🇩🇪 Deutsch (German) — 🔄 Help needed
 - 🇮🇹 Italiano (Italian) — 🔄 Help needed
-- 🇵🇹 Português (Portuguese) — 🔄 Help needed
-- 🇧🇷 Português (BR) — 🔄 Help needed
 - 🇷🇺 Русский (Russian) — 🔄 Help needed
 - 🇯🇵 日本語 (Japanese) — 🔄 Help needed
 - 🇨🇳 中文 (Chinese) — 🔄 Help needed
 - 🇹🇷 Türkçe (Turkish) — 🔄 Help needed
+- 🇮🇱 עברית (Hebrew) — 🔄 Help needed
 
 ## 🤝 Support
 
