@@ -151,6 +151,15 @@ def _parse_xml_response(response_text, season=None, episode=None, filename=None,
             author_el = subtitle.find("author")
             author = author_el.text if author_el is not None and author_el.text else None
             
+            rating_el = subtitle.find("rating")
+            rating = None
+            if rating_el is not None and rating_el.text:
+                try:
+                    # Napisy24 uses 0-6 scale, convert to 0-10
+                    rating = float(rating_el.text) * 10 / 6
+                except ValueError:
+                    rating = None
+            
             subSeason = subtitle.find("season")
             subSeason = int(subSeason.text) if subSeason is not None and subSeason.text else None
             subEpisode = subtitle.find("episode")
@@ -171,14 +180,16 @@ def _parse_xml_response(response_text, season=None, episode=None, filename=None,
                     'id': sub_id,
                     'fps': fps,
                     'release': release,
-                    'author': author
+                    'author': author,
+                    'rating': rating
                 }]
             
             subtitles.append({
                 'id': sub_id,
                 'fps': fps,
                 'release': release,
-                'author': author
+                'author': author,
+                'rating': rating
             })
         
         return subtitles
