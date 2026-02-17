@@ -124,7 +124,7 @@ if __name__ == '__main__':
     # Run web server
     debug = os.getenv('DEBUG', 'false').lower() in ('true', '1', 'yes')
     host = os.getenv('FLASK_RUN_HOST', '0.0.0.0')
-    port = int(os.getenv('FLASK_RUN_PORT', 5000))
+    port = int(os.getenv('FLASK_RUN_PORT', os.getenv('PORT', 5000)))
     
     if debug:
         # Development mode - Quart built-in server with auto-reload
