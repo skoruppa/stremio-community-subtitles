@@ -47,21 +47,19 @@ def create_admin(email, username, password):
             await session.commit()
             click.echo(f"Admin user created: {username}")
     
-    with app.app_context():
-        asyncio.run(_create())
+    asyncio.run(_create())
 
 @cli.command('init-db')
 def init_db_command():
     """Initialize database tables"""
-    from app.extensions import engine, Base
+    from app.extensions import async_engine, Base
     
     async def _init():
-        async with engine.begin() as conn:
+        async with async_engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
         click.echo("Database tables created")
     
-    with app.app_context():
-        asyncio.run(_init())
+    asyncio.run(_init())
 
 @cli.command('create-roles')
 def create_roles_command():
@@ -87,8 +85,7 @@ def create_roles_command():
             
             await session.commit()
     
-    with app.app_context():
-        asyncio.run(_create())
+    asyncio.run(_create())
 
 
 @cli.command('init-anime-db')
