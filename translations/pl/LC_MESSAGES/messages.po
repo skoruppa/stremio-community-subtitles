@@ -90,10 +90,6 @@ msgstr "Autor (opcjonalnie)"
 msgid "Version/Sync Info (Optional)"
 msgstr "Informacje o wersji/synchronizacji (opcjonalnie)"
 
-#: app/forms.py:61
-msgid "Forced/Foreign Parts Only"
-msgstr "Wymuszone/Tylko obce fragmenty"
-
 #: app/forms.py:63
 msgid "Content ID"
 msgstr "ID treści"
@@ -660,14 +656,6 @@ msgstr "Tłumaczenie AI"
 #: templates/_provider_subtitle_list_item.html:40
 msgid "Hearing Impaired"
 msgstr "Dla niedosłyszących"
-
-#: templates/_provider_subtitle_list_item.html:43
-msgid "Forced/Foreign Parts Only"
-msgstr "Wymuszone/Tylko obce fragmenty"
-
-#: templates/_provider_subtitle_list_item.html:43
-msgid "Forced"
-msgstr "Wymuszone"
 
 #: templates/_provider_subtitle_list_item.html:47
 #: templates/_subtitle_list_item.html:69
@@ -1793,8 +1781,3 @@ msgstr "SubSource zwraca pliki ZIP, które mogą zawierać format ASS. Ta opcja 
 msgid "SubSource offers API access for subtitle downloads. Check their website for current limits."
 msgstr "SubSource oferuje dostęp do API do pobierania napisów. Sprawdź ich stronę, aby poznać aktualne limity."
 
-msgid "Prioritize forced subtitles"
-msgstr "Priorytetyzuj napisy wymuszone"
-
-msgid "When enabled, forced/foreign parts subtitles will be prioritized"
-msgstr "Gdy włączone, napisy wymuszone/obce fragmenty będą priorytetyzowane"
