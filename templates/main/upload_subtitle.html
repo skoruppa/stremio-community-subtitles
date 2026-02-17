@@ -85,6 +85,11 @@
                     {{ render_field_with_info(form.fps, _("Select FPS only for subtitle formats that use frames. Leave as 'Auto' if unsure.")) }}
                     {{ render_field(form.author) }}
                     {{ render_field(form.version_info) }}
+                    
+                    <div class="mb-3">
+                        {{ form.forced.label(class="form-check-label") }}
+                        {{ form.forced(class="form-check-input ms-2") }}
+                    </div>
 
                     {{ render_submit_button(form.submit) }}
                 </form>

@@ -919,7 +919,8 @@ async def upload_subtitle(activity_id=None):
                 source_metadata=source_metadata,
                 version_info=form.version_info.data if hasattr(form,
                                                                'version_info') and form.version_info.data else None,
-                author=form.author.data if hasattr(form, 'author') and form.author.data else None
+                author=form.author.data if hasattr(form, 'author') and form.author.data else None,
+                forced=form.forced.data if hasattr(form, 'forced') else False
             )
             
             async with async_session_maker() as session:

@@ -47,6 +47,9 @@
                 {% else %}
                     <span class="badge bg-light text-dark">{{ _('No Hash Specific') }}</span>
                 {% endif %}
+                {% if subtitle.forced %}
+                    <span class="badge bg-danger" title="{{ _('Forced/Foreign Parts Only') }}"><i class="fas fa-language"></i></span>
+                {% endif %}
             </div>
         </div>
         <div class="col-md-5 col-lg-4 text-end gap-1 pt-2 pt-md-0">

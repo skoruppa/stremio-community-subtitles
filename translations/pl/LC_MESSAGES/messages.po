@@ -90,6 +90,10 @@ msgstr "Autor (opcjonalnie)"
 msgid "Version/Sync Info (Optional)"
 msgstr "Informacje o wersji/synchronizacji (opcjonalnie)"
 
+#: app/forms.py:61
+msgid "Forced/Foreign Parts Only"
+msgstr "Wymuszone/Tylko obce fragmenty"
+
 #: app/forms.py:63
 msgid "Content ID"
 msgstr "ID treści"

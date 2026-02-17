@@ -58,6 +58,7 @@ class SubtitleUploadForm(QuartForm):
                       validators=[])
     author = StringField(_l('Author (Optional)'), validators=[Length(max=100)])
     version_info = TextAreaField(_l('Version/Sync Info (Optional)'), validators=[Length(max=500)])
+    forced = BooleanField(_l('Forced/Foreign Parts Only'), default=False)
 
     # Advanced upload fields (only shown for advanced upload)
     content_id = StringField(_l('Content ID'),

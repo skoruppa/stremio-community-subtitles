@@ -303,7 +303,7 @@ async def get_active_subtitle_details(user, content_id, video_hash=None, content
     
     # 2. Local by hash
     if video_hash:
-        local_sub = await _find_local_by_hash(content_id, video_hash, lang)
+        local_sub = await _find_local_by_hash(content_id, video_hash, lang, user)
         if local_sub:
             result.update({
                 'type': 'local',
@@ -389,16 +389,22 @@ async def _get_user_vote(user, subtitle_id):
         return vote.vote_value if vote else None
 
 
-async def _find_local_by_hash(content_id, video_hash, lang):
+async def _find_local_by_hash(content_id, video_hash, lang, user):
     async with async_session_maker() as session:
         result = await session.execute(
             select(Subtitle).options(selectinload(Subtitle.uploader)).filter_by(
                 content_id=content_id,
                 language=lang,
                 video_hash=video_hash
-            ).order_by(Subtitle.votes.desc()).limit(1)
+            ).order_by(Subtitle.votes.desc())
         )
-        return result.scalar_one_or_none()
+        subs = result.scalars().all()
+        if not subs:
+            return None
+        if user.prioritize_forced_subtitles:
+            forced = [s for s in subs if s.forced]
+            return forced[0] if forced else subs[0]
+        return subs[0]
 
 
 async def _search_providers_by_hash(user, imdb_id, video_hash, content_type, lang, season=None, episode=None, cached_results=None):

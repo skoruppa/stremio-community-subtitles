@@ -338,6 +338,7 @@ class Subtitle(Base):
     version_info = Column(Text, nullable=True)
     source_type = Column(String(50), nullable=False, default='community', index=True)
     source_metadata = Column(MutableDict.as_mutable(JSONType), nullable=True)
+    forced = Column(Boolean, default=False)
 
     uploader = relationship('User', back_populates='uploaded_subtitles')
     user_votes = relationship('SubtitleVote', back_populates='subtitle')
