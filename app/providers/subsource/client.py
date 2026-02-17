@@ -37,7 +37,7 @@ class SubSourceClient:
                 params['type'] = 'series'
         
         async with aiohttp.ClientSession() as session:
-            async with session.get(url, headers=self.headers, params=params, timeout=aiohttp.ClientTimeout(total=10)) as response:
+            async with session.get(url, headers=self.headers, params=params, timeout=aiohttp.ClientTimeout(total=5)) as response:
                 response.raise_for_status()
                 data = await response.json()
                 if data.get('success') and data.get('data'):
@@ -57,7 +57,7 @@ class SubSourceClient:
             params['language'] = language
         
         async with aiohttp.ClientSession() as session:
-            async with session.get(url, headers=self.headers, params=params, timeout=aiohttp.ClientTimeout(total=10)) as response:
+            async with session.get(url, headers=self.headers, params=params, timeout=aiohttp.ClientTimeout(total=5)) as response:
                 response.raise_for_status()
                 return await response.json()
     
@@ -66,7 +66,7 @@ class SubSourceClient:
         url = f"{self.BASE_URL}/subtitles/{subtitle_id}/download"
         
         async with aiohttp.ClientSession() as session:
-            async with session.get(url, headers=self.headers, timeout=aiohttp.ClientTimeout(total=30)) as response:
+            async with session.get(url, headers=self.headers, timeout=aiohttp.ClientTimeout(total=5)) as response:
                 response.raise_for_status()
                 # SubSource returns JSON with body field containing ZIP stream
                 body = await response.read()

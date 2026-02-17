@@ -52,7 +52,7 @@ async def search_subtitles(api_key, imdb_id=None, tmdb_id=None, film_name=None, 
     try:
         current_app.logger.info(f"SubDL search with params: {params}")
         async with aiohttp.ClientSession() as session:
-            async with session.get(base_url, params=params, headers=headers, timeout=aiohttp.ClientTimeout(total=3)) as response:
+            async with session.get(base_url, params=params, headers=headers, timeout=aiohttp.ClientTimeout(total=5)) as response:
                 response.raise_for_status()
                 return await response.json()
     except aiohttp.ClientResponseError as e:
