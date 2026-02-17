@@ -1,18 +1,22 @@
-
 msgid ""
 msgstr ""
-"Project-Id-Version:  stremio-community-subtitles\n"
+"Project-Id-Version: stremio-community-subtitles\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2026-02-17 13:49+0100\n"
-"PO-Revision-Date: 2026-02-15 01:52+0000\n"
+"PO-Revision-Date: 2026-02-17 12:56\n"
 "Last-Translator: \n"
-"Language: vi_VN\n"
 "Language-Team: Vietnamese\n"
-"Plural-Forms: nplurals=1; plural=0;\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=utf-8\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.17.0\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"X-Crowdin-Project: stremio-community-subtitles\n"
+"X-Crowdin-Project-ID: 872640\n"
+"X-Crowdin-Language: vi\n"
+"X-Crowdin-File: messages.pot\n"
+"X-Crowdin-File-ID: 4\n"
+"Language: vi_VN\n"
 
 #: app/email.py:125
 msgid "Stremio Community Subtitles - Confirm Your Email"
@@ -23,38 +27,32 @@ msgid "Stremio Community Subtitles - Reset Your Password"
 msgstr "Stremio Community Subtitles - Đặt lại mật khẩu"
 
 #: app/forms.py:12 app/forms.py:20 app/forms.py:134
-#, fuzzy
 msgid "Email"
-msgstr "Email:"
+msgstr "Email"
 
 #: app/forms.py:13 app/forms.py:21
-#, fuzzy
 msgid "Password"
-msgstr "Mẹo đặt mật khẩu"
+msgstr "Mật khẩu"
 
 #: app/forms.py:14
-#, fuzzy
 msgid "Remember Me"
-msgstr "Thành viên từ:"
+msgstr "Ghi nhớ đăng nhập"
 
 #: app/forms.py:15
 msgid "Sign In"
-msgstr ""
+msgstr "Đăng nhập"
 
 #: app/forms.py:19
-#, fuzzy
 msgid "Username"
-msgstr "Tên đăng nhập:"
+msgstr "Tên người dùng"
 
 #: app/forms.py:22 app/forms.py:140
-#, fuzzy
 msgid "Confirm Password"
-msgstr "Thay đổi mật khẩu"
+msgstr "Xác nhận mật khẩu"
 
 #: app/forms.py:23 app/forms.py:145
-#, fuzzy
 msgid "Preferred Subtitle Languages"
-msgstr "Phụ đề đã chọn"
+msgstr "Ngôn ngữ phụ đề ưu tiên"
 
 #: app/forms.py:24 templates/base.html:96 templates/main/index.html:14
 msgid "Register"
@@ -62,37 +60,35 @@ msgstr "Đăng ký"
 
 #: app/forms.py:49
 msgid "Subtitle File (.srt, .sub, .txt, .ass, .ssa)"
-msgstr ""
+msgstr "Tập tin phụ đề (.srt, .sub, .txt, .ass, .ssa)"
 
 #: app/forms.py:51
 msgid "Only .srt, .sub, .txt, .ass, .ssa files allowed!"
-msgstr ""
+msgstr "Chỉ cho phép định dạng .srt, .sub, .txt, .ass, .ssa!"
 
 #: app/forms.py:53
-#, fuzzy
 msgid "Subtitle Language"
-msgstr "Hướng dẫn về phụ đề"
+msgstr "Ngôn ngữ phụ đề"
 
 #: app/forms.py:54
 msgid "Encoding"
-msgstr ""
+msgstr "Bảng mã"
 
 #: app/forms.py:55
 msgid "FPS (Frames Per Second)"
-msgstr ""
+msgstr "FPS (Số khung hình mỗi giây)"
 
 #: app/forms.py:56
-#, fuzzy
 msgid "Auto"
-msgstr "Tác giả:"
+msgstr "Tự động"
 
 #: app/forms.py:59
 msgid "Author (Optional)"
-msgstr ""
+msgstr "Tác giả (Tùy chỉnh)"
 
 #: app/forms.py:60
 msgid "Version/Sync Info (Optional)"
-msgstr ""
+msgstr "Thông tin phiên bản/đồng bộ (Không bắt buộc)"
 
 #: app/forms.py:61 templates/_provider_subtitle_list_item.html:43
 #: templates/_subtitle_list_item.html:51
@@ -100,18 +96,16 @@ msgid "Forced/Foreign Parts Only"
 msgstr ""
 
 #: app/forms.py:64
-#, fuzzy
 msgid "Content ID"
-msgstr "Đã kết nối"
+msgstr "Content ID"
 
 #: app/forms.py:66
-#, fuzzy
 msgid "IMDB ID (e.g., tt1234567) or Kitsu ID (e.g., kitsu:12345)"
-msgstr "Nhập IMDB ID (tt1234567) hoặc Kitsu ID (kitsu:12345)"
+msgstr "IMDB ID (vd: tt1234567) hoặc Kitsu ID (vd: kitsu:12345)"
 
 #: app/forms.py:67
 msgid "Content Type"
-msgstr ""
+msgstr "Loại nội dung"
 
 #: app/forms.py:68 templates/main/content_detail.html:30
 #: templates/main/dashboard.html:63 templates/main/upload_subtitle.html:121
@@ -119,28 +113,24 @@ msgid "Movie"
 msgstr "Phim"
 
 #: app/forms.py:68
-#, fuzzy
 msgid "TV Series"
 msgstr "Phim bộ"
 
 #: app/forms.py:70
-#, fuzzy
 msgid "Season Number"
-msgstr "Mùa:"
+msgstr "Số mùa"
 
 #: app/forms.py:72
 msgid "Required for TV series (default: 1)"
-msgstr ""
+msgstr "Dùng cho Phim bộ (Mặc định: 1)"
 
 #: app/forms.py:73
-#, fuzzy
 msgid "Episode Number"
-msgstr "Số tập:"
+msgstr "Số tập"
 
 #: app/forms.py:75
-#, fuzzy
 msgid "Required for TV series"
-msgstr "Số tập (bắt buộc đối với phim bộ)"
+msgstr "Dùng cho Phim bộ"
 
 #: app/forms.py:77 templates/main/upload_subtitle.html:4
 #: templates/main/upload_subtitle.html:11
@@ -149,29 +139,24 @@ msgid "Upload Subtitle"
 msgstr "Tải lên phụ đề"
 
 #: app/forms.py:117
-#, fuzzy
 msgid "Content ID must be either IMDB ID (starting with \"tt\") or Kitsu ID (format \"kitsu:12345\")"
-msgstr "Content ID phải là IMDB ID (bắt đầu bằng \"tt\") hoặc Kitsu ID (định dạng \"kitsu:12345\") hoặc MAL ID (định dạng \"mal:12345\")"
+msgstr "Content ID phải là IMDB ID (bắt đầu bằng \"tt\") hoặc Kitsu ID (định dạng \"kitsu:12345\")"
 
 #: app/forms.py:123
-#, fuzzy
 msgid "Episode number is required for TV series"
 msgstr "Phim bộ bắt buộc phải có Số tập"
 
 #: app/forms.py:127
-#, fuzzy
 msgid "Current Password"
-msgstr "Đặt lại mật khẩu"
+msgstr "Mật khẩu hiện tại"
 
 #: app/forms.py:128 app/forms.py:139
-#, fuzzy
 msgid "New Password"
-msgstr "Thiết lập mật khẩu mới"
+msgstr "Mật khẩu mới"
 
 #: app/forms.py:129
-#, fuzzy
 msgid "Confirm New Password"
-msgstr "Thiết lập mật khẩu mới"
+msgstr "Xác nhận mật khẩu mới"
 
 #: app/forms.py:130 templates/auth/change_password.html:11
 #: templates/main/account_settings.html:157
@@ -179,9 +164,8 @@ msgid "Change Password"
 msgstr "Thay đổi mật khẩu"
 
 #: app/forms.py:135
-#, fuzzy
 msgid "Request Password Reset"
-msgstr "Đặt lại mật khẩu"
+msgstr "Yêu cầu đặt lại mật khẩu"
 
 #: app/forms.py:141 templates/auth/reset_password_request.html:11
 #: templates/email/reset_password.html:54
@@ -189,37 +173,32 @@ msgid "Reset Password"
 msgstr "Đặt lại mật khẩu"
 
 #: app/forms.py:146
-#, fuzzy
 msgid "Update Preference"
-msgstr "Tùy chọn ngôn ngữ"
+msgstr "Cập nhật tùy chọn"
 
 #: app/forms.py:150
-#, fuzzy
 msgid "Use OpenSubtitles Integration"
-msgstr "Thông tin phụ đề"
+msgstr "Sử dụng tính năng tích hợp OpenSubtitles"
 
 #: app/forms.py:152 templates/providers/opensubtitles_form.html:3
 msgid "OpenSubtitles Username"
 msgstr "Tên người dùng OpenSubtitles"
 
 #: app/forms.py:154
-#, fuzzy
 msgid "Your OpenSubtitles.com Username"
-msgstr "Tên đăng nhập OpenSubtitles.com của bạn"
+msgstr "Tên người dùng OpenSubtitles.com của bạn"
 
 #: app/forms.py:158 templates/providers/opensubtitles_form.html:12
 msgid "OpenSubtitles Password"
 msgstr "Mật khẩu OpenSubtitles"
 
 #: app/forms.py:160
-#, fuzzy
 msgid "Your OpenSubtitles.com Password"
 msgstr "Mật khẩu OpenSubtitles.com của bạn"
 
 #: app/forms.py:163
-#, fuzzy
 msgid "Save OpenSubtitles Settings"
-msgstr "Tên người dùng OpenSubtitles"
+msgstr "Lưu cài đặt OpenSubtitles"
 
 #: app/routes/auth.py:33
 msgid "Invalid email or password"
@@ -1027,9 +1006,8 @@ msgid "When enabled, .ass/.ssa subtitles will appear first in Stremio's subtitle
 msgstr "Khi bật, các phụ đề .ass/.ssa sẽ xuất hiện đầu tiên trong danh sách phụ đề của Stremio"
 
 #: templates/main/account_settings.html:75
-#, fuzzy
 msgid "Prioritize forced subtitles"
-msgstr "Ưu tiên phụ đề .ass"
+msgstr ""
 
 #: templates/main/account_settings.html:76
 msgid "When enabled, forced/foreign parts subtitles will be prioritized"
@@ -1818,106 +1796,4 @@ msgstr "SubSource trả về tệp ZIP có thể chứa định dạng ASS. Tùy
 #: templates/providers/subsource_form.html:23
 msgid "SubSource offers API access for subtitle downloads. Check their website for current limits."
 msgstr "SubSource cung cấp quyền truy cập API để tải xuống phụ đề. Kiểm tra trang web của họ để biết các giới hạn hiện tại."
-
-#~ msgid "Email"
-#~ msgstr "Email"
-
-#~ msgid "Password"
-#~ msgstr "Mật khẩu"
-
-#~ msgid "Remember Me"
-#~ msgstr "Ghi nhớ đăng nhập"
-
-#~ msgid "Sign In"
-#~ msgstr "Đăng nhập"
-
-#~ msgid "Username"
-#~ msgstr "Tên người dùng"
-
-#~ msgid "Confirm Password"
-#~ msgstr "Xác nhận mật khẩu"
-
-#~ msgid "Preferred Subtitle Languages"
-#~ msgstr "Ngôn ngữ phụ đề ưu tiên"
-
-#~ msgid "Subtitle File (.srt, .sub, .txt, .ass, .ssa)"
-#~ msgstr "Tập tin phụ đề (.srt, .sub, .txt, .ass, .ssa)"
-
-#~ msgid "Only .srt, .sub, .txt, .ass, .ssa files allowed!"
-#~ msgstr "Chỉ cho phép định dạng .srt, .sub, .txt, .ass, .ssa!"
-
-#~ msgid "Subtitle Language"
-#~ msgstr "Ngôn ngữ phụ đề"
-
-#~ msgid "Encoding"
-#~ msgstr "Bảng mã"
-
-#~ msgid "FPS (Frames Per Second)"
-#~ msgstr "FPS (Số khung hình mỗi giây)"
-
-#~ msgid "Auto"
-#~ msgstr "Tự động"
-
-#~ msgid "Author (Optional)"
-#~ msgstr "Tác giả (Tùy chỉnh)"
-
-#~ msgid "Version/Sync Info (Optional)"
-#~ msgstr "Thông tin phiên bản/đồng bộ (Không bắt buộc)"
-
-#~ msgid "Content ID"
-#~ msgstr "Content ID"
-
-#~ msgid "IMDB ID (e.g., tt1234567) or Kitsu ID (e.g., kitsu:12345)"
-#~ msgstr "IMDB ID (vd: tt1234567) hoặc Kitsu ID (vd: kitsu:12345)"
-
-#~ msgid "Content Type"
-#~ msgstr "Loại nội dung"
-
-#~ msgid "TV Series"
-#~ msgstr "Phim bộ"
-
-#~ msgid "Season Number"
-#~ msgstr "Số mùa"
-
-#~ msgid "Required for TV series (default: 1)"
-#~ msgstr "Dùng cho Phim bộ (Mặc định: 1)"
-
-#~ msgid "Episode Number"
-#~ msgstr "Số tập"
-
-#~ msgid "Required for TV series"
-#~ msgstr "Dùng cho Phim bộ"
-
-#~ msgid "Content ID must be either IMDB ID (starting with \"tt\") or Kitsu ID (format \"kitsu:12345\")"
-#~ msgstr "Content ID phải là IMDB ID (bắt đầu bằng \"tt\") hoặc Kitsu ID (định dạng \"kitsu:12345\")"
-
-#~ msgid "Episode number is required for TV series"
-#~ msgstr "Phim bộ bắt buộc phải có Số tập"
-
-#~ msgid "Current Password"
-#~ msgstr "Mật khẩu hiện tại"
-
-#~ msgid "New Password"
-#~ msgstr "Mật khẩu mới"
-
-#~ msgid "Confirm New Password"
-#~ msgstr "Xác nhận mật khẩu mới"
-
-#~ msgid "Request Password Reset"
-#~ msgstr "Yêu cầu đặt lại mật khẩu"
-
-#~ msgid "Update Preference"
-#~ msgstr "Cập nhật tùy chọn"
-
-#~ msgid "Use OpenSubtitles Integration"
-#~ msgstr "Sử dụng tính năng tích hợp OpenSubtitles"
-
-#~ msgid "Your OpenSubtitles.com Username"
-#~ msgstr "Tên người dùng OpenSubtitles.com của bạn"
-
-#~ msgid "Your OpenSubtitles.com Password"
-#~ msgstr "Mật khẩu OpenSubtitles.com của bạn"
-
-#~ msgid "Save OpenSubtitles Settings"
-#~ msgstr "Lưu cài đặt OpenSubtitles"
 

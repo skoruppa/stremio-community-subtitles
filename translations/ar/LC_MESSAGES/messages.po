@@ -1,18 +1,22 @@
-
 msgid ""
 msgstr ""
-"Project-Id-Version:  stremio-community-subtitles\n"
+"Project-Id-Version: stremio-community-subtitles\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2026-02-17 13:49+0100\n"
-"PO-Revision-Date: 2026-02-15 01:26+0000\n"
+"PO-Revision-Date: 2026-02-17 12:56\n"
 "Last-Translator: \n"
-"Language: ar_SA\n"
 "Language-Team: Arabic\n"
-"Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 && n%100<=99 ? 4 : 5);\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=utf-8\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.17.0\n"
+"Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 && n%100<=99 ? 4 : 5);\n"
+"X-Crowdin-Project: stremio-community-subtitles\n"
+"X-Crowdin-Project-ID: 872640\n"
+"X-Crowdin-Language: ar\n"
+"X-Crowdin-File: messages.pot\n"
+"X-Crowdin-File-ID: 4\n"
+"Language: ar_SA\n"
 
 #: app/email.py:125
 msgid "Stremio Community Subtitles - Confirm Your Email"
@@ -23,38 +27,32 @@ msgid "Stremio Community Subtitles - Reset Your Password"
 msgstr "ترجمة مجتمع البث - إعادة تعيين كلمة المرور الخاصة بك"
 
 #: app/forms.py:12 app/forms.py:20 app/forms.py:134
-#, fuzzy
 msgid "Email"
-msgstr "البريد الإلكتروني:"
+msgstr "البريد الإلكتروني"
 
 #: app/forms.py:13 app/forms.py:21
-#, fuzzy
 msgid "Password"
-msgstr "نصائح كلمة المرور"
+msgstr "كلمة السر"
 
 #: app/forms.py:14
-#, fuzzy
 msgid "Remember Me"
-msgstr "عضو منذ:"
+msgstr "تذكر بياناتي"
 
 #: app/forms.py:15
 msgid "Sign In"
-msgstr ""
+msgstr "تسجيل الدخول"
 
 #: app/forms.py:19
-#, fuzzy
 msgid "Username"
-msgstr "اسم المستخدم:"
+msgstr "اسم المستخدم"
 
 #: app/forms.py:22 app/forms.py:140
-#, fuzzy
 msgid "Confirm Password"
-msgstr "تغيير كلمة السر"
+msgstr "تأكيد كلمة المرور"
 
 #: app/forms.py:23 app/forms.py:145
-#, fuzzy
 msgid "Preferred Subtitle Languages"
-msgstr "الترجمات المحددة"
+msgstr "لغة الترجمة المفضلة"
 
 #: app/forms.py:24 templates/base.html:96 templates/main/index.html:14
 msgid "Register"
@@ -62,37 +60,35 @@ msgstr "تسجيل"
 
 #: app/forms.py:49
 msgid "Subtitle File (.srt, .sub, .txt, .ass, .ssa)"
-msgstr ""
+msgstr "ملف الترجمة (.srt, .sub, .txt, .ass, .ssa)"
 
 #: app/forms.py:51
 msgid "Only .srt, .sub, .txt, .ass, .ssa files allowed!"
-msgstr ""
+msgstr "فقط .srt, .sub, .txt, .ass, .ssa الملفات المسموح بها!"
 
 #: app/forms.py:53
-#, fuzzy
 msgid "Subtitle Language"
-msgstr "إرشادات الترجمة"
+msgstr "لغة الترجمة"
 
 #: app/forms.py:54
 msgid "Encoding"
-msgstr ""
+msgstr "الترميز"
 
 #: app/forms.py:55
 msgid "FPS (Frames Per Second)"
-msgstr ""
+msgstr "FPS (إطارات لكل ثانية)"
 
 #: app/forms.py:56
-#, fuzzy
 msgid "Auto"
-msgstr "المؤلّف:"
+msgstr "تلقائي"
 
 #: app/forms.py:59
 msgid "Author (Optional)"
-msgstr ""
+msgstr "المؤلف (اختياري)"
 
 #: app/forms.py:60
 msgid "Version/Sync Info (Optional)"
-msgstr ""
+msgstr "الإصدار/مزامنة معلومات (اختياري)"
 
 #: app/forms.py:61 templates/_provider_subtitle_list_item.html:43
 #: templates/_subtitle_list_item.html:51
@@ -100,18 +96,16 @@ msgid "Forced/Foreign Parts Only"
 msgstr ""
 
 #: app/forms.py:64
-#, fuzzy
 msgid "Content ID"
-msgstr "متصل"
+msgstr "ID المحتوى"
 
 #: app/forms.py:66
-#, fuzzy
 msgid "IMDB ID (e.g., tt1234567) or Kitsu ID (e.g., kitsu:12345)"
-msgstr "Enter IMDB ID (tt1234567) or Kitsu ID (kitsu:12345)"
+msgstr "IMDB ID (e.g., tt1234567) or Kitsu ID (e.g., kitsu:12345)"
 
 #: app/forms.py:67
 msgid "Content Type"
-msgstr ""
+msgstr "نوع المحتوى"
 
 #: app/forms.py:68 templates/main/content_detail.html:30
 #: templates/main/dashboard.html:63 templates/main/upload_subtitle.html:121
@@ -119,28 +113,24 @@ msgid "Movie"
 msgstr "فيلم"
 
 #: app/forms.py:68
-#, fuzzy
 msgid "TV Series"
-msgstr "مسلسل تلفزيوني"
+msgstr "مسلسلات"
 
 #: app/forms.py:70
-#, fuzzy
 msgid "Season Number"
-msgstr "الموسم:"
+msgstr "رقم الموسم"
 
 #: app/forms.py:72
 msgid "Required for TV series (default: 1)"
-msgstr ""
+msgstr "مطلوب للمسلسلات التلفزيون (الافتراضي: 1)"
 
 #: app/forms.py:73
-#, fuzzy
 msgid "Episode Number"
-msgstr "الحلقة:"
+msgstr "رقم الحلقة"
 
 #: app/forms.py:75
-#, fuzzy
 msgid "Required for TV series"
-msgstr "رقم الحلقة (مطلوب للمسلسلات)"
+msgstr "مطلوب للمسلسلات التليفزيون"
 
 #: app/forms.py:77 templates/main/upload_subtitle.html:4
 #: templates/main/upload_subtitle.html:11
@@ -149,29 +139,24 @@ msgid "Upload Subtitle"
 msgstr "رفع الترجمة"
 
 #: app/forms.py:117
-#, fuzzy
 msgid "Content ID must be either IMDB ID (starting with \"tt\") or Kitsu ID (format \"kitsu:12345\")"
-msgstr "يجب أن يكون معرف المحتوى إما معرف IMDB (بدءاً ب \"tt\") أو معرف Kitsu (تنسيق \"kitsu:12345\") أو معرف MAL (تنسيق \"mal:12345\")"
+msgstr "يجب أن يكون معرف المحتوى إما معرف IMDB (بدءاً ب \"tt\") أو معرف Kitsu (تنسيق \"kitsu:12345\")"
 
 #: app/forms.py:123
-#, fuzzy
 msgid "Episode number is required for TV series"
-msgstr "رقم الحلقة مطلوب للمسلسل"
+msgstr "رقم الحلقة مطلوب للمسلسل التلفزيوني"
 
 #: app/forms.py:127
-#, fuzzy
 msgid "Current Password"
-msgstr "إعادة تعيين كلمة السر"
+msgstr "كلمة السر الحالية"
 
 #: app/forms.py:128 app/forms.py:139
-#, fuzzy
 msgid "New Password"
-msgstr "تعيين كلمة سر جديدة"
+msgstr "كلمة سر جديدة"
 
 #: app/forms.py:129
-#, fuzzy
 msgid "Confirm New Password"
-msgstr "تعيين كلمة سر جديدة"
+msgstr "تأكيد كلمة السر الجديدة"
 
 #: app/forms.py:130 templates/auth/change_password.html:11
 #: templates/main/account_settings.html:157
@@ -179,9 +164,8 @@ msgid "Change Password"
 msgstr "تغيير كلمة السر"
 
 #: app/forms.py:135
-#, fuzzy
 msgid "Request Password Reset"
-msgstr "إعادة تعيين كلمة السر"
+msgstr "طلب إعادة تعيين كلمة السر"
 
 #: app/forms.py:141 templates/auth/reset_password_request.html:11
 #: templates/email/reset_password.html:54
@@ -189,37 +173,32 @@ msgid "Reset Password"
 msgstr "إعادة تعيين كلمة السر"
 
 #: app/forms.py:146
-#, fuzzy
 msgid "Update Preference"
-msgstr "تفضيلات اللغة"
+msgstr "تحديث التفضيلات"
 
 #: app/forms.py:150
-#, fuzzy
 msgid "Use OpenSubtitles Integration"
-msgstr "معلومات الترجمة"
+msgstr "استخدام تكامل الترجمات المفتوحة"
 
 #: app/forms.py:152 templates/providers/opensubtitles_form.html:3
 msgid "OpenSubtitles Username"
 msgstr "اسم مستخدم OpenSubtitles"
 
 #: app/forms.py:154
-#, fuzzy
 msgid "Your OpenSubtitles.com Username"
-msgstr "اسم المستخدم الخاص بك على OpenSubtitles.com"
+msgstr "اسم المستخدم الخاص بك OpenSubtitles.com"
 
 #: app/forms.py:158 templates/providers/opensubtitles_form.html:12
 msgid "OpenSubtitles Password"
 msgstr "كلمة سر OpenSubtitles"
 
 #: app/forms.py:160
-#, fuzzy
 msgid "Your OpenSubtitles.com Password"
-msgstr "كلمة مرورك على OpenSubtitles.com"
+msgstr "كلمة سر OpenSubtitles.com"
 
 #: app/forms.py:163
-#, fuzzy
 msgid "Save OpenSubtitles Settings"
-msgstr "اسم مستخدم OpenSubtitles"
+msgstr "حفظ إعدادات OpenSubtitles"
 
 #: app/routes/auth.py:33
 msgid "Invalid email or password"
@@ -1027,9 +1006,8 @@ msgid "When enabled, .ass/.ssa subtitles will appear first in Stremio's subtitle
 msgstr "عند التمكين، ستظهر ترجمات .ass/.ssa أولا في قائمة ترجمات ستريميو"
 
 #: templates/main/account_settings.html:75
-#, fuzzy
 msgid "Prioritize forced subtitles"
-msgstr "أولوية ترجمات .ass"
+msgstr ""
 
 #: templates/main/account_settings.html:76
 msgid "When enabled, forced/foreign parts subtitles will be prioritized"
@@ -1818,106 +1796,4 @@ msgstr "SubSource يرجع ملفات ZIP التي قد تحتوي على تنس
 #: templates/providers/subsource_form.html:23
 msgid "SubSource offers API access for subtitle downloads. Check their website for current limits."
 msgstr "يوفر SubSource الوصول إلى API لتنزيلات الترجمة. تحقق من موقعهم الإلكتروني بالحدود الحالية."
-
-#~ msgid "Email"
-#~ msgstr "البريد الإلكتروني"
-
-#~ msgid "Password"
-#~ msgstr "كلمة السر"
-
-#~ msgid "Remember Me"
-#~ msgstr "تذكر بياناتي"
-
-#~ msgid "Sign In"
-#~ msgstr "تسجيل الدخول"
-
-#~ msgid "Username"
-#~ msgstr "اسم المستخدم"
-
-#~ msgid "Confirm Password"
-#~ msgstr "تأكيد كلمة المرور"
-
-#~ msgid "Preferred Subtitle Languages"
-#~ msgstr "لغة الترجمة المفضلة"
-
-#~ msgid "Subtitle File (.srt, .sub, .txt, .ass, .ssa)"
-#~ msgstr "ملف الترجمة (.srt, .sub, .txt, .ass, .ssa)"
-
-#~ msgid "Only .srt, .sub, .txt, .ass, .ssa files allowed!"
-#~ msgstr "فقط .srt, .sub, .txt, .ass, .ssa الملفات المسموح بها!"
-
-#~ msgid "Subtitle Language"
-#~ msgstr "لغة الترجمة"
-
-#~ msgid "Encoding"
-#~ msgstr "الترميز"
-
-#~ msgid "FPS (Frames Per Second)"
-#~ msgstr "FPS (إطارات لكل ثانية)"
-
-#~ msgid "Auto"
-#~ msgstr "تلقائي"
-
-#~ msgid "Author (Optional)"
-#~ msgstr "المؤلف (اختياري)"
-
-#~ msgid "Version/Sync Info (Optional)"
-#~ msgstr "الإصدار/مزامنة معلومات (اختياري)"
-
-#~ msgid "Content ID"
-#~ msgstr "ID المحتوى"
-
-#~ msgid "IMDB ID (e.g., tt1234567) or Kitsu ID (e.g., kitsu:12345)"
-#~ msgstr "IMDB ID (e.g., tt1234567) or Kitsu ID (e.g., kitsu:12345)"
-
-#~ msgid "Content Type"
-#~ msgstr "نوع المحتوى"
-
-#~ msgid "TV Series"
-#~ msgstr "مسلسلات"
-
-#~ msgid "Season Number"
-#~ msgstr "رقم الموسم"
-
-#~ msgid "Required for TV series (default: 1)"
-#~ msgstr "مطلوب للمسلسلات التلفزيون (الافتراضي: 1)"
-
-#~ msgid "Episode Number"
-#~ msgstr "رقم الحلقة"
-
-#~ msgid "Required for TV series"
-#~ msgstr "مطلوب للمسلسلات التليفزيون"
-
-#~ msgid "Content ID must be either IMDB ID (starting with \"tt\") or Kitsu ID (format \"kitsu:12345\")"
-#~ msgstr "يجب أن يكون معرف المحتوى إما معرف IMDB (بدءاً ب \"tt\") أو معرف Kitsu (تنسيق \"kitsu:12345\")"
-
-#~ msgid "Episode number is required for TV series"
-#~ msgstr "رقم الحلقة مطلوب للمسلسل التلفزيوني"
-
-#~ msgid "Current Password"
-#~ msgstr "كلمة السر الحالية"
-
-#~ msgid "New Password"
-#~ msgstr "كلمة سر جديدة"
-
-#~ msgid "Confirm New Password"
-#~ msgstr "تأكيد كلمة السر الجديدة"
-
-#~ msgid "Request Password Reset"
-#~ msgstr "طلب إعادة تعيين كلمة السر"
-
-#~ msgid "Update Preference"
-#~ msgstr "تحديث التفضيلات"
-
-#~ msgid "Use OpenSubtitles Integration"
-#~ msgstr "استخدام تكامل الترجمات المفتوحة"
-
-#~ msgid "Your OpenSubtitles.com Username"
-#~ msgstr "اسم المستخدم الخاص بك OpenSubtitles.com"
-
-#~ msgid "Your OpenSubtitles.com Password"
-#~ msgstr "كلمة سر OpenSubtitles.com"
-
-#~ msgid "Save OpenSubtitles Settings"
-#~ msgstr "حفظ إعدادات OpenSubtitles"
 

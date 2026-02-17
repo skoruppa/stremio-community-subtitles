@@ -1,18 +1,22 @@
-
 msgid ""
 msgstr ""
-"Project-Id-Version:  stremio-community-subtitles\n"
+"Project-Id-Version: stremio-community-subtitles\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2026-02-17 13:49+0100\n"
-"PO-Revision-Date: 2026-02-13 22:29+0000\n"
+"PO-Revision-Date: 2026-02-17 12:56\n"
 "Last-Translator: \n"
-"Language: zh_CN\n"
 "Language-Team: Chinese Simplified\n"
-"Plural-Forms: nplurals=1; plural=0;\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=utf-8\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.17.0\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"X-Crowdin-Project: stremio-community-subtitles\n"
+"X-Crowdin-Project-ID: 872640\n"
+"X-Crowdin-Language: zh-CN\n"
+"X-Crowdin-File: messages.pot\n"
+"X-Crowdin-File-ID: 4\n"
+"Language: zh_CN\n"
 
 #: app/email.py:125
 msgid "Stremio Community Subtitles - Confirm Your Email"
@@ -1792,106 +1796,4 @@ msgstr ""
 #: templates/providers/subsource_form.html:23
 msgid "SubSource offers API access for subtitle downloads. Check their website for current limits."
 msgstr ""
-
-#~ msgid "Email"
-#~ msgstr ""
-
-#~ msgid "Password"
-#~ msgstr ""
-
-#~ msgid "Remember Me"
-#~ msgstr ""
-
-#~ msgid "Sign In"
-#~ msgstr ""
-
-#~ msgid "Username"
-#~ msgstr ""
-
-#~ msgid "Confirm Password"
-#~ msgstr ""
-
-#~ msgid "Preferred Subtitle Languages"
-#~ msgstr ""
-
-#~ msgid "Subtitle File (.srt, .sub, .txt, .ass, .ssa)"
-#~ msgstr ""
-
-#~ msgid "Only .srt, .sub, .txt, .ass, .ssa files allowed!"
-#~ msgstr ""
-
-#~ msgid "Subtitle Language"
-#~ msgstr ""
-
-#~ msgid "Encoding"
-#~ msgstr ""
-
-#~ msgid "FPS (Frames Per Second)"
-#~ msgstr ""
-
-#~ msgid "Auto"
-#~ msgstr ""
-
-#~ msgid "Author (Optional)"
-#~ msgstr ""
-
-#~ msgid "Version/Sync Info (Optional)"
-#~ msgstr ""
-
-#~ msgid "Content ID"
-#~ msgstr ""
-
-#~ msgid "IMDB ID (e.g., tt1234567) or Kitsu ID (e.g., kitsu:12345)"
-#~ msgstr ""
-
-#~ msgid "Content Type"
-#~ msgstr ""
-
-#~ msgid "TV Series"
-#~ msgstr ""
-
-#~ msgid "Season Number"
-#~ msgstr ""
-
-#~ msgid "Required for TV series (default: 1)"
-#~ msgstr ""
-
-#~ msgid "Episode Number"
-#~ msgstr ""
-
-#~ msgid "Required for TV series"
-#~ msgstr ""
-
-#~ msgid "Content ID must be either IMDB ID (starting with \"tt\") or Kitsu ID (format \"kitsu:12345\")"
-#~ msgstr ""
-
-#~ msgid "Episode number is required for TV series"
-#~ msgstr ""
-
-#~ msgid "Current Password"
-#~ msgstr ""
-
-#~ msgid "New Password"
-#~ msgstr ""
-
-#~ msgid "Confirm New Password"
-#~ msgstr ""
-
-#~ msgid "Request Password Reset"
-#~ msgstr ""
-
-#~ msgid "Update Preference"
-#~ msgstr ""
-
-#~ msgid "Use OpenSubtitles Integration"
-#~ msgstr ""
-
-#~ msgid "Your OpenSubtitles.com Username"
-#~ msgstr ""
-
-#~ msgid "Your OpenSubtitles.com Password"
-#~ msgstr ""
-
-#~ msgid "Save OpenSubtitles Settings"
-#~ msgstr ""
 
