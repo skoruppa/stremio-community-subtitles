@@ -145,6 +145,10 @@ async def account_settings():
                     user.prioritize_ass_subtitles = data.get('prioritize_ass_subtitles', False)
                     await session.commit()
                     return {'success': True}
+                if 'prioritize_forced_subtitles' in data:
+                    user.prioritize_forced_subtitles = data.get('prioritize_forced_subtitles', False)
+                    await session.commit()
+                    return {'success': True}
         except Exception as e:
             current_app.logger.error(f"Error updating settings for user {user_id}: {e}")
             return {'success': False, 'error': str(e)}, 500

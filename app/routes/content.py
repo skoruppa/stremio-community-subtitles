@@ -196,6 +196,7 @@ async def content_detail(activity_id):
                                 'votes': None,
                                 'download_count': result.download_count,
                                 'hearing_impaired': result.hearing_impaired,
+                                'forced': result.forced,
                                 'url': result.metadata.get('url', '') if result.metadata else ''
                             }
                         }

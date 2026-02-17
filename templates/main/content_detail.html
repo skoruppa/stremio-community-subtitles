@@ -247,6 +247,7 @@
                                         rating=attrs.ratings,
                                         ai_translated=attrs.ai_translated or attrs.machine_translated,
                                         hearing_impaired=attrs.hearing_impaired,
+                                        forced=attrs.forced if attrs.forced is defined else false,
                                         metadata={'hash_match': attrs.moviehash_match, 'url': attrs.url, 'original_file_id': file.file_id}
                                     ) %}
                                     {% set active_details = active_details_by_lang.get(lang_code) %}

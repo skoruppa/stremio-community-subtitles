@@ -180,6 +180,7 @@ class SubSourceProvider(BaseSubtitleProvider):
                             download_count=sub.get('downloads', 0),
                             hearing_impaired=sub.get('hearingImpaired', False),
                             ai_translated=False,
+                            forced=sub.get('foreignParts', False),
                             provider_name=self.name,
                             metadata={
                                 'movie_id': movie_id,

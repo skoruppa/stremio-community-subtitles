@@ -293,6 +293,7 @@ async def get_active_subtitle_details(user, content_id, video_hash=None, content
                     'download_count': details.get('download_count'),
                     'hearing_impaired': details.get('hearing_impaired', False),
                     'ai_translated': details.get('ai_translated', False),
+                    'forced': details.get('forced', False),
                     'moviehash_match': details.get('hash_match', False),
                     'url': details.get('url', '')
                 })
@@ -403,24 +404,40 @@ async def _find_local_by_hash(content_id, video_hash, lang):
 async def _search_providers_by_hash(user, imdb_id, video_hash, content_type, lang, season=None, episode=None, cached_results=None):
     """Search for hash match from cache or live search"""
     if cached_results:
+        # Collect all hash matches
+        hash_matches = []
         for provider_name, results in cached_results.items():
             for result in results:
                 if result.language == lang and result.metadata and result.metadata.get('hash_match'):
-                    return {
-                        'type': f'{provider_name}_auto',
-                        'provider_name': provider_name,
-                        'provider_subtitle_id': result.subtitle_id,
-                        'provider_metadata': {'release_name': result.release_name, 'uploader': result.uploader, 'hash_match': True},
-                        'details': {'file_id': result.subtitle_id, 'release_name': result.release_name},
-                        'release_name': result.release_name,
-                        'uploader': result.uploader,
-                        'rating': result.rating,
-                        'download_count': result.download_count,
-                        'hearing_impaired': result.hearing_impaired,
-                        'ai_translated': result.ai_translated,
-                        'moviehash_match': True,
-                        'url': result.metadata.get('url', '') if result.metadata else ''
-                    }
+                    hash_matches.append((provider_name, result))
+        
+        # Prioritize forced if user setting enabled
+        if hash_matches:
+            if user.prioritize_forced_subtitles:
+                # Sort: forced first, then by rating/downloads
+                hash_matches.sort(key=lambda x: (
+                    not x[1].forced,  # False (forced) comes before True (not forced)
+                    -(x[1].rating or 0),
+                    -(x[1].download_count or 0)
+                ))
+            
+            provider_name, result = hash_matches[0]
+            return {
+                'type': f'{provider_name}_auto',
+                'provider_name': provider_name,
+                'provider_subtitle_id': result.subtitle_id,
+                'provider_metadata': {'release_name': result.release_name, 'uploader': result.uploader, 'hash_match': True},
+                'details': {'file_id': result.subtitle_id, 'release_name': result.release_name},
+                'release_name': result.release_name,
+                'uploader': result.uploader,
+                'rating': result.rating,
+                'download_count': result.download_count,
+                'hearing_impaired': result.hearing_impaired,
+                'ai_translated': result.ai_translated,
+                'forced': result.forced,
+                'moviehash_match': True,
+                'url': result.metadata.get('url', '') if result.metadata else ''
+            }
         # If we have cached results but no hash match, don't do another search
         return None
     
@@ -447,28 +464,43 @@ async def _search_providers_by_hash(user, imdb_id, video_hash, content_type, lan
         
         results_by_provider = await search_providers_parallel(user, active_providers, search_params, timeout=8)
         
+        # Collect all hash matches
+        hash_matches = []
         for provider_name, results in results_by_provider.items():
             for result in results:
                 if result.metadata and result.metadata.get('hash_match'):
-                    return {
-                        'type': f'{provider_name}_auto',
-                        'provider_name': provider_name,
-                        'provider_subtitle_id': result.subtitle_id,
-                        'provider_metadata': {
-                            'release_name': result.release_name,
-                            'uploader': result.uploader,
-                            'hash_match': True
-                        },
-                        'details': {'file_id': result.subtitle_id, 'release_name': result.release_name},
-                        'release_name': result.release_name,
-                        'uploader': result.uploader,
-                        'rating': result.rating,
-                        'download_count': result.download_count,
-                        'hearing_impaired': result.hearing_impaired,
-                        'ai_translated': result.ai_translated,
-                        'moviehash_match': result.metadata.get('hash_match', False),
-                        'url': result.metadata.get('url', '') if result.metadata else ''
-                    }
+                    hash_matches.append((provider_name, result))
+        
+        # Prioritize forced if user setting enabled
+        if hash_matches:
+            if user.prioritize_forced_subtitles:
+                hash_matches.sort(key=lambda x: (
+                    not x[1].forced,
+                    -(x[1].rating or 0),
+                    -(x[1].download_count or 0)
+                ))
+            
+            provider_name, result = hash_matches[0]
+            return {
+                'type': f'{provider_name}_auto',
+                'provider_name': provider_name,
+                'provider_subtitle_id': result.subtitle_id,
+                'provider_metadata': {
+                    'release_name': result.release_name,
+                    'uploader': result.uploader,
+                    'hash_match': True
+                },
+                'details': {'file_id': result.subtitle_id, 'release_name': result.release_name},
+                'release_name': result.release_name,
+                'uploader': result.uploader,
+                'rating': result.rating,
+                'download_count': result.download_count,
+                'hearing_impaired': result.hearing_impaired,
+                'ai_translated': result.ai_translated,
+                'forced': result.forced,
+                'moviehash_match': result.metadata.get('hash_match', False),
+                'url': result.metadata.get('url', '') if result.metadata else ''
+            }
     except Exception as e:
         current_app.logger.warning(f"Error in provider hash search: {e}")
     return None
@@ -511,6 +543,7 @@ async def _find_best_match_by_filename(user, content_id, imdb_id, video_filename
                             'download_count': result.download_count,
                             'hearing_impaired': result.hearing_impaired,
                             'ai_translated': result.ai_translated,
+                            'forced': result.forced,
                             'moviehash_match': result.metadata.get('hash_match', False) if result.metadata else False,
                             'url': result.metadata.get('url', '') if result.metadata else ''
                         })
@@ -549,6 +582,7 @@ async def _find_best_match_by_filename(user, content_id, imdb_id, video_filename
                             'download_count': result.download_count,
                             'hearing_impaired': result.hearing_impaired,
                             'ai_translated': result.ai_translated,
+                            'forced': result.forced,
                             'moviehash_match': result.metadata.get('hash_match', False) if result.metadata else False,
                             'url': result.metadata.get('url', '') if result.metadata else ''
                         })
@@ -559,7 +593,11 @@ async def _find_best_match_by_filename(user, content_id, imdb_id, video_filename
     if not candidates:
         return None
     
-    candidates.sort(key=lambda c: c['score'], reverse=True)
+    if user.prioritize_forced_subtitles:
+        candidates.sort(key=lambda c: (not c.get('forced', False), -c['score']))
+    else:
+        candidates.sort(key=lambda c: c['score'], reverse=True)
+    
     best = candidates[0]
     
     if best['type'] == 'local':
@@ -581,6 +619,7 @@ async def _find_best_match_by_filename(user, content_id, imdb_id, video_filename
             'download_count': best.get('download_count'),
             'hearing_impaired': best.get('hearing_impaired'),
             'ai_translated': best.get('ai_translated'),
+            'forced': best.get('forced', False),
             'moviehash_match': best.get('moviehash_match', False),
             'url': best.get('url', '')
         }
@@ -647,14 +686,41 @@ async def _find_fallback_subtitle(user, content_id, imdb_id, content_type, lang,
             
             candidates = matching if matching else matching_ep_only
             if candidates:
-                non_ai = [r for r in candidates if not r.ai_translated]
-                chosen = non_ai[0] if non_ai else candidates[0]
+                if user.prioritize_forced_subtitles:
+                    forced = [r for r in candidates if r.forced]
+                    if forced:
+                        non_ai = [r for r in forced if not r.ai_translated]
+                        chosen = non_ai[0] if non_ai else forced[0]
+                    else:
+                        non_ai = [r for r in candidates if not r.ai_translated]
+                        chosen = non_ai[0] if non_ai else candidates[0]
+                else:
+                    non_ai = [r for r in candidates if not r.ai_translated]
+                    chosen = non_ai[0] if non_ai else candidates[0]
+            else:
+                if user.prioritize_forced_subtitles:
+                    forced = [r for r in lang_results if r.forced]
+                    if forced:
+                        non_ai = [r for r in forced if not r.ai_translated]
+                        chosen = non_ai[0] if non_ai else forced[0]
+                    else:
+                        non_ai = [r for r in lang_results if not r.ai_translated]
+                        chosen = non_ai[0] if non_ai else (lang_results[0] if lang_results else None)
+                else:
+                    non_ai = [r for r in lang_results if not r.ai_translated]
+                    chosen = non_ai[0] if non_ai else (lang_results[0] if lang_results else None)
+        else:
+            if user.prioritize_forced_subtitles:
+                forced = [r for r in lang_results if r.forced]
+                if forced:
+                    non_ai = [r for r in forced if not r.ai_translated]
+                    chosen = non_ai[0] if non_ai else forced[0]
+                else:
+                    non_ai = [r for r in lang_results if not r.ai_translated]
+                    chosen = non_ai[0] if non_ai else (lang_results[0] if lang_results else None)
             else:
                 non_ai = [r for r in lang_results if not r.ai_translated]
                 chosen = non_ai[0] if non_ai else (lang_results[0] if lang_results else None)
-        else:
-            non_ai = [r for r in lang_results if not r.ai_translated]
-            chosen = non_ai[0] if non_ai else (lang_results[0] if lang_results else None)
         
         if chosen:
             result = {
@@ -669,6 +735,7 @@ async def _find_fallback_subtitle(user, content_id, imdb_id, content_type, lang,
                 'download_count': chosen.download_count,
                 'hearing_impaired': chosen.hearing_impaired,
                 'ai_translated': chosen.ai_translated,
+                'forced': chosen.forced,
                 'moviehash_match': chosen.metadata.get('hash_match', False) if chosen.metadata else False,
                 'url': chosen.metadata.get('url', '') if chosen.metadata else ''
             }

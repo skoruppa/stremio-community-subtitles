@@ -236,6 +236,7 @@ class OpenSubtitlesProvider(BaseSubtitleProvider):
                 hearing_impaired=attrs.get('hearing_impaired', False),
                 ai_translated=attrs.get('ai_translated', False) or attrs.get('machine_translated', False),
                 fps=attrs.get('fps'),
+                forced=attrs.get('foreign_parts_only', False),
                 metadata={
                     'hash_match': attrs.get('moviehash_match', False),
                     'url': attrs.get('url'),

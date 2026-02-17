@@ -224,6 +224,7 @@ class SubDLProvider(BaseSubtitleProvider):
                 hearing_impaired=item.get('hi', False) or item.get('hearing_impaired', False),
                 ai_translated=False,  # SubDL doesn't have AI translations
                 fps=item.get('fps'),
+                forced=False,  # SubDL doesn't support forced subtitles flag
                 metadata={
                     'hash_match': False,  # SubDL doesn't support hash matching
                     'url': subtitle_url,

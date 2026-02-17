@@ -125,6 +125,7 @@ class User(Base):
     email_confirmed_at = Column(DateTime, nullable=True)
     show_no_subtitles = Column(Boolean, default=False)
     prioritize_ass_subtitles = Column(Boolean, default=False)
+    prioritize_forced_subtitles = Column(Boolean, default=False)
     provider_credentials = Column(MutableDict.as_mutable(JSONType), nullable=True, default=dict)
     last_login_at = Column(DateTime)
     current_login_at = Column(DateTime)

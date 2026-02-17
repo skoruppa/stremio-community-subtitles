@@ -19,6 +19,7 @@ class SubtitleResult:
     hearing_impaired: bool = False
     ai_translated: bool = False
     fps: Optional[float] = None
+    forced: bool = False
     metadata: Optional[Dict[str, Any]] = None
 
 
