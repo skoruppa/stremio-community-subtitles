@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: stremio-community-subtitles\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2026-02-17 13:49+0100\n"
-"PO-Revision-Date: 2026-02-17 12:56\n"
+"PO-Revision-Date: 2026-02-18 01:50\n"
 "Last-Translator: \n"
 "Language-Team: Vietnamese\n"
 "MIME-Version: 1.0\n"
@@ -93,7 +93,7 @@ msgstr "Thông tin phiên bản/đồng bộ (Không bắt buộc)"
 #: app/forms.py:61 templates/_provider_subtitle_list_item.html:43
 #: templates/_subtitle_list_item.html:51
 msgid "Forced/Foreign Parts Only"
-msgstr ""
+msgstr "Chỉ phụ đề bắt buộc/phụ đề nước ngoài"
 
 #: app/forms.py:64
 msgid "Content ID"
@@ -1007,11 +1007,11 @@ msgstr "Khi bật, các phụ đề .ass/.ssa sẽ xuất hiện đầu tiên tr
 
 #: templates/main/account_settings.html:75
 msgid "Prioritize forced subtitles"
-msgstr ""
+msgstr "Ưu tiên phụ đề bắt buộc"
 
 #: templates/main/account_settings.html:76
 msgid "When enabled, forced/foreign parts subtitles will be prioritized"
-msgstr ""
+msgstr "Khi bật, phụ đề bắt buộc/phụ đề nước ngoài sẽ được ưu tiên"
 
 #: templates/main/account_settings.html:94
 msgid "Subtitle Providers"
