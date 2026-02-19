@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: stremio-community-subtitles\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2026-02-17 13:49+0100\n"
-"PO-Revision-Date: 2026-02-17 12:56\n"
+"PO-Revision-Date: 2026-02-19 01:49\n"
 "Last-Translator: \n"
 "Language-Team: Turkish\n"
 "MIME-Version: 1.0\n"
@@ -398,7 +398,7 @@ msgstr "Altyazıyı bağlanma hatası"
 
 #: app/routes/subtitles.py:730
 msgid "Content ID must be either IMDB ID (starting with \"tt\") or Kitsu ID (format \"kitsu:12345\") or MAL ID (format \"mal:12345\")"
-msgstr ""
+msgstr "İçerik ID’si ya IMDB ID ( \"tt\" ile başlayan) ya da Kitsu ID ( \"kitsu:12345\" formatında) ya da MAL ID ( \"mal:12345\" formatında) olmalıdır"
 
 #: app/routes/subtitles.py:740
 msgid "Episode number is required for series"
@@ -450,7 +450,7 @@ msgstr ""
 #: templates/main/selected_subtitles.html:168
 #: templates/main/voted_subtitles.html:140
 msgid "Vote removed."
-msgstr ""
+msgstr "Oy kaldırıldı."
 
 #: app/routes/subtitles.py:1071 templates/main/content_detail.html:330
 #: templates/main/my_subtitles.html:144
@@ -479,7 +479,7 @@ msgstr ""
 
 #: app/routes/subtitles.py:1112
 msgid "Selection deleted successfully."
-msgstr ""
+msgstr "Seçim başarıyla silindi."
 
 #: app/routes/subtitles.py:1116
 msgid "Error deleting selection."
@@ -517,7 +517,7 @@ msgstr ""
 #: app/routes/subtitles.py:1525 app/routes/subtitles.py:1535
 #, python-format
 msgid "Error downloading from %(provider)s: %(error)s"
-msgstr ""
+msgstr "%(provider)s kaynağından indirme hatası: %(error)s"
 
 #: app/routes/subtitles.py:1532
 #, python-format
