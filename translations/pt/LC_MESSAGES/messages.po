@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: stremio-community-subtitles\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2026-02-17 13:49+0100\n"
-"PO-Revision-Date: 2026-02-17 12:56\n"
+"PO-Revision-Date: 2026-02-20 01:45\n"
 "Last-Translator: \n"
 "Language-Team: Portuguese\n"
 "MIME-Version: 1.0\n"
@@ -28,7 +28,7 @@ msgstr "Stremio Community Subtitles — Redefinir Palavra-Passe"
 
 #: app/forms.py:12 app/forms.py:20 app/forms.py:134
 msgid "Email"
-msgstr "Endereço de correio eletrónico"
+msgstr "Endereço de e-mail"
 
 #: app/forms.py:13 app/forms.py:21
 msgid "Password"
@@ -202,7 +202,7 @@ msgstr "Salvar Configurações OpenSubtitles"
 
 #: app/routes/auth.py:33
 msgid "Invalid email or password"
-msgstr "E-mail ou palavra-chave inválidos"
+msgstr "E-mail ou palavra-passe inválidos"
 
 #: app/routes/auth.py:37
 msgid "Please confirm your email address before logging in."
