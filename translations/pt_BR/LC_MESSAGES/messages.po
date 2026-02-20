@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: stremio-community-subtitles\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2026-02-17 13:49+0100\n"
-"PO-Revision-Date: 2026-02-19 01:49\n"
+"PO-Revision-Date: 2026-02-20 01:45\n"
 "Last-Translator: \n"
 "Language-Team: Portuguese, Brazilian\n"
 "MIME-Version: 1.0\n"
@@ -101,7 +101,8 @@ msgstr "ID do conteúdo"
 
 #: app/forms.py:66
 msgid "IMDB ID (e.g., tt1234567) or Kitsu ID (e.g., kitsu:12345)"
-msgstr "ID do IMDB (Ex: tt1234567) ou ID do Kitsu (Ex: kitsu:12345)"
+msgstr "ID do IMDB (Ex: tt1234567) ou ID do Kitsu (Ex: kitsu:12345)\n"
+"Se for série, precisa ser o ID inteiro, não do episódio específico."
 
 #: app/forms.py:67
 msgid "Content Type"
@@ -1007,11 +1008,11 @@ msgstr "Quando ativado, legendas .ass/.ssa aparecerão primeiro na lista de lege
 
 #: templates/main/account_settings.html:75
 msgid "Prioritize forced subtitles"
-msgstr ""
+msgstr "Priorizar legendas forçadas"
 
 #: templates/main/account_settings.html:76
 msgid "When enabled, forced/foreign parts subtitles will be prioritized"
-msgstr ""
+msgstr "Quando ativado, as legendas de partes forçadas/estrangeiras terão prioridade"
 
 #: templates/main/account_settings.html:94
 msgid "Subtitle Providers"
@@ -1576,7 +1577,8 @@ msgstr "(Para anime)"
 
 #: templates/main/upload_subtitle.html:62
 msgid "Enter IMDB ID (tt1234567) or Kitsu ID (kitsu:12345)"
-msgstr "Insira o ID do IMDB (tt1234567) ou ID do Kitsu (kitsu:12345)"
+msgstr "Insira o ID do IMDB (tt1234567) ou ID do Kitsu (kitsu:12345)\n"
+"Se for série, precisa ser o ID inteiro, não do episódio específico."
 
 #: templates/main/upload_subtitle.html:71
 msgid "Season number (default: 1). Ignore for kitsu"
