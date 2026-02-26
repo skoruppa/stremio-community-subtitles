@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: stremio-community-subtitles\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2026-02-17 13:49+0100\n"
-"PO-Revision-Date: 2026-02-23 01:49\n"
+"PO-Revision-Date: 2026-02-26 01:44\n"
 "Last-Translator: \n"
 "Language-Team: Chinese Simplified\n"
 "MIME-Version: 1.0\n"
@@ -60,7 +60,7 @@ msgstr "注册"
 
 #: app/forms.py:49
 msgid "Subtitle File (.srt, .sub, .txt, .ass, .ssa)"
-msgstr "字幕文件(.srt, .sub, .txt, .ass, .ssa)"
+msgstr "字幕文件（.srt, .sub, .txt, .ass, .ssa）"
 
 #: app/forms.py:51
 msgid "Only .srt, .sub, .txt, .ass, .ssa files allowed!"
@@ -84,11 +84,11 @@ msgstr "自动"
 
 #: app/forms.py:59
 msgid "Author (Optional)"
-msgstr "作者(可选)"
+msgstr "作者（可选）"
 
 #: app/forms.py:60
 msgid "Version/Sync Info (Optional)"
-msgstr "版本/同步信息(可选)"
+msgstr "版本/同步信息（可选）"
 
 #: app/forms.py:61 templates/_provider_subtitle_list_item.html:43
 #: templates/_subtitle_list_item.html:51
@@ -101,7 +101,7 @@ msgstr "内容 ID"
 
 #: app/forms.py:66
 msgid "IMDB ID (e.g., tt1234567) or Kitsu ID (e.g., kitsu:12345)"
-msgstr "IMDB ID (e.g., tt1234567) 或 Kitsu ID (e.g., kitsu:12345)"
+msgstr "IMDB ID（e.g., tt1234567）或 Kitsu ID（e.g., kitsu:12345）"
 
 #: app/forms.py:67
 msgid "Content Type"
@@ -114,7 +114,7 @@ msgstr "电影"
 
 #: app/forms.py:68
 msgid "TV Series"
-msgstr "剧集"
+msgstr "电视剧"
 
 #: app/forms.py:70
 msgid "Season Number"
@@ -122,7 +122,7 @@ msgstr "季号"
 
 #: app/forms.py:72
 msgid "Required for TV series (default: 1)"
-msgstr "电视剧集必需 (默认：1)"
+msgstr "电视剧必需（默认：1）"
 
 #: app/forms.py:73
 msgid "Episode Number"
@@ -130,7 +130,7 @@ msgstr "集数"
 
 #: app/forms.py:75
 msgid "Required for TV series"
-msgstr "电视剧集必需"
+msgstr "电视剧必需"
 
 #: app/forms.py:77 templates/main/upload_subtitle.html:4
 #: templates/main/upload_subtitle.html:11
@@ -144,7 +144,7 @@ msgstr "内容 ID 必须是 IMDB ID (以 tt开头) 或 Kitsu ID (格式 \"kitsu:
 
 #: app/forms.py:123
 msgid "Episode number is required for TV series"
-msgstr "电视剧集必须输入剧集编号"
+msgstr "电视剧必须输入集号"
 
 #: app/forms.py:127
 msgid "Current Password"
@@ -398,7 +398,7 @@ msgstr "链接字幕时出错"
 
 #: app/routes/subtitles.py:730
 msgid "Content ID must be either IMDB ID (starting with \"tt\") or Kitsu ID (format \"kitsu:12345\") or MAL ID (format \"mal:12345\")"
-msgstr ""
+msgstr "内容 ID 必须是 IMDB ID（以 “tt\"开头）或 Kitsu ID（格式 \"kitsu:12345\"）或 MAL ID （格式 ”mal:12345“）"
 
 #: app/routes/subtitles.py:740
 msgid "Episode number is required for series"
@@ -491,7 +491,7 @@ msgstr "此内容的所有字幕选择都已重置。"
 
 #: app/routes/subtitles.py:1155
 msgid "No selections to reset for this content."
-msgstr ""
+msgstr "没有重置此内容的选择。"
 
 #: app/routes/subtitles.py:1390
 msgid "You do not have permission to delete this subtitle."
@@ -526,7 +526,7 @@ msgstr "%(provider)s认证过期。请在账户设置中再次登录。"
 
 #: app/routes/subtitles.py:1561
 msgid "Target video hash is missing."
-msgstr ""
+msgstr "目标视频哈希缺失。"
 
 #: app/routes/subtitles.py:1564
 msgid "Activity ID is missing."
@@ -538,7 +538,7 @@ msgstr "无效的活动ID格式。"
 
 #: app/routes/subtitles.py:1589
 msgid "Content ID mismatch between subtitle and activity."
-msgstr ""
+msgstr "字幕和活动的内容 ID 不匹配。"
 
 #: app/routes/subtitles.py:1593
 msgid "This operation is not applicable to provider-linked entries in this manner."
@@ -623,11 +623,11 @@ msgstr "尝试提供 ASS/SSA 格式"
 
 #: templates/_provider_status.html:107
 msgid "Enable this to always offer ASS format option for this provider."
-msgstr ""
+msgstr "启用此选项可以始终为此提供方提供ASS格式选项。"
 
 #: templates/_provider_status.html:114
 msgid "No additional settings available for this provider."
-msgstr ""
+msgstr "此提供方没有其他可用设置。"
 
 #: templates/_provider_status.html:121
 msgid "Save"
@@ -706,7 +706,7 @@ msgstr "不同的视频版本"
 
 #: templates/_subtitle_list_item.html:48
 msgid "No Hash Specific"
-msgstr ""
+msgstr "无哈希特定值"
 
 #: templates/_subtitle_list_item.html:60 templates/main/my_subtitles.html:74
 #: templates/main/selected_subtitles.html:101
@@ -725,7 +725,7 @@ msgstr "反对"
 #: templates/_subtitle_list_item.html:88
 #, python-format
 msgid "Mark this subtitle as compatible with the current video version (%(hash)s...)"
-msgstr ""
+msgstr "标记此字幕与当前视频版本(%(hash)s...)适配"
 
 #: templates/_subtitle_list_item.html:103
 msgid "Are you sure you want to delete this subtitle? This action cannot be undone."
@@ -1264,12 +1264,12 @@ msgstr "文件名："
 #: templates/main/content_detail.html:50
 #: templates/main/upload_subtitle.html:135
 msgid "Season:"
-msgstr ""
+msgstr "季："
 
 #: templates/main/content_detail.html:55
 #: templates/main/upload_subtitle.html:140
 msgid "Episode:"
-msgstr ""
+msgstr "集："
 
 #: templates/main/content_detail.html:61
 msgid "Year:"
@@ -1297,11 +1297,11 @@ msgstr "重置所有选择"
 
 #: templates/main/content_detail.html:115
 msgid "Upload New"
-msgstr ""
+msgstr "上传字幕"
 
 #: templates/main/content_detail.html:130
 msgid "Currently Selected"
-msgstr ""
+msgstr "当前选中"
 
 #: templates/main/content_detail.html:134
 #: templates/main/content_detail.html:141
@@ -1369,7 +1369,7 @@ msgstr "元素："
 #: templates/main/dashboard.html:27
 #, python-format
 msgid "We store only your last %(max)s activities."
-msgstr ""
+msgstr "我们只存储您最近%(max)s个活动。"
 
 #: templates/main/dashboard.html:70
 msgid "Are you sure you want to delete this activity record?"
@@ -1402,7 +1402,7 @@ msgstr "已选字幕"
 
 #: templates/main/dashboard.html:120
 msgid "Votes Cast"
-msgstr ""
+msgstr "投票次数"
 
 #: templates/main/index.html:7
 msgid "Stremio Community Subtitles Addon"
@@ -1535,7 +1535,7 @@ msgstr "此功能适用于有经验的用户，他们想要上传字幕而不在
 
 #: templates/main/upload_subtitle.html:18
 msgid "You'll need to provide the Content ID manually. To upload subtitles for what you are watching right now, open the activity entry for it from the"
-msgstr ""
+msgstr "您需要手动提供内容 ID。 要上传当前内容的字幕，请打开活动条目"
 
 #: templates/main/upload_subtitle.html:23
 msgid "Upload a subtitle file for"
@@ -1564,7 +1564,7 @@ msgstr ""
 
 #: templates/main/upload_subtitle.html:53
 msgid "(for movies and TV series)"
-msgstr ""
+msgstr "(用于电影和电视剧)"
 
 #: templates/main/upload_subtitle.html:54
 msgid "Kitsu ID:"
@@ -1572,7 +1572,7 @@ msgstr "Kitsu ID："
 
 #: templates/main/upload_subtitle.html:54
 msgid "(for anime)"
-msgstr ""
+msgstr "(用于动画)"
 
 #: templates/main/upload_subtitle.html:62
 msgid "Enter IMDB ID (tt1234567) or Kitsu ID (kitsu:12345)"
@@ -1580,11 +1580,11 @@ msgstr "输入IMDB ID (tt1234567) 或 Kitsu ID (kitsu:12345)"
 
 #: templates/main/upload_subtitle.html:71
 msgid "Season number (default: 1). Ignore for kitsu"
-msgstr ""
+msgstr "季号（默认: 1）。Kitsu请跳过此项"
 
 #: templates/main/upload_subtitle.html:74
 msgid "Episode number (required for series)"
-msgstr ""
+msgstr "集号(剧集必填)"
 
 #: templates/main/upload_subtitle.html:84
 msgid "Enter 'utf8' (default), 'auto' for automatic detection, or a specific encoding like 'cp1250', 'latin1', etc."
@@ -1592,7 +1592,7 @@ msgstr "输入 'utf8' (default), 'auto' 进行自动检测, 或指定编码, 例
 
 #: templates/main/upload_subtitle.html:85
 msgid "Select FPS only for subtitle formats that use frames. Leave as 'Auto' if unsure."
-msgstr ""
+msgstr "仅针对基于帧的字幕格式选择FPS。如果不确定则保留为“自动”。"
 
 #: templates/main/upload_subtitle.html:111
 msgid "Title:"
@@ -1621,11 +1621,11 @@ msgstr "从URL复制ID(例如"
 
 #: templates/main/upload_subtitle.html:167
 msgid "Kitsu ID (Anime):"
-msgstr "Kitsu ID (Anime):"
+msgstr "Kitsu ID（动画）："
 
 #: templates/main/upload_subtitle.html:170
 msgid "Search for your anime"
-msgstr ""
+msgstr "搜索您的动画"
 
 #: templates/main/upload_subtitle.html:171
 msgid "Investigate url of the thumbnail"
