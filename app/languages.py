@@ -40,6 +40,7 @@ LANGUAGES = [
     ('lav', 'Latviešu'),
     ('lit', 'Lietuvių'),
     ('fas', 'فارسی'),  # ISO 639-2/B for Persian (Farsi)
+    ('pus', 'پښتو'),  # Pashto
     ('urd', 'اردو'),
     ('ben', 'বাংলা'),
     ('mya', 'မြန်မာ'), # ISO 639-2/T for Burmese
