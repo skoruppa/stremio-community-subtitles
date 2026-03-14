@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: stremio-community-subtitles\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2026-02-17 13:49+0100\n"
-"PO-Revision-Date: 2026-02-17 12:56\n"
+"PO-Revision-Date: 2026-03-13 01:44\n"
 "Last-Translator: \n"
 "Language-Team: Hebrew\n"
 "MIME-Version: 1.0\n"
@@ -88,12 +88,12 @@ msgstr "יוצר (לא חובה)"
 
 #: app/forms.py:60
 msgid "Version/Sync Info (Optional)"
-msgstr ""
+msgstr "מידע על גרסא/סנכרון (אופציונלי)"
 
 #: app/forms.py:61 templates/_provider_subtitle_list_item.html:43
 #: templates/_subtitle_list_item.html:51
 msgid "Forced/Foreign Parts Only"
-msgstr ""
+msgstr "חלקים מאולצים/זרים בלבד"
 
 #: app/forms.py:64
 msgid "Content ID"
@@ -423,126 +423,126 @@ msgstr "שגיאה פנימית: נתיב הכתוביות לא נקבע."
 
 #: app/routes/subtitles.py:956
 msgid "Subtitle uploaded and selected successfully!"
-msgstr ""
+msgstr "כתוביות הועלו ונבחרו בהצלחה!"
 
 #: app/routes/subtitles.py:960
 msgid "Subtitle uploaded, but failed to auto-select."
-msgstr ""
+msgstr "הכתוביות הועלו, אך הבחירה האוטומטית נכשלה."
 
 #: app/routes/subtitles.py:972
 msgid "Error uploading subtitle. Please try again."
-msgstr ""
+msgstr "שגיאה בעת העלאת כתוביות. אנא נסו שוב."
 
 #: app/routes/subtitles.py:1025
 msgid "Subtitle selection updated."
-msgstr ""
+msgstr "בחירת הכתוביות עודכנה."
 
 #: app/routes/subtitles.py:1029
 msgid "Error updating subtitle selection."
-msgstr ""
+msgstr "שגיאה בעת עדכון בחירת הכתוביות."
 
 #: app/routes/subtitles.py:1051
 msgid "Voting is not available for this type of subtitle."
-msgstr ""
+msgstr "הצבעה אינה זמינה לסוג זה של כתוביות."
 
 #: app/routes/subtitles.py:1066 templates/main/content_detail.html:328
 #: templates/main/my_subtitles.html:142
 #: templates/main/selected_subtitles.html:168
 #: templates/main/voted_subtitles.html:140
 msgid "Vote removed."
-msgstr ""
+msgstr "הצבעה הוסרה."
 
 #: app/routes/subtitles.py:1071 templates/main/content_detail.html:330
 #: templates/main/my_subtitles.html:144
 #: templates/main/selected_subtitles.html:170
 #: templates/main/voted_subtitles.html:142
 msgid "Vote updated."
-msgstr ""
+msgstr "הצבעה עודכנה."
 
 #: app/routes/subtitles.py:1077 templates/main/content_detail.html:329
 #: templates/main/my_subtitles.html:143
 #: templates/main/selected_subtitles.html:169
 #: templates/main/voted_subtitles.html:141
 msgid "Vote recorded."
-msgstr ""
+msgstr "הצבעה נקלטה."
 
 #: app/routes/subtitles.py:1088 templates/main/content_detail.html:331
 #: templates/main/my_subtitles.html:145
 #: templates/main/selected_subtitles.html:171
 #: templates/main/voted_subtitles.html:143
 msgid "Error processing vote."
-msgstr ""
+msgstr "שגיאה בעת עיבוד הצבעה."
 
 #: app/routes/subtitles.py:1106
 msgid "You do not have permission to delete this selection."
-msgstr ""
+msgstr "אין לך הרשאה למחוק את הבחירה הזו."
 
 #: app/routes/subtitles.py:1112
 msgid "Selection deleted successfully."
-msgstr ""
+msgstr "בחירה נמחקה בהצלחה."
 
 #: app/routes/subtitles.py:1116
 msgid "Error deleting selection."
-msgstr ""
+msgstr "שגיאה בעת מחיקת בחירה."
 
 #: app/routes/subtitles.py:1149
 msgid "All subtitle selections for this content have been reset."
-msgstr ""
+msgstr "כל בחירות הכתוביות עבור תוכן זה אופסו בהצלחה."
 
 #: app/routes/subtitles.py:1155
 msgid "No selections to reset for this content."
-msgstr ""
+msgstr "אין בחירות לאפס עבור תוכן זה."
 
 #: app/routes/subtitles.py:1390
 msgid "You do not have permission to delete this subtitle."
-msgstr ""
+msgstr "אין לך הרשאה למחוק את כתוביות אלה."
 
 #: app/routes/subtitles.py:1454
 msgid "Subtitle deleted successfully."
-msgstr ""
+msgstr "כתוביות נמחקו בהצלחה."
 
 #: app/routes/subtitles.py:1458
 msgid "Error deleting subtitle."
-msgstr ""
+msgstr "שגיאה בעת מחיקת כתוביות."
 
 #: app/routes/subtitles.py:1479
 msgid "You do not have permission to download subtitles."
-msgstr ""
+msgstr "אין לך הרשאה להוריד כתוביות."
 
 #: app/routes/subtitles.py:1510
 #, python-format
 msgid "Admin's %(provider)s account is not configured/active; cannot download this linked subtitle."
-msgstr ""
+msgstr "חשבון ה%(provider)s של האדמין אינו מוגדר/פעיל; לא ניתן להוריד כתוביות מקושרות אלה."
 
 #: app/routes/subtitles.py:1525 app/routes/subtitles.py:1535
 #, python-format
 msgid "Error downloading from %(provider)s: %(error)s"
-msgstr ""
+msgstr "שגיאה בעת הורדה מ%(provider)s: %(error)s"
 
 #: app/routes/subtitles.py:1532
 #, python-format
 msgid "%(provider)s authentication expired. Please log in again in account settings."
-msgstr ""
+msgstr "האימות של %(provider)s פג תוקף. אנא התחבר שוב דרך הגדרות החשבון."
 
 #: app/routes/subtitles.py:1561
 msgid "Target video hash is missing."
-msgstr ""
+msgstr "גיבוב סרטון היעד חסר."
 
 #: app/routes/subtitles.py:1564
 msgid "Activity ID is missing."
-msgstr ""
+msgstr "מספר זיהוי הפעילות חסר."
 
 #: app/routes/subtitles.py:1570
 msgid "Invalid Activity ID format."
-msgstr ""
+msgstr "פורמט מספר זיהוי הפעילות שגוי."
 
 #: app/routes/subtitles.py:1589
 msgid "Content ID mismatch between subtitle and activity."
-msgstr ""
+msgstr "חוסר התאמת מספר זיהוי בין הכתוביות לפעילות."
 
 #: app/routes/subtitles.py:1593
 msgid "This operation is not applicable to provider-linked entries in this manner."
-msgstr ""
+msgstr "פעולה זו אינה ישימה עבור רשומות המקושרות לספק באופן זה."
 
 #: app/routes/subtitles.py:1596
 msgid "Original subtitle does not have a file path, cannot mark as compatible."
