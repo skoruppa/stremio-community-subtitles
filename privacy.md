@@ -26,7 +26,8 @@ When you use the addon, we store a minimal amount of data necessary to provide i
   - If you upvote or downvote a subtitle, that vote is stored to help others find the best-matched subtitles.
 
 - **Subtitle Provider Credentials**
-  - If you connect external subtitle providers (OpenSubtitles, SubDL, Subsource), we store your **API keys or access tokens** only. We never store your provider passwords.
+  - If you connect external subtitle providers (OpenSubtitles, SubDL, Subsource), we store your **API keys or access tokens**.
+  - For OpenSubtitles specifically, we also store your **username and password** to automatically refresh your access token (which expires every 24 hours). This ensures uninterrupted service without requiring you to log in daily.
 
 - **Cookies**
   - A single session cookie (`hear`) is used to keep you logged in between visits. No tracking cookies are used.
