@@ -196,12 +196,29 @@ async def addon_stream(manifest_token: str, content_type: str, content_id: str, 
             if not has_subtitles and not user.show_no_subtitles:
                 return []  # Skip this language if no subtitles and user doesn't want empty entries
             
+            # Generate readable subtitle name for ID
+            subtitle_name = None
+            if active_subtitle_info['type'] == 'local' and active_subtitle_info['subtitle']:
+                sub = active_subtitle_info['subtitle']
+                subtitle_name = sub.version_info or sub.author
+            elif active_subtitle_info.get('release_name'):
+                subtitle_name = active_subtitle_info['release_name']
+            
+            # Fallback: use content_id + short identifier
+            if not subtitle_name:
+                short_id = download_identifier[:8] if len(download_identifier) >= 8 else download_identifier
+                subtitle_name = f"{content_id}_{short_id}"
+            
+            # Limit length for Nuvio compatibility
+            if len(subtitle_name) > 80:
+                subtitle_name = subtitle_name[:80]
+            
             download_url = url_for('subtitles.unified_download',
                                    manifest_token=manifest_token,
                                    download_identifier=download_identifier,
                                    _external=True,
                                    _scheme=current_app.config['PREFERRED_URL_SCHEME'])
-            stremio_sub_id = f"comm_{download_identifier}"
+            stremio_sub_id = f"{subtitle_name}_{preferred_lang}"
             
             vtt_entry = {
                 'id': stremio_sub_id,
