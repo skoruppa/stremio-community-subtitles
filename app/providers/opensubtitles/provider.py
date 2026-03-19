@@ -96,6 +96,20 @@ class OpenSubtitlesProvider(BaseSubtitleProvider):
         
         try:
             return await opensubtitles_client.get_user_info(temp_user)
+        except opensubtitles_client.OpenSubtitlesError as e:
+            # If auth error, try to refresh token and retry once
+            if getattr(e, 'status_code', None) in (401, 403):
+                current_app.logger.info(f"OpenSubtitles auth error during token check, attempting token refresh...")
+                try:
+                    await self._refresh_token(user, creds)
+                    # Retry with new token
+                    temp_user = TempUser(creds['token'], creds['base_url'])
+                    return await opensubtitles_client.get_user_info(temp_user)
+                except Exception as refresh_error:
+                    current_app.logger.error(f"Token refresh failed: {refresh_error}")
+                    return False
+            current_app.logger.debug(f"OpenSubtitles token check failed: {e}")
+            return True  # Don't show error if check fails for non-auth reasons
         except Exception as e:
             current_app.logger.debug(f"OpenSubtitles token check failed: {e}")
             return True  # Don't show error if check fails
