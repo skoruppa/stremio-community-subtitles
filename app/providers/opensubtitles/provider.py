@@ -94,25 +94,22 @@ class OpenSubtitlesProvider(BaseSubtitleProvider):
         
         temp_user = TempUser(creds['token'], creds['base_url'])
         
-        try:
-            return await opensubtitles_client.get_user_info(temp_user)
-        except opensubtitles_client.OpenSubtitlesError as e:
-            # If auth error, try to refresh token and retry once
-            if getattr(e, 'status_code', None) in (401, 403):
-                current_app.logger.info(f"OpenSubtitles auth error during token check, attempting token refresh...")
-                try:
-                    await self._refresh_token(user, creds)
-                    # Retry with new token
-                    temp_user = TempUser(creds['token'], creds['base_url'])
-                    return await opensubtitles_client.get_user_info(temp_user)
-                except Exception as refresh_error:
-                    current_app.logger.error(f"Token refresh failed: {refresh_error}")
-                    return False
-            current_app.logger.debug(f"OpenSubtitles token check failed: {e}")
-            return True  # Don't show error if check fails for non-auth reasons
-        except Exception as e:
-            current_app.logger.debug(f"OpenSubtitles token check failed: {e}")
-            return True  # Don't show error if check fails
+        # Check token validity
+        is_valid = await opensubtitles_client.get_user_info(temp_user)
+        
+        # If token is invalid (401), try to refresh and check again
+        if not is_valid:
+            current_app.logger.info(f"OpenSubtitles token invalid, attempting token refresh...")
+            try:
+                await self._refresh_token(user, creds)
+                # Check again with new token
+                temp_user = TempUser(creds['token'], creds['base_url'])
+                return await opensubtitles_client.get_user_info(temp_user)
+            except Exception as refresh_error:
+                current_app.logger.error(f"Token refresh failed: {refresh_error}")
+                return False
+        
+        return is_valid
     
     async def _refresh_token(self, user, creds: Dict[str, Any]) -> None:
         """Refresh OpenSubtitles token using stored credentials"""
