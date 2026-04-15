@@ -86,7 +86,12 @@ async def addon_stream(manifest_token: str, content_type: str, content_id: str, 
         except ValueError:
             current_app.logger.warning(f"Could not convert videoSize '{video_size_str}' to integer. URL: {request.url}")
 
-    preferred_langs = user.preferred_languages
+    # Allow language override via query param (e.g. ?langs=eng,spa,pol)
+    langs_override = parsed_params.get('langs')
+    if langs_override:
+        preferred_langs = [l.strip() for l in langs_override.split(',') if l.strip()]
+    else:
+        preferred_langs = user.preferred_languages
     current_app.logger.info(
         f"Subtitle request: User={user.username}, Lang={','.join(preferred_langs)}, Content={content_type}/{content_id}, Hash={video_hash}, Size={video_size}, Filename={video_filename}")
 
@@ -171,6 +176,74 @@ async def addon_stream(manifest_token: str, content_type: str, content_id: str, 
             await session.rollback()
             current_app.logger.error(f"Failed to log or update user activity for user {user.id}: {e}", exc_info=True)
 
+    # --- Pre-search providers once for all languages ---
+    cached_provider_results = {}
+    if preferred_langs:
+        # Resolve IMDb ID and season/episode for provider search
+        imdb_id = None
+        season = None
+        episode = None
+        
+        if content_id.startswith('tt'):
+            imdb_id = content_id.split(':')[0]
+        elif content_id.startswith('kitsu:'):
+            from ..lib.anime_mapping import get_imdb_from_kitsu
+            try:
+                kitsu_id = int(content_id.split(':')[1])
+                mapping = get_imdb_from_kitsu(kitsu_id)
+                if mapping:
+                    imdb_id = mapping['imdb_id']
+                    if mapping['season']:
+                        season = mapping['season']
+            except (ValueError, IndexError):
+                pass
+        elif content_id.startswith('mal:'):
+            from ..lib.anime_mapping import get_imdb_from_mal
+            try:
+                mal_id = int(content_id.split(':')[1])
+                mapping = get_imdb_from_mal(mal_id)
+                if mapping:
+                    imdb_id = mapping['imdb_id']
+                    if mapping['season']:
+                        season = mapping['season']
+            except (ValueError, IndexError):
+                pass
+        
+        if content_type == 'series' and ':' in content_id:
+            parts = content_id.split(':')
+            if episode is None:
+                try:
+                    episode = int(parts[-1])
+                except (ValueError, IndexError):
+                    pass
+            if season is None and not content_id.startswith(('kitsu:', 'mal:')):
+                if len(parts) >= 3:
+                    try:
+                        season = int(parts[-2])
+                    except ValueError:
+                        pass
+        
+        if imdb_id:
+            try:
+                from ..providers.registry import ProviderRegistry
+                from ..lib.provider_async import search_providers_parallel
+                active_providers = await ProviderRegistry.get_active_for_user(user)
+                
+                if active_providers:
+                    search_params = {
+                        'imdb_id': imdb_id,
+                        'video_hash': video_hash,
+                        'languages': preferred_langs,
+                        'season': season,
+                        'episode': episode,
+                        'content_type': content_type,
+                        'video_filename': video_filename
+                    }
+                    cached_provider_results = await search_providers_parallel(user, active_providers, search_params, timeout=10)
+                    current_app.logger.info(f"Pre-searched providers for {len(preferred_langs)} languages: {list(cached_provider_results.keys())}")
+            except Exception as e:
+                current_app.logger.error(f"Error in provider pre-search: {e}", exc_info=True)
+
     # Parallel search for all languages
     async def process_language(preferred_lang):
         download_context = {
@@ -189,7 +262,7 @@ async def addon_stream(manifest_token: str, content_type: str, content_id: str, 
             return None
 
         try:
-            active_subtitle_info = await get_active_subtitle_details(user, content_id, video_hash, content_type, video_filename, preferred_lang)
+            active_subtitle_info = await get_active_subtitle_details(user, content_id, video_hash, content_type, video_filename, preferred_lang, cached_provider_results=cached_provider_results)
             
             # Check if we should add subtitle entry
             has_subtitles = active_subtitle_info['type'] != 'none'
