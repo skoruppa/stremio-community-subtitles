@@ -235,17 +235,21 @@ async def get_active_subtitle_details(user, content_id, video_hash=None, content
                 season = result['season']
     
     # Extract season and episode from content_id if not provided
-    if season is None and episode is None and content_type == 'series' and ':' in content_id:
+    if content_type == 'series' and ':' in content_id:
         parts = content_id.split(':')
-        try:
-            episode = int(parts[-1])
-        except (ValueError, IndexError):
-            episode = None
-        if len(parts) >= 2:
+        if episode is None:
             try:
-                season = int(parts[-2])
-            except ValueError:
-                season = None
+                episode = int(parts[-1])
+            except (ValueError, IndexError):
+                pass
+        if season is None and not content_id.startswith(('kitsu:', 'mal:')):
+            # For kitsu/mal, season comes from anime mapping, not from content_id
+            # (the second segment is the anime ID, not a season number)
+            if len(parts) >= 3:
+                try:
+                    season = int(parts[-2])
+                except ValueError:
+                    pass
     
     result = {
         'type': 'none',
