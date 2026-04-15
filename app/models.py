@@ -4,7 +4,7 @@ import secrets
 import json
 from time import time
 
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, Text, BigInteger, SmallInteger, ForeignKey, Table, TypeDecorator, CHAR, select, UniqueConstraint
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, Text, BigInteger, SmallInteger, ForeignKey, Table, TypeDecorator, CHAR, select, UniqueConstraint, Index
 from sqlalchemy.orm import relationship, declarative_base
 from sqlalchemy.dialects.mysql import LONGTEXT
 from sqlalchemy.dialects.postgresql import JSONB, UUID as PG_UUID
@@ -343,6 +343,11 @@ class Subtitle(Base):
     uploader = relationship('User', back_populates='uploaded_subtitles')
     user_votes = relationship('SubtitleVote', back_populates='subtitle')
 
+    __table_args__ = (
+        Index('ix_subtitles_content_lang', 'content_id', 'language'),
+        Index('ix_subtitles_content_lang_hash', 'content_id', 'language', 'video_hash'),
+    )
+
     def __repr__(self):
         return f'<Subtitle id={self.id} lang={self.language} content={self.content_id} hash={self.video_hash} source={self.source_type}>'
 
@@ -359,6 +364,10 @@ class UserActivity(Base):
     video_filename = Column(Text, nullable=True)
 
     user = relationship('User', back_populates='activity_log')
+
+    __table_args__ = (
+        Index('ix_activity_user_content', 'user_id', 'content_id'),
+    )
 
     def __repr__(self):
         return f'<Activity user={self.user_id} content={self.content_id} time={self.timestamp}>'

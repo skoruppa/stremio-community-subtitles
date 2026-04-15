@@ -312,7 +312,8 @@ async def get_metadata(content_id, content_type=None):
         if not content_type:
             current_app.logger.warning(f"content_type not provided for TMDB ID {content_id}. Cannot determine if movie or series.")
             return None
-        return _get_tmdb_metadata(content_id, content_type)
+        # _get_tmdb_metadata uses sync HTTP (themoviedb library) — run in thread to avoid blocking event loop
+        return await asyncio.get_event_loop().run_in_executor(None, _get_tmdb_metadata, content_id, content_type)
     elif content_id and content_id.startswith('kitsu:'):
         return await _get_kitsu_metadata(content_id)
     elif content_id and content_id.startswith('mal:'):

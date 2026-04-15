@@ -65,16 +65,25 @@ def init_cors(app):
 import functools
 import hashlib
 import json
+import time as _time
 
 class AsyncCache:
     def __init__(self):
-        self._cache = {}
+        self._cache = {}  # key -> (value, expires_at)
     
     async def get(self, key):
-        return self._cache.get(key)
+        entry = self._cache.get(key)
+        if entry is None:
+            return None
+        value, expires_at = entry
+        if expires_at and _time.monotonic() > expires_at:
+            del self._cache[key]
+            return None
+        return value
     
     async def set(self, key, value, timeout=None):
-        self._cache[key] = value
+        expires_at = (_time.monotonic() + timeout) if timeout else None
+        self._cache[key] = (value, expires_at)
     
     async def delete(self, key):
         self._cache.pop(key, None)

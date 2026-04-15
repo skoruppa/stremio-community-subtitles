@@ -78,6 +78,25 @@ def create_app():
     except Exception as e:
         app.logger.warning(f"Could not initialize providers: {e}")
 
+    # Pre-compute available languages and static file versions (once at startup)
+    _available_languages = ['en']
+    translations_dir = os.path.join(os.path.dirname(__file__), '..', 'translations')
+    for lang_code in app.config.get('LANGUAGES', []):
+        if lang_code == 'en':
+            continue
+        mo_file = os.path.join(translations_dir, lang_code, 'LC_MESSAGES', 'messages.mo')
+        if os.path.exists(mo_file) and os.path.getsize(mo_file) > 700:
+            _available_languages.append(lang_code)
+
+    _static_versions = {}
+    css_path = os.path.join(app.static_folder, 'css', 'style.css')
+    _static_versions['css'] = int(os.path.getmtime(css_path)) if os.path.exists(css_path) else 0
+    js_files = ['utils.js', 'account_settings.js', 'voting.js']
+    _static_versions['js'] = {}
+    for js_file in js_files:
+        js_path = os.path.join(app.static_folder, 'js', js_file)
+        _static_versions['js'][js_file] = int(os.path.getmtime(js_path)) if os.path.exists(js_path) else 0
+
     from .routes.auth import auth_bp
     from .routes.main import main_bp
     from .routes.manifest import manifest_bp
@@ -121,17 +140,10 @@ def create_app():
         if is_auth:
             from .models import User
             from sqlalchemy import select
-            from sqlalchemy.orm import selectinload
             from .extensions import async_session_maker
             async with async_session_maker() as session:
                 result = await session.execute(
-                    select(User)
-                    .filter_by(id=current_user.auth_id)
-                    .options(
-                        selectinload(User.uploaded_subtitles),
-                        selectinload(User.selections),
-                        selectinload(User.votes)
-                    )
+                    select(User).filter_by(id=current_user.auth_id)
                 )
                 user = result.scalar_one_or_none()
                 return {'user': user}
@@ -158,38 +170,17 @@ def create_app():
             'vi': {'flag': '🇻🇳', 'name': 'Tiếng Việt'}
         }
         
-        # Check which languages have translations (have .mo files)
-        available_languages = ['en']  # English is always available
-        translations_dir = os.path.join(os.path.dirname(__file__), '..', 'translations')
-        for lang_code in app.config.get('LANGUAGES', []):
-            if lang_code == 'en':
-                continue
-            mo_file = os.path.join(translations_dir, lang_code, 'LC_MESSAGES', 'messages.mo')
-            if os.path.exists(mo_file) and os.path.getsize(mo_file) > 700:  # Check if file has any translations (>700B)
-                available_languages.append(lang_code)
-        
         # Use same logic as get_locale()
         current_lang = request.cookies.get('lang')
         if not current_lang:
-            current_lang = request.accept_languages.best_match(available_languages) or 'en'
-        
-        # Get CSS file mtime for cache busting
-        css_path = os.path.join(app.static_folder, 'css', 'style.css')
-        css_mtime = int(os.path.getmtime(css_path)) if os.path.exists(css_path) else 0
-        
-        # Get JS files mtime for cache busting
-        js_files = ['utils.js', 'account_settings.js', 'voting.js']
-        js_versions = {}
-        for js_file in js_files:
-            js_path = os.path.join(app.static_folder, 'js', js_file)
-            js_versions[js_file] = int(os.path.getmtime(js_path)) if os.path.exists(js_path) else 0
+            current_lang = request.accept_languages.best_match(_available_languages) or 'en'
         
         return {
             'language_map': lang_map,
             'current_language': current_lang,
-            'supported_languages': available_languages,
-            'css_version': css_mtime,
-            'js_versions': js_versions
+            'supported_languages': _available_languages,
+            'css_version': _static_versions.get('css', 0),
+            'js_versions': _static_versions.get('js', {}),
         }
 
     return app

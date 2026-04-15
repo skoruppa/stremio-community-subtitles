@@ -96,8 +96,8 @@ class Config:
     CACHE_DEFAULT_TIMEOUT = 300
     
     # Database connection pool settings
-    SQLALCHEMY_POOL_SIZE = 5
-    SQLALCHEMY_MAX_OVERFLOW = 10
+    SQLALCHEMY_POOL_SIZE = int(os.environ.get('SQLALCHEMY_POOL_SIZE', 10))
+    SQLALCHEMY_MAX_OVERFLOW = int(os.environ.get('SQLALCHEMY_MAX_OVERFLOW', 20))
     SQLALCHEMY_POOL_PRE_PING = False  # Disabled for aiomysql - rely on pool_recycle instead
     SQLALCHEMY_POOL_RECYCLE = 150 
     SQLALCHEMY_POOL_TIMEOUT = 30
