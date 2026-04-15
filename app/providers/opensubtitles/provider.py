@@ -69,11 +69,19 @@ class OpenSubtitlesProvider(BaseSubtitleProvider):
         import time
         token_age = time.time() - creds.get('token_timestamp', 0)
         if token_age > (46 * 3600):  # 46 hours
+            # Skip refresh if we recently failed (avoid blocking every request)
+            last_fail = creds.get('_refresh_failed_at', 0)
+            if time.time() - last_fail < 300:  # 5 min cooldown after failed refresh
+                return False
+            
             current_app.logger.info(f"OpenSubtitles token expired (age: {token_age/3600:.1f}h), refreshing...")
             try:
                 await self._refresh_token(user, creds)
             except Exception as e:
                 current_app.logger.error(f"Failed to refresh OpenSubtitles token: {e}")
+                # Mark failure time to avoid retrying on every request
+                creds['_refresh_failed_at'] = int(time.time())
+                await self.save_credentials(user, creds)
                 return False
         
         return True

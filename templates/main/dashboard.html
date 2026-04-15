@@ -110,15 +110,15 @@
                 <div class="d-grid gap-2">
                     <a href="{{ url_for('subtitles.my_subtitles') }}" class="btn btn-outline-primary d-flex justify-content-between align-items-center">
                         <span>{{ _('Uploaded Subtitles') }}</span>
-                        <span class="badge bg-primary rounded-pill">{{ user.uploaded_subtitles|length if user else 0 }}</span>
+                        <span class="badge bg-primary rounded-pill">{{ uploaded_count }}</span>
                     </a>
                     <a href="{{ url_for('subtitles.selected_subtitles') }}" class="btn btn-outline-primary d-flex justify-content-between align-items-center">
                         <span>{{ _('Selected Subtitles') }}</span>
-                        <span class="badge bg-primary rounded-pill">{{ user.selections|length if user else 0 }}</span>
+                        <span class="badge bg-primary rounded-pill">{{ selections_count }}</span>
                     </a>
                     <a href="{{ url_for('subtitles.voted_subtitles') }}" class="btn btn-outline-primary d-flex justify-content-between align-items-center">
                         <span>{{ _('Votes Cast') }}</span>
-                        <span class="badge bg-primary rounded-pill">{{ user.votes|length if user else 0 }}</span>
+                        <span class="badge bg-primary rounded-pill">{{ votes_count }}</span>
                     </a>
                 </div>
             </div>

@@ -9,6 +9,11 @@ from ...version import USER_AGENT
 # Global base URL for non-authenticated or initial calls like login
 GLOBAL_OS_BASE_URL = "https://api.opensubtitles.com/api/v1"
 
+# Common headers — explicitly exclude brotli to avoid intermittent decoding issues with Cloudflare
+_COMMON_HEADERS = {
+    'Accept-Encoding': 'gzip, deflate',
+}
+
 # Custom decorator for time-based LRU cache
 def timed_lru_cache(seconds: int, maxsize: int = 128):
     def wrapper_cache(func):
@@ -82,7 +87,10 @@ async def make_request_with_retry(request_func, max_retries=3, retry_delay=1.0):
 
         except aiohttp.ClientError as e:
             last_exception = e
-            # For network errors, also retry
+            # For network errors (not HTTP status errors), also retry
+            if isinstance(e, aiohttp.ClientResponseError):
+                # Don't retry HTTP client errors (4xx) — only server errors are retried above
+                raise
             if attempt < max_retries:
                 current_app.logger.warning(
                     f"OpenSubtitles API request failed (attempt {attempt + 1}/{max_retries + 1}): {e}. "
@@ -125,7 +133,8 @@ async def login(username, password, user=None):
         'Api-Key': api_key,
         'Content-Type': 'application/json',
         'Accept': 'application/json',
-        'User-Agent': USER_AGENT
+        'User-Agent': USER_AGENT,
+        **_COMMON_HEADERS,
     }
     payload = {
         'username': username,
@@ -192,7 +201,8 @@ async def logout(token, user):
         'Api-Key': api_key,
         'Authorization': f'Bearer {token}',
         'Accept': 'application/json',
-        'User-Agent': USER_AGENT
+        'User-Agent': USER_AGENT,
+        **_COMMON_HEADERS,
     }
 
     async def make_request():
@@ -249,7 +259,8 @@ async def search_subtitles(imdb_id=None, query=None, languages=None, moviehash=N
         'Api-Key': api_key,
         'Authorization': f'Bearer {user.opensubtitles_token}',  # Read token from user object
         'Accept': '*/*',
-        'User-Agent': USER_AGENT
+        'User-Agent': USER_AGENT,
+        **_COMMON_HEADERS,
     }
 
     params = {}
@@ -317,7 +328,8 @@ async def request_download_link(file_id, user=None):
         'Authorization': f'Bearer {user.opensubtitles_token}',
         'Content-Type': 'application/json',
         'Accept': '*/*',
-        'User-Agent': USER_AGENT
+        'User-Agent': USER_AGENT,
+        **_COMMON_HEADERS,
     }
 
     payload = {
@@ -373,7 +385,8 @@ async def get_user_info(user):
         'Authorization': f'Bearer {user.opensubtitles_token}',
         'Content-Type': 'application/json',
         'Accept': '*/*',
-        'User-Agent': USER_AGENT
+        'User-Agent': USER_AGENT,
+        **_COMMON_HEADERS,
     }
     
     try:

@@ -1,3 +1,4 @@
+import asyncio
 import datetime
 
 from quart_babel import gettext as _
@@ -56,13 +57,12 @@ async def dashboard():
         )
         recent_activity = result.scalars().all()
 
-    # Fetch metadata for each activity item
+    # Fetch metadata for each activity item (parallel)
     activity_metadata = {}
-    for activity in recent_activity:
+    
+    async def _fetch_meta(activity):
         meta = await get_metadata(activity.content_id, activity.content_type)
         if meta:
-            activity_metadata[activity.id] = meta
-            # Simple title construction for display
             title = meta.get('title', activity.content_id)
             if meta.get('season') is not None and meta.get('episode') is not None:
                 title = f"{title} S{meta['season']:02d}E{meta['episode']:02d}"
@@ -70,7 +70,14 @@ async def dashboard():
                 title = f"{title} S{meta['season']:02d}"
             if meta.get('year'):
                 title = f"{title} ({meta['year']})"
-            meta['display_title'] = title  # Add a pre-formatted title for the template
+            meta['display_title'] = title
+            return (activity.id, meta)
+        return None
+    
+    results = await asyncio.gather(*[_fetch_meta(a) for a in recent_activity], return_exceptions=True)
+    for r in results:
+        if r and not isinstance(r, Exception):
+            activity_metadata[r[0]] = r[1]
 
     max_activities_to_display = current_app.config.get('MAX_USER_ACTIVITIES', 15)
 

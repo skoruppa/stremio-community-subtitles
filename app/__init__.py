@@ -138,16 +138,28 @@ def create_app():
             is_auth = False
         
         if is_auth:
-            from .models import User
-            from sqlalchemy import select
+            from .models import User, Subtitle, UserSubtitleSelection, SubtitleVote
+            from sqlalchemy import select, func
             from .extensions import async_session_maker
             async with async_session_maker() as session:
-                result = await session.execute(
-                    select(User).filter_by(id=current_user.auth_id)
-                )
-                user = result.scalar_one_or_none()
-                return {'user': user}
-        return {'user': None}
+                # Single query: fetch user + all three counts via scalar subqueries
+                uid = current_user.auth_id
+                stmt = select(
+                    User,
+                    select(func.count()).where(Subtitle.uploader_id == uid).correlate(None).scalar_subquery().label('uploaded_count'),
+                    select(func.count()).where(UserSubtitleSelection.user_id == uid).correlate(None).scalar_subquery().label('selections_count'),
+                    select(func.count()).where(SubtitleVote.user_id == uid).correlate(None).scalar_subquery().label('votes_count'),
+                ).filter(User.id == uid)
+                
+                row = (await session.execute(stmt)).first()
+                if row:
+                    return {
+                        'user': row[0],
+                        'uploaded_count': row[1] or 0,
+                        'selections_count': row[2] or 0,
+                        'votes_count': row[3] or 0,
+                    }
+        return {'user': None, 'uploaded_count': 0, 'selections_count': 0, 'votes_count': 0}
     
     @app.context_processor
     def inject_language_info():
