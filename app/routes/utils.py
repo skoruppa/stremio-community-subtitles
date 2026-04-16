@@ -900,15 +900,19 @@ async def process_subtitle_content(content: bytes, extension: str, encoding=None
 
 
 async def check_opensubtitles_token(user):
-    """Check if OpenSubtitles token is valid, flash warning if expired."""
+    """Flash warning only for legacy users who have a token but no stored username/password."""
     from quart import flash
     from quart_babel import gettext as _
     try:
         from ..providers.registry import ProviderRegistry
         provider = ProviderRegistry.get('opensubtitles')
-        if provider and await provider.is_authenticated(user):
-            is_valid = await provider.check_token_validity(user)
-            if not is_valid:
-                await flash(_('OpenSubtitles authentication expired. Please log in again in account settings.'), 'warning')
+        if provider:
+            creds = await provider.get_credentials(user)
+            if creds and creds.get('active') and creds.get('token'):
+                if not creds.get('username') or not creds.get('password'):
+                    import time
+                    token_age = time.time() - creds.get('token_timestamp', 0)
+                    if token_age > (48 * 3600):
+                        await flash(_('OpenSubtitles authentication expired. Please log in again in account settings.'), 'warning')
     except Exception as e:
         current_app.logger.debug(f"OpenSubtitles token check error: {e}")

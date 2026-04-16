@@ -60,31 +60,46 @@ class OpenSubtitlesProvider(BaseSubtitleProvider):
             return False
     
     async def is_authenticated(self, user) -> bool:
-        """Check if user has valid OpenSubtitles credentials"""
+        """Check if user has valid OpenSubtitles credentials.
+        This is a fast, non-blocking check — no network requests.
+        Token refresh happens lazily on first actual API usage (search/download)."""
         creds = await self.get_credentials(user)
         if not creds or not creds.get('active') or not creds.get('username') or not creds.get('password'):
             return False
         
-        # Auto-refresh token if older than 46 hours (48h - 2h buffer)
-        import time
-        token_age = time.time() - creds.get('token_timestamp', 0)
-        if token_age > (46 * 3600):  # 46 hours
-            # Skip refresh if we recently failed (avoid blocking every request)
-            last_fail = creds.get('_refresh_failed_at', 0)
-            if time.time() - last_fail < 300:  # 5 min cooldown after failed refresh
-                return False
-            
-            current_app.logger.info(f"OpenSubtitles token expired (age: {token_age/3600:.1f}h), refreshing...")
-            try:
-                await self._refresh_token(user, creds)
-            except Exception as e:
-                current_app.logger.error(f"Failed to refresh OpenSubtitles token: {e}")
-                # Mark failure time to avoid retrying on every request
-                creds['_refresh_failed_at'] = int(time.time())
-                await self.save_credentials(user, creds)
-                return False
+        # Just check if we have a token — don't try to refresh here
+        # Refresh will happen on demand in search/download methods
+        if not creds.get('token'):
+            return False
         
         return True
+    
+    async def ensure_fresh_token(self, user) -> bool:
+        """Ensure token is fresh before making API calls. Call this before search/download.
+        Returns True if token is valid, False if refresh failed."""
+        creds = await self.get_credentials(user)
+        if not creds or not creds.get('active'):
+            return False
+        
+        import time
+        token_age = time.time() - creds.get('token_timestamp', 0)
+        if token_age <= (46 * 3600):  # Token still fresh (< 46 hours)
+            return True
+        
+        # Skip refresh if we recently failed (5 min cooldown)
+        last_fail = creds.get('_refresh_failed_at', 0)
+        if time.time() - last_fail < 300:
+            return False
+        
+        current_app.logger.info(f"OpenSubtitles token expired (age: {token_age/3600:.1f}h), refreshing...")
+        try:
+            await self._refresh_token(user, creds)
+            return True
+        except Exception as e:
+            current_app.logger.error(f"Failed to refresh OpenSubtitles token: {e}")
+            creds['_refresh_failed_at'] = int(time.time())
+            await self.save_credentials(user, creds)
+            return False
     
     async def check_token_validity(self, user) -> bool:
         """Check if OpenSubtitles token is still valid by making API request.
@@ -158,6 +173,10 @@ class OpenSubtitlesProvider(BaseSubtitleProvider):
         if not await self.is_authenticated(user):
             raise ProviderSearchError("Not authenticated", self.name)
         
+        # Ensure token is fresh before making API call (may do network refresh)
+        if not await self.ensure_fresh_token(user):
+            raise ProviderSearchError("Token expired and refresh failed", self.name)
+        
         creds = await self.get_credentials(user)
         
         # Convert languages to OpenSubtitles format
@@ -210,6 +229,10 @@ class OpenSubtitlesProvider(BaseSubtitleProvider):
         """Get download URL for OpenSubtitles subtitle"""
         if not await self.is_authenticated(user):
             raise ProviderDownloadError("Not authenticated", self.name)
+        
+        # Ensure token is fresh before making API call (may do network refresh)
+        if not await self.ensure_fresh_token(user):
+            raise ProviderDownloadError("Token expired and refresh failed", self.name)
         
         creds = await self.get_credentials(user)
         
