@@ -113,7 +113,9 @@ docker-compose exec db mysqldump -u stremio -p stremio_subtitles > backup.sql
 
 ## Production Deployment
 
-For production, use a reverse proxy (nginx/Caddy) in front of the application:
+For production, use a reverse proxy (nginx/Caddy) in front of the application.
+
+**Important:** If using nginx, set `client_max_body_size` to allow subtitle uploads (default app limit is 15 MB). Without this, nginx returns `413 Entity Too Large` for files over 1 MB.
 
 ```yaml
 # Add to docker-compose.yml
@@ -127,6 +129,15 @@ For production, use a reverse proxy (nginx/Caddy) in front of the application:
       - ./certs:/etc/nginx/certs
     depends_on:
       - app
+```
+
+Example `nginx.conf` should include:
+```nginx
+server {
+    # ...
+    client_max_body_size 20M;  # Must be >= MAX_UPLOAD_SIZE_MB (default 15M)
+    # ...
+}
 ```
 
 ## Environment Variables

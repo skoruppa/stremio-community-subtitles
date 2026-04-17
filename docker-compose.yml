@@ -24,6 +24,7 @@ services:
       - MAL_CLIENT_ID=${MAL_CLIENT_ID:-}
       - BETTERSTACK_SOURCE_TOKEN=${BETTERSTACK_SOURCE_TOKEN:-}
       - PREFERRED_URL_SCHEME=${PREFERRED_URL_SCHEME:-https}
+      - MAX_UPLOAD_SIZE_MB=${MAX_UPLOAD_SIZE_MB:-15}
     volumes:
       - ./data:/app/data
       - ./logs:/app/logs

@@ -113,7 +113,21 @@ def create_app():
     app.register_blueprint(providers_bp)
     app.register_blueprint(language_bp)
 
+    @app.errorhandler(413)
+    async def request_entity_too_large(error):
+        max_mb = app.config.get('MAX_CONTENT_LENGTH', 15 * 1024 * 1024) // (1024 * 1024)
+        from quart import request, flash, redirect, url_for
+        await flash(f'File too large. Maximum upload size is {max_mb} MB.', 'danger')
+        referrer = request.referrer
+        if referrer:
+            return redirect(referrer)
+        return redirect(url_for('main.index'))
+
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+
+    # Register custom Jinja filters
+    from .routes.utils import sanitize_filename
+    app.jinja_env.filters['sanitize_filename'] = lambda s: sanitize_filename(s) or ''
 
     @app.context_processor
     def inject_providers():

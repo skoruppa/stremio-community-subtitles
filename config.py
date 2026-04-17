@@ -90,6 +90,9 @@ class Config:
     UPLOAD_FOLDER = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'uploads')
     
     ALLOWED_EXTENSIONS = {'txt', 'srt', 'sub', 'ass', 'ssa'}
+
+    # Maximum upload file size (default 15MB to accommodate large styled ASS/SSA fansubs)
+    MAX_CONTENT_LENGTH = int(os.environ.get('MAX_UPLOAD_SIZE_MB', 15)) * 1024 * 1024
     
     CACHE_TYPE = 'SimpleCache'
     # CACHE_DIR = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'instance/cache')
