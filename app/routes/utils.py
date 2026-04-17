@@ -24,6 +24,26 @@ except ImportError:
     CLOUDINARY_AVAILABLE = False
 
 
+def sanitize_filename(filename):
+    if not filename:
+        return filename
+    # Remove control characters and non-printable chars (except common whitespace)
+    cleaned = ""
+    for ch in filename:
+        cp = ord(ch)
+        # Allow: printable ASCII (0x20-0x7E), common Unicode letters/digits, and whitespace
+        if 0x20 <= cp <= 0x7E:
+            cleaned += ch
+        elif ch in ('\t',):
+            cleaned += ' '
+        elif cp > 0x7E and ch.isprintable() and not (0x2500 <= cp <= 0x257F or 0x2580 <= cp <= 0x259F):
+            # Allow printable unicode but exclude box-drawing and block element chars
+            cleaned += ch
+    # Collapse multiple spaces
+    cleaned = re.sub(r'\s+', ' ', cleaned).strip()
+    return cleaned if cleaned else None
+
+
 def respond_with(data) -> Response:
     """Create a JSON response with CORS headers."""
     resp = jsonify(data)

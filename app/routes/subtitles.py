@@ -30,7 +30,7 @@ except ImportError:
 from ..extensions import async_session_maker
 from ..models import User, Subtitle, UserActivity, UserSubtitleSelection, SubtitleVote  
 from ..lib.subtitles import convert_to_vtt
-from .utils import respond_with, get_active_subtitle_details, respond_with_no_cache, NoCacheResponse, no_cache_redirect, get_vtt_content, generate_vtt_message
+from .utils import respond_with, get_active_subtitle_details, respond_with_no_cache, NoCacheResponse, no_cache_redirect, get_vtt_content, generate_vtt_message, sanitize_filename
 from urllib.parse import parse_qs, unquote
 import gzip
 import io
@@ -74,6 +74,7 @@ async def addon_stream(manifest_token: str, content_type: str, content_id: str, 
         video_size_str = video_size_str[:-5]
     
     video_filename = parsed_params.get('filename')
+    video_filename = sanitize_filename(video_filename)
 
     if video_filename and video_filename.endswith(".docc"):
         current_app.logger.info(f"Ignoring as those are probably from the Docchi extension with hardcoded subs")
@@ -381,7 +382,7 @@ async def unified_download(manifest_token: str, download_identifier: str):
         content_id = context.get('content_id')
         lang = context.get('lang')
         video_hash = context.get('v_hash')
-        video_filename = context.get('v_fname')
+        video_filename = sanitize_filename(context.get('v_fname'))
         content_type = context.get('content_type', '')
 
         episode = None
@@ -852,7 +853,7 @@ async def upload_subtitle(activity_id=None):
                 video_hash = activity.video_hash
 
             subtitle_file = form.subtitle_file.data
-            original_filename = subtitle_file.filename
+            original_filename = sanitize_filename(subtitle_file.filename) or 'subtitle'
             file_extension = os.path.splitext(original_filename)[1].lower()[1:]
             encoding = form.encoding.data
             fps = form.fps.data

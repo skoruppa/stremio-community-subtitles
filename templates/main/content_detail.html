@@ -42,7 +42,7 @@
                     {% if activity.video_filename %}
                     <li class="list-group-item">
                         <strong>{{ _('Filename:') }}</strong> 
-                        <span class="text-break">{{ activity.video_filename }}</span>
+                        <span class="text-break">{{ activity.video_filename|sanitize_filename }}</span>
                     </li>
                     {% endif %}
                     {% if season is not none %}
