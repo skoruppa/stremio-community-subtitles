@@ -115,8 +115,6 @@ async def addon_stream(manifest_token: str, content_type: str, content_id: str, 
                     existing_activity.timestamp = datetime.datetime.utcnow()
                     if video_filename:
                         existing_activity.video_filename = video_filename
-                    current_app.logger.info(
-                        f"Updated existing UserActivity ID {existing_activity.id} (match by hash/size) for user {user.id}, hash {video_hash}, size {video_size}")
                     activity_found_and_updated = True
 
             elif video_hash is None:
@@ -132,8 +130,6 @@ async def addon_stream(manifest_token: str, content_type: str, content_id: str, 
                 existing_activity = result.scalar_one_or_none()
                 if existing_activity:
                     existing_activity.timestamp = datetime.datetime.utcnow()
-                    current_app.logger.info(
-                        f"Updated existing UserActivity ID {existing_activity.id} (match by filename, no hash/size) for user {user.id}, filename {video_filename}")
                     activity_found_and_updated = True
 
             if not activity_found_and_updated:
@@ -146,8 +142,6 @@ async def addon_stream(manifest_token: str, content_type: str, content_id: str, 
                     video_filename=video_filename
                 )
                 session.add(new_activity)
-                current_app.logger.info(
-                    f"Created new UserActivity for user {user.id}, content {content_id}, hash {video_hash}, size {video_size}, filename {video_filename}")
 
             max_activities = current_app.config.get('MAX_USER_ACTIVITIES', 15)+1
 
@@ -162,20 +156,26 @@ async def addon_stream(manifest_token: str, content_type: str, content_id: str, 
             if effective_count_after_commit > max_activities:
                 num_to_delete = effective_count_after_commit - max_activities
                 if num_to_delete > 0:
-                    oldest_result = await session.execute(
-                        select(UserActivity).filter_by(user_id=user.id).order_by(
+                    # Use bulk DELETE to avoid StaleDataError from concurrent requests
+                    oldest_ids_result = await session.execute(
+                        select(UserActivity.id).filter_by(user_id=user.id).order_by(
                             UserActivity.timestamp.asc()).limit(num_to_delete)
                     )
-                    oldest_activities = oldest_result.scalars().all()
-                    for old_activity in oldest_activities:
-                        await session.delete(old_activity)
-                        current_app.logger.info(
-                            f"Deleted oldest UserActivity ID {old_activity.id} for user {user.id} to maintain limit of {max_activities-1}.")
+                    oldest_ids = [row[0] for row in oldest_ids_result.all()]
+                    if oldest_ids:
+                        from sqlalchemy import delete
+                        await session.execute(
+                            delete(UserActivity).where(UserActivity.id.in_(oldest_ids))
+                        )
 
             await session.commit()
         except Exception as e:
             await session.rollback()
-            current_app.logger.error(f"Failed to log or update user activity for user {user.id}: {e}", exc_info=True)
+            # StaleDataError from concurrent requests is harmless — just log debug
+            if 'StaleDataError' in type(e).__name__ or 'expected to' in str(e):
+                current_app.logger.debug(f"Activity race condition for user {user.id} (harmless): {e}")
+            else:
+                current_app.logger.error(f"Failed to log user activity for user {user.id}: {e}", exc_info=True)
 
     # --- Pre-search providers once for all languages ---
     cached_provider_results = {}

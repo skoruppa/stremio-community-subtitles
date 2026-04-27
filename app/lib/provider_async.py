@@ -26,11 +26,11 @@ async def search_providers_parallel(user, active_providers, search_params, timeo
                 return (provider.name, results)
         except asyncio.TimeoutError:
             elapsed = time.time() - provider_start
-            logger.warning(f"Provider {provider.name} timeout after {elapsed:.2f}s")
+            logger.debug(f"Provider {provider.name} timeout after {elapsed:.2f}s")
             return (provider.name, [])
         except Exception as e:
             elapsed = time.time() - provider_start
-            logger.warning(f"Provider {provider.name} failed after {elapsed:.2f}s: {e}", exc_info=True)
+            logger.debug(f"Provider {provider.name} failed after {elapsed:.2f}s: {e}")
             return (provider.name, [])
     
     tasks = [search_single_provider(p) for p in active_providers]
@@ -64,10 +64,10 @@ async def search_providers_with_fallback(user, active_providers, search_params, 
                 results = await provider.search(user=user, **search_params)
                 return results if results else None
         except asyncio.TimeoutError:
-            logger.warning(f"Provider {provider.name} timeout")
+            logger.debug(f"Provider {provider.name} timeout")
             return None
         except Exception as e:
-            logger.warning(f"Provider {provider.name} failed: {e}")
+            logger.debug(f"Provider {provider.name} failed: {e}")
             return None
     
     tasks = [search_single_provider(p) for p in active_providers]
