@@ -6,9 +6,12 @@ services:
     restart: always
     ports:
       - "${FLASK_RUN_PORT:-4949}:4949"
+    env_file:
+      - .env
     environment:
       - FLASK_APP=wsgi.py
       - FLASK_ENV=${FLASK_ENV:-production}
+      - DEBUG=false
       - SECRET_KEY=${SECRET_KEY}
       - DATABASE_URL=${DATABASE_URL:-sqlite:////app/data/stremio_subtitles.db}
       - DISABLE_EMAIL_VERIFICATION=${DISABLE_EMAIL_VERIFICATION:-true}
@@ -25,7 +28,18 @@ services:
       - BETTERSTACK_SOURCE_TOKEN=${BETTERSTACK_SOURCE_TOKEN:-}
       - PREFERRED_URL_SCHEME=${PREFERRED_URL_SCHEME:-https}
       - MAX_UPLOAD_SIZE_MB=${MAX_UPLOAD_SIZE_MB:-15}
+      - INTERNAL_API_TOKEN=${INTERNAL_API_TOKEN:-}
     volumes:
       - ./data:/app/data
       - ./logs:/app/logs
       - ./subtitles:/app/subtitles
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:4949/')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s

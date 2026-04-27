@@ -104,6 +104,7 @@ def create_app():
     from .routes.content import content_bp
     from .routes.providers import providers_bp
     from .routes.language import language_bp
+    from .routes.internal import internal_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(main_bp)
@@ -112,6 +113,7 @@ def create_app():
     app.register_blueprint(content_bp)
     app.register_blueprint(providers_bp)
     app.register_blueprint(language_bp)
+    app.register_blueprint(internal_bp)
 
     @app.errorhandler(413)
     async def request_entity_too_large(error):
