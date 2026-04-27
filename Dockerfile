@@ -25,4 +25,4 @@ RUN mkdir -p /app/data /app/logs /app/subtitles
 EXPOSE 4949
 
 # Run with Hypercorn (6 workers for production)
-CMD ["hypercorn", "run:app", "--bind", "0.0.0.0:4949", "--workers", "6", "--backlog", "256"]
+CMD ["hypercorn", "run:app", "--bind", "0.0.0.0:4949", "--workers", "6", "--backlog", "256", "--forwarded-allow-ips", "*"]
