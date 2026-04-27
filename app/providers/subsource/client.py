@@ -40,7 +40,7 @@ class SubSourceClient:
         async with aiohttp.ClientSession() as session:
             async with session.get(url, headers=self.headers, params=params, timeout=aiohttp.ClientTimeout(total=5)) as response:
                 if response.status in (502, 503, 504):
-                    current_app.logger.warning(f"SubSource API returned {response.status} for {url}")
+                    current_app.logger.debug(f"SubSource API returned {response.status} for {url}")
                     return None  # SubSource API temporarily unavailable
                 response.raise_for_status()
                 data = await response.json()
