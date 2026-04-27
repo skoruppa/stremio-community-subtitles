@@ -127,9 +127,11 @@ class DevelopmentConfig(Config):
 
 class ProductionConfig(Config):
     """Production configuration."""
-    # Production specific settings
-    SESSION_COOKIE_SECURE = True
-    QUART_AUTH_COOKIE_SECURE = True
+    # Caddy/Cloudflare terminates SSL — traffic to container is HTTP (localhost)
+    # Secure cookies would be rejected on plain HTTP, so keep them off
+    # SSL is handled at the proxy layer, not the app layer
+    SESSION_COOKIE_SECURE = False
+    QUART_AUTH_COOKIE_SECURE = False
 
 
 class TestingConfig(Config):
