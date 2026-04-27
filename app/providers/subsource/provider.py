@@ -202,12 +202,11 @@ class SubSourceProvider(BaseSubtitleProvider):
             return results
             
         except Exception as e:
-            error_msg = str(e)
-            # Log as warning for rate limiting (429), error for others
+            error_msg = str(e) or type(e).__name__
             if '429' in error_msg or 'Too Many Requests' in error_msg:
-                current_app.logger.warning(f"SubSource search failed: {e}")
+                current_app.logger.debug(f"SubSource rate limited: {error_msg}")
             else:
-                current_app.logger.error(f"SubSource search failed: {e}")
+                current_app.logger.debug(f"SubSource search failed: {error_msg}")
             raise
     
     async def get_download_url(self, user, subtitle_id: str) -> str:

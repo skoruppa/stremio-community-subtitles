@@ -96,7 +96,10 @@ class OpenSubtitlesProvider(BaseSubtitleProvider):
             await self._refresh_token(user, creds)
             return True
         except Exception as e:
-            current_app.logger.error(f"Failed to refresh OpenSubtitles token: {e}")
+            if '429' in str(e):
+                current_app.logger.debug(f"OpenSubtitles token refresh rate limited for user {user.id}")
+            else:
+                current_app.logger.warning(f"Failed to refresh OpenSubtitles token: {e}")
             creds['_refresh_failed_at'] = int(time.time())
             await self.save_credentials(user, creds)
             return False

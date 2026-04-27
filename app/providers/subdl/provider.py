@@ -106,7 +106,7 @@ class SubDLProvider(BaseSubtitleProvider):
                         elif episode:
                             content_id = f"{imdb_id}:{episode}"
                         
-                        metadata = get_metadata(content_id, content_type)
+                        metadata = await get_metadata(content_id, content_type)
                         if metadata and metadata.get('tmdb_id'):
                             results = await client.search_subtitles(
                                 api_key=api_key,

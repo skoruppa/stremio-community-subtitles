@@ -49,29 +49,36 @@ class OpenSubtitlesError(Exception):
 # Modified for aiohttp - returns response data directly
 async def make_request_with_retry(request_func, max_retries=3, retry_delay=1.0):
     """
-    Makes an HTTP request with retry logic for 5xx server errors.
-
-    Args:
-        request_func (callable): Function that makes the HTTP request (should return aiohttp.ClientResponse)
-        max_retries (int): Maximum number of retry attempts (default: 2)
-        retry_delay (float): Delay in seconds between retries (default: 1.0)
-
-    Returns:
-        aiohttp.ClientResponse: The successful response
-
-    Raises:
-        aiohttp.ClientResponseError: For non-5xx HTTP errors or after max retries
-        aiohttp.ClientError: For other request errors
+    Makes an HTTP request with retry logic for 5xx server errors and 429 rate limits.
     """
     last_exception = None
 
-    for attempt in range(max_retries + 1):  # +1 for initial attempt
+    for attempt in range(max_retries + 1):
         try:
             data = await request_func()
-            # request_func now handles raise_for_status() and returns data
             return data
 
         except aiohttp.ClientResponseError as e:
+            # 429 Too Many Requests — respect Retry-After header
+            if e.status == 429:
+                retry_after = 2  # default
+                if hasattr(e, 'headers') and e.headers:
+                    try:
+                        retry_after = int(e.headers.get('Retry-After', 2))
+                    except (ValueError, TypeError):
+                        pass
+                retry_after = min(retry_after, 10)  # cap at 10s
+                if attempt < max_retries:
+                    current_app.logger.debug(
+                        f"OpenSubtitles 429 rate limited "
+                        f"(attempt {attempt + 1}/{max_retries + 1}). "
+                        f"Waiting {retry_after}s..."
+                    )
+                    await asyncio.sleep(retry_after)
+                    last_exception = e
+                    continue
+                raise
+
             # For 5xx server errors, retry
             if 500 <= e.status < 600 and attempt < max_retries:
                 current_app.logger.warning(
@@ -82,14 +89,11 @@ async def make_request_with_retry(request_func, max_retries=3, retry_delay=1.0):
                 await asyncio.sleep(retry_delay)
                 last_exception = e
                 continue
-            # For other HTTP errors, raise immediately
             raise
 
         except aiohttp.ClientError as e:
             last_exception = e
-            # For network errors (not HTTP status errors), also retry
             if isinstance(e, aiohttp.ClientResponseError):
-                # Don't retry HTTP client errors (4xx) — only server errors are retried above
                 raise
             if attempt < max_retries:
                 current_app.logger.warning(
@@ -99,10 +103,8 @@ async def make_request_with_retry(request_func, max_retries=3, retry_delay=1.0):
                 await asyncio.sleep(retry_delay)
                 continue
             else:
-                # Re-raise the last exception if we've exhausted retries
                 raise
 
-    # This should never be reached, but just in case
     if last_exception:
         raise last_exception
 
