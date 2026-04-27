@@ -24,5 +24,5 @@ RUN mkdir -p /app/data /app/logs /app/subtitles
 # Expose port
 EXPOSE 4949
 
-# Run with Hypercorn (6 workers for production)
-CMD ["hypercorn", "run:app", "--bind", "0.0.0.0:4949", "--workers", "6", "--backlog", "256"]
+# Run with Hypercorn (workers = CPU cores)
+CMD ["hypercorn", "run:app", "--bind", "0.0.0.0:4949", "--workers", "2", "--backlog", "256"]
