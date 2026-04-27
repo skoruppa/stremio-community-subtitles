@@ -8,6 +8,11 @@ from app import create_app
 
 app = create_app()
 
+# Wrap with ProxyFixMiddleware when behind reverse proxy (Caddy/Cloudflare)
+if os.environ.get('PREFERRED_URL_SCHEME') == 'https':
+    from hypercorn.middleware import ProxyFixMiddleware
+    app = ProxyFixMiddleware(app, mode="legacy", trusted_hops=1)
+
 @click.group()
 def cli():
     """Management commands"""

@@ -24,5 +24,8 @@ RUN mkdir -p /app/data /app/logs /app/subtitles
 # Expose port
 EXPOSE 4949
 
+# Hypercorn proxy fix — not a CLI flag
+# Applied in run.py via ProxyFixMiddleware
+
 # Run with Hypercorn (6 workers for production)
-CMD ["hypercorn", "run:app", "--bind", "0.0.0.0:4949", "--workers", "6", "--backlog", "256", "--forwarded-allow-ips", "*"]
+CMD ["hypercorn", "run:app", "--bind", "0.0.0.0:4949", "--workers", "6", "--backlog", "256"]
