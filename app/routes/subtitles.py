@@ -495,7 +495,7 @@ async def unified_download(manifest_token: str, download_identifier: str):
                 from ..providers.registry import ProviderRegistry
                 provider = ProviderRegistry.get(provider_name)
                 
-                if provider and provider.is_authenticated(user):
+                if provider and await provider.is_authenticated(user):
                     provider_subtitle_to_serve = {
                         'provider': provider_name,
                         'subtitle_id': provider_subtitle_id,
@@ -540,7 +540,7 @@ async def unified_download(manifest_token: str, download_identifier: str):
                 from ..providers.base import ProviderDownloadError
                 
                 provider = ProviderRegistry.get(provider_name)
-                if not provider or not provider.is_authenticated(user):
+                if not provider or not await provider.is_authenticated(user):
                     current_app.logger.warning(
                         f"Attempting to serve {provider_name} subtitle {subtitle_id}, but provider is not active")
                     message_key = 'provider_integration_inactive'
