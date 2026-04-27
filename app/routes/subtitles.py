@@ -4,7 +4,6 @@ import json
 import base64
 import tempfile
 import uuid
-import gc
 import asyncio
 import aiohttp
 from quart_babel import gettext as _
@@ -96,86 +95,87 @@ async def addon_stream(manifest_token: str, content_type: str, content_id: str, 
     current_app.logger.info(
         f"Subtitle request: User={user.username}, Lang={','.join(preferred_langs)}, Content={content_type}/{content_id}, Hash={video_hash}, Size={video_size}, Filename={video_filename}")
 
-    # Log user activity
-    async with async_session_maker() as session:
-        try:
-            activity_found_and_updated = False
+    # Log user activity (fire-and-forget — don't block subtitle response)
+    async def _log_activity():
+        async with async_session_maker() as session:
+            try:
+                activity_found_and_updated = False
 
-            if video_hash is not None and video_size is not None:
-                result = await session.execute(
-                    select(UserActivity).filter_by(
+                if video_hash is not None and video_size is not None:
+                    result = await session.execute(
+                        select(UserActivity).filter_by(
+                            user_id=user.id,
+                            content_id=content_id,
+                            video_hash=video_hash,
+                            video_size=video_size
+                        ).limit(1)
+                    )
+                    existing_activity = result.scalar_one_or_none()
+                    if existing_activity:
+                        existing_activity.timestamp = datetime.datetime.utcnow()
+                        if video_filename:
+                            existing_activity.video_filename = video_filename
+                        activity_found_and_updated = True
+
+                elif video_hash is None:
+                    result = await session.execute(
+                        select(UserActivity).filter_by(
+                            user_id=user.id,
+                            content_id=content_id,
+                            video_hash=None,
+                            video_size=video_size,
+                            video_filename=video_filename
+                        ).limit(1)
+                    )
+                    existing_activity = result.scalar_one_or_none()
+                    if existing_activity:
+                        existing_activity.timestamp = datetime.datetime.utcnow()
+                        activity_found_and_updated = True
+
+                if not activity_found_and_updated:
+                    new_activity = UserActivity(
                         user_id=user.id,
                         content_id=content_id,
+                        content_type=content_type,
                         video_hash=video_hash,
-                        video_size=video_size
-                    ).limit(1)
-                )
-                existing_activity = result.scalar_one_or_none()
-                if existing_activity:
-                    existing_activity.timestamp = datetime.datetime.utcnow()
-                    if video_filename:
-                        existing_activity.video_filename = video_filename
-                    activity_found_and_updated = True
-
-            elif video_hash is None:
-                result = await session.execute(
-                    select(UserActivity).filter_by(
-                        user_id=user.id,
-                        content_id=content_id,
-                        video_hash=None,
                         video_size=video_size,
                         video_filename=video_filename
-                    ).limit(1)
-                )
-                existing_activity = result.scalar_one_or_none()
-                if existing_activity:
-                    existing_activity.timestamp = datetime.datetime.utcnow()
-                    activity_found_and_updated = True
-
-            if not activity_found_and_updated:
-                new_activity = UserActivity(
-                    user_id=user.id,
-                    content_id=content_id,
-                    content_type=content_type,
-                    video_hash=video_hash,
-                    video_size=video_size,
-                    video_filename=video_filename
-                )
-                session.add(new_activity)
-
-            max_activities = current_app.config.get('MAX_USER_ACTIVITIES', 15)+1
-
-            count_result = await session.execute(
-                select(func.count()).select_from(UserActivity).filter_by(user_id=user.id)
-            )
-            current_persisted_count = count_result.scalar()
-            effective_count_after_commit = current_persisted_count
-            if not activity_found_and_updated:
-                effective_count_after_commit += 1
-
-            if effective_count_after_commit > max_activities:
-                num_to_delete = effective_count_after_commit - max_activities
-                if num_to_delete > 0:
-                    # Use bulk DELETE to avoid StaleDataError from concurrent requests
-                    oldest_ids_result = await session.execute(
-                        select(UserActivity.id).filter_by(user_id=user.id).order_by(
-                            UserActivity.timestamp.asc()).limit(num_to_delete)
                     )
-                    oldest_ids = [row[0] for row in oldest_ids_result.all()]
-                    if oldest_ids:
-                        from sqlalchemy import delete
-                        await session.execute(
-                            delete(UserActivity).where(UserActivity.id.in_(oldest_ids))
-                        )
+                    session.add(new_activity)
 
-            await session.commit()
-        except Exception as e:
-            await session.rollback()
-            # StaleDataError from concurrent requests is harmless — just log debug
-            if 'StaleDataError' in type(e).__name__ or 'expected to' in str(e):
-                current_app.logger.debug(f"Activity race condition for user {user.id} (harmless): {e}")
-            else:
-                current_app.logger.error(f"Failed to log user activity for user {user.id}: {e}", exc_info=True)
+                max_activities = current_app.config.get('MAX_USER_ACTIVITIES', 15)+1
+
+                count_result = await session.execute(
+                    select(func.count()).select_from(UserActivity).filter_by(user_id=user.id)
+                )
+                current_persisted_count = count_result.scalar()
+                effective_count_after_commit = current_persisted_count
+                if not activity_found_and_updated:
+                    effective_count_after_commit += 1
+
+                if effective_count_after_commit > max_activities:
+                    num_to_delete = effective_count_after_commit - max_activities
+                    if num_to_delete > 0:
+                        oldest_ids_result = await session.execute(
+                            select(UserActivity.id).filter_by(user_id=user.id).order_by(
+                                UserActivity.timestamp.asc()).limit(num_to_delete)
+                        )
+                        oldest_ids = [row[0] for row in oldest_ids_result.all()]
+                        if oldest_ids:
+                            from sqlalchemy import delete
+                            await session.execute(
+                                delete(UserActivity).where(UserActivity.id.in_(oldest_ids))
+                            )
+
+                await session.commit()
+            except Exception as e:
+                await session.rollback()
+                if 'StaleDataError' in type(e).__name__ or 'expected to' in str(e):
+                    current_app.logger.debug(f"Activity race condition for user {user.id} (harmless): {e}")
+                else:
+                    current_app.logger.error(f"Failed to log user activity for user {user.id}: {e}", exc_info=True)
+
+    asyncio.ensure_future(_log_activity())
 
     # --- Pre-search providers once for all languages ---
     cached_provider_results = {}
@@ -565,13 +565,9 @@ async def unified_download(manifest_token: str, download_identifier: str):
                                 
                                 if is_ass_request and processed['original']:
                                     result = NoCacheResponse(processed['original'], mimetype='text/x-ssa')
-                                    del processed
-                                    gc.collect()
                                     return result
                                 
                                 vtt_content = processed['vtt']
-                                del processed
-                                gc.collect()
                             except ValueError as e:
                                 if "No subtitle file found in" in str(e):
                                     current_app.logger.warning(f"{provider_name} archive contains no subtitle files (subtitle_id={subtitle_id}): {e}")
@@ -580,11 +576,9 @@ async def unified_download(manifest_token: str, download_identifier: str):
                                 else:
                                     current_app.logger.error(f"Error processing {provider_name} ZIP (subtitle_id={subtitle_id}): {e}", exc_info=True)
                                     message_key = 'error'
-                                gc.collect()
                             except Exception as e:
                                 current_app.logger.error(f"Error processing {provider_name} ZIP (subtitle_id={subtitle_id}): {e}", exc_info=True)
                                 message_key = 'error'
-                                gc.collect()
                         else:
                             current_app.logger.info(f"Got download URL from {provider_name}")
                     except ProviderDownloadError as e:
@@ -641,16 +635,12 @@ async def unified_download(manifest_token: str, download_identifier: str):
                             if is_ass_request and processed['original']:
                                 current_app.logger.info(f"Serving ASS format from provider ZIP")
                                 result = NoCacheResponse(processed['original'], mimetype='text/x-ssa')
-                                del processed
-                                gc.collect()
                                 return result
                             elif is_ass_request:
                                 # ASS requested but not available - serve VTT instead
                                 current_app.logger.info(f"ASS requested but not in ZIP, serving VTT")
                             
                             vtt_content = processed['vtt']
-                            del processed
-                            gc.collect()
                         except ValueError as e:
                             if "No subtitle file found in" in str(e):
                                 current_app.logger.warning(f"Provider archive contains no subtitle files (url={provider_subtitle_url}): {e}")
@@ -658,11 +648,9 @@ async def unified_download(manifest_token: str, download_identifier: str):
                             else:
                                 current_app.logger.error(f"Error processing ZIP subtitle (url={provider_subtitle_url}, content_type={content_type}, response_size={len(await r.read())}): {e}", exc_info=True)
                                 message_key = 'error'
-                            gc.collect()
                         except Exception as e:
                             current_app.logger.error(f"Error processing ZIP subtitle (url={provider_subtitle_url}, content_type={content_type}): {e}", exc_info=True)
                             message_key = 'error'
-                            gc.collect()
                     else:
                         # Plain text subtitle (VTT/SRT)
                         if is_ass_request:
@@ -1292,8 +1280,6 @@ async def voted_subtitles():
             meta['display_title'] = title
             metadata_map[vote.id] = meta
     
-    del metadata_cache
-    gc.collect()
     
     # Helper function to get provider
     from ..providers.registry import ProviderRegistry
@@ -1369,8 +1355,6 @@ async def selected_subtitles():
             meta['display_title'] = title
             metadata_map[selection.id] = meta
     
-    del metadata_cache
-    gc.collect()
     
     # Helper function to get provider
     from ..providers.registry import ProviderRegistry
@@ -1441,8 +1425,6 @@ async def my_subtitles():
             meta['display_title'] = title
             metadata_map[subtitle.id] = meta
     
-    del metadata_cache
-    gc.collect()
     
     # Helper function to get provider
     from ..providers.registry import ProviderRegistry
