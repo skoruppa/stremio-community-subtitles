@@ -21,7 +21,24 @@ def detect_encoding(raw_data):
     
     # If confidence is low, try common encodings
     if confidence < 0.8:
-        common_encodings = ['utf-8', 'utf-8-sig', 'cp1250', 'cp1252', 'latin1', 'iso-8859-1', 'iso-8859-2']
+        common_encodings = [
+            'utf-8', 'utf-8-sig',
+            'cp1250',       # Polish, Czech, Hungarian
+            'cp1251',       # Russian, Bulgarian, Serbian
+            'cp1252',       # Western European
+            'cp1253',       # Greek
+            'cp1254',       # Turkish
+            'cp1255',       # Hebrew
+            'cp1256',       # Arabic
+            'cp874',        # Thai
+            'latin1',       # ISO Western
+            'iso-8859-1',   # Western European
+            'iso-8859-2',   # Central European
+            'euc-kr',       # Korean
+            'shift_jis',    # Japanese
+            'gb2312',       # Chinese Simplified
+            'big5',         # Chinese Traditional
+        ]
         for enc in common_encodings:
             try:
                 raw_data.decode(enc)
