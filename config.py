@@ -100,12 +100,12 @@ class Config:
     
     # Database connection pool settings
     # With 4 Hypercorn workers, each gets its own pool.
-    # Aiven MySQL free tier allows ~75 connections total.
-    # 4 workers × pool_size 5 = 20 base + 4 × overflow 10 = 60 max
-    SQLALCHEMY_POOL_SIZE = int(os.environ.get('SQLALCHEMY_POOL_SIZE', 5))
-    SQLALCHEMY_MAX_OVERFLOW = int(os.environ.get('SQLALCHEMY_MAX_OVERFLOW', 10))
+    # Local MariaDB — no external connection limit.
+    # 4 workers × pool_size 10 = 40 base + 4 × overflow 20 = 120 max
+    SQLALCHEMY_POOL_SIZE = int(os.environ.get('SQLALCHEMY_POOL_SIZE', 10))
+    SQLALCHEMY_MAX_OVERFLOW = int(os.environ.get('SQLALCHEMY_MAX_OVERFLOW', 20))
     SQLALCHEMY_POOL_PRE_PING = False  # Disabled for aiomysql - rely on pool_recycle instead
-    SQLALCHEMY_POOL_RECYCLE = 150 
+    SQLALCHEMY_POOL_RECYCLE = 300
     SQLALCHEMY_POOL_TIMEOUT = 30
 
     MAX_USER_ACTIVITIES = int(os.environ.get('MAX_USER_ACTIVITIES') or '15')
