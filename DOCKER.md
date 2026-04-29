@@ -104,6 +104,24 @@ OPENSUBTITLES_API_KEY=your-api-key-here
 
 Without this, users won't be able to connect their OpenSubtitles accounts.
 
+**To enable movie/series metadata (posters, titles):**
+
+Get a free API key at [themoviedb.org/settings/api](https://www.themoviedb.org/settings/api) and add to `.env`:
+```bash
+TMDB_API_KEY=your-tmdb-api-key
+```
+
+Without this, the app works but won't show posters or episode titles in the dashboard.
+
+**To enable MyAnimeList metadata (optional):**
+
+Create an API client at [myanimelist.net/apiconfig](https://myanimelist.net/apiconfig) and add to `.env`:
+```bash
+MAL_CLIENT_ID=your-mal-client-id
+```
+
+Without this, anime metadata falls back to Kitsu or TMDB via ID mapping. Only needed for direct MAL ID lookups.
+
 ## Commands
 
 ```bash
