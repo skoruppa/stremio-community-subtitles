@@ -28,12 +28,11 @@ Every subtitle you upload helps build a community database that benefits all use
   - your provider selections
   - your votes
 
-### ✅ New in 0.6.5 — Internationalization
+### ✅ New in 0.7.0
 
-Multi-language interface support with community translations:
-
-- **🌐 Interface Translation System** – Full internationalization support with 15 languages
-- **🤝 Help Us Translate!** – We need your help to translate the interface to other languages. Join us on [Crowdin](https://crowdin.com/project/stremio-community-subtitles) to contribute translations for Spanish, French, German, Italian, Portuguese, Russian, Japanese, Chinese, Turkish, Arabic, Hebrew, Vietnamese, and more!
+- **🚀 Performance** – Optimized subtitle search, removed blocking operations, faster response times
+- **🗄️ Bundled MariaDB** – Self-hosting now includes MariaDB out of the box (no external DB needed)
+- **🌐 Internationalization** – Full interface translation support with 15 languages
 
 ---
 
@@ -139,21 +138,27 @@ If you want to thank me for the addon, you can [buy me a coffee](https://ko-fi.c
 The addon is self-hostable! Deploy your own instance with Docker in minutes:
 
 ```bash
+git clone --recurse-submodules https://github.com/skoruppa/stremio-community-subtitles.git
+cd stremio-community-subtitles
 cp .env.docker.example .env
 # Edit .env and set your SECRET_KEY
-docker-compose up -d
-docker-compose exec app python run.py init-db
-docker-compose exec app python run.py create-roles
-docker-compose exec app python run.py init-anime-db
+docker compose up -d
+docker compose exec app python run.py init-db
+docker compose exec app python run.py create-roles
+docker compose exec app python run.py init-anime-db
 ```
 
 **Features:**
-- SQLite database (no external DB needed)
+- MariaDB included (no external DB needed)
 - Local subtitle storage (no cloud required)
 - Email verification disabled by default
 - Only SECRET_KEY required to start
 
-**Note:** Run `git submodule update --init --recursive` before starting to initialize anime-lists database.
+**Updating:**
+```bash
+git pull --recurse-submodules
+docker compose up -d --build
+```
 
 See **[DOCKER.md](DOCKER.md)** for complete deployment guide.
 

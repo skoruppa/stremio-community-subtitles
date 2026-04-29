@@ -27,12 +27,21 @@ RUN cp -r /app/data/anime-lists /app/_bundled_anime_lists 2>/dev/null || true
 # Expose port
 EXPOSE 4949
 
-# Entrypoint: seed anime-lists into data volume if missing
+# Entrypoint: seed/update anime-lists into data volume
 RUN printf '#!/bin/sh\n\
-if [ -d /app/_bundled_anime_lists ] && [ ! -f /app/data/anime-lists/anime-list-full.json ]; then\n\
+if [ ! -f /app/data/anime-lists/anime-list-full.json ]; then\n\
   echo "[entrypoint] Seeding anime-lists into data volume..."\n\
-  mkdir -p /app/data/anime-lists\n\
-  cp -r /app/_bundled_anime_lists/* /app/data/anime-lists/\n\
+  if [ -d /app/_bundled_anime_lists ]; then\n\
+    mkdir -p /app/data/anime-lists\n\
+    cp -r /app/_bundled_anime_lists/* /app/data/anime-lists/\n\
+  fi\n\
+elif [ -d /app/_bundled_anime_lists ]; then\n\
+  BUNDLED_HASH=$(md5sum /app/_bundled_anime_lists/anime-list-full.json 2>/dev/null | cut -d" " -f1)\n\
+  CURRENT_HASH=$(md5sum /app/data/anime-lists/anime-list-full.json 2>/dev/null | cut -d" " -f1)\n\
+  if [ "$BUNDLED_HASH" != "$CURRENT_HASH" ]; then\n\
+    echo "[entrypoint] Updating anime-lists (new version in image)..."\n\
+    cp -r /app/_bundled_anime_lists/* /app/data/anime-lists/\n\
+  fi\n\
 fi\n\
 exec "$@"\n' > /app/entrypoint.sh && chmod +x /app/entrypoint.sh
 

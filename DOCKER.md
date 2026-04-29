@@ -110,32 +110,34 @@ git pull --recurse-submodules
 docker compose up -d --build
 ```
 
-## Updating Anime Mappings Without Restart
+## Updating Anime Mappings
 
-When the anime-lists submodule is updated, you can reload the mappings without restarting the container. This avoids downtime.
+Anime mappings are updated automatically when you update the app. Just run:
 
-1. **Add `INTERNAL_API_TOKEN` to your `.env`:**
+```bash
+git pull --recurse-submodules
+docker compose up -d --build
+```
+
+The container detects new anime data and reloads it on startup.
+
+## Advanced: Hot-Reload Anime Mappings (Zero Downtime)
+
+If you run your own deployment pipeline and want to update anime mappings without restarting:
+
+1. Add `INTERNAL_API_TOKEN` to `.env`:
    ```bash
-   # Generate a random token
    echo "INTERNAL_API_TOKEN=$(openssl rand -hex 32)" >> .env
+   docker compose restart app
    ```
 
-2. **Restart the container once** (to pick up the new env var):
+2. After updating anime-lists data, trigger reload:
    ```bash
-   docker compose up -d
-   ```
-
-3. **After pulling submodule updates, reload with:**
-   ```bash
-   git submodule update --remote data/anime-lists
-   
    curl -X POST http://localhost:4949/internal/reload-anime \
         -H "X-Internal-Token: $(grep INTERNAL_API_TOKEN .env | cut -d= -f2)"
    ```
 
-   If the response is `{"updated": true}`, the new data is live. No restart needed.
-
-> **Note:** The `/internal/*` endpoints are meant for local use only. If you expose the app through a reverse proxy, block `/internal/*` from external access.
+> Block `/internal/*` from external access in your reverse proxy.
 
 ## Production Deployment
 
