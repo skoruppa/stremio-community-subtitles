@@ -11,7 +11,7 @@ services:
       - FLASK_ENV=${FLASK_ENV:-production}
       - DEBUG=false
       - SECRET_KEY=${SECRET_KEY}
-      - DATABASE_URL=${DATABASE_URL:-sqlite:////app/data/stremio_subtitles.db}
+      - DATABASE_URL=${DATABASE_URL:-mysql+aiomysql://stremio:stremio_pass@db:3306/stremio_subs}
       - DISABLE_EMAIL_VERIFICATION=${DISABLE_EMAIL_VERIFICATION:-true}
       - MAIL_SERVER=${MAIL_SERVER:-}
       - MAIL_PORT=${MAIL_PORT:-587}
@@ -31,6 +31,9 @@ services:
       - ./data:/app/data
       - ./logs:/app/logs
       - ./subtitles:/app/subtitles
+    depends_on:
+      db:
+        condition: service_healthy
     deploy:
       resources:
         limits:
@@ -41,3 +44,35 @@ services:
       timeout: 10s
       retries: 3
       start_period: 30s
+
+  db:
+    image: mariadb:11
+    restart: always
+    environment:
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root_change_me}
+      MARIADB_DATABASE: stremio_subs
+      MARIADB_USER: stremio
+      MARIADB_PASSWORD: ${DB_PASSWORD:-stremio_pass}
+    volumes:
+      - db_data:/var/lib/mysql
+    ports:
+      - "0.0.0.0:3306:3306"
+    command: >
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+      --max-connections=100
+      --innodb-buffer-pool-size=256M
+      --innodb-log-file-size=64M
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+volumes:
+  db_data:
