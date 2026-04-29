@@ -821,12 +821,35 @@ def extract_subtitle_from_zip(zip_content: bytes, episode: int = None):
     Returns tuple: (subtitle_content: bytes, filename: str, extension: str)
     """
     subtitle_extensions = ['.srt', '.vtt', '.ass', '.ssa', '.sub', '.smi']
-    episode_patterns = [
-        f'e{episode:02d}',
-        f' {episode:02d} ',
-        f'-{episode:02d}-',
-        f'.{episode:02d}.'
-    ] if episode is not None else []
+    
+    # Build episode matching patterns (both zero-padded and non-padded)
+    episode_patterns = []
+    if episode is not None:
+        ep = episode
+        ep2 = f'{episode:02d}'
+        ep3 = f'{episode:03d}'
+        episode_patterns = [
+            f'e{ep2}',          # e04, E04
+            f'e{ep}',           # e4
+            f'ep{ep2}',         # ep04
+            f'ep{ep}',          # ep4
+            f' {ep2} ',         # " 04 "
+            f' {ep} ',          # " 4 "
+            f'-{ep2}-',         # -04-
+            f'-{ep}-',          # -4-
+            f'.{ep2}.',         # .04.
+            f'.{ep}.',          # .4.
+            f' {ep2}.',         # " 04."  (before extension)
+            f' {ep}.',          # " 4."   (before extension)
+            f'_{ep2}',          # _04
+            f'_{ep}.',          # _4.
+            f' - {ep2}',        # " - 04"
+            f' - {ep}',         # " - 4"
+            f'#{ep2}',          # #04
+            f'#{ep}',           # #4
+            f' {ep3} ',         # " 004 "
+            f' {ep3}.',         # " 004."
+        ]
     
     def find_and_extract(archive_files, read_func, archive_type):
         """Common logic for finding and extracting subtitle from archive"""
@@ -844,7 +867,21 @@ def extract_subtitle_from_zip(zip_content: bytes, episode: int = None):
         if episode_patterns:
             for f in subtitle_files:
                 fname = f if isinstance(f, str) else f.filename
-                if any(pattern in fname.lower() for pattern in episode_patterns):
+                fname_lower = fname.lower()
+                # Strip directory path for matching
+                fname_base = os.path.basename(fname_lower)
+                if any(pattern in fname_base for pattern in episode_patterns):
+                    return (read_func(f), fname, os.path.splitext(fname)[1].lower())
+            
+            # Second pass: try regex for number at end of filename (e.g. "Title 4.ass")
+            import re
+            for f in subtitle_files:
+                fname = f if isinstance(f, str) else f.filename
+                fname_base = os.path.basename(fname)
+                name_without_ext = os.path.splitext(fname_base)[0]
+                # Match number at end: "Title 4", "Title - 04", "Title_04"
+                match = re.search(r'[\s_\-.](\d+)$', name_without_ext)
+                if match and int(match.group(1)) == episode:
                     return (read_func(f), fname, os.path.splitext(fname)[1].lower())
         
         chosen = subtitle_files[0]
