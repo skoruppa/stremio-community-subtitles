@@ -27,7 +27,7 @@
 
    **Optional configurations:**
    - Email (set `DISABLE_EMAIL_VERIFICATION=false` and configure `MAIL_*`)
-   - Database URL (SQLite by default, can use MySQL/PostgreSQL)
+   - Database URL (MariaDB included, can use external MySQL/PostgreSQL)
    - Cloudinary (for cloud storage instead of local files)
    - TMDB API (for better metadata)
    - MAL Client ID (for anime metadata)
@@ -78,6 +78,11 @@ Only 1 thing is required in `.env`:
 SECRET_KEY=your-random-64-char-hex-string
 ```
 
+Generate one with:
+```bash
+python3 -c "import secrets; print(secrets.token_hex(32))"
+```
+
 That's it! The included MariaDB container handles the database automatically. Email verification is disabled by default.
 
 **To enable email verification:**
@@ -89,6 +94,15 @@ MAIL_PASSWORD=your-app-password
 ```
 
 Everything else has sensible defaults!
+
+**To enable OpenSubtitles integration:**
+
+Generate your API key at [opensubtitles.com/consumers](https://www.opensubtitles.com/consumers) and add to `.env`:
+```bash
+OPENSUBTITLES_API_KEY=your-api-key-here
+```
+
+Without this, users won't be able to connect their OpenSubtitles accounts.
 
 ## Commands
 
