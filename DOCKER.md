@@ -57,10 +57,12 @@
 
 ## Storage
 
-### Database (SQLite by default)
-- Database file: `./data/stremio_subtitles.db`
-- No additional setup needed
-- For MySQL/PostgreSQL, set `DATABASE_URL` in `.env`
+### Database (MariaDB — included)
+- Runs as a Docker container alongside the app
+- Data persisted in Docker volume `db_data`
+- Default credentials: user `stremio`, database `stremio_subs`
+- No additional setup needed — starts automatically with `docker compose up -d`
+- For external database (MySQL/PostgreSQL), set `DATABASE_URL` in `.env` and remove the `db` service from docker-compose.yml
 
 ### Subtitles (Local by default)
 - Stored in: `./subtitles/` directory
@@ -76,7 +78,7 @@ Only 1 thing is required in `.env`:
 SECRET_KEY=your-random-64-char-hex-string
 ```
 
-That's it! Email verification is disabled by default.
+That's it! The included MariaDB container handles the database automatically. Email verification is disabled by default.
 
 **To enable email verification:**
 ```bash
@@ -156,7 +158,8 @@ See `.env.docker.example` for all available configuration options.
 
 ## Volumes
 
-- `./data` — Application data (database, anime mappings)
+- `db_data` — MariaDB database files (Docker managed volume)
+- `./data` — Application data (anime mappings)
 - `./logs` — Application logs
 - `./subtitles` — Uploaded subtitle files (if using local storage)
 
