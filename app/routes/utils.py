@@ -112,7 +112,7 @@ def normalize_release_name(name):
 def extract_release_components(name):
     """Extract key components from release name for weighted comparison."""
     if not name:
-        return {'title': '', 'season_episode': '', 'group': '', 'quality': ''}
+        return {'title': '', 'season_episode': '', 'group': '', 'source': '', 'resolution': ''}
     
     name_lower = name.lower()
     # Remove file extension first (e.g., .mkv, .mp4, .avi)
@@ -132,21 +132,41 @@ def extract_release_components(name):
             season_episode = f"s{int(match.group(1)):02d}e{int(match.group(2)):02d}"
             break
     
-    # Extract quality: source type + resolution
-    source_types = ['web-dl', 'webdl', 'webrip', 'bluray', 'blu-ray', 'brrip', 'hdrip', 'hdtv', 'dvdrip']
-    resolution_tags = ['2160p', '1080p', '720p', '480p', '4k', 'uhd', 'hd']
+    # Extract source type (order matters — more specific first)
+    source_types_map = {
+        'web-dl': 'webdl',
+        'webdl': 'webdl',
+        'web dl': 'webdl',
+        'webrip': 'webrip',
+        'web': 'web',       # generic web (after web-dl/webrip)
+        'bluray': 'bluray',
+        'blu-ray': 'bluray',
+        'blu ray': 'bluray',
+        'bdrip': 'bluray',
+        'brrip': 'bluray',
+        'remux': 'remux',
+        'hdtv': 'hdtv',
+        'hdrip': 'hdrip',
+        'dvdrip': 'dvdrip',
+        'dvd': 'dvd',
+        'cam': 'cam',
+        'ts': 'ts',
+        'hdcam': 'cam',
+    }
     
-    quality_parts = []
-    for source in source_types:
-        if source in name_normalized:
-            quality_parts.append(source.replace('-', ''))
+    source = ''
+    for pattern, normalized_source in source_types_map.items():
+        if pattern in name_normalized:
+            source = normalized_source
             break
+    
+    # Extract resolution
+    resolution = ''
+    resolution_tags = ['2160p', '1080p', '720p', '480p', '4k', 'uhd']
     for res in resolution_tags:
         if res in name_normalized:
-            quality_parts.append(res)
+            resolution = res
             break
-    
-    quality = ' '.join(quality_parts)
     
     # Extract release group (priority: dash before bracket > bracket at start/end)
     group = ''
@@ -165,11 +185,12 @@ def extract_release_components(name):
             if dash_match:
                 group = dash_match.group(1)
     
-    # Title is what remains after removing S/E, quality, and common tags
+    # Title is what remains after removing S/E, source, resolution, and common tags
     title = name_normalized
     if season_episode:
         title = re.sub(r's\d+\s*e?\d+', '', title)
-    for tag in source_types + resolution_tags + ['x264', 'h264', 'x265', 'hevc']:
+    all_tags = list(source_types_map.keys()) + resolution_tags + ['x264', 'h264', 'x265', 'hevc', 'aac', 'ac3', 'dts', 'hdr', 'dv', '10bit']
+    for tag in all_tags:
         title = title.replace(tag, '')
     title = re.sub(r'\s+', ' ', title).strip()
     
@@ -177,15 +198,21 @@ def extract_release_components(name):
         'title': title,
         'season_episode': season_episode,
         'group': group,
-        'quality': quality
+        'source': source,
+        'resolution': resolution
     }
 
 
 def calculate_filename_similarity(video_filename, subtitle_release_name):
     """
-    Calculates weighted similarity between video filename and subtitle release name.
-    For series: S/E (40%) > group (40%) > quality (15%) > title (5%)
-    For movies: group (50%) > quality (20%) > title (30%)
+    Calculates similarity between video filename and subtitle release name.
+    
+    Priority order:
+    1. Source type MUST match if video has one (hard filter — bluray≠web)
+    2. Release group match (most important for sync)
+    3. Resolution match
+    4. Title similarity (least important, already filtered by content_id)
+    
     Returns a float between 0.0 and 1.0.
     """
     if not video_filename or not subtitle_release_name:
@@ -198,31 +225,46 @@ def calculate_filename_similarity(video_filename, subtitle_release_name):
         return 0.0
     
     # Season/Episode exact match - critical for series
-    se_sim = 1.0 if (video_parts['season_episode'] and 
-                    video_parts['season_episode'] == subtitle_parts['season_episode']) else 0.0
+    if video_parts['season_episode'] and subtitle_parts['season_episode']:
+        if video_parts['season_episode'] != subtitle_parts['season_episode']:
+            return 0.0  # Wrong episode = no match
     
-    # Release group similarity - important for sync
+    # Source type: hard filter
+    # If video has a source type, subtitle MUST match (or have no source)
+    source_match = True
+    if video_parts['source'] and subtitle_parts['source']:
+        source_match = video_parts['source'] == subtitle_parts['source']
+    
+    if not source_match:
+        return 0.05  # Very low score — wrong source, only use as last resort
+    
+    # Source bonus: both have same source = good signal
+    source_bonus = 0.0
+    if video_parts['source'] and subtitle_parts['source'] and video_parts['source'] == subtitle_parts['source']:
+        source_bonus = 0.3
+    
+    # Release group similarity
     group_sim = 0.0
     if video_parts['group'] and subtitle_parts['group']:
         group_sim = fuzz.ratio(video_parts['group'], subtitle_parts['group']) / 100.0
     
-    # Quality similarity - same source type often compatible
-    quality_sim = 0.0
-    if video_parts['quality'] and subtitle_parts['quality']:
-        quality_sim = fuzz.token_set_ratio(video_parts['quality'], subtitle_parts['quality']) / 100.0
+    # Resolution match
+    resolution_sim = 0.0
+    if video_parts['resolution'] and subtitle_parts['resolution']:
+        resolution_sim = 1.0 if video_parts['resolution'] == subtitle_parts['resolution'] else 0.0
     
-    # Title similarity - less important since filtered by content_id
+    # Title similarity
     title_sim = fuzz.token_sort_ratio(video_parts['title'], subtitle_parts['title']) / 100.0
     
-    # Dynamic weights based on content type
+    # Scoring
     if video_parts['season_episode']:
-        # Series: prioritize S/E match
-        score = (se_sim * 0.4) + (group_sim * 0.4) + (quality_sim * 0.15) + (title_sim * 0.05)
+        # Series: source > group > resolution > title
+        score = source_bonus + (group_sim * 0.4) + (resolution_sim * 0.15) + (title_sim * 0.05)
     else:
-        # Movies: no S/E, redistribute weight to group and quality
-        score = (group_sim * 0.5) + (quality_sim * 0.2) + (title_sim * 0.3)
+        # Movies: source > group > resolution > title
+        score = source_bonus + (group_sim * 0.4) + (resolution_sim * 0.15) + (title_sim * 0.15)
     
-    return score
+    return min(score, 1.0)
 
 
 
