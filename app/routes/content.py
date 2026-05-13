@@ -105,19 +105,42 @@ async def content_detail(activity_id):
         all_local_subs = result.scalars().all()
 
     # Group local subtitles by language and hash
+    # Track file_paths already in matching_hash to deduplicate linked copies
+    matching_hash_file_paths = set()
     temp_grouped_local_subs = {lang: {'matching_hash': [], 'other_hash': [], 'no_hash': []} for lang in preferred_languages}
+    
+    # First pass: collect matching hash subtitles
     for sub in all_local_subs:
         if sub.language in temp_grouped_local_subs:
             if activity.video_hash and sub.video_hash == activity.video_hash:
                 temp_grouped_local_subs[sub.language]['matching_hash'].append(sub)
                 all_subs_matching_hash.append(sub)
-            elif sub.video_hash is None:
+                if sub.file_path:
+                    matching_hash_file_paths.add(sub.file_path)
+            all_subtitle_ids_for_voting.add(sub.id)
+    
+    # Second pass: other hash and no hash (skip duplicates already linked to current hash)
+    seen_file_paths = set(matching_hash_file_paths)  # Start with matching hash paths
+    for sub in all_local_subs:
+        if sub.language in temp_grouped_local_subs:
+            if activity.video_hash and sub.video_hash == activity.video_hash:
+                continue  # Already handled above
+            
+            # Skip if same file_path already seen (deduplicate linked copies)
+            if sub.file_path and sub.file_path in seen_file_paths:
+                all_subtitle_ids_for_voting.add(sub.id)
+                continue
+            
+            if sub.file_path:
+                seen_file_paths.add(sub.file_path)
+            
+            if sub.video_hash is None:
                 temp_grouped_local_subs[sub.language]['no_hash'].append(sub)
                 all_subs_no_hash.append(sub)
             else:
                 temp_grouped_local_subs[sub.language]['other_hash'].append(sub)
                 all_subs_other_hash.append(sub)
-        all_subtitle_ids_for_voting.add(sub.id)
+            all_subtitle_ids_for_voting.add(sub.id)
 
     # Determine imdb_id for provider search
     imdb_id = None
@@ -285,6 +308,12 @@ async def content_detail(activity_id):
     except:
         pass
 
+    # Count how many hash versions each subtitle file_path has (for "linked to X versions" badge)
+    subtitle_link_counts = {}
+    for sub in all_local_subs:
+        if sub.file_path:
+            subtitle_link_counts[sub.file_path] = subtitle_link_counts.get(sub.file_path, 0) + 1
+
     # Pass context to the template
     context = {
         'activity': activity,
@@ -302,7 +331,8 @@ async def content_detail(activity_id):
         'preferred_languages': preferred_languages,
         'has_any_user_selection': has_any_user_selection,
         'has_provider_results': has_provider_results,
-        'preferred_languages_display': preferred_languages_display
+        'preferred_languages_display': preferred_languages_display,
+        'subtitle_link_counts': subtitle_link_counts
     }
 
     return await render_template('main/content_detail.html', **context)

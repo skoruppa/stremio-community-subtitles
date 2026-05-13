@@ -905,17 +905,17 @@ async def upload_subtitle(activity_id=None):
                 skip_file_upload = False
 
                 if existing_subtitle_same_hash:
-                    if existing_subtitle_same_hash.video_hash == video_hash:
-                        # Exact duplicate: same content, same video hash
+                    if existing_subtitle_same_hash.content_id == content_id and existing_subtitle_same_hash.video_hash == video_hash:
+                        # Exact duplicate: same content_id, same video hash, same subtitle file
                         await flash(_('These subtitles already exist for this content and video version.'), 'info')
                         redirect_url = url_for('subtitles.upload_subtitle') if is_advanced_upload else url_for(
                             'content.content_detail', activity_id=activity_id)
                         return redirect(redirect_url)
                     else:
-                        # Same content, different video hash - reuse file_path
+                        # Same subtitle file but different content_id or video hash - reuse file_path
                         db_file_path = existing_subtitle_same_hash.file_path
                         skip_file_upload = True
-                        current_app.logger.info(f"Reusing existing subtitle file_path: {db_file_path} for new video_hash.")
+                        current_app.logger.info(f"Reusing existing subtitle file_path: {db_file_path} for content_id={content_id}, video_hash={video_hash}.")
                 
                 # Save original ASS/SSA file if applicable
                 if is_ass_format and not skip_file_upload:
@@ -1052,6 +1052,93 @@ async def upload_subtitle(activity_id=None):
 
     return await render_template('main/upload_subtitle.html', form=form, activity=activity, metadata=metadata,
                            season=season, episode=episode, is_advanced_upload=is_advanced_upload)
+
+
+@subtitles_bp.route('/link_subtitle/<uuid:activity_id>/<uuid:subtitle_id>', methods=['POST'])
+@login_required
+async def link_subtitle_to_hash(activity_id, subtitle_id):
+    """Link a community subtitle to the user's current video hash by creating a hash-linked copy."""
+    async with async_session_maker() as session:
+        # Get activity (must have video_hash)
+        act_result = await session.execute(
+            select(UserActivity).filter_by(id=activity_id, user_id=current_user.auth_id)
+        )
+        activity = act_result.scalar_one_or_none()
+        if not activity:
+            from quart import abort
+            abort(404)
+
+        if not activity.video_hash:
+            await flash(_('Cannot link: your video has no hash (try playing it first)'), 'warning')
+            return redirect(url_for('content.content_detail', activity_id=activity_id))
+
+        # Get source subtitle
+        sub_result = await session.execute(
+            select(Subtitle).filter_by(id=subtitle_id)
+        )
+        source_subtitle = sub_result.scalar_one_or_none()
+        if not source_subtitle:
+            from quart import abort
+            abort(404)
+
+        # Verify content matches
+        if source_subtitle.content_id != activity.content_id:
+            await flash(_('Subtitle does not match this content'), 'danger')
+            return redirect(url_for('content.content_detail', activity_id=activity_id))
+
+        # Check if already linked to this hash
+        existing_result = await session.execute(
+            select(Subtitle).filter_by(
+                content_id=source_subtitle.content_id,
+                language=source_subtitle.language,
+                video_hash=activity.video_hash,
+                file_path=source_subtitle.file_path
+            )
+        )
+        if existing_result.scalar_one_or_none():
+            await flash(_('This subtitle is already linked to your video version'), 'info')
+            return redirect(url_for('content.content_detail', activity_id=activity_id))
+
+        try:
+            # Create a new subtitle entry linked to this hash
+            linked_subtitle = Subtitle(
+                content_id=source_subtitle.content_id,
+                content_type=source_subtitle.content_type,
+                video_hash=activity.video_hash,
+                language=source_subtitle.language,
+                file_path=source_subtitle.file_path,
+                uploader_id=current_user.auth_id,
+                author=source_subtitle.author,
+                version_info=source_subtitle.version_info,
+                source_type='community',
+                source_metadata={
+                    'linked_from_subtitle_id': str(source_subtitle.id),
+                    'linked_by_user_id': current_user.auth_id,
+                    'original_hash': source_subtitle.video_hash
+                },
+                votes=1
+            )
+            session.add(linked_subtitle)
+            await session.flush()
+
+            # Add initial upvote from linker
+            vote = SubtitleVote(
+                user_id=current_user.auth_id,
+                subtitle_id=linked_subtitle.id,
+                vote_value=1
+            )
+            session.add(vote)
+
+            await session.commit()
+            await flash(_('Subtitle linked to your video version. It will now auto-select for others with the same file.'), 'success')
+            current_app.logger.info(
+                f"User {current_user.auth_id} linked subtitle {subtitle_id} to hash {activity.video_hash} (new ID: {linked_subtitle.id})")
+        except Exception as e:
+            await session.rollback()
+            current_app.logger.error(f"Error linking subtitle to hash: {e}", exc_info=True)
+            await flash(_('Error linking subtitle'), 'danger')
+
+    return redirect(url_for('content.content_detail', activity_id=activity_id))
 
 
 @subtitles_bp.route('/select_subtitle/<uuid:activity_id>/<uuid:subtitle_id>', methods=['POST'])

@@ -1,6 +1,38 @@
 # Docker Deployment Guide
 
-## Quick Start
+## Quick Start (Pre-built Image)
+
+The fastest way — no need to clone the repo or build anything:
+
+1. **Create a directory and download config:**
+   ```bash
+   mkdir stremio-community-subtitles && cd stremio-community-subtitles
+   curl -O https://raw.githubusercontent.com/skoruppa/stremio-community-subtitles/main/.env.docker.example
+   curl -O https://raw.githubusercontent.com/skoruppa/stremio-community-subtitles/main/docker-compose.yml
+   mv .env.docker.example .env
+   ```
+
+2. **Edit `.env` and set your `SECRET_KEY`** (see Minimal Configuration below)
+
+3. **Start:**
+   ```bash
+   docker compose up -d
+   docker compose exec app python run.py init-db
+   docker compose exec app python run.py create-roles
+   docker compose exec app python run.py init-anime-db
+   ```
+
+4. **Access:** http://localhost:4949
+
+**Updating:**
+```bash
+docker compose pull
+docker compose up -d
+```
+
+---
+
+## Quick Start (Build from Source)
 
 1. **Clone with submodules:**
    ```bash

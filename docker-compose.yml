@@ -1,5 +1,6 @@
 services:
   app:
+    image: ghcr.io/skoruppa/stremio-community-subtitles:latest
     build: .
     restart: always
     ports:
