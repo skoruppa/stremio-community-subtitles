@@ -1129,6 +1129,30 @@ async def link_subtitle_to_hash(activity_id, subtitle_id):
             )
             session.add(vote)
 
+            # Update user's selection to point to the new linked subtitle
+            sel_result = await session.execute(
+                select(UserSubtitleSelection).filter_by(
+                    user_id=current_user.auth_id,
+                    content_id=source_subtitle.content_id,
+                    video_hash=activity.video_hash or '',
+                    language=source_subtitle.language
+                )
+            )
+            selection = sel_result.scalar_one_or_none()
+            if selection:
+                selection.selected_subtitle_id = linked_subtitle.id
+                selection.selected_external_file_id = None
+                selection.external_details_json = None
+            else:
+                selection = UserSubtitleSelection(
+                    user_id=current_user.auth_id,
+                    content_id=source_subtitle.content_id,
+                    video_hash=activity.video_hash or '',
+                    selected_subtitle_id=linked_subtitle.id,
+                    language=source_subtitle.language
+                )
+                session.add(selection)
+
             await session.commit()
             await flash(_('Subtitle linked to your video version. It will now auto-select for others with the same file.'), 'success')
             current_app.logger.info(
