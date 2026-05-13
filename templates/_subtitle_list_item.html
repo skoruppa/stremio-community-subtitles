@@ -1,4 +1,4 @@
-{% macro render_subtitle_item(subtitle, user_votes, user_selection, activity_id, current_video_hash, current_user_obj, lang_dict, is_active_subtitle=false, get_provider=none, link_counts=none) %}
+{% macro render_subtitle_item(subtitle, user_votes, user_selection, activity_id, current_video_hash, current_user_obj, lang_dict, is_active_subtitle=false, get_provider=none) %}
 {#
     Renders a single community subtitle item (either uploaded or linked from OpenSubtitles).
     - subtitle: The Subtitle object from the database.
@@ -49,11 +49,6 @@
                 {% endif %}
                 {% if subtitle.forced %}
                     <span class="badge bg-danger" title="{{ _('Forced/Foreign Parts Only') }}"><i class="fas fa-language"></i></span>
-                {% endif %}
-                {% if link_counts and subtitle.file_path and link_counts.get(subtitle.file_path, 0) > 1 %}
-                    <span class="badge bg-primary" title="{{ _('Linked to multiple video versions') }}">
-                        <i class="fas fa-link"></i> {{ link_counts[subtitle.file_path] }} {{ _('versions') }}
-                    </span>
                 {% endif %}
             </div>
         </div>

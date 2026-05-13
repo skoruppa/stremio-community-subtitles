@@ -308,12 +308,6 @@ async def content_detail(activity_id):
     except:
         pass
 
-    # Count how many hash versions each subtitle file_path has (for "linked to X versions" badge)
-    subtitle_link_counts = {}
-    for sub in all_local_subs:
-        if sub.file_path:
-            subtitle_link_counts[sub.file_path] = subtitle_link_counts.get(sub.file_path, 0) + 1
-
     # Pass context to the template
     context = {
         'activity': activity,
@@ -331,8 +325,7 @@ async def content_detail(activity_id):
         'preferred_languages': preferred_languages,
         'has_any_user_selection': has_any_user_selection,
         'has_provider_results': has_provider_results,
-        'preferred_languages_display': preferred_languages_display,
-        'subtitle_link_counts': subtitle_link_counts
+        'preferred_languages_display': preferred_languages_display
     }
 
     return await render_template('main/content_detail.html', **context)

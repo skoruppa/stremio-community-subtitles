@@ -147,7 +147,7 @@
                         </h6>
                         {% if active_subtitle %}
                             <div class="list-group-item active-subtitle">
-                                {{ render_subtitle_item(active_subtitle, user_votes, user_selection, activity.id, activity.video_hash, current_user, LANGUAGE_DICT, is_active_subtitle=true, get_provider=get_provider, link_counts=subtitle_link_counts) }}
+                                {{ render_subtitle_item(active_subtitle, user_votes, user_selection, activity.id, activity.video_hash, current_user, LANGUAGE_DICT, is_active_subtitle=true, get_provider=get_provider) }}
                             </div>
                         {% elif active_provider_details %}
                             <div class="list-group-item active-subtitle">
