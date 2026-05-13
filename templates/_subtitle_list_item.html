@@ -96,12 +96,12 @@
                 </form>
             {% endif %}
 
-            {# Link to Hash Button - for subtitles without hash OR with different hash #}
-            {% if current_video_hash and subtitle.video_hash != current_video_hash and (subtitle.source_type == 'community') %}
+            {# Link to Hash Button - only when subtitle is actively selected AND hash differs #}
+            {% if is_active_subtitle and current_video_hash and subtitle.video_hash != current_video_hash and (subtitle.source_type == 'community') %}
                 <form action="{{ url_for('subtitles.link_subtitle_to_hash', activity_id=activity_id, subtitle_id=subtitle.id) }}" method="POST" class="d-inline ms-1">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <button type="submit" class="btn btn-sm btn-outline-info" title="{{ _('Link this subtitle to your video version so it auto-selects for others') }}">
-                        <i class="fas fa-link"></i> {{ _('Link to my version') }}
+                    <button type="submit" class="btn btn-sm btn-outline-secondary" title="{{ _('Link this subtitle to the current video version for the community') }}">
+                        <i class="fas fa-link"></i> {{ _('Link') }}
                     </button>
                 </form>
             {% endif %}
