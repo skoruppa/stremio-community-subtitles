@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: stremio-community-subtitles\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-02-17 13:49+0100\n"
-"PO-Revision-Date: 2026-02-26 01:44\n"
+"POT-Creation-Date: 2026-05-14 01:14+0200\n"
+"PO-Revision-Date: 2026-05-14 02:42\n"
 "Last-Translator: \n"
 "Language-Team: Chinese Simplified\n"
 "MIME-Version: 1.0\n"
@@ -288,47 +288,47 @@ msgstr "重置链接无效或已过期。"
 msgid "Your password has been reset."
 msgstr "您的密码已经被重置。"
 
-#: app/routes/content.py:206
+#: app/routes/content.py:229
 msgid "An error occurred while searching for subtitles."
 msgstr "搜索字幕时出错。"
 
-#: app/routes/main.py:23 app/routes/main.py:90
+#: app/routes/main.py:24 app/routes/main.py:97
 msgid "Please log in to access this page."
 msgstr "请登录以访问此页面。"
 
-#: app/routes/main.py:174
+#: app/routes/main.py:181
 msgid "Preferred languages updated successfully!"
 msgstr "首选语言更新成功！"
 
-#: app/routes/main.py:179
+#: app/routes/main.py:186
 msgid "Failed to update language."
 msgstr "更新语言失败。"
 
-#: app/routes/main.py:211
+#: app/routes/main.py:218
 msgid "Activity record not found."
 msgstr "未找到活动记录。"
 
-#: app/routes/main.py:221
+#: app/routes/main.py:228
 msgid "You do not have permission to delete this activity record."
 msgstr "您没有权限删除此活动记录。"
 
-#: app/routes/main.py:227
+#: app/routes/main.py:234
 msgid "Activity record deleted successfully."
 msgstr "成功删除活动记录。"
 
-#: app/routes/main.py:231
+#: app/routes/main.py:238
 msgid "Error deleting activity record. Please try again."
 msgstr "删除活动记录时出错。请重试。"
 
-#: app/routes/main.py:249
+#: app/routes/main.py:256
 msgid "Username confirmation does not match. Account not deleted."
 msgstr "用户名确认不匹配。账户未删除。"
 
-#: app/routes/main.py:270
+#: app/routes/main.py:277
 msgid "Your account has been permanently deleted."
 msgstr "您的账户已被永久删除。"
 
-#: app/routes/main.py:276
+#: app/routes/main.py:283
 msgid "Error deleting account. Please try again or contact support."
 msgstr "删除帐户时出错。请再试一次或联系支持人员。"
 
@@ -392,175 +392,191 @@ msgstr "此字幕已经链接到此视频版本"
 msgid "Subtitle successfully linked to this video version!"
 msgstr "字幕成功链接到此视频版本！"
 
-#: app/routes/providers.py:316
+#: app/routes/providers.py:316 app/routes/subtitles.py:1163
 msgid "Error linking subtitle"
 msgstr "链接字幕时出错"
 
-#: app/routes/subtitles.py:730
+#: app/routes/subtitles.py:809
 msgid "Content ID must be either IMDB ID (starting with \"tt\") or Kitsu ID (format \"kitsu:12345\") or MAL ID (format \"mal:12345\")"
 msgstr "内容 ID 必须是 IMDB ID（以 “tt\"开头）或 Kitsu ID（格式 \"kitsu:12345\"）或 MAL ID （格式 ”mal:12345“）"
 
-#: app/routes/subtitles.py:740
+#: app/routes/subtitles.py:819
 msgid "Episode number is required for series"
 msgstr "电视剧集必须输入剧集编号"
 
-#: app/routes/subtitles.py:831
+#: app/routes/subtitles.py:910
 msgid "These subtitles already exist for this content and video version."
 msgstr "这些字幕已经存在于此内容和视频版本。"
 
-#: app/routes/subtitles.py:862
+#: app/routes/subtitles.py:941
 msgid "Server error: Cloudinary storage is not properly configured."
 msgstr "服务器错误：云存储配置不正确。"
 
-#: app/routes/subtitles.py:888
+#: app/routes/subtitles.py:967
 #, python-format
 msgid "Error processing/uploading subtitle: %(error)s"
 msgstr "处理/上传字幕时出错：%(error)s"
 
-#: app/routes/subtitles.py:897
+#: app/routes/subtitles.py:976
 msgid "Internal error: Subtitle path not determined."
 msgstr "内部错误：字幕路径未确定。"
 
-#: app/routes/subtitles.py:956
+#: app/routes/subtitles.py:1035
 msgid "Subtitle uploaded and selected successfully!"
 msgstr "字幕上传并成功选择！"
 
-#: app/routes/subtitles.py:960
+#: app/routes/subtitles.py:1039
 msgid "Subtitle uploaded, but failed to auto-select."
 msgstr "字幕已上传，但未能自动选择。"
 
-#: app/routes/subtitles.py:972
+#: app/routes/subtitles.py:1051
 msgid "Error uploading subtitle. Please try again."
 msgstr "上传字幕出错。请重试。"
 
-#: app/routes/subtitles.py:1025
+#: app/routes/subtitles.py:1072
+msgid "Cannot link: your video has no hash (try playing it first)"
+msgstr ""
+
+#: app/routes/subtitles.py:1086
+msgid "Subtitle does not match this content"
+msgstr ""
+
+#: app/routes/subtitles.py:1099
+msgid "This subtitle is already linked to your video version"
+msgstr ""
+
+#: app/routes/subtitles.py:1157
+msgid "Subtitle linked to your video version. It will now auto-select for others with the same file."
+msgstr ""
+
+#: app/routes/subtitles.py:1215
 msgid "Subtitle selection updated."
 msgstr "字幕选择已更新。"
 
-#: app/routes/subtitles.py:1029
+#: app/routes/subtitles.py:1219
 msgid "Error updating subtitle selection."
 msgstr "更新字幕选择时出错。"
 
-#: app/routes/subtitles.py:1051
+#: app/routes/subtitles.py:1241
 msgid "Voting is not available for this type of subtitle."
 msgstr "这类字幕不能投票。"
 
-#: app/routes/subtitles.py:1066 templates/main/content_detail.html:328
+#: app/routes/subtitles.py:1256 templates/main/content_detail.html:328
 #: templates/main/my_subtitles.html:142
 #: templates/main/selected_subtitles.html:168
 #: templates/main/voted_subtitles.html:140
 msgid "Vote removed."
 msgstr "投票已删除。"
 
-#: app/routes/subtitles.py:1071 templates/main/content_detail.html:330
+#: app/routes/subtitles.py:1261 templates/main/content_detail.html:330
 #: templates/main/my_subtitles.html:144
 #: templates/main/selected_subtitles.html:170
 #: templates/main/voted_subtitles.html:142
 msgid "Vote updated."
 msgstr "投票已更新。"
 
-#: app/routes/subtitles.py:1077 templates/main/content_detail.html:329
+#: app/routes/subtitles.py:1267 templates/main/content_detail.html:329
 #: templates/main/my_subtitles.html:143
 #: templates/main/selected_subtitles.html:169
 #: templates/main/voted_subtitles.html:141
 msgid "Vote recorded."
 msgstr "投票已记录。"
 
-#: app/routes/subtitles.py:1088 templates/main/content_detail.html:331
+#: app/routes/subtitles.py:1278 templates/main/content_detail.html:331
 #: templates/main/my_subtitles.html:145
 #: templates/main/selected_subtitles.html:171
 #: templates/main/voted_subtitles.html:143
 msgid "Error processing vote."
 msgstr "处理投票时出错。"
 
-#: app/routes/subtitles.py:1106
+#: app/routes/subtitles.py:1296
 msgid "You do not have permission to delete this selection."
 msgstr "您没有删除此选择的权限。"
 
-#: app/routes/subtitles.py:1112
+#: app/routes/subtitles.py:1302
 msgid "Selection deleted successfully."
 msgstr "选择已成功删除。"
 
-#: app/routes/subtitles.py:1116
+#: app/routes/subtitles.py:1306
 msgid "Error deleting selection."
 msgstr "删除选择时出错。"
 
-#: app/routes/subtitles.py:1149
+#: app/routes/subtitles.py:1339
 msgid "All subtitle selections for this content have been reset."
 msgstr "此内容的所有字幕选择都已重置。"
 
-#: app/routes/subtitles.py:1155
+#: app/routes/subtitles.py:1345
 msgid "No selections to reset for this content."
 msgstr "没有重置此内容的选择。"
 
-#: app/routes/subtitles.py:1390
+#: app/routes/subtitles.py:1574
 msgid "You do not have permission to delete this subtitle."
 msgstr "您没有权限删除此字幕。"
 
-#: app/routes/subtitles.py:1454
+#: app/routes/subtitles.py:1638
 msgid "Subtitle deleted successfully."
 msgstr "字幕删除成功。"
 
-#: app/routes/subtitles.py:1458
+#: app/routes/subtitles.py:1642
 msgid "Error deleting subtitle."
 msgstr "删除字幕时出错。"
 
-#: app/routes/subtitles.py:1479
-msgid "You do not have permission to download subtitles."
-msgstr "您没有下载字幕的权限。"
+#: app/routes/subtitles.py:1670
+msgid "You do not have permission to download this subtitle."
+msgstr ""
 
-#: app/routes/subtitles.py:1510
+#: app/routes/subtitles.py:1695
 #, python-format
 msgid "Admin's %(provider)s account is not configured/active; cannot download this linked subtitle."
 msgstr ""
 
-#: app/routes/subtitles.py:1525 app/routes/subtitles.py:1535
+#: app/routes/subtitles.py:1710 app/routes/subtitles.py:1720
 #, python-format
 msgid "Error downloading from %(provider)s: %(error)s"
 msgstr "从%(provider)s下载时出错：%(error)s"
 
-#: app/routes/subtitles.py:1532
+#: app/routes/subtitles.py:1717
 #, python-format
 msgid "%(provider)s authentication expired. Please log in again in account settings."
 msgstr "%(provider)s认证过期。请在账户设置中再次登录。"
 
-#: app/routes/subtitles.py:1561
+#: app/routes/subtitles.py:1746
 msgid "Target video hash is missing."
 msgstr "目标视频哈希缺失。"
 
-#: app/routes/subtitles.py:1564
+#: app/routes/subtitles.py:1749
 msgid "Activity ID is missing."
 msgstr "缺少活动ID。"
 
-#: app/routes/subtitles.py:1570
+#: app/routes/subtitles.py:1755
 msgid "Invalid Activity ID format."
 msgstr "无效的活动ID格式。"
 
-#: app/routes/subtitles.py:1589
+#: app/routes/subtitles.py:1774
 msgid "Content ID mismatch between subtitle and activity."
 msgstr "字幕和活动的内容 ID 不匹配。"
 
-#: app/routes/subtitles.py:1593
+#: app/routes/subtitles.py:1778
 msgid "This operation is not applicable to provider-linked entries in this manner."
 msgstr ""
 
-#: app/routes/subtitles.py:1596
+#: app/routes/subtitles.py:1781
 msgid "Original subtitle does not have a file path, cannot mark as compatible."
 msgstr "原字幕没有文件路径，无法标记为兼容。"
 
-#: app/routes/subtitles.py:1614
+#: app/routes/subtitles.py:1799
 msgid "A compatible subtitle entry for this hash already exists. Selecting it."
 msgstr "此哈希的兼容字幕条目已经存在。请选择它。"
 
-#: app/routes/subtitles.py:1633
+#: app/routes/subtitles.py:1818
 msgid "Subtitle marked as compatible with the current video version."
 msgstr "字幕已标记为与当前视频版本兼容。"
 
-#: app/routes/subtitles.py:1674
+#: app/routes/subtitles.py:1859
 msgid "An error occurred."
 msgstr "发生了错误。"
 
-#: app/routes/utils.py:908
+#: app/routes/utils.py:1015
 msgid "OpenSubtitles authentication expired. Please log in again in account settings."
 msgstr "OpenSubtitles 认证过期。请在账户设置中再次登录。"
 
@@ -668,11 +684,12 @@ msgid "Selected"
 msgstr "已选择"
 
 #: templates/_provider_subtitle_list_item.html:62
+#: templates/_subtitle_list_item.html:98
 msgid "Link this subtitle to the current video version for the community"
 msgstr "将此字幕链接到当前社区的视频版本"
 
 #: templates/_provider_subtitle_list_item.html:63
-#: templates/_subtitle_list_item.html:89
+#: templates/_subtitle_list_item.html:89 templates/_subtitle_list_item.html:99
 msgid "Link"
 msgstr "链接"
 
@@ -727,11 +744,11 @@ msgstr "反对"
 msgid "Mark this subtitle as compatible with the current video version (%(hash)s...)"
 msgstr "标记此字幕与当前视频版本(%(hash)s...)适配"
 
-#: templates/_subtitle_list_item.html:103
+#: templates/_subtitle_list_item.html:113
 msgid "Are you sure you want to delete this subtitle? This action cannot be undone."
 msgstr "您确定要删除这个字幕吗？此操作无法撤消。"
 
-#: templates/_subtitle_list_item.html:106
+#: templates/_subtitle_list_item.html:116
 msgid "Delete Subtitle"
 msgstr "删除字幕"
 
