@@ -49,7 +49,8 @@ LANGUAGES = [
     ('epo', 'Esperanto'),
     ('mkd', 'Македонски'),
     ('tel', 'తెలుగు'), 
-    ('sqi', 'Shqip') 
+    ('sqi', 'Shqip'),
+    ('sin', 'සිංහල')  # Sinhala (Sri Lanka)
 ]
 
 # Dictionary for quick lookups
