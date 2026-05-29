@@ -293,7 +293,8 @@ def calculate_filename_similarity(video_filename, subtitle_release_name, is_forc
         score = source_score + (group_sim * 0.4) + (resolution_sim * 0.15) + (title_sim * 0.15)
     
     # Forced subtitle penalty (less preferred unless explicitly wanted)
-    if is_forced:
+    # Also detect "forced" in release name even if flag not set
+    if is_forced or (subtitle_release_name and 'forced' in subtitle_release_name.lower()):
         score *= 0.5
     
     return min(score, 1.0)
