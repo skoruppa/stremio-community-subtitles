@@ -203,15 +203,17 @@ def extract_release_components(name):
     }
 
 
-def calculate_filename_similarity(video_filename, subtitle_release_name):
+def calculate_filename_similarity(video_filename, subtitle_release_name, is_forced=False):
     """
     Calculates similarity between video filename and subtitle release name.
     
     Priority order:
-    1. Source type MUST match if video has one (hard filter — bluray≠web)
+    1. Source type proximity (exact match > similar quality tier > different tier)
     2. Release group match (most important for sync)
     3. Resolution match
     4. Title similarity (least important, already filtered by content_id)
+    
+    Forced subtitles get a penalty unless user explicitly prefers them.
     
     Returns a float between 0.0 and 1.0.
     """
@@ -229,19 +231,45 @@ def calculate_filename_similarity(video_filename, subtitle_release_name):
         if video_parts['season_episode'] != subtitle_parts['season_episode']:
             return 0.0  # Wrong episode = no match
     
-    # Source type: hard filter
-    # If video has a source type, subtitle MUST match (or have no source)
-    source_match = True
+    # Source quality tiers (higher = better quality source)
+    # Sources in the same tier are interchangeable (similar timing/sync)
+    SOURCE_TIERS = {
+        'remux': 5,
+        'bluray': 4,
+        'webdl': 3,
+        'webrip': 3,
+        'web': 3,
+        'hdtv': 2,
+        'hdrip': 2,
+        'dvdrip': 1,
+        'dvd': 1,
+        'ts': 0,
+        'cam': 0,
+    }
+    
+    # Source scoring
+    source_score = 0.0
     if video_parts['source'] and subtitle_parts['source']:
-        source_match = video_parts['source'] == subtitle_parts['source']
-    
-    if not source_match:
-        return 0.05  # Very low score — wrong source, only use as last resort
-    
-    # Source bonus: both have same source = good signal
-    source_bonus = 0.0
-    if video_parts['source'] and subtitle_parts['source'] and video_parts['source'] == subtitle_parts['source']:
-        source_bonus = 0.3
+        if video_parts['source'] == subtitle_parts['source']:
+            # Exact match
+            source_score = 0.3
+        else:
+            video_tier = SOURCE_TIERS.get(video_parts['source'], 2)
+            sub_tier = SOURCE_TIERS.get(subtitle_parts['source'], 2)
+            tier_diff = abs(video_tier - sub_tier)
+            
+            if tier_diff == 0:
+                # Same tier (e.g., webdl vs webrip) — very compatible
+                source_score = 0.25
+            elif tier_diff == 1:
+                # Adjacent tier (e.g., bluray vs webdl) — likely compatible
+                source_score = 0.15
+            else:
+                # Far apart (e.g., bluray vs cam) — probably bad sync
+                source_score = 0.02
+    elif video_parts['source'] and not subtitle_parts['source']:
+        # Subtitle has no source info — neutral
+        source_score = 0.1
     
     # Release group similarity
     group_sim = 0.0
@@ -259,10 +287,14 @@ def calculate_filename_similarity(video_filename, subtitle_release_name):
     # Scoring
     if video_parts['season_episode']:
         # Series: source > group > resolution > title
-        score = source_bonus + (group_sim * 0.4) + (resolution_sim * 0.15) + (title_sim * 0.05)
+        score = source_score + (group_sim * 0.4) + (resolution_sim * 0.15) + (title_sim * 0.05)
     else:
         # Movies: source > group > resolution > title
-        score = source_bonus + (group_sim * 0.4) + (resolution_sim * 0.15) + (title_sim * 0.15)
+        score = source_score + (group_sim * 0.4) + (resolution_sim * 0.15) + (title_sim * 0.15)
+    
+    # Forced subtitle penalty (less preferred unless explicitly wanted)
+    if is_forced:
+        score *= 0.5
     
     return min(score, 1.0)
 
@@ -590,7 +622,7 @@ async def _find_best_match_by_filename(user, content_id, imdb_id, video_filename
         local_subs = result.scalars().all()
         
     for sub in local_subs:
-        score = calculate_filename_similarity(video_filename, sub.version_info)
+        score = calculate_filename_similarity(video_filename, sub.version_info, is_forced=getattr(sub, 'forced', False))
         if score > 0:
             candidates.append({'type': 'local', 'subtitle': sub, 'score': score})
     
@@ -599,7 +631,7 @@ async def _find_best_match_by_filename(user, content_id, imdb_id, video_filename
         for provider_name, results in cached_results.items():
             for result in results:
                 if result.language == lang:
-                    score = calculate_filename_similarity(video_filename, result.release_name)
+                    score = calculate_filename_similarity(video_filename, result.release_name, is_forced=result.forced)
                     if result.ai_translated:
                         score -= 0.05
                     if score > 0:
@@ -638,7 +670,7 @@ async def _find_best_match_by_filename(user, content_id, imdb_id, video_filename
             
             for provider_name, results in results_by_provider.items():
                 for result in results:
-                    score = calculate_filename_similarity(video_filename, result.release_name)
+                    score = calculate_filename_similarity(video_filename, result.release_name, is_forced=result.forced)
                     if result.ai_translated:
                         score -= 0.05
                     if score > 0:
