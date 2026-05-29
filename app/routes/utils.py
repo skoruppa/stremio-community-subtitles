@@ -294,7 +294,8 @@ def calculate_filename_similarity(video_filename, subtitle_release_name, is_forc
     
     # Forced subtitle penalty (less preferred unless explicitly wanted)
     # Also detect "forced" in release name even if flag not set
-    if is_forced or (subtitle_release_name and 'forced' in subtitle_release_name.lower()):
+    detected_forced = is_forced or (subtitle_release_name and 'forced' in subtitle_release_name.lower())
+    if detected_forced:
         score *= 0.5
     
     return min(score, 1.0)
@@ -623,16 +624,18 @@ async def _find_best_match_by_filename(user, content_id, imdb_id, video_filename
         local_subs = result.scalars().all()
         
     for sub in local_subs:
-        score = calculate_filename_similarity(video_filename, sub.version_info, is_forced=getattr(sub, 'forced', False))
+        is_sub_forced = getattr(sub, 'forced', False) or (sub.version_info and 'forced' in sub.version_info.lower())
+        score = calculate_filename_similarity(video_filename, sub.version_info, is_forced=is_sub_forced)
         if score > 0:
-            candidates.append({'type': 'local', 'subtitle': sub, 'score': score})
+            candidates.append({'type': 'local', 'subtitle': sub, 'score': score, 'forced': is_sub_forced})
     
     # Providers (cached or live)
     if cached_results:
         for provider_name, results in cached_results.items():
             for result in results:
                 if result.language == lang:
-                    score = calculate_filename_similarity(video_filename, result.release_name, is_forced=result.forced)
+                    is_result_forced = result.forced or (result.release_name and 'forced' in result.release_name.lower())
+                    score = calculate_filename_similarity(video_filename, result.release_name, is_forced=is_result_forced)
                     if result.ai_translated:
                         score -= 0.05
                     if score > 0:
@@ -648,7 +651,7 @@ async def _find_best_match_by_filename(user, content_id, imdb_id, video_filename
                             'download_count': result.download_count,
                             'hearing_impaired': result.hearing_impaired,
                             'ai_translated': result.ai_translated,
-                            'forced': result.forced,
+                            'forced': is_result_forced,
                             'moviehash_match': result.metadata.get('hash_match', False) if result.metadata else False,
                             'url': result.metadata.get('url', '') if result.metadata else ''
                         })
@@ -671,7 +674,8 @@ async def _find_best_match_by_filename(user, content_id, imdb_id, video_filename
             
             for provider_name, results in results_by_provider.items():
                 for result in results:
-                    score = calculate_filename_similarity(video_filename, result.release_name, is_forced=result.forced)
+                    is_result_forced = result.forced or (result.release_name and 'forced' in result.release_name.lower())
+                    score = calculate_filename_similarity(video_filename, result.release_name, is_forced=is_result_forced)
                     if result.ai_translated:
                         score -= 0.05
                     if score > 0:
@@ -687,11 +691,10 @@ async def _find_best_match_by_filename(user, content_id, imdb_id, video_filename
                             'download_count': result.download_count,
                             'hearing_impaired': result.hearing_impaired,
                             'ai_translated': result.ai_translated,
-                            'forced': result.forced,
+                            'forced': is_result_forced,
                             'moviehash_match': result.metadata.get('hash_match', False) if result.metadata else False,
                             'url': result.metadata.get('url', '') if result.metadata else ''
                         })
-            gc.collect()
         except:
             pass
     
