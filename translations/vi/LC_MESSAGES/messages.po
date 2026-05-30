@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: stremio-community-subtitles\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2026-05-14 01:14+0200\n"
-"PO-Revision-Date: 2026-05-14 02:42\n"
+"PO-Revision-Date: 2026-05-24 02:47\n"
 "Last-Translator: \n"
 "Language-Team: Vietnamese\n"
 "MIME-Version: 1.0\n"
@@ -435,19 +435,19 @@ msgstr "Lỗi khi tải phụ đề lên. Vui lòng thử lại."
 
 #: app/routes/subtitles.py:1072
 msgid "Cannot link: your video has no hash (try playing it first)"
-msgstr ""
+msgstr "Không thể liên kết: video của bạn không có mã hash (hãy thử phát video trước)"
 
 #: app/routes/subtitles.py:1086
 msgid "Subtitle does not match this content"
-msgstr ""
+msgstr "Phụ đề không khớp với nội dung này"
 
 #: app/routes/subtitles.py:1099
 msgid "This subtitle is already linked to your video version"
-msgstr ""
+msgstr "Phụ đề này đã được liên kết với phiên bản video của bạn"
 
 #: app/routes/subtitles.py:1157
 msgid "Subtitle linked to your video version. It will now auto-select for others with the same file."
-msgstr ""
+msgstr "Phụ đề được liên kết với phiên bản video của bạn. Giờ đây, nó sẽ tự động chọn cho những người khác có cùng tệp tin."
 
 #: app/routes/subtitles.py:1215
 msgid "Subtitle selection updated."
@@ -523,7 +523,7 @@ msgstr "Lỗi khi xóa phụ đề."
 
 #: app/routes/subtitles.py:1670
 msgid "You do not have permission to download this subtitle."
-msgstr ""
+msgstr "Bạn không có quyền tải xuống phụ đề này."
 
 #: app/routes/subtitles.py:1695
 #, python-format
