@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: stremio-community-subtitles\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2026-05-14 01:14+0200\n"
-"PO-Revision-Date: 2026-05-14 02:42\n"
+"PO-Revision-Date: 2026-07-01 02:56\n"
 "Last-Translator: \n"
 "Language-Team: Portuguese\n"
 "MIME-Version: 1.0\n"
@@ -64,7 +64,7 @@ msgstr "Arquivo de Legenda (.srt, .sub, .txt, .ass, .ssa)"
 
 #: app/forms.py:51
 msgid "Only .srt, .sub, .txt, .ass, .ssa files allowed!"
-msgstr "Apenas .srt, .sub, .txt, .ass, .ssa  permitidos!"
+msgstr "Apenas ficheiros .srt, .sub, .txt, .ass, .ssa  permitidos!"
 
 #: app/forms.py:53
 msgid "Subtitle Language"
@@ -386,11 +386,11 @@ msgstr "Não é possível vincular legenda: o vídeo não tem hash"
 
 #: app/routes/providers.py:225
 msgid "This subtitle is already linked to this video version"
-msgstr "Esta legenda já está vinculada a esta versão do vídeo"
+msgstr "Estas legendas já estão vinculadas a esta versão do vídeo"
 
 #: app/routes/providers.py:312
 msgid "Subtitle successfully linked to this video version!"
-msgstr "Legenda vinculada com sucesso a esta versão do vídeo!"
+msgstr "Legendas vinculadas com sucesso a esta versão do vídeo!"
 
 #: app/routes/providers.py:316 app/routes/subtitles.py:1163
 msgid "Error linking subtitle"
@@ -435,19 +435,19 @@ msgstr "Erro ao carregar legenda. Por favor, tente novamente."
 
 #: app/routes/subtitles.py:1072
 msgid "Cannot link: your video has no hash (try playing it first)"
-msgstr ""
+msgstr "Impossível vincular: o seu vídeo não tem hash (tente reproduzi-lo primeiro)"
 
 #: app/routes/subtitles.py:1086
 msgid "Subtitle does not match this content"
-msgstr ""
+msgstr "Legenda não correspondem a este conteúdo"
 
 #: app/routes/subtitles.py:1099
 msgid "This subtitle is already linked to your video version"
-msgstr ""
+msgstr "Estas legendas já estão vinculadas a esta versão do vídeo"
 
 #: app/routes/subtitles.py:1157
 msgid "Subtitle linked to your video version. It will now auto-select for others with the same file."
-msgstr ""
+msgstr "Legendas vinculadas a esta versão do vídeo. Vai ser automaticamente selecionada para outros com o mesmo ficheiro. "
 
 #: app/routes/subtitles.py:1215
 msgid "Subtitle selection updated."
@@ -523,12 +523,12 @@ msgstr "Erro ao apagar legenda."
 
 #: app/routes/subtitles.py:1670
 msgid "You do not have permission to download this subtitle."
-msgstr ""
+msgstr "Não tem permissão para fazer download destas legendas."
 
 #: app/routes/subtitles.py:1695
 #, python-format
 msgid "Admin's %(provider)s account is not configured/active; cannot download this linked subtitle."
-msgstr "A conta %(provider)s do administrador não está configurada/ativa; não é possível baixar esta legenda vinculada."
+msgstr "A conta %(provider)s do administrador não está configurada/ativa; não é possível baixar estas legendas vinculadas."
 
 #: app/routes/subtitles.py:1710 app/routes/subtitles.py:1720
 #, python-format
