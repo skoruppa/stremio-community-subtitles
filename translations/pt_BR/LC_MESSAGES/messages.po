@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: stremio-community-subtitles\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2026-05-14 01:14+0200\n"
-"PO-Revision-Date: 2026-05-14 02:42\n"
+"PO-Revision-Date: 2026-07-03 02:29\n"
 "Last-Translator: \n"
 "Language-Team: Portuguese, Brazilian\n"
 "MIME-Version: 1.0\n"
@@ -93,7 +93,7 @@ msgstr "Informação da versão/sincronia (Opcional)"
 #: app/forms.py:61 templates/_provider_subtitle_list_item.html:43
 #: templates/_subtitle_list_item.html:51
 msgid "Forced/Foreign Parts Only"
-msgstr ""
+msgstr "Apenas Partes Forçadas/Externas"
 
 #: app/forms.py:64
 msgid "Content ID"
@@ -436,19 +436,19 @@ msgstr "Erro ao fazer upload da legenda. Por favor, tente novamente."
 
 #: app/routes/subtitles.py:1072
 msgid "Cannot link: your video has no hash (try playing it first)"
-msgstr ""
+msgstr "Impossível vincular: seu vídeo não tem hash (tente reproduzi-lo primeiro)"
 
 #: app/routes/subtitles.py:1086
 msgid "Subtitle does not match this content"
-msgstr ""
+msgstr "A legenda não corresponde a este conteúdo"
 
 #: app/routes/subtitles.py:1099
 msgid "This subtitle is already linked to your video version"
-msgstr ""
+msgstr "Esta legenda já está vinculada à sua versão do vídeo"
 
 #: app/routes/subtitles.py:1157
 msgid "Subtitle linked to your video version. It will now auto-select for others with the same file."
-msgstr ""
+msgstr "Legenda ligada à sua versão de vídeo. Agora selecionará automaticamente para outros com o mesmo arquivo."
 
 #: app/routes/subtitles.py:1215
 msgid "Subtitle selection updated."
@@ -524,7 +524,7 @@ msgstr "Erro ao deletar a legenda."
 
 #: app/routes/subtitles.py:1670
 msgid "You do not have permission to download this subtitle."
-msgstr ""
+msgstr "Você não tem permissão para baixar esta legenda."
 
 #: app/routes/subtitles.py:1695
 #, python-format
