@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: stremio-community-subtitles\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2026-05-14 01:14+0200\n"
-"PO-Revision-Date: 2026-05-14 02:42\n"
+"PO-Revision-Date: 2026-08-23 01:00\n"
 "Last-Translator: \n"
 "Language-Team: Turkish\n"
 "MIME-Version: 1.0\n"
@@ -443,7 +443,7 @@ msgstr ""
 
 #: app/routes/subtitles.py:1099
 msgid "This subtitle is already linked to your video version"
-msgstr ""
+msgstr "Bu altyazı, zaten video sürümünüze bağlı"
 
 #: app/routes/subtitles.py:1157
 msgid "Subtitle linked to your video version. It will now auto-select for others with the same file."
