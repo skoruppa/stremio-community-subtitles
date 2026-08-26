@@ -176,9 +176,9 @@ class OpenSubtitlesProvider(BaseSubtitleProvider):
         if not await self.is_authenticated(user):
             raise ProviderSearchError("Not authenticated", self.name)
         
-        # Ensure token is fresh before making API call (may do network refresh)
-        if not await self.ensure_fresh_token(user):
-            raise ProviderSearchError("Token expired and refresh failed", self.name)
+        # Try to refresh token, but don't block search if refresh fails
+        # Old tokens often still work for search (OS only strictly requires fresh for download)
+        token_fresh = await self.ensure_fresh_token(user)
         
         creds = await self.get_credentials(user)
         
