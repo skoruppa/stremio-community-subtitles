@@ -427,7 +427,7 @@ async def get_active_subtitle_details(user, content_id, video_hash=None, content
     
     # 4. Best match by filename
     if video_filename:
-        best_match = await _find_best_match_by_filename(user, content_id, imdb_id, video_filename, content_type, lang, season, episode, cached_provider_results)
+        best_match = await _find_best_match_by_filename(user, content_id, imdb_id, video_filename, content_type, lang, season, episode, cached_provider_results, video_hash=video_hash)
         if best_match:
             result.update(best_match)
             result['auto'] = True
@@ -436,7 +436,7 @@ async def get_active_subtitle_details(user, content_id, video_hash=None, content
             return result
     
     # 5. Fallback
-    fallback = await _find_fallback_subtitle(user, content_id, imdb_id, content_type, lang, season, episode, cached_provider_results)
+    fallback = await _find_fallback_subtitle(user, content_id, imdb_id, content_type, lang, season, episode, cached_provider_results, video_hash=video_hash)
     if fallback:
         result.update(fallback)
         result['auto'] = True
@@ -612,7 +612,7 @@ async def _search_providers_by_hash(user, imdb_id, video_hash, content_type, lan
     return None
 
 
-async def _find_best_match_by_filename(user, content_id, imdb_id, video_filename, content_type, lang, season=None, episode=None, cached_results=None):
+async def _find_best_match_by_filename(user, content_id, imdb_id, video_filename, content_type, lang, season=None, episode=None, cached_results=None, video_hash=None):
     """Find best match by filename from cache or live search"""
     candidates = []
     
@@ -663,6 +663,7 @@ async def _find_best_match_by_filename(user, content_id, imdb_id, video_filename
             
             search_params = {
                 'imdb_id': imdb_id,
+                'video_hash': video_hash,
                 'languages': [lang],
                 'season': season,
                 'episode': episode,
@@ -733,7 +734,7 @@ async def _find_best_match_by_filename(user, content_id, imdb_id, video_filename
         }
 
 
-async def _find_fallback_subtitle(user, content_id, imdb_id, content_type, lang, season=None, episode=None, cached_results=None):
+async def _find_fallback_subtitle(user, content_id, imdb_id, content_type, lang, season=None, episode=None, cached_results=None, video_hash=None):
     """Find fallback subtitle from cache or live search"""
     # Local first
     async with async_session_maker() as session:
@@ -763,6 +764,7 @@ async def _find_fallback_subtitle(user, content_id, imdb_id, content_type, lang,
             
             search_params = {
                 'imdb_id': imdb_id,
+                'video_hash': video_hash,
                 'languages': [lang],
                 'season': season,
                 'episode': episode,
