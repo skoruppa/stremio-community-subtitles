@@ -515,6 +515,8 @@ async def _search_providers_by_hash(user, imdb_id, video_hash, content_type, lan
         for provider_name, results in cached_results.items():
             for result in results:
                 if result.language == lang and result.metadata and result.metadata.get('hash_match'):
+                    if result.ai_translated and user.ignore_ai_subtitles:
+                        continue
                     hash_matches.append((provider_name, result))
         
         # Prioritize forced if user setting enabled
@@ -575,6 +577,8 @@ async def _search_providers_by_hash(user, imdb_id, video_hash, content_type, lan
         for provider_name, results in results_by_provider.items():
             for result in results:
                 if result.metadata and result.metadata.get('hash_match'):
+                    if result.ai_translated and user.ignore_ai_subtitles:
+                        continue
                     hash_matches.append((provider_name, result))
         
         # Prioritize forced if user setting enabled
@@ -634,6 +638,8 @@ async def _find_best_match_by_filename(user, content_id, imdb_id, video_filename
         for provider_name, results in cached_results.items():
             for result in results:
                 if result.language == lang:
+                    if result.ai_translated and user.ignore_ai_subtitles:
+                        continue
                     is_result_forced = result.forced or (result.release_name and 'forced' in result.release_name.lower())
                     score = calculate_filename_similarity(video_filename, result.release_name, is_forced=is_result_forced)
                     if result.ai_translated:
@@ -675,6 +681,8 @@ async def _find_best_match_by_filename(user, content_id, imdb_id, video_filename
             
             for provider_name, results in results_by_provider.items():
                 for result in results:
+                    if result.ai_translated and user.ignore_ai_subtitles:
+                        continue
                     is_result_forced = result.forced or (result.release_name and 'forced' in result.release_name.lower())
                     score = calculate_filename_similarity(video_filename, result.release_name, is_forced=is_result_forced)
                     if result.ai_translated:
@@ -780,6 +788,12 @@ async def _find_fallback_subtitle(user, content_id, imdb_id, content_type, lang,
     for provider_name, lang_results in results_by_provider.items():
         if not lang_results:
             continue
+        
+        # Filter out AI subtitles if user has ignore_ai_subtitles enabled
+        if user.ignore_ai_subtitles:
+            lang_results = [r for r in lang_results if not r.ai_translated]
+            if not lang_results:
+                continue
         
         if episode:
             matching = []
