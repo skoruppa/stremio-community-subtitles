@@ -657,9 +657,12 @@ async def unified_download(manifest_token: str, download_identifier: str):
                     else:
                         # Plain text subtitle (VTT/SRT)
                         if is_ass_request:
-                            # ASS requested but provider returned plain text - serve as VTT
                             current_app.logger.info(f"ASS requested but provider returned plain text, serving as VTT")
-                        vtt_content = await r.text()
+                        raw_bytes = await r.read()
+                        # Detect encoding instead of assuming UTF-8
+                        from ..lib.subtitles import detect_encoding
+                        encoding = detect_encoding(raw_bytes)
+                        vtt_content = raw_bytes.decode(encoding, errors='replace')
         except asyncio.TimeoutError:
             current_app.logger.warning(f"Timeout fetching subtitle from {provider_subtitle_url}")
             message_key = 'provider_timeout'
