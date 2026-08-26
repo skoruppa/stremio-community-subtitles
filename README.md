@@ -110,19 +110,19 @@ Read the privacy policy here:
 **Translation Status:**
 - 🇬🇧 English — ✅ Complete (base language)
 - 🇵🇱 Polski (Polish) — ✅ Complete
+- 🇪🇸 Español (Spanish) — ✅ Complete
 - 🇵🇹 Português (Portuguese) — ✅ Complete
 - 🇧🇷 Português (BR) — ✅ Complete
 - 🇸🇦 العربية (Arabic) — ✅ Complete
 - 🇻🇳 Tiếng Việt (Vietnamese) — ✅ Complete
-- 🇪🇸 Español (Spanish) — 🔄 Help needed
-- 🇫🇷 Français (French) — 🔄 Help needed
-- 🇩🇪 Deutsch (German) — 🔄 Help needed
-- 🇮🇹 Italiano (Italian) — 🔄 Help needed
-- 🇷🇺 Русский (Russian) — 🔄 Help needed
-- 🇯🇵 日本語 (Japanese) — 🔄 Help needed
-- 🇨🇳 中文 (Chinese) — 🔄 Help needed
-- 🇹🇷 Türkçe (Turkish) — 🔄 Help needed
-- 🇮🇱 עברית (Hebrew) — 🔄 Help needed
+- 🇹🇷 Türkçe (Turkish) — 🟢 99%
+- 🇫🇷 Français (French) — 🟢 98%
+- 🇮🇹 Italiano (Italian) — 🟢 98%
+- 🇨🇳 中文 (Chinese) — 🟢 97%
+- 🇮🇱 עברית (Hebrew) — 🟡 28%
+- 🇩🇪 Deutsch (German) — 🔴 Help needed
+- 🇷🇺 Русский (Russian) — 🔴 Help needed
+- 🇯🇵 日本語 (Japanese) — 🔴 Help needed
 
 ## 🤝 Support
 
