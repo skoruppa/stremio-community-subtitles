@@ -50,7 +50,8 @@ LANGUAGES = [
     ('mkd', 'Македонски'),
     ('tel', 'తెలుగు'), 
     ('sqi', 'Shqip'),
-    ('sin', 'සිංහල')  # Sinhala (Sri Lanka)
+    ('sin', 'සිංහල'),  # Sinhala (Sri Lanka)
+    ('mon', 'Монгол')  # Mongolian
 ]
 
 # Dictionary for quick lookups
