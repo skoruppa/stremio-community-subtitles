@@ -2,14 +2,14 @@ msgid ""
 msgstr ""
 "Project-Id-Version: stremio-community-subtitles\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-05-14 01:14+0200\n"
-"PO-Revision-Date: 2026-07-03 02:29\n"
+"POT-Creation-Date: 2026-08-26 23:00+0200\n"
+"PO-Revision-Date: 2026-08-27 06:51\n"
 "Last-Translator: \n"
 "Language-Team: Portuguese, Brazilian\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.17.0\n"
+"Generated-By: Babel 2.18.0\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Crowdin-Project: stremio-community-subtitles\n"
 "X-Crowdin-Project-ID: 872640\n"
@@ -160,7 +160,7 @@ msgid "Confirm New Password"
 msgstr "Confirmar nova senha"
 
 #: app/forms.py:130 templates/auth/change_password.html:11
-#: templates/main/account_settings.html:157
+#: templates/main/account_settings.html:174
 msgid "Change Password"
 msgstr "Mudar senha"
 
@@ -297,39 +297,39 @@ msgstr "Ocorreu um erro ao procurar por legendas."
 msgid "Please log in to access this page."
 msgstr "Por favor, faça login para acessar essa página."
 
-#: app/routes/main.py:181
+#: app/routes/main.py:185
 msgid "Preferred languages updated successfully!"
 msgstr "Idiomas preferidos atualizados com sucesso!"
 
-#: app/routes/main.py:186
+#: app/routes/main.py:190
 msgid "Failed to update language."
 msgstr "Ocorreu um problema ao atualizar o idioma."
 
-#: app/routes/main.py:218
+#: app/routes/main.py:222
 msgid "Activity record not found."
 msgstr "Registro de atividade não encontrado."
 
-#: app/routes/main.py:228
+#: app/routes/main.py:232
 msgid "You do not have permission to delete this activity record."
 msgstr "Você não possui permissão para deletar esse registro de atividade."
 
-#: app/routes/main.py:234
+#: app/routes/main.py:238
 msgid "Activity record deleted successfully."
 msgstr "Registro de atividade deletado com sucesso."
 
-#: app/routes/main.py:238
+#: app/routes/main.py:242
 msgid "Error deleting activity record. Please try again."
 msgstr "Erro ao deletar registro de atividade. Por favor, tente novamente."
 
-#: app/routes/main.py:256
+#: app/routes/main.py:260
 msgid "Username confirmation does not match. Account not deleted."
 msgstr "Confirmação de usuário não condiz. A conta não foi deletada."
 
-#: app/routes/main.py:277
+#: app/routes/main.py:281
 msgid "Your account has been permanently deleted."
 msgstr "Sua conta foi permanentemente deletada."
 
-#: app/routes/main.py:283
+#: app/routes/main.py:287
 msgid "Error deleting account. Please try again or contact support."
 msgstr "Erro ao deletar a conta. Por favor, tente novamente ou entre em contato com o suporte."
 
@@ -393,191 +393,191 @@ msgstr "Essa legenda já está linkada essa versão do vídeo"
 msgid "Subtitle successfully linked to this video version!"
 msgstr "Legenda linkada com sucesso a essa versão do vídeo!"
 
-#: app/routes/providers.py:316 app/routes/subtitles.py:1163
+#: app/routes/providers.py:316 app/routes/subtitles.py:1169
 msgid "Error linking subtitle"
 msgstr "Erro ao linkar a legenda"
 
-#: app/routes/subtitles.py:809
+#: app/routes/subtitles.py:815
 msgid "Content ID must be either IMDB ID (starting with \"tt\") or Kitsu ID (format \"kitsu:12345\") or MAL ID (format \"mal:12345\")"
 msgstr "O ID do conteúdo deve ser o ID do IMDB (começando com \"tt\") ou ID do Kitsu (Formato \"kitsu:12345\") ou ID do MAL (formato \"mal:12345\")"
 
-#: app/routes/subtitles.py:819
+#: app/routes/subtitles.py:825
 msgid "Episode number is required for series"
 msgstr "Número do episódio é necessário para séries de TV"
 
-#: app/routes/subtitles.py:910
+#: app/routes/subtitles.py:916
 msgid "These subtitles already exist for this content and video version."
 msgstr "Essas legendas já existem para esse conteúdo e versão do vídeo."
 
-#: app/routes/subtitles.py:941
+#: app/routes/subtitles.py:947
 msgid "Server error: Cloudinary storage is not properly configured."
 msgstr "Erro do servidor: Armazenamento do Cloudinary não foi configurado adequadamente."
 
-#: app/routes/subtitles.py:967
+#: app/routes/subtitles.py:973
 #, python-format
 msgid "Error processing/uploading subtitle: %(error)s"
 msgstr "Erro ao processar/fazer upload da legenda: %(error)s"
 
-#: app/routes/subtitles.py:976
+#: app/routes/subtitles.py:982
 msgid "Internal error: Subtitle path not determined."
 msgstr "Erro interno: Caminho da legenda não determinado."
 
-#: app/routes/subtitles.py:1035
+#: app/routes/subtitles.py:1041
 msgid "Subtitle uploaded and selected successfully!"
 msgstr "Upload da legenda feito e selecionada com sucesso!"
 
-#: app/routes/subtitles.py:1039
+#: app/routes/subtitles.py:1045
 msgid "Subtitle uploaded, but failed to auto-select."
 msgstr "Upload da legenda feito, mas falhou ao auto-selecionar."
 
-#: app/routes/subtitles.py:1051
+#: app/routes/subtitles.py:1057
 msgid "Error uploading subtitle. Please try again."
 msgstr "Erro ao fazer upload da legenda. Por favor, tente novamente."
 
-#: app/routes/subtitles.py:1072
+#: app/routes/subtitles.py:1078
 msgid "Cannot link: your video has no hash (try playing it first)"
 msgstr "Impossível vincular: seu vídeo não tem hash (tente reproduzi-lo primeiro)"
 
-#: app/routes/subtitles.py:1086
+#: app/routes/subtitles.py:1092
 msgid "Subtitle does not match this content"
 msgstr "A legenda não corresponde a este conteúdo"
 
-#: app/routes/subtitles.py:1099
+#: app/routes/subtitles.py:1105
 msgid "This subtitle is already linked to your video version"
 msgstr "Esta legenda já está vinculada à sua versão do vídeo"
 
-#: app/routes/subtitles.py:1157
+#: app/routes/subtitles.py:1163
 msgid "Subtitle linked to your video version. It will now auto-select for others with the same file."
 msgstr "Legenda ligada à sua versão de vídeo. Agora selecionará automaticamente para outros com o mesmo arquivo."
 
-#: app/routes/subtitles.py:1215
+#: app/routes/subtitles.py:1221
 msgid "Subtitle selection updated."
 msgstr "Seleção da legenda atualizada."
 
-#: app/routes/subtitles.py:1219
+#: app/routes/subtitles.py:1225
 msgid "Error updating subtitle selection."
 msgstr "Error ao atualizar a seleção da legenda."
 
-#: app/routes/subtitles.py:1241
+#: app/routes/subtitles.py:1247
 msgid "Voting is not available for this type of subtitle."
 msgstr "Votação não está disponível para esse tipo de legenda."
 
-#: app/routes/subtitles.py:1256 templates/main/content_detail.html:328
+#: app/routes/subtitles.py:1262 templates/main/content_detail.html:328
 #: templates/main/my_subtitles.html:142
 #: templates/main/selected_subtitles.html:168
 #: templates/main/voted_subtitles.html:140
 msgid "Vote removed."
 msgstr "Voto removido."
 
-#: app/routes/subtitles.py:1261 templates/main/content_detail.html:330
+#: app/routes/subtitles.py:1267 templates/main/content_detail.html:330
 #: templates/main/my_subtitles.html:144
 #: templates/main/selected_subtitles.html:170
 #: templates/main/voted_subtitles.html:142
 msgid "Vote updated."
 msgstr "Voto atualizado."
 
-#: app/routes/subtitles.py:1267 templates/main/content_detail.html:329
+#: app/routes/subtitles.py:1273 templates/main/content_detail.html:329
 #: templates/main/my_subtitles.html:143
 #: templates/main/selected_subtitles.html:169
 #: templates/main/voted_subtitles.html:141
 msgid "Vote recorded."
 msgstr "Voto registrado."
 
-#: app/routes/subtitles.py:1278 templates/main/content_detail.html:331
+#: app/routes/subtitles.py:1284 templates/main/content_detail.html:331
 #: templates/main/my_subtitles.html:145
 #: templates/main/selected_subtitles.html:171
 #: templates/main/voted_subtitles.html:143
 msgid "Error processing vote."
 msgstr "Erro ao processar o voto."
 
-#: app/routes/subtitles.py:1296
+#: app/routes/subtitles.py:1302
 msgid "You do not have permission to delete this selection."
 msgstr "Você não possui permissão para deletar essa seleção."
 
-#: app/routes/subtitles.py:1302
+#: app/routes/subtitles.py:1308
 msgid "Selection deleted successfully."
 msgstr "Seleção deletada com sucesso."
 
-#: app/routes/subtitles.py:1306
+#: app/routes/subtitles.py:1312
 msgid "Error deleting selection."
 msgstr "Erro ao deletar a seleção."
 
-#: app/routes/subtitles.py:1339
+#: app/routes/subtitles.py:1345
 msgid "All subtitle selections for this content have been reset."
 msgstr "Todas as seleções de legendas para esse conteúdo foram redefinidas."
 
-#: app/routes/subtitles.py:1345
+#: app/routes/subtitles.py:1351
 msgid "No selections to reset for this content."
 msgstr "Sem seleções para redefinir nesse conteúdo."
 
-#: app/routes/subtitles.py:1574
+#: app/routes/subtitles.py:1580
 msgid "You do not have permission to delete this subtitle."
 msgstr "Você não tem permissão para apagar essa legenda."
 
-#: app/routes/subtitles.py:1638
+#: app/routes/subtitles.py:1644
 msgid "Subtitle deleted successfully."
 msgstr "Legenda apagada com sucesso."
 
-#: app/routes/subtitles.py:1642
+#: app/routes/subtitles.py:1648
 msgid "Error deleting subtitle."
 msgstr "Erro ao deletar a legenda."
 
-#: app/routes/subtitles.py:1670
+#: app/routes/subtitles.py:1676
 msgid "You do not have permission to download this subtitle."
 msgstr "Você não tem permissão para baixar esta legenda."
 
-#: app/routes/subtitles.py:1695
+#: app/routes/subtitles.py:1701
 #, python-format
 msgid "Admin's %(provider)s account is not configured/active; cannot download this linked subtitle."
 msgstr "A conta de administrador do %(provider)s não está configurada ou ativa. Não é possível fazer download dessa legenda linkada."
 
-#: app/routes/subtitles.py:1710 app/routes/subtitles.py:1720
+#: app/routes/subtitles.py:1716 app/routes/subtitles.py:1726
 #, python-format
 msgid "Error downloading from %(provider)s: %(error)s"
 msgstr "Erro ao fazer download do %(provider)s: %(error)s"
 
-#: app/routes/subtitles.py:1717
+#: app/routes/subtitles.py:1723
 #, python-format
 msgid "%(provider)s authentication expired. Please log in again in account settings."
 msgstr "A autenticação com %(provider)s expirou. Por favor, faça login novamente nas configurações da conta."
 
-#: app/routes/subtitles.py:1746
+#: app/routes/subtitles.py:1752
 msgid "Target video hash is missing."
 msgstr "Hash de vídeo está faltando."
 
-#: app/routes/subtitles.py:1749
+#: app/routes/subtitles.py:1755
 msgid "Activity ID is missing."
 msgstr "ID de Atividade está faltando."
 
-#: app/routes/subtitles.py:1755
+#: app/routes/subtitles.py:1761
 msgid "Invalid Activity ID format."
 msgstr "Formato inválido do ID de Atividade."
 
-#: app/routes/subtitles.py:1774
+#: app/routes/subtitles.py:1780
 msgid "Content ID mismatch between subtitle and activity."
 msgstr "Incompatibilidade do ID do conteúdo entre a legenda e a atividade."
 
-#: app/routes/subtitles.py:1778
+#: app/routes/subtitles.py:1784
 msgid "This operation is not applicable to provider-linked entries in this manner."
 msgstr "Essa operação não é aplicável a entradas vinculadas ao provedor dessa forma."
 
-#: app/routes/subtitles.py:1781
+#: app/routes/subtitles.py:1787
 msgid "Original subtitle does not have a file path, cannot mark as compatible."
 msgstr "A legenda original não possui um caminho de arquivo, não é possível marcar como compatível."
 
-#: app/routes/subtitles.py:1799
+#: app/routes/subtitles.py:1805
 msgid "A compatible subtitle entry for this hash already exists. Selecting it."
 msgstr "Já existe uma entrada de legenda compatível para esse hash. Selecionando ela."
 
-#: app/routes/subtitles.py:1818
+#: app/routes/subtitles.py:1824
 msgid "Subtitle marked as compatible with the current video version."
 msgstr "Legenda marcada como compatível com a versão atual do vídeo."
 
-#: app/routes/subtitles.py:1859
+#: app/routes/subtitles.py:1865
 msgid "An error occurred."
 msgstr "Ocorreu um erro."
 
-#: app/routes/utils.py:1015
+#: app/routes/utils.py:1067
 msgid "OpenSubtitles authentication expired. Please log in again in account settings."
 msgstr "A autenticação do OpenSubtitles expirou. Por favor, faça login novamente nas configurações da conta."
 
@@ -624,7 +624,7 @@ msgid "Connect to %(name)s"
 msgstr "Conectar no %(name)s"
 
 #: templates/_provider_status.html:71 templates/_provider_status.html:119
-#: templates/main/account_settings.html:204
+#: templates/main/account_settings.html:221
 msgid "Cancel"
 msgstr "Cancelar"
 
@@ -758,7 +758,7 @@ msgstr "Apagar legenda"
 msgid "Dashboard"
 msgstr "Painel"
 
-#: templates/base.html:56 templates/main/account_settings.html:145
+#: templates/base.html:56 templates/main/account_settings.html:162
 #: templates/main/dashboard.html:101
 msgid "Install Addon"
 msgstr "Instalar o Addon"
@@ -1000,18 +1000,21 @@ msgstr "Quando ativado, a opção de legendas continuará aparecendo no Stremio,
 #: templates/main/account_settings.html:51
 #: templates/main/account_settings.html:66
 #: templates/main/account_settings.html:81
+#: templates/main/account_settings.html:98
 msgid "Setting updated successfully"
 msgstr "Configurações atualizadas"
 
 #: templates/main/account_settings.html:52
 #: templates/main/account_settings.html:67
 #: templates/main/account_settings.html:82
+#: templates/main/account_settings.html:99
 msgid "Failed to update setting"
 msgstr "Falha ao atualizar configuração"
 
 #: templates/main/account_settings.html:53
 #: templates/main/account_settings.html:68
 #: templates/main/account_settings.html:83
+#: templates/main/account_settings.html:100
 msgid "Error updating setting"
 msgstr "Erro ao atualizar configuração"
 
@@ -1031,113 +1034,121 @@ msgstr "Priorizar legendas forçadas"
 msgid "When enabled, forced/foreign parts subtitles will be prioritized"
 msgstr "Quando ativado, as legendas de partes forçadas/estrangeiras terão prioridade"
 
-#: templates/main/account_settings.html:94
+#: templates/main/account_settings.html:92
+msgid "Ignore AI-translated subtitles"
+msgstr ""
+
+#: templates/main/account_settings.html:93
+msgid "When enabled, AI/machine translated subtitles will be completely excluded from auto-selection"
+msgstr ""
+
+#: templates/main/account_settings.html:111
 msgid "Subtitle Providers"
 msgstr "Provedores de legendas"
 
-#: templates/main/account_settings.html:97
+#: templates/main/account_settings.html:114
 msgid "Connect to external subtitle providers for enhanced search capabilities."
 msgstr "Conecte-se a provedores externos de legenda para ampliar as opções de busca."
 
-#: templates/main/account_settings.html:112
+#: templates/main/account_settings.html:129
 msgid "Account Information"
 msgstr "Informações da conta"
 
-#: templates/main/account_settings.html:117
+#: templates/main/account_settings.html:134
 msgid "Username:"
 msgstr "Usuário:"
 
-#: templates/main/account_settings.html:120
+#: templates/main/account_settings.html:137
 msgid "Email:"
 msgstr "Email:"
 
-#: templates/main/account_settings.html:123
+#: templates/main/account_settings.html:140
 msgid "Member Since:"
 msgstr "Membro desde:"
 
-#: templates/main/account_settings.html:126
+#: templates/main/account_settings.html:143
 msgid "Current Languages:"
 msgstr "Idiomas atuais:"
 
-#: templates/main/account_settings.html:132
+#: templates/main/account_settings.html:149
 msgid "No languages selected"
 msgstr "Nenhum idioma selecionado"
 
-#: templates/main/account_settings.html:141 templates/main/dashboard.html:97
+#: templates/main/account_settings.html:158 templates/main/dashboard.html:97
 msgid "Addon Installation"
 msgstr "Instalação do Addon"
 
-#: templates/main/account_settings.html:144
+#: templates/main/account_settings.html:161
 msgid "Need to install your addon in Stremio?"
 msgstr "Precisa instalar o Addon no Stremio?"
 
-#: templates/main/account_settings.html:151
+#: templates/main/account_settings.html:168
 msgid "Security"
 msgstr "Segurança"
 
-#: templates/main/account_settings.html:154
+#: templates/main/account_settings.html:171
 msgid "Manage your account security settings:"
 msgstr "Gerenciar configurações de segurança da sua conta:"
 
-#: templates/main/account_settings.html:164
+#: templates/main/account_settings.html:181
 msgid "Danger Zone"
 msgstr "Área de risco"
 
-#: templates/main/account_settings.html:167
+#: templates/main/account_settings.html:184
 msgid "Warning:"
 msgstr "Aviso:"
 
-#: templates/main/account_settings.html:167
+#: templates/main/account_settings.html:184
 msgid "This action cannot be undone."
 msgstr "Essa ação não pode ser desfeita."
 
-#: templates/main/account_settings.html:168
+#: templates/main/account_settings.html:185
 msgid "Deleting your account will permanently remove all your data including uploaded subtitles, selections, and votes."
 msgstr "Deletar sua conta vai remover permanentemente todos seus dados, incluindo upload de legendas, seleções e votos."
 
-#: templates/main/account_settings.html:170
-#: templates/main/account_settings.html:181
+#: templates/main/account_settings.html:187
+#: templates/main/account_settings.html:198
 msgid "Delete Account"
 msgstr "Deletar conta"
 
-#: templates/main/account_settings.html:185
+#: templates/main/account_settings.html:202
 msgid "Are you absolutely sure?"
 msgstr "Tem certeza absoluta?"
 
-#: templates/main/account_settings.html:186
+#: templates/main/account_settings.html:203
 msgid "This will permanently delete your account and all associated data:"
 msgstr "Isso vai deletar sua conta permanentemente e todos dados associados:"
 
-#: templates/main/account_settings.html:188
+#: templates/main/account_settings.html:205
 msgid "All uploaded subtitles"
 msgstr "Upload de todas legendas"
 
-#: templates/main/account_settings.html:189
+#: templates/main/account_settings.html:206
 msgid "All subtitle selections"
 msgstr "Todas seleções de legendas"
 
-#: templates/main/account_settings.html:190
+#: templates/main/account_settings.html:207
 msgid "All votes"
 msgstr "Todos votos"
 
-#: templates/main/account_settings.html:191
+#: templates/main/account_settings.html:208
 msgid "Activity history"
 msgstr "Histórico de atividade"
 
-#: templates/main/account_settings.html:192
+#: templates/main/account_settings.html:209
 msgid "Provider connections"
 msgstr "Conexões de provedores"
 
-#: templates/main/account_settings.html:194
+#: templates/main/account_settings.html:211
 msgid "This action cannot be undone!"
 msgstr "Essa ação não pode ser desfeita!"
 
-#: templates/main/account_settings.html:198
+#: templates/main/account_settings.html:215
 #, python-format
 msgid "Type your username %(username)s to confirm:"
 msgstr "Digite seu usuário %(username)s para confirmar:"
 
-#: templates/main/account_settings.html:206
+#: templates/main/account_settings.html:223
 msgid "Delete My Account"
 msgstr "Apagar minha conta"
 

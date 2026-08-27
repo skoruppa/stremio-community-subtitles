@@ -2,14 +2,14 @@ msgid ""
 msgstr ""
 "Project-Id-Version: stremio-community-subtitles\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-05-14 01:14+0200\n"
-"PO-Revision-Date: 2026-07-05 02:37\n"
+"POT-Creation-Date: 2026-08-26 23:00+0200\n"
+"PO-Revision-Date: 2026-08-27 06:51\n"
 "Last-Translator: \n"
 "Language-Team: Arabic\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.17.0\n"
+"Generated-By: Babel 2.18.0\n"
 "Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 && n%100<=99 ? 4 : 5);\n"
 "X-Crowdin-Project: stremio-community-subtitles\n"
 "X-Crowdin-Project-ID: 872640\n"
@@ -159,7 +159,7 @@ msgid "Confirm New Password"
 msgstr "تأكيد كلمة السر الجديدة"
 
 #: app/forms.py:130 templates/auth/change_password.html:11
-#: templates/main/account_settings.html:157
+#: templates/main/account_settings.html:174
 msgid "Change Password"
 msgstr "تغيير كلمة السر"
 
@@ -296,39 +296,39 @@ msgstr "حدث خطأ أثناء البحث عن الترجمة."
 msgid "Please log in to access this page."
 msgstr "الرجاء تسجيل الدخول للوصول إلى هذه الصفحة."
 
-#: app/routes/main.py:181
+#: app/routes/main.py:185
 msgid "Preferred languages updated successfully!"
 msgstr "تم تحديث اللغات المفضلة بنجاح!"
 
-#: app/routes/main.py:186
+#: app/routes/main.py:190
 msgid "Failed to update language."
 msgstr "فشل في تحديث اللغة."
 
-#: app/routes/main.py:218
+#: app/routes/main.py:222
 msgid "Activity record not found."
 msgstr "لم يتم العثور على سجل الأنشطة."
 
-#: app/routes/main.py:228
+#: app/routes/main.py:232
 msgid "You do not have permission to delete this activity record."
 msgstr "ليس لديك الصلاحية لحذف سجل النشاط هذا."
 
-#: app/routes/main.py:234
+#: app/routes/main.py:238
 msgid "Activity record deleted successfully."
 msgstr "تم حذف سجل النشاط بنجاح."
 
-#: app/routes/main.py:238
+#: app/routes/main.py:242
 msgid "Error deleting activity record. Please try again."
 msgstr "حدث خطأ أثناء حذف سجل النشاط. الرجاء المحاولة مرة أخرى."
 
-#: app/routes/main.py:256
+#: app/routes/main.py:260
 msgid "Username confirmation does not match. Account not deleted."
 msgstr "تأكيد اسم المستخدم غير متطابق. لم يتم حذف الحساب."
 
-#: app/routes/main.py:277
+#: app/routes/main.py:281
 msgid "Your account has been permanently deleted."
 msgstr "تم حذف حسابك بشكل دائم."
 
-#: app/routes/main.py:283
+#: app/routes/main.py:287
 msgid "Error deleting account. Please try again or contact support."
 msgstr "حدث خطأ أثناء حذف الحساب. الرجاء المحاولة مرة أخرى أو الاتصال بالدعم."
 
@@ -392,191 +392,191 @@ msgstr "هذه الترجمة مرتبطة مسبقاً بهذا الإصدار 
 msgid "Subtitle successfully linked to this video version!"
 msgstr "تم ربط الترجمة بنجاح بنسخة الفيديو هذه!"
 
-#: app/routes/providers.py:316 app/routes/subtitles.py:1163
+#: app/routes/providers.py:316 app/routes/subtitles.py:1169
 msgid "Error linking subtitle"
 msgstr "خطأ أثناء ربط الترجمة"
 
-#: app/routes/subtitles.py:809
+#: app/routes/subtitles.py:815
 msgid "Content ID must be either IMDB ID (starting with \"tt\") or Kitsu ID (format \"kitsu:12345\") or MAL ID (format \"mal:12345\")"
 msgstr "يجب أن يكون معرف المحتوى إما معرف IMDB (بدءاً ب \"tt\") أو معرف Kitsu (تنسيق \"kitsu:12345\") أو معرف MAL (تنسيق \"mal:12345\")"
 
-#: app/routes/subtitles.py:819
+#: app/routes/subtitles.py:825
 msgid "Episode number is required for series"
 msgstr "رقم الحلقة مطلوب للمسلسل"
 
-#: app/routes/subtitles.py:910
+#: app/routes/subtitles.py:916
 msgid "These subtitles already exist for this content and video version."
 msgstr "هذه الترجمات موجودة بالفعل لهذا المحتوى و إصدار الفيديو."
 
-#: app/routes/subtitles.py:941
+#: app/routes/subtitles.py:947
 msgid "Server error: Cloudinary storage is not properly configured."
 msgstr "خطأ في الخادم: التخزين السحابي غير معد بشكل صحيح."
 
-#: app/routes/subtitles.py:967
+#: app/routes/subtitles.py:973
 #, python-format
 msgid "Error processing/uploading subtitle: %(error)s"
 msgstr "حدث خطأ أثناء معالجة/تحميل الترجمة: %(error)s"
 
-#: app/routes/subtitles.py:976
+#: app/routes/subtitles.py:982
 msgid "Internal error: Subtitle path not determined."
 msgstr "خطأ داخلي: لم يتم تحديد مسار الترجمة."
 
-#: app/routes/subtitles.py:1035
+#: app/routes/subtitles.py:1041
 msgid "Subtitle uploaded and selected successfully!"
 msgstr "تم تحميل الترجمة واختيار بنجاح!"
 
-#: app/routes/subtitles.py:1039
+#: app/routes/subtitles.py:1045
 msgid "Subtitle uploaded, but failed to auto-select."
 msgstr "تم رفع الترجمة ، ولكن فشل في التحديد التلقائي."
 
-#: app/routes/subtitles.py:1051
+#: app/routes/subtitles.py:1057
 msgid "Error uploading subtitle. Please try again."
 msgstr "خطأ في تحميل الترجمة. الرجاء المحاولة مرة أخرى."
 
-#: app/routes/subtitles.py:1072
+#: app/routes/subtitles.py:1078
 msgid "Cannot link: your video has no hash (try playing it first)"
 msgstr "تعذر الربط: الفيديو الخاص بك لا يحتوي على هاش (جرب تشغيله أولاً)"
 
-#: app/routes/subtitles.py:1086
+#: app/routes/subtitles.py:1092
 msgid "Subtitle does not match this content"
 msgstr "الترجمة لا تتطابق مع هذا المحتوى"
 
-#: app/routes/subtitles.py:1099
+#: app/routes/subtitles.py:1105
 msgid "This subtitle is already linked to your video version"
 msgstr "هذه الترجمة مرتبطة بالفعل بإصدار الفيديو الخاص بك"
 
-#: app/routes/subtitles.py:1157
+#: app/routes/subtitles.py:1163
 msgid "Subtitle linked to your video version. It will now auto-select for others with the same file."
 msgstr "تم ربط الترجمة بإصدار الفيديو الخاص بك. سيتم تحديدها تلقائياً للآخرين الذين لديهم نفس الملف."
 
-#: app/routes/subtitles.py:1215
+#: app/routes/subtitles.py:1221
 msgid "Subtitle selection updated."
 msgstr "تم تحديث اختيار الترجمة."
 
-#: app/routes/subtitles.py:1219
+#: app/routes/subtitles.py:1225
 msgid "Error updating subtitle selection."
 msgstr "حدث خطأ أثناء تحديث اختيار الترجمة."
 
-#: app/routes/subtitles.py:1241
+#: app/routes/subtitles.py:1247
 msgid "Voting is not available for this type of subtitle."
 msgstr "التصويت غير متوفر لهذا النوع من الترجمة."
 
-#: app/routes/subtitles.py:1256 templates/main/content_detail.html:328
+#: app/routes/subtitles.py:1262 templates/main/content_detail.html:328
 #: templates/main/my_subtitles.html:142
 #: templates/main/selected_subtitles.html:168
 #: templates/main/voted_subtitles.html:140
 msgid "Vote removed."
 msgstr "تمت إزالة التصويت."
 
-#: app/routes/subtitles.py:1261 templates/main/content_detail.html:330
+#: app/routes/subtitles.py:1267 templates/main/content_detail.html:330
 #: templates/main/my_subtitles.html:144
 #: templates/main/selected_subtitles.html:170
 #: templates/main/voted_subtitles.html:142
 msgid "Vote updated."
 msgstr "تم تحديث التصويت."
 
-#: app/routes/subtitles.py:1267 templates/main/content_detail.html:329
+#: app/routes/subtitles.py:1273 templates/main/content_detail.html:329
 #: templates/main/my_subtitles.html:143
 #: templates/main/selected_subtitles.html:169
 #: templates/main/voted_subtitles.html:141
 msgid "Vote recorded."
 msgstr "تم تسجيل التصويت."
 
-#: app/routes/subtitles.py:1278 templates/main/content_detail.html:331
+#: app/routes/subtitles.py:1284 templates/main/content_detail.html:331
 #: templates/main/my_subtitles.html:145
 #: templates/main/selected_subtitles.html:171
 #: templates/main/voted_subtitles.html:143
 msgid "Error processing vote."
 msgstr "خطأ في معالجة التصويت."
 
-#: app/routes/subtitles.py:1296
+#: app/routes/subtitles.py:1302
 msgid "You do not have permission to delete this selection."
 msgstr "ليس لديك الصلاحية لحذف هذا التحديد."
 
-#: app/routes/subtitles.py:1302
+#: app/routes/subtitles.py:1308
 msgid "Selection deleted successfully."
 msgstr "تم حذف التحديد بنجاح."
 
-#: app/routes/subtitles.py:1306
+#: app/routes/subtitles.py:1312
 msgid "Error deleting selection."
 msgstr "خطأ في حذف التحديد."
 
-#: app/routes/subtitles.py:1339
+#: app/routes/subtitles.py:1345
 msgid "All subtitle selections for this content have been reset."
 msgstr "تم إعادة تعيين جميع اختيارات الترجمة لهذا المحتوى."
 
-#: app/routes/subtitles.py:1345
+#: app/routes/subtitles.py:1351
 msgid "No selections to reset for this content."
 msgstr "لا توجد إختيارات لإعادة تعيينها لهذا المحتوى."
 
-#: app/routes/subtitles.py:1574
+#: app/routes/subtitles.py:1580
 msgid "You do not have permission to delete this subtitle."
 msgstr "ليس لديك الصلاحية لحذف هذه الترجمة."
 
-#: app/routes/subtitles.py:1638
+#: app/routes/subtitles.py:1644
 msgid "Subtitle deleted successfully."
 msgstr "تم حذف الترجمة بنجاح."
 
-#: app/routes/subtitles.py:1642
+#: app/routes/subtitles.py:1648
 msgid "Error deleting subtitle."
 msgstr "خطأ في حذف الترجمة."
 
-#: app/routes/subtitles.py:1670
+#: app/routes/subtitles.py:1676
 msgid "You do not have permission to download this subtitle."
 msgstr "ليس لديك إذن لتنزيل هذه الترجمة."
 
-#: app/routes/subtitles.py:1695
+#: app/routes/subtitles.py:1701
 #, python-format
 msgid "Admin's %(provider)s account is not configured/active; cannot download this linked subtitle."
 msgstr "حساب المدير %(provider)s لم يتم تكوينه/نشطه؛ لا يمكن تحميل هذه الترجمة المرتبطة."
 
-#: app/routes/subtitles.py:1710 app/routes/subtitles.py:1720
+#: app/routes/subtitles.py:1716 app/routes/subtitles.py:1726
 #, python-format
 msgid "Error downloading from %(provider)s: %(error)s"
 msgstr "خطأ في التحميل من %(provider)s: %(error)s"
 
-#: app/routes/subtitles.py:1717
+#: app/routes/subtitles.py:1723
 #, python-format
 msgid "%(provider)s authentication expired. Please log in again in account settings."
 msgstr "انتهت صلاحية المصادقة %(provider)s. الرجاء تسجيل الدخول مرة أخرى في إعدادات الحساب."
 
-#: app/routes/subtitles.py:1746
+#: app/routes/subtitles.py:1752
 msgid "Target video hash is missing."
 msgstr "الهاش للفيديو المستهدف مفقود."
 
-#: app/routes/subtitles.py:1749
+#: app/routes/subtitles.py:1755
 msgid "Activity ID is missing."
 msgstr "معرّف ID مفقود."
 
-#: app/routes/subtitles.py:1755
+#: app/routes/subtitles.py:1761
 msgid "Invalid Activity ID format."
 msgstr "صيغة معرف ID غير صالحة."
 
-#: app/routes/subtitles.py:1774
+#: app/routes/subtitles.py:1780
 msgid "Content ID mismatch between subtitle and activity."
 msgstr "عدم تطابق Content ID بين الترجمة والنشاط."
 
-#: app/routes/subtitles.py:1778
+#: app/routes/subtitles.py:1784
 msgid "This operation is not applicable to provider-linked entries in this manner."
 msgstr "وهذه العملية لا تنطبق على المدخلات المرتبطة بالمزود بهذه الطريقة."
 
-#: app/routes/subtitles.py:1781
+#: app/routes/subtitles.py:1787
 msgid "Original subtitle does not have a file path, cannot mark as compatible."
 msgstr "الترجمة الأصلية ليس لديها مسار ملف، لا يمكن وضع علامة على أنها متوافقة."
 
-#: app/routes/subtitles.py:1799
+#: app/routes/subtitles.py:1805
 msgid "A compatible subtitle entry for this hash already exists. Selecting it."
 msgstr "يوجد بالفعل إدخال ترجمة متوافقة لهذا hash. قم باختياره."
 
-#: app/routes/subtitles.py:1818
+#: app/routes/subtitles.py:1824
 msgid "Subtitle marked as compatible with the current video version."
 msgstr "تم وضع علامة على أن الترجمة متوافقة مع إصدار الفيديو الحالي."
 
-#: app/routes/subtitles.py:1859
+#: app/routes/subtitles.py:1865
 msgid "An error occurred."
 msgstr "حدث خطأ ما."
 
-#: app/routes/utils.py:1015
+#: app/routes/utils.py:1067
 msgid "OpenSubtitles authentication expired. Please log in again in account settings."
 msgstr "انتهت صلاحية مصادقة OpenSubtitles. الرجاء تسجيل الدخول مرة أخرى في إعدادات الحساب."
 
@@ -623,7 +623,7 @@ msgid "Connect to %(name)s"
 msgstr "الاتصال بـ %(name)s"
 
 #: templates/_provider_status.html:71 templates/_provider_status.html:119
-#: templates/main/account_settings.html:204
+#: templates/main/account_settings.html:221
 msgid "Cancel"
 msgstr "إلغاء"
 
@@ -757,7 +757,7 @@ msgstr "حذف الترجمة"
 msgid "Dashboard"
 msgstr "لوحة التحكم"
 
-#: templates/base.html:56 templates/main/account_settings.html:145
+#: templates/base.html:56 templates/main/account_settings.html:162
 #: templates/main/dashboard.html:101
 msgid "Install Addon"
 msgstr "تثبيت الإضافة"
@@ -999,18 +999,21 @@ msgstr "عند التمكين، سيظهر إدخال الترجمة دائما 
 #: templates/main/account_settings.html:51
 #: templates/main/account_settings.html:66
 #: templates/main/account_settings.html:81
+#: templates/main/account_settings.html:98
 msgid "Setting updated successfully"
 msgstr "تم تحديث الإعدادات بنجاح"
 
 #: templates/main/account_settings.html:52
 #: templates/main/account_settings.html:67
 #: templates/main/account_settings.html:82
+#: templates/main/account_settings.html:99
 msgid "Failed to update setting"
 msgstr "فشل تحديث الإعدادات"
 
 #: templates/main/account_settings.html:53
 #: templates/main/account_settings.html:68
 #: templates/main/account_settings.html:83
+#: templates/main/account_settings.html:100
 msgid "Error updating setting"
 msgstr "خطأ أثناء تحديث الإعدادات"
 
@@ -1030,113 +1033,121 @@ msgstr "إعطاء الأولوية للترجمات الإجبارية"
 msgid "When enabled, forced/foreign parts subtitles will be prioritized"
 msgstr "عند التفعيل، سيتم إعطاء الأولوية لترجمات الأجزاء الأجنبية/الإجبارية"
 
-#: templates/main/account_settings.html:94
+#: templates/main/account_settings.html:92
+msgid "Ignore AI-translated subtitles"
+msgstr ""
+
+#: templates/main/account_settings.html:93
+msgid "When enabled, AI/machine translated subtitles will be completely excluded from auto-selection"
+msgstr ""
+
+#: templates/main/account_settings.html:111
 msgid "Subtitle Providers"
 msgstr "مقدمي خدمات الترجمة"
 
-#: templates/main/account_settings.html:97
+#: templates/main/account_settings.html:114
 msgid "Connect to external subtitle providers for enhanced search capabilities."
 msgstr "الاتصال بموفري الترجمة الخارجيين لتعزيز قدرات البحث."
 
-#: templates/main/account_settings.html:112
+#: templates/main/account_settings.html:129
 msgid "Account Information"
 msgstr "معلومات الحساب"
 
-#: templates/main/account_settings.html:117
+#: templates/main/account_settings.html:134
 msgid "Username:"
 msgstr "اسم المستخدم:"
 
-#: templates/main/account_settings.html:120
+#: templates/main/account_settings.html:137
 msgid "Email:"
 msgstr "البريد الإلكتروني:"
 
-#: templates/main/account_settings.html:123
+#: templates/main/account_settings.html:140
 msgid "Member Since:"
 msgstr "عضو منذ:"
 
-#: templates/main/account_settings.html:126
+#: templates/main/account_settings.html:143
 msgid "Current Languages:"
 msgstr "اللغات الحالية:"
 
-#: templates/main/account_settings.html:132
+#: templates/main/account_settings.html:149
 msgid "No languages selected"
 msgstr "لم يتم اختيار لغة"
 
-#: templates/main/account_settings.html:141 templates/main/dashboard.html:97
+#: templates/main/account_settings.html:158 templates/main/dashboard.html:97
 msgid "Addon Installation"
 msgstr "تثبيت الإضافة"
 
-#: templates/main/account_settings.html:144
+#: templates/main/account_settings.html:161
 msgid "Need to install your addon in Stremio?"
 msgstr "تحتاج إلى تثبيت الإضافة الخاصة بك في ستريميو؟"
 
-#: templates/main/account_settings.html:151
+#: templates/main/account_settings.html:168
 msgid "Security"
 msgstr "الأمان"
 
-#: templates/main/account_settings.html:154
+#: templates/main/account_settings.html:171
 msgid "Manage your account security settings:"
 msgstr "إدارة تفضيلات وإعدادات حسابك:"
 
-#: templates/main/account_settings.html:164
+#: templates/main/account_settings.html:181
 msgid "Danger Zone"
 msgstr "منطقة خطر"
 
-#: templates/main/account_settings.html:167
+#: templates/main/account_settings.html:184
 msgid "Warning:"
 msgstr "تحذير:"
 
-#: templates/main/account_settings.html:167
+#: templates/main/account_settings.html:184
 msgid "This action cannot be undone."
 msgstr "لايمكن التراجع عن هذا الاجراء."
 
-#: templates/main/account_settings.html:168
+#: templates/main/account_settings.html:185
 msgid "Deleting your account will permanently remove all your data including uploaded subtitles, selections, and votes."
 msgstr "سيؤدي حذف حسابك إلى إزالة جميع بياناتك بشكل دائم بما في ذلك الترجمات التي تم تحميلها، والتحديدات، والتصويت."
 
-#: templates/main/account_settings.html:170
-#: templates/main/account_settings.html:181
+#: templates/main/account_settings.html:187
+#: templates/main/account_settings.html:198
 msgid "Delete Account"
 msgstr "حذف الحساب"
 
-#: templates/main/account_settings.html:185
+#: templates/main/account_settings.html:202
 msgid "Are you absolutely sure?"
 msgstr "هل أنت متأكد تمامًا؟"
 
-#: templates/main/account_settings.html:186
+#: templates/main/account_settings.html:203
 msgid "This will permanently delete your account and all associated data:"
 msgstr "سيؤدي هذا إلى حذف حسابك وكافة البيانات المرتبطة به بشكل دائم:"
 
-#: templates/main/account_settings.html:188
+#: templates/main/account_settings.html:205
 msgid "All uploaded subtitles"
 msgstr "جميع الترجمات المرفوعة"
 
-#: templates/main/account_settings.html:189
+#: templates/main/account_settings.html:206
 msgid "All subtitle selections"
 msgstr "جميع اختيارات الترجمة"
 
-#: templates/main/account_settings.html:190
+#: templates/main/account_settings.html:207
 msgid "All votes"
 msgstr "جميع التصويت"
 
-#: templates/main/account_settings.html:191
+#: templates/main/account_settings.html:208
 msgid "Activity history"
 msgstr "تاريخ النشاط"
 
-#: templates/main/account_settings.html:192
+#: templates/main/account_settings.html:209
 msgid "Provider connections"
 msgstr "اتصالات موفر الخدمة"
 
-#: templates/main/account_settings.html:194
+#: templates/main/account_settings.html:211
 msgid "This action cannot be undone!"
 msgstr "لا يمكن التراجع عن هذا الإجراء!"
 
-#: templates/main/account_settings.html:198
+#: templates/main/account_settings.html:215
 #, python-format
 msgid "Type your username %(username)s to confirm:"
 msgstr "اكتب اسم المستخدم %(username)s للتأكيد:"
 
-#: templates/main/account_settings.html:206
+#: templates/main/account_settings.html:223
 msgid "Delete My Account"
 msgstr "حذف حسابي"
 
