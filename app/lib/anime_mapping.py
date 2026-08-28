@@ -121,7 +121,14 @@ def update_database():
         mal_id = entry.get('mal_id')
         imdb_id = entry.get('imdb_id')
         tvdb_season = entry.get('season', {}).get('tvdb') if entry.get('season') else None
-        # tvdb_season can be a list for multi-season anime — take first value
+        
+        # These fields can be lists in the JSON — take first value
+        if isinstance(kitsu_id, list):
+            kitsu_id = kitsu_id[0] if kitsu_id else None
+        if isinstance(mal_id, list):
+            mal_id = mal_id[0] if mal_id else None
+        if isinstance(imdb_id, list):
+            imdb_id = imdb_id[0] if imdb_id else None
         if isinstance(tvdb_season, list):
             tvdb_season = tvdb_season[0] if tvdb_season else None
         
