@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: stremio-community-subtitles\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2026-08-26 23:00+0200\n"
-"PO-Revision-Date: 2026-08-27 06:51\n"
+"PO-Revision-Date: 2026-08-28 08:39\n"
 "Last-Translator: \n"
 "Language-Team: Polish\n"
 "MIME-Version: 1.0\n"
@@ -1035,11 +1035,11 @@ msgstr "Gdy włączone, napisy wymuszone/obce fragmenty będą priorytetyzowane"
 
 #: templates/main/account_settings.html:92
 msgid "Ignore AI-translated subtitles"
-msgstr ""
+msgstr "Ignoruj napisy przetłumaczone przez AI"
 
 #: templates/main/account_settings.html:93
 msgid "When enabled, AI/machine translated subtitles will be completely excluded from auto-selection"
-msgstr ""
+msgstr "Po włączeniu napisy przetłumaczone przez AI/maszynowo będą całkowicie wykluczone z automatycznego wyboru"
 
 #: templates/main/account_settings.html:111
 msgid "Subtitle Providers"
