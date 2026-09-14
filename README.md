@@ -54,6 +54,12 @@ Connect to external subtitle providers from [account settings](https://stremio-c
 - **OpenSubtitles** – Requires API key or account
 - **SubDL** – Requires API key
 - **Subsource** – Requires API key
+- **TheSubtitleDB** – No API key or account required; enable it in account settings
+
+TheSubtitleDB supports movie and TV episode lookups by IMDb ID or title, with
+language filtering and SRT downloads. Its [public API](https://thesubtitledb.org/developer/api)
+currently limits downloads to 150 per hour per IP, shared by users of the same
+addon server. Searches retrieve up to 300 subtitles per requested language.
 
 Once connected:
 
