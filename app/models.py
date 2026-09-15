@@ -13,6 +13,41 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from quart import current_app
 from .extensions import Base, async_session_maker
 
+class CachedUser:
+    """Lightweight read-only proxy for User data served from cache.
+    
+    Avoids SQLAlchemy instrumentation overhead entirely. Exposes the same
+    attribute interface that the Stremio API hot path reads, so code like
+    ``user.preferred_languages`` works identically on both User and CachedUser.
+    """
+    __slots__ = (
+        'id', 'username', 'email', 'preferred_languages', 'manifest_token',
+        'show_no_subtitles', 'prioritize_ass_subtitles', 'prioritize_forced_subtitles',
+        'ignore_ai_subtitles', 'provider_credentials', 'active',
+        'auth_id',
+    )
+
+    def __init__(self, d: dict):
+        self.id = d['id']
+        self.username = d['username']
+        self.email = d['email']
+        self.preferred_languages = d.get('preferred_languages', [])
+        self.manifest_token = d.get('manifest_token')
+        self.show_no_subtitles = d.get('show_no_subtitles', False)
+        self.prioritize_ass_subtitles = d.get('prioritize_ass_subtitles', False)
+        self.prioritize_forced_subtitles = d.get('prioritize_forced_subtitles', False)
+        self.ignore_ai_subtitles = d.get('ignore_ai_subtitles', False)
+        self.provider_credentials = d.get('provider_credentials', {})
+        self.active = d.get('active', True)
+        self.auth_id = self.id  # compatibility
+
+    def has_role(self, role_name):
+        return False  # cached users don't carry roles
+
+    def __repr__(self):
+        return f'<CachedUser {self.username}>'
+
+
 # Association table
 roles_users = Table(
     'roles_users',
@@ -161,9 +196,9 @@ class User(Base):
     async def get_by_manifest_token(token):
         """Look up user by manifest token with L1/L2 caching (5 min TTL).
         
-        The returned object is a *detached* SQLAlchemy instance — safe for
-        reads but should NOT be used for writes. Open a fresh session if you
-        need to persist changes.
+        The returned object is either a real SQLAlchemy User (on cache miss)
+        or a lightweight CachedUser proxy (on cache hit). Both expose the same
+        read-only attributes used by the Stremio API hot path.
         """
         from .extensions import cache as _cache
 
@@ -173,14 +208,12 @@ class User(Base):
         cache_key = f"user:token:{token}"
         cached = await _cache.get(cache_key)
         if cached is not None:
-            # Reconstruct a lightweight, detached User from cached dict
-            return User._from_cache_dict(cached)
+            return CachedUser(cached)
 
         async with async_session_maker() as session:
             result = await session.execute(select(User).filter_by(manifest_token=token))
             user = result.scalar_one_or_none()
             if user:
-                # Store serialisable dict in cache (300s = 5 min)
                 await _cache.set(cache_key, user._to_cache_dict(), timeout=300)
             return user
 
@@ -206,43 +239,6 @@ class User(Base):
             'provider_credentials': self.provider_credentials or {},
             'active': self.active,
         }
-
-    @staticmethod
-    def _from_cache_dict(d: dict) -> 'User':
-        """Reconstruct a detached User from a cache dict.
-        
-        Uses object.__new__ + __dict__ to bypass SQLAlchemy instrumentation
-        (the cached user is never attached to a session)."""
-        u = object.__new__(User)
-        # Bypass SQLAlchemy descriptors by writing directly to __dict__
-        u.__dict__.update({
-            'id': d['id'],
-            'username': d['username'],
-            'email': d['email'],
-            'preferred_languages': d.get('preferred_languages', []),
-            'manifest_token': d.get('manifest_token'),
-            'show_no_subtitles': d.get('show_no_subtitles', False),
-            'prioritize_ass_subtitles': d.get('prioritize_ass_subtitles', False),
-            'prioritize_forced_subtitles': d.get('prioritize_forced_subtitles', False),
-            'ignore_ai_subtitles': d.get('ignore_ai_subtitles', False),
-            'provider_credentials': d.get('provider_credentials', {}),
-            'active': d.get('active', True),
-            'password_hash': '',
-            'created_at': None,
-            'email_confirmed': False,
-            'email_confirmed_at': None,
-            'last_login_at': None,
-            'current_login_at': None,
-            'last_login_ip': None,
-            'current_login_ip': None,
-            'login_count': 0,
-            'roles': [],
-            'uploaded_subtitles': [],
-            'activity_log': [],
-            'selections': [],
-            'votes': [],
-        })
-        return u
 
     def has_role(self, role_name):
         return any(role.name == role_name for role in self.roles)
