@@ -22,6 +22,7 @@ aiohappyeyeballs==2.6.1
 aiosignal==1.4.0
 aiofiles==24.1.0
 aiosmtplib==5.1.0
+redis[hiredis]==5.2.1
 
 # Security
 cryptography==46.0.5

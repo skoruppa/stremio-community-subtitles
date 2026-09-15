@@ -46,6 +46,7 @@ async def connect_provider(provider_name):
                 user.provider_credentials[provider_name]['try_provide_ass'] = try_provide_ass
                 flag_modified(user, 'provider_credentials')
                 await session.commit()
+                await User.invalidate_token_cache(user.manifest_token)
                 await flash(_('%(name)s settings updated!', name=provider.display_name), 'success')
             else:
                 # Full authentication
@@ -56,6 +57,7 @@ async def connect_provider(provider_name):
                 
                 await provider.save_credentials(user, auth_result)
                 await session.commit()
+                await User.invalidate_token_cache(user.manifest_token)
                 
                 await flash(_('Successfully connected to %(name)s!', name=provider.display_name), 'success')
     except ProviderAuthError as e:
@@ -87,6 +89,7 @@ async def disconnect_provider(provider_name):
             if hasattr(user, 'provider_credentials') and user.provider_credentials:
                 user.provider_credentials.pop(provider_name, None)
                 await session.commit()
+                await User.invalidate_token_cache(user.manifest_token)
             
             await flash(_('Disconnected from %(name)s', name=provider.display_name), 'success')
     except Exception as e:

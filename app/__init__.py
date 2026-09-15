@@ -2,7 +2,7 @@
 import os
 import logging
 from quart import Quart, request
-from .extensions import init_async_db, auth_manager, init_cors, cache, csrf, babel
+from .extensions import init_async_db, auth_manager, init_cors, cache, csrf, babel, init_cache
 from config import get_config
 
 
@@ -49,6 +49,7 @@ def create_app():
             app.logger.warning(f"Failed to setup Better Stack: {e}")
     
     init_async_db(app)
+    init_cache(app)
     auth_manager.init_app(app)
     csrf.init_app(app)
     init_cors(app)

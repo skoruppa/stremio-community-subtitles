@@ -28,12 +28,15 @@ services:
       - PREFERRED_URL_SCHEME=${PREFERRED_URL_SCHEME:-https}
       - MAX_UPLOAD_SIZE_MB=${MAX_UPLOAD_SIZE_MB:-15}
       - INTERNAL_API_TOKEN=${INTERNAL_API_TOKEN:-}
+      - REDIS_URL=redis://redis:6379/0
     volumes:
       - ./data:/app/data
       - ./logs:/app/logs
       - ./subtitles:/app/subtitles
     depends_on:
       db:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     deploy:
       resources:
@@ -74,6 +77,26 @@ services:
       resources:
         limits:
           memory: 512M
+
+  redis:
+    image: redis:7-alpine
+    restart: always
+    command: >
+      redis-server
+      --maxmemory 128mb
+      --maxmemory-policy allkeys-lru
+      --save ""
+      --appendonly no
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+    deploy:
+      resources:
+        limits:
+          memory: 192M
 
 volumes:
   db_data:

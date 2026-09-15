@@ -147,18 +147,22 @@ async def account_settings():
                 if 'show_no_subtitles' in data:
                     user.show_no_subtitles = data.get('show_no_subtitles', False)
                     await session.commit()
+                    await User.invalidate_token_cache(user.manifest_token)
                     return {'success': True}
                 if 'prioritize_ass_subtitles' in data:
                     user.prioritize_ass_subtitles = data.get('prioritize_ass_subtitles', False)
                     await session.commit()
+                    await User.invalidate_token_cache(user.manifest_token)
                     return {'success': True}
                 if 'prioritize_forced_subtitles' in data:
                     user.prioritize_forced_subtitles = data.get('prioritize_forced_subtitles', False)
                     await session.commit()
+                    await User.invalidate_token_cache(user.manifest_token)
                     return {'success': True}
                 if 'ignore_ai_subtitles' in data:
                     user.ignore_ai_subtitles = data.get('ignore_ai_subtitles', False)
                     await session.commit()
+                    await User.invalidate_token_cache(user.manifest_token)
                     return {'success': True}
         except Exception as e:
             current_app.logger.error(f"Error updating settings for user {user_id}: {e}")
@@ -182,6 +186,7 @@ async def account_settings():
             try:
                 user.preferred_languages = lang_form.preferred_languages.data
                 await session.commit()
+                await User.invalidate_token_cache(user.manifest_token)
                 await flash(_('Preferred languages updated successfully!'), 'success')
                 return redirect(url_for('main.account_settings'))
             except Exception as e:

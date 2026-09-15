@@ -34,7 +34,9 @@ class OpenSubtitlesProvider(BaseSubtitleProvider):
                 'active': True,
                 'username': username,
                 'password': password,  # Store for auto-refresh
-                'token_timestamp': int(time.time())
+                'token_timestamp': int(time.time()),
+                # Clear any previous failure flags
+                'credentials_invalid': False,
             }
         except opensubtitles_client.OpenSubtitlesError as e:
             raise ProviderAuthError(str(e), self.name, getattr(e, 'status_code', None))
@@ -62,9 +64,16 @@ class OpenSubtitlesProvider(BaseSubtitleProvider):
     async def is_authenticated(self, user) -> bool:
         """Check if user has valid OpenSubtitles credentials.
         This is a fast, non-blocking check — no network requests.
-        Token refresh happens lazily on first actual API usage (search/download)."""
+        Token refresh happens lazily on first actual API usage (search/download).
+        
+        Credentials marked as 'credentials_invalid' are skipped entirely
+        until the user re-authenticates via account settings."""
         creds = await self.get_credentials(user)
         if not creds or not creds.get('active') or not creds.get('username') or not creds.get('password'):
+            return False
+        
+        # Skip if credentials were permanently invalidated (bad username/password)
+        if creds.get('credentials_invalid'):
             return False
         
         # Just check if we have a token — don't try to refresh here
@@ -76,9 +85,16 @@ class OpenSubtitlesProvider(BaseSubtitleProvider):
     
     async def ensure_fresh_token(self, user) -> bool:
         """Ensure token is fresh before making API calls. Call this before search/download.
-        Returns True if token is valid, False if refresh failed."""
+        Returns True if token is valid, False if refresh failed.
+        
+        Persists cooldown/invalidation to DB so it survives across requests
+        (critical with multiprocessing workers that don't share memory)."""
         creds = await self.get_credentials(user)
         if not creds or not creds.get('active'):
+            return False
+        
+        # Already marked as permanently invalid — skip entirely
+        if creds.get('credentials_invalid'):
             return False
         
         import time
@@ -86,9 +102,9 @@ class OpenSubtitlesProvider(BaseSubtitleProvider):
         if token_age <= (46 * 3600):  # Token still fresh (< 46 hours)
             return True
         
-        # Skip refresh if we recently failed (5 min cooldown)
+        # Skip refresh if we recently failed (30 min cooldown, persisted to DB)
         last_fail = creds.get('_refresh_failed_at', 0)
-        if time.time() - last_fail < 300:
+        if time.time() - last_fail < 1800:
             return False
         
         current_app.logger.info(f"OpenSubtitles token expired (age: {token_age/3600:.1f}h), refreshing...")
@@ -96,12 +112,23 @@ class OpenSubtitlesProvider(BaseSubtitleProvider):
             await self._refresh_token(user, creds)
             return True
         except Exception as e:
-            if '429' in str(e):
+            error_str = str(e)
+            if '429' in error_str:
                 current_app.logger.debug(f"OpenSubtitles token refresh rate limited for user {user.id}")
+            elif '401' in error_str or 'Unauthorized' in error_str:
+                # Persistent auth failure — mark credentials as invalid
+                current_app.logger.warning(
+                    f"OpenSubtitles credentials invalid for user {user.id} — "
+                    f"marking as invalid until re-auth"
+                )
+                creds['credentials_invalid'] = True
+                await self._persist_credentials(user, creds)
+                return False
             else:
                 current_app.logger.warning(f"Failed to refresh OpenSubtitles token: {e}")
+            
             creds['_refresh_failed_at'] = int(time.time())
-            await self.save_credentials(user, creds)
+            await self._persist_credentials(user, creds)
             return False
     
     async def check_token_validity(self, user) -> bool:
@@ -153,12 +180,40 @@ class OpenSubtitlesProvider(BaseSubtitleProvider):
             creds['token'] = result['token']
             creds['base_url'] = result['base_url']
             creds['token_timestamp'] = int(time.time())
+            # Clear any previous failure flags on success
+            creds.pop('credentials_invalid', None)
+            creds.pop('_refresh_failed_at', None)
             
-            # Save updated credentials
-            await self.save_credentials(user, creds)
+            # Persist to DB
+            await self._persist_credentials(user, creds)
             current_app.logger.info(f"OpenSubtitles token refreshed successfully for user {user.id}")
         except opensubtitles_client.OpenSubtitlesError as e:
             raise ProviderAuthError(f"Token refresh failed: {str(e)}", self.name, getattr(e, 'status_code', None))
+
+    async def _persist_credentials(self, user, creds: Dict[str, Any]) -> None:
+        """Persist credential changes to DB — works even with detached user objects.
+        
+        During the Stremio API hot path, the user object comes from cache and is
+        not attached to any SQLAlchemy session. This method opens a fresh session
+        to ensure changes actually land in the database."""
+        from ...extensions import async_session_maker
+        from sqlalchemy import select
+        from sqlalchemy.orm.attributes import flag_modified
+        try:
+            async with async_session_maker() as session:
+                from ...models import User
+                result = await session.execute(select(User).filter_by(id=user.id))
+                db_user = result.scalar_one_or_none()
+                if db_user:
+                    if not db_user.provider_credentials:
+                        db_user.provider_credentials = {}
+                    db_user.provider_credentials[self.name] = creds
+                    flag_modified(db_user, 'provider_credentials')
+                    await session.commit()
+                    # Invalidate user token cache so other workers pick up the change
+                    await User.invalidate_token_cache(db_user.manifest_token)
+        except Exception as exc:
+            current_app.logger.error(f"Failed to persist {self.name} credentials for user {user.id}: {exc}")
     
     async def search(
         self,

@@ -159,9 +159,85 @@ class User(Base):
 
     @staticmethod
     async def get_by_manifest_token(token):
+        """Look up user by manifest token with L1/L2 caching (5 min TTL).
+        
+        The returned object is a *detached* SQLAlchemy instance — safe for
+        reads but should NOT be used for writes. Open a fresh session if you
+        need to persist changes.
+        """
+        from .extensions import cache as _cache
+
+        if not token:
+            return None
+
+        cache_key = f"user:token:{token}"
+        cached = await _cache.get(cache_key)
+        if cached is not None:
+            # Reconstruct a lightweight, detached User from cached dict
+            return User._from_cache_dict(cached)
+
         async with async_session_maker() as session:
             result = await session.execute(select(User).filter_by(manifest_token=token))
-            return result.scalar_one_or_none()
+            user = result.scalar_one_or_none()
+            if user:
+                # Store serialisable dict in cache (300s = 5 min)
+                await _cache.set(cache_key, user._to_cache_dict(), timeout=300)
+            return user
+
+    @staticmethod
+    async def invalidate_token_cache(token):
+        """Call after modifying user settings so Stremio API picks up changes."""
+        from .extensions import cache as _cache
+        if token:
+            await _cache.delete(f"user:token:{token}")
+
+    def _to_cache_dict(self) -> dict:
+        """Serialise fields needed by the Stremio API hot path."""
+        return {
+            'id': self.id,
+            'username': self.username,
+            'email': self.email,
+            'preferred_languages': self.preferred_languages or [],
+            'manifest_token': self.manifest_token,
+            'show_no_subtitles': self.show_no_subtitles,
+            'prioritize_ass_subtitles': self.prioritize_ass_subtitles,
+            'prioritize_forced_subtitles': self.prioritize_forced_subtitles,
+            'ignore_ai_subtitles': self.ignore_ai_subtitles,
+            'provider_credentials': self.provider_credentials or {},
+            'active': self.active,
+        }
+
+    @staticmethod
+    def _from_cache_dict(d: dict) -> 'User':
+        """Reconstruct a detached User from a cache dict."""
+        u = User.__new__(User)
+        u.id = d['id']
+        u.username = d['username']
+        u.email = d['email']
+        u.preferred_languages = d.get('preferred_languages', [])
+        u.manifest_token = d.get('manifest_token')
+        u.show_no_subtitles = d.get('show_no_subtitles', False)
+        u.prioritize_ass_subtitles = d.get('prioritize_ass_subtitles', False)
+        u.prioritize_forced_subtitles = d.get('prioritize_forced_subtitles', False)
+        u.ignore_ai_subtitles = d.get('ignore_ai_subtitles', False)
+        u.provider_credentials = d.get('provider_credentials', {})
+        u.active = d.get('active', True)
+        # Fields not in cache — set safe defaults
+        u.password_hash = ''
+        u.created_at = None
+        u.email_confirmed = False
+        u.email_confirmed_at = None
+        u.last_login_at = None
+        u.current_login_at = None
+        u.last_login_ip = None
+        u.current_login_ip = None
+        u.login_count = 0
+        u.roles = []
+        u.uploaded_subtitles = []
+        u.activity_log = []
+        u.selections = []
+        u.votes = []
+        return u
 
     def has_role(self, role_name):
         return any(role.name == role_name for role in self.roles)

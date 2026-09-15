@@ -305,7 +305,10 @@ def calculate_filename_similarity(video_filename, subtitle_release_name, is_forc
 
 
 async def get_active_subtitle_details(user, content_id, video_hash=None, content_type=None, video_filename=None, lang=None, season=None, episode=None, cached_provider_results=None):
-    """Provider-agnostic subtitle selection logic"""
+    """Provider-agnostic subtitle selection logic.
+    
+    Uses a single DB session for all local queries to reduce connection pool
+    pressure (was 3-5 sessions per call before)."""
     import time
     func_start = time.time()
     
@@ -339,8 +342,6 @@ async def get_active_subtitle_details(user, content_id, video_hash=None, content
             except (ValueError, IndexError):
                 pass
         if season is None and not content_id.startswith(('kitsu:', 'mal:')):
-            # For kitsu/mal, season comes from anime mapping, not from content_id
-            # (the second segment is the anime ID, not a season number)
             if len(parts) >= 3:
                 try:
                     season = int(parts[-2])
@@ -359,139 +360,151 @@ async def get_active_subtitle_details(user, content_id, video_hash=None, content
         'user_selection_record': None
     }
     
-    # 1. User Selection
-    user_selection = await _get_user_selection(user, content_id, video_hash, lang)
-    result['user_selection_record'] = user_selection
-    
-    if user_selection:
-        if user_selection.selected_subtitle_id:
-            result.update({
-                'type': 'local',
-                'subtitle': user_selection.selected_subtitle,
-                'user_vote_value': await _get_user_vote(user, user_selection.selected_subtitle_id)
-            })
-            elapsed = time.time() - func_start
-            current_app.logger.debug(f"[TIMING] get_active_subtitle_details: {elapsed:.3f}s (user selection local)")
-            return result
+    # Use a SINGLE session for all local DB queries in this function
+    async with async_session_maker() as session:
+        # 1. User Selection
+        user_selection = await _get_user_selection(user, content_id, video_hash, lang, session=session)
+        result['user_selection_record'] = user_selection
         
-        # Provider selection
-        if user_selection.external_details_json:
-            details = user_selection.external_details_json
-            provider_name = details.get('provider')
-            subtitle_id = details.get('subtitle_id') or details.get('file_id')
-            
-            if provider_name and subtitle_id:
+        if user_selection:
+            if user_selection.selected_subtitle_id:
                 result.update({
-                    'type': f'{provider_name}_selection',
-                    'provider_name': provider_name,
-                    'provider_subtitle_id': str(subtitle_id),
-                    'provider_metadata': details,
-                    'details': details,
-                    'release_name': details.get('release_name'),
-                    'uploader': details.get('uploader'),
-                    'rating': details.get('rating'),
-                    'download_count': details.get('download_count'),
-                    'hearing_impaired': details.get('hearing_impaired', False),
-                    'ai_translated': details.get('ai_translated', False),
-                    'forced': details.get('forced', False),
-                    'moviehash_match': details.get('hash_match', False),
-                    'url': details.get('url', '')
+                    'type': 'local',
+                    'subtitle': user_selection.selected_subtitle,
+                    'user_vote_value': await _get_user_vote(user, user_selection.selected_subtitle_id, session=session)
                 })
                 elapsed = time.time() - func_start
-                current_app.logger.debug(f"[TIMING] get_active_subtitle_details: {elapsed:.3f}s (user selection provider)")
+                current_app.logger.debug(f"[TIMING] get_active_subtitle_details: {elapsed:.3f}s (user selection local)")
                 return result
-    
-    # 2. Local by hash
-    if video_hash:
-        local_sub = await _find_local_by_hash(content_id, video_hash, lang, user)
-        if local_sub:
-            result.update({
-                'type': 'local',
-                'subtitle': local_sub,
-                'auto': True,
-                'user_vote_value': await _get_user_vote(user, local_sub.id)
-            })
-            elapsed = time.time() - func_start
-            current_app.logger.debug(f"[TIMING] get_active_subtitle_details: {elapsed:.3f}s (local by hash)")
-            return result
-    
-    # 3. Providers by hash
-    if video_hash:
-        provider_result = await _search_providers_by_hash(user, imdb_id, video_hash, content_type, lang, season, episode, cached_provider_results)
-        if provider_result:
-            result.update(provider_result)
+            
+            # Provider selection
+            if user_selection.external_details_json:
+                details = user_selection.external_details_json
+                provider_name = details.get('provider')
+                subtitle_id = details.get('subtitle_id') or details.get('file_id')
+                
+                if provider_name and subtitle_id:
+                    result.update({
+                        'type': f'{provider_name}_selection',
+                        'provider_name': provider_name,
+                        'provider_subtitle_id': str(subtitle_id),
+                        'provider_metadata': details,
+                        'details': details,
+                        'release_name': details.get('release_name'),
+                        'uploader': details.get('uploader'),
+                        'rating': details.get('rating'),
+                        'download_count': details.get('download_count'),
+                        'hearing_impaired': details.get('hearing_impaired', False),
+                        'ai_translated': details.get('ai_translated', False),
+                        'forced': details.get('forced', False),
+                        'moviehash_match': details.get('hash_match', False),
+                        'url': details.get('url', '')
+                    })
+                    elapsed = time.time() - func_start
+                    current_app.logger.debug(f"[TIMING] get_active_subtitle_details: {elapsed:.3f}s (user selection provider)")
+                    return result
+        
+        # 2. Local by hash
+        if video_hash:
+            local_sub = await _find_local_by_hash(content_id, video_hash, lang, user, session=session)
+            if local_sub:
+                result.update({
+                    'type': 'local',
+                    'subtitle': local_sub,
+                    'auto': True,
+                    'user_vote_value': await _get_user_vote(user, local_sub.id, session=session)
+                })
+                elapsed = time.time() - func_start
+                current_app.logger.debug(f"[TIMING] get_active_subtitle_details: {elapsed:.3f}s (local by hash)")
+                return result
+        
+        # 3. Providers by hash
+        if video_hash:
+            provider_result = await _search_providers_by_hash(user, imdb_id, video_hash, content_type, lang, season, episode, cached_provider_results)
+            if provider_result:
+                result.update(provider_result)
+                result['auto'] = True
+                elapsed = time.time() - func_start
+                current_app.logger.debug(f"[TIMING] get_active_subtitle_details: {elapsed:.3f}s (provider by hash)")
+                return result
+        
+        # 4. Best match by filename
+        if video_filename:
+            best_match = await _find_best_match_by_filename(user, content_id, imdb_id, video_filename, content_type, lang, season, episode, cached_provider_results, video_hash=video_hash, session=session)
+            if best_match:
+                result.update(best_match)
+                result['auto'] = True
+                elapsed = time.time() - func_start
+                current_app.logger.debug(f"[TIMING] get_active_subtitle_details: {elapsed:.3f}s (best match by filename)")
+                return result
+        
+        # 5. Fallback
+        fallback = await _find_fallback_subtitle(user, content_id, imdb_id, content_type, lang, season, episode, cached_provider_results, video_hash=video_hash, session=session)
+        if fallback:
+            result.update(fallback)
             result['auto'] = True
             elapsed = time.time() - func_start
-            current_app.logger.debug(f"[TIMING] get_active_subtitle_details: {elapsed:.3f}s (provider by hash)")
+            current_app.logger.debug(f"[TIMING] get_active_subtitle_details: {elapsed:.3f}s (fallback)")
             return result
-    
-    # 4. Best match by filename
-    if video_filename:
-        best_match = await _find_best_match_by_filename(user, content_id, imdb_id, video_filename, content_type, lang, season, episode, cached_provider_results, video_hash=video_hash)
-        if best_match:
-            result.update(best_match)
-            result['auto'] = True
-            elapsed = time.time() - func_start
-            current_app.logger.debug(f"[TIMING] get_active_subtitle_details: {elapsed:.3f}s (best match by filename)")
-            return result
-    
-    # 5. Fallback
-    fallback = await _find_fallback_subtitle(user, content_id, imdb_id, content_type, lang, season, episode, cached_provider_results, video_hash=video_hash)
-    if fallback:
-        result.update(fallback)
-        result['auto'] = True
-        elapsed = time.time() - func_start
-        current_app.logger.debug(f"[TIMING] get_active_subtitle_details: {elapsed:.3f}s (fallback)")
-        return result
     
     elapsed = time.time() - func_start
     current_app.logger.debug(f"[TIMING] get_active_subtitle_details: {elapsed:.3f}s (no match)")
     return result
 
 
-async def _get_user_selection(user, content_id, video_hash, lang):
-    async with async_session_maker() as session:
+async def _get_user_selection(user, content_id, video_hash, lang, session=None):
+    async def _query(s):
         # Normalize video_hash: None -> ''
-        video_hash = video_hash or ''
+        vh = video_hash or ''
         
         stmt = select(UserSubtitleSelection).filter_by(
             user_id=user.id,
             content_id=content_id,
-            video_hash=video_hash,
+            video_hash=vh,
             language=lang
         ).options(selectinload(UserSubtitleSelection.selected_subtitle).selectinload(Subtitle.uploader)).limit(1)
         
-        result = await session.execute(stmt)
+        result = await s.execute(stmt)
         selection = result.scalar_one_or_none()
         if selection:
             return selection
         
         # Fallback: try with empty hash if we searched with a specific hash
-        if video_hash:
+        if vh:
             stmt_fallback = select(UserSubtitleSelection).filter_by(
                 user_id=user.id,
                 content_id=content_id,
                 video_hash='',
                 language=lang
             ).options(selectinload(UserSubtitleSelection.selected_subtitle).selectinload(Subtitle.uploader)).limit(1)
-            result = await session.execute(stmt_fallback)
+            result = await s.execute(stmt_fallback)
             return result.scalar_one_or_none()
         
         return None
 
+    if session:
+        return await _query(session)
+    async with async_session_maker() as s:
+        return await _query(s)
 
-async def _get_user_vote(user, subtitle_id):
-    async with async_session_maker() as session:
-        result = await session.execute(
+
+async def _get_user_vote(user, subtitle_id, session=None):
+    async def _query(s):
+        result = await s.execute(
             select(SubtitleVote).filter_by(user_id=user.id, subtitle_id=subtitle_id)
         )
         vote = result.scalar_one_or_none()
         return vote.vote_value if vote else None
 
+    if session:
+        return await _query(session)
+    async with async_session_maker() as s:
+        return await _query(s)
 
-async def _find_local_by_hash(content_id, video_hash, lang, user):
-    async with async_session_maker() as session:
-        result = await session.execute(
+
+async def _find_local_by_hash(content_id, video_hash, lang, user, session=None):
+    async def _query(s):
+        result = await s.execute(
             select(Subtitle).options(selectinload(Subtitle.uploader)).filter_by(
                 content_id=content_id,
                 language=lang,
@@ -505,6 +518,11 @@ async def _find_local_by_hash(content_id, video_hash, lang, user):
             forced = [s for s in subs if s.forced]
             return forced[0] if forced else subs[0]
         return subs[0]
+
+    if session:
+        return await _query(session)
+    async with async_session_maker() as s:
+        return await _query(s)
 
 
 async def _search_providers_by_hash(user, imdb_id, video_hash, content_type, lang, season=None, episode=None, cached_results=None):
@@ -616,16 +634,22 @@ async def _search_providers_by_hash(user, imdb_id, video_hash, content_type, lan
     return None
 
 
-async def _find_best_match_by_filename(user, content_id, imdb_id, video_filename, content_type, lang, season=None, episode=None, cached_results=None, video_hash=None):
+async def _find_best_match_by_filename(user, content_id, imdb_id, video_filename, content_type, lang, season=None, episode=None, cached_results=None, video_hash=None, session=None):
     """Find best match by filename from cache or live search"""
     candidates = []
     
     # Local
-    async with async_session_maker() as session:
-        result = await session.execute(
+    async def _local_query(s):
+        result = await s.execute(
             select(Subtitle).options(selectinload(Subtitle.uploader)).filter_by(content_id=content_id, language=lang)
         )
-        local_subs = result.scalars().all()
+        return result.scalars().all()
+
+    if session:
+        local_subs = await _local_query(session)
+    else:
+        async with async_session_maker() as s:
+            local_subs = await _local_query(s)
         
     for sub in local_subs:
         is_sub_forced = getattr(sub, 'forced', False) or (sub.version_info and 'forced' in sub.version_info.lower())
@@ -721,7 +745,7 @@ async def _find_best_match_by_filename(user, content_id, imdb_id, video_filename
         return {
             'type': 'local',
             'subtitle': best['subtitle'],
-            'user_vote_value': await _get_user_vote(user, best['subtitle'].id)
+            'user_vote_value': await _get_user_vote(user, best['subtitle'].id, session=session)
         }
     else:
         return {
@@ -742,20 +766,26 @@ async def _find_best_match_by_filename(user, content_id, imdb_id, video_filename
         }
 
 
-async def _find_fallback_subtitle(user, content_id, imdb_id, content_type, lang, season=None, episode=None, cached_results=None, video_hash=None):
+async def _find_fallback_subtitle(user, content_id, imdb_id, content_type, lang, season=None, episode=None, cached_results=None, video_hash=None, session=None):
     """Find fallback subtitle from cache or live search"""
     # Local first
-    async with async_session_maker() as session:
-        result = await session.execute(
+    async def _local_query(s):
+        result = await s.execute(
             select(Subtitle).options(selectinload(Subtitle.uploader)).filter_by(content_id=content_id, language=lang).order_by(Subtitle.votes.desc()).limit(1)
         )
-        local_sub = result.scalar_one_or_none()
+        return result.scalar_one_or_none()
+
+    if session:
+        local_sub = await _local_query(session)
+    else:
+        async with async_session_maker() as s:
+            local_sub = await _local_query(s)
         
     if local_sub:
         return {
             'type': 'local',
             'subtitle': local_sub,
-            'user_vote_value': await _get_user_vote(user, local_sub.id)
+            'user_vote_value': await _get_user_vote(user, local_sub.id, session=session)
         }
     
     if not imdb_id and not cached_results:

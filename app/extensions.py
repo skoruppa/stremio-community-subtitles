@@ -1,10 +1,19 @@
 """Async extensions for Quart application"""
+import os
+import functools
+import hashlib
+import json
+import time as _time
+import logging
+
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import declarative_base
 from quart_auth import QuartAuth
 from quart_cors import cors as quart_cors
 from quart_wtf import CSRFProtect
 from quart_babel import Babel
+
+logger = logging.getLogger(__name__)
 
 # SQLAlchemy async
 Base = declarative_base()
@@ -62,35 +71,109 @@ def init_cors(app):
         allow_credentials=allow_credentials
     )
 
-import functools
-import hashlib
-import json
-import time as _time
 
 class AsyncCache:
+    """Two-tier cache: L1 in-process dict + L2 Redis (shared across workers).
+    
+    Falls back gracefully to L1-only when Redis is unavailable.
+    Designed for multiprocessing Hypercorn workers where each process
+    needs fast local access but also benefits from shared state.
+    """
+
+    # L1 in-process TTL (seconds). Kept short so workers converge quickly.
+    L1_DEFAULT_TTL = 30
+
     def __init__(self):
-        self._cache = {}  # key -> (value, expires_at)
-    
-    async def get(self, key):
-        entry = self._cache.get(key)
-        if entry is None:
-            return None
-        value, expires_at = entry
-        if expires_at and _time.monotonic() > expires_at:
-            del self._cache[key]
-            return None
-        return value
-    
-    async def set(self, key, value, timeout=None):
-        expires_at = (_time.monotonic() + timeout) if timeout else None
-        self._cache[key] = (value, expires_at)
-    
-    async def delete(self, key):
-        self._cache.pop(key, None)
-    
+        self._local = {}          # key -> (value, expires_at)
+        self._redis = None        # set by init_redis()
+        self._redis_available = False
+
+    # ------------------------------------------------------------------
+    # Redis bootstrap
+    # ------------------------------------------------------------------
+    def init_redis(self, redis_url: str):
+        """Connect to Redis. Safe to call multiple times."""
+        try:
+            import redis as _redis
+            self._redis = _redis.Redis.from_url(
+                redis_url,
+                decode_responses=True,
+                socket_connect_timeout=2,
+                socket_timeout=1,
+                retry_on_timeout=True,
+            )
+            self._redis.ping()
+            self._redis_available = True
+            logger.info("Redis cache connected: %s", redis_url)
+        except Exception as exc:
+            logger.warning("Redis unavailable (%s) — falling back to local cache", exc)
+            self._redis = None
+            self._redis_available = False
+
+    # ------------------------------------------------------------------
+    # Core API
+    # ------------------------------------------------------------------
+    async def get(self, key: str):
+        # L1 check
+        entry = self._local.get(key)
+        if entry is not None:
+            value, expires_at = entry
+            if expires_at and _time.monotonic() > expires_at:
+                del self._local[key]
+            else:
+                return value
+
+        # L2 check
+        if self._redis_available:
+            try:
+                raw = self._redis.get(key)
+                if raw is not None:
+                    value = json.loads(raw)
+                    # Populate L1
+                    l1_exp = _time.monotonic() + self.L1_DEFAULT_TTL
+                    self._local[key] = (value, l1_exp)
+                    return value
+            except Exception:
+                pass
+
+        return None
+
+    async def set(self, key: str, value, timeout=None):
+        # L1
+        l1_ttl = min(timeout, self.L1_DEFAULT_TTL) if timeout else self.L1_DEFAULT_TTL
+        expires_at = _time.monotonic() + l1_ttl
+        self._local[key] = (value, expires_at)
+
+        # L2
+        if self._redis_available:
+            try:
+                raw = json.dumps(value, default=str)
+                if timeout:
+                    self._redis.setex(key, int(timeout), raw)
+                else:
+                    self._redis.set(key, raw)
+            except Exception:
+                pass
+
+    async def delete(self, key: str):
+        self._local.pop(key, None)
+        if self._redis_available:
+            try:
+                self._redis.delete(key)
+            except Exception:
+                pass
+
     def clear(self):
-        self._cache.clear()
-    
+        self._local.clear()
+        if self._redis_available:
+            try:
+                self._redis.flushdb()
+            except Exception:
+                pass
+
+    # ------------------------------------------------------------------
+    # Decorator
+    # ------------------------------------------------------------------
     def memoize(self, timeout=None):
         def decorator(func):
             @functools.wraps(func)
@@ -100,12 +183,24 @@ class AsyncCache:
                 if cached is not None:
                     return cached
                 result = await func(*args, **kwargs)
-                await self.set(cache_key, result, timeout)
+                if result is not None:
+                    await self.set(cache_key, result, timeout)
                 return result
             return wrapper
         return decorator
 
+
 cache = AsyncCache()
+
+
+def init_cache(app):
+    """Initialize cache with Redis if available. Call from app factory."""
+    redis_url = os.environ.get('REDIS_URL') or app.config.get('REDIS_URL')
+    if redis_url:
+        cache.init_redis(redis_url)
+    else:
+        logger.info("No REDIS_URL configured — using local-only cache")
+
 
 # For Alembic migrations (sync)
 from sqlalchemy import create_engine, pool

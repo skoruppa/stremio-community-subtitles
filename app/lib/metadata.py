@@ -304,20 +304,34 @@ async def _get_mal_metadata(content_id):
 async def get_metadata(content_id, content_type=None):
     """
     Public dispatcher function to fetch metadata from various sources.
-    :param content_id: The ID of the content (e.g., 'tt12345', 'kitsu:123', 'kitsu:123:1').
-    :param content_type: Type of content, primarily for TMDB ('movie', 'series').
-    :return: Metadata dictionary or None.
+    Results are cached for 6 hours to avoid hammering external APIs.
     """
-    if content_id and content_id.startswith('tt'):
+    if not content_id:
+        return None
+
+    # Check cache first
+    cache_key = f"metadata:{content_id}:{content_type or ''}"
+    cached = await cache.get(cache_key)
+    if cached is not None:
+        return cached
+
+    result = None
+    if content_id.startswith('tt'):
         if not content_type:
             current_app.logger.warning(f"content_type not provided for TMDB ID {content_id}. Cannot determine if movie or series.")
             return None
         # Run sync TMDB call in thread pool to avoid blocking event loop
-        return await asyncio.to_thread(_get_tmdb_metadata, content_id, content_type)
-    elif content_id and content_id.startswith('kitsu:'):
-        return await _get_kitsu_metadata(content_id)
-    elif content_id and content_id.startswith('mal:'):
-        return await _get_mal_metadata(content_id)
+        result = await asyncio.to_thread(_get_tmdb_metadata, content_id, content_type)
+    elif content_id.startswith('kitsu:'):
+        result = await _get_kitsu_metadata(content_id)
+    elif content_id.startswith('mal:'):
+        result = await _get_mal_metadata(content_id)
     else:
         current_app.logger.info(f"Unsupported content_id format: {content_id}")
         return None
+
+    if result is not None:
+        # Cache for 6 hours (21600s)
+        await cache.set(cache_key, result, timeout=21600)
+
+    return result
