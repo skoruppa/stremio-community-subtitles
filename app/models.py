@@ -209,34 +209,39 @@ class User(Base):
 
     @staticmethod
     def _from_cache_dict(d: dict) -> 'User':
-        """Reconstruct a detached User from a cache dict."""
-        u = User.__new__(User)
-        u.id = d['id']
-        u.username = d['username']
-        u.email = d['email']
-        u.preferred_languages = d.get('preferred_languages', [])
-        u.manifest_token = d.get('manifest_token')
-        u.show_no_subtitles = d.get('show_no_subtitles', False)
-        u.prioritize_ass_subtitles = d.get('prioritize_ass_subtitles', False)
-        u.prioritize_forced_subtitles = d.get('prioritize_forced_subtitles', False)
-        u.ignore_ai_subtitles = d.get('ignore_ai_subtitles', False)
-        u.provider_credentials = d.get('provider_credentials', {})
-        u.active = d.get('active', True)
-        # Fields not in cache — set safe defaults
-        u.password_hash = ''
-        u.created_at = None
-        u.email_confirmed = False
-        u.email_confirmed_at = None
-        u.last_login_at = None
-        u.current_login_at = None
-        u.last_login_ip = None
-        u.current_login_ip = None
-        u.login_count = 0
-        u.roles = []
-        u.uploaded_subtitles = []
-        u.activity_log = []
-        u.selections = []
-        u.votes = []
+        """Reconstruct a detached User from a cache dict.
+        
+        Uses object.__new__ + __dict__ to bypass SQLAlchemy instrumentation
+        (the cached user is never attached to a session)."""
+        u = object.__new__(User)
+        # Bypass SQLAlchemy descriptors by writing directly to __dict__
+        u.__dict__.update({
+            'id': d['id'],
+            'username': d['username'],
+            'email': d['email'],
+            'preferred_languages': d.get('preferred_languages', []),
+            'manifest_token': d.get('manifest_token'),
+            'show_no_subtitles': d.get('show_no_subtitles', False),
+            'prioritize_ass_subtitles': d.get('prioritize_ass_subtitles', False),
+            'prioritize_forced_subtitles': d.get('prioritize_forced_subtitles', False),
+            'ignore_ai_subtitles': d.get('ignore_ai_subtitles', False),
+            'provider_credentials': d.get('provider_credentials', {}),
+            'active': d.get('active', True),
+            'password_hash': '',
+            'created_at': None,
+            'email_confirmed': False,
+            'email_confirmed_at': None,
+            'last_login_at': None,
+            'current_login_at': None,
+            'last_login_ip': None,
+            'current_login_ip': None,
+            'login_count': 0,
+            'roles': [],
+            'uploaded_subtitles': [],
+            'activity_log': [],
+            'selections': [],
+            'votes': [],
+        })
         return u
 
     def has_role(self, role_name):
