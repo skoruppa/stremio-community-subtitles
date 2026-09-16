@@ -213,10 +213,40 @@ def calculate_filename_similarity(video_filename, subtitle_release_name, is_forc
     3. Resolution match
     4. Title similarity (least important, already filtered by content_id)
     
+    Handles multi-release strings (e.g. "release1;release2;release3" from Napisy24)
+    by scoring each segment separately and returning the best match.
+    
     Forced subtitles get a penalty unless user explicitly prefers them.
     
     Returns a float between 0.0 and 1.0.
     """
+    if not video_filename or not subtitle_release_name:
+        return 0.0
+
+    # Handle multi-release strings (Napisy24 uses ";" to list compatible releases)
+    if ';' in subtitle_release_name:
+        segments = [s.strip() for s in subtitle_release_name.split(';') if s.strip()]
+        if len(segments) > 1:
+            best_score = 0.0
+            for segment in segments:
+                score = _calculate_single_filename_similarity(video_filename, segment, is_forced)
+                if score > best_score:
+                    best_score = score
+            return best_score
+
+    return _calculate_single_filename_similarity(video_filename, subtitle_release_name, is_forced)
+
+
+def _calculate_single_filename_similarity(video_filename, subtitle_release_name, is_forced=False):
+    """Score a single video filename against a single subtitle release name."""
+    if not video_filename or not subtitle_release_name:
+        return 0.0
+
+    video_parts = extract_release_components(video_filename)
+    subtitle_parts = extract_release_components(subtitle_release_name)
+    
+def _calculate_single_filename_similarity(video_filename, subtitle_release_name, is_forced=False):
+    """Score a single video filename against a single subtitle release name."""
     if not video_filename or not subtitle_release_name:
         return 0.0
 
@@ -251,7 +281,6 @@ def calculate_filename_similarity(video_filename, subtitle_release_name, is_forc
     source_score = 0.0
     if video_parts['source'] and subtitle_parts['source']:
         if video_parts['source'] == subtitle_parts['source']:
-            # Exact match
             source_score = 0.3
         else:
             video_tier = SOURCE_TIERS.get(video_parts['source'], 2)
@@ -259,16 +288,12 @@ def calculate_filename_similarity(video_filename, subtitle_release_name, is_forc
             tier_diff = abs(video_tier - sub_tier)
             
             if tier_diff == 0:
-                # Same tier (e.g., webdl vs webrip) — very compatible
                 source_score = 0.25
             elif tier_diff == 1:
-                # Adjacent tier (e.g., bluray vs webdl) — likely compatible
                 source_score = 0.15
             else:
-                # Far apart (e.g., bluray vs cam) — probably bad sync
                 source_score = 0.02
     elif video_parts['source'] and not subtitle_parts['source']:
-        # Subtitle has no source info — neutral
         source_score = 0.1
     
     # Release group similarity
@@ -286,14 +311,11 @@ def calculate_filename_similarity(video_filename, subtitle_release_name, is_forc
     
     # Scoring
     if video_parts['season_episode']:
-        # Series: source > group > resolution > title
         score = source_score + (group_sim * 0.4) + (resolution_sim * 0.15) + (title_sim * 0.05)
     else:
-        # Movies: source > group > resolution > title
         score = source_score + (group_sim * 0.4) + (resolution_sim * 0.15) + (title_sim * 0.15)
     
-    # Forced subtitle penalty (less preferred unless explicitly wanted)
-    # Also detect "forced" in release name even if flag not set
+    # Forced subtitle penalty
     detected_forced = is_forced or (subtitle_release_name and 'forced' in subtitle_release_name.lower())
     if detected_forced:
         score *= 0.5
