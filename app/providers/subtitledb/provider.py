@@ -70,9 +70,10 @@ class SubtitleDBProvider(BaseSubtitleProvider):
         content_type: Optional[str] = None,
         **kwargs
     ) -> List[SubtitleResult]:
-        """Search TheSubtitleDB for subtitles."""
+        """Search TheSubtitleDB for subtitles.
+        
+        Tries IMDb ID first, falls back to TMDB ID via metadata lookup."""
         if not imdb_id:
-            # SubtitleDB needs an IMDb or TMDB id; title search requires a key
             return []
 
         results = []
@@ -83,6 +84,7 @@ class SubtitleDBProvider(BaseSubtitleProvider):
                 continue
 
             try:
+                # Try IMDb first
                 data = await client.search_by_imdb(
                     imdb_id=imdb_id,
                     language=sdb_lang,
@@ -90,6 +92,18 @@ class SubtitleDBProvider(BaseSubtitleProvider):
                     episode=episode,
                     limit=30,
                 )
+
+                # Fallback to TMDB if IMDb returned nothing
+                if not data or not self._has_items(data):
+                    tmdb_id = await self._resolve_tmdb_id(imdb_id, season, episode, content_type)
+                    if tmdb_id:
+                        data = await client.search_by_tmdb(
+                            tmdb_id=tmdb_id,
+                            language=sdb_lang,
+                            season=season,
+                            episode=episode,
+                            limit=30,
+                        )
 
                 if not data:
                     continue
@@ -124,7 +138,7 @@ class SubtitleDBProvider(BaseSubtitleProvider):
             except client.SubtitleDBError as e:
                 if e.status_code == 429:
                     current_app.logger.debug(f"SubtitleDB rate limited for {imdb_id}")
-                    break  # stop searching more languages
+                    break
                 current_app.logger.debug(f"SubtitleDB search error for {imdb_id}: {e}")
             except Exception as e:
                 current_app.logger.debug(f"SubtitleDB search failed: {e}")
@@ -156,3 +170,26 @@ class SubtitleDBProvider(BaseSubtitleProvider):
             return Lang(lang_code).pt3
         except (KeyError, AttributeError):
             return lang_code
+
+    @staticmethod
+    def _has_items(data: dict) -> bool:
+        """Check if API response contains subtitle items."""
+        subs = data.get('subtitles')
+        return bool(subs and subs.get('items'))
+
+    @staticmethod
+    async def _resolve_tmdb_id(imdb_id, season, episode, content_type) -> Optional[int]:
+        """Resolve TMDB ID from IMDb ID via cached metadata lookup."""
+        try:
+            from ...lib.metadata import get_metadata
+            content_id = imdb_id
+            if season and episode:
+                content_id = f"{imdb_id}:{season}:{episode}"
+            elif episode:
+                content_id = f"{imdb_id}:{episode}"
+            metadata = await get_metadata(content_id, content_type)
+            if metadata and metadata.get('tmdb_id'):
+                return metadata['tmdb_id']
+        except Exception:
+            pass
+        return None
