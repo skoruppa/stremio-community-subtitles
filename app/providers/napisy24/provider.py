@@ -17,6 +17,7 @@ class Napisy24Provider(BaseSubtitleProvider):
     can_return_ass = False
     has_additional_settings = False
     supported_languages = ['pol']
+    returns_zip = True
     
     async def authenticate(self, user, credentials: Dict[str, str]) -> Dict[str, Any]:
         """No authentication needed for Napisy24"""
