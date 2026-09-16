@@ -6,6 +6,25 @@ import json
 import time as _time
 import logging
 
+try:
+    import orjson as _json
+
+    def _dumps(obj):
+        return _json.dumps(obj, default=str).decode()
+
+    def _loads(raw):
+        return _json.loads(raw)
+except ImportError:
+    import json as _json_stdlib
+
+    def _dumps(obj):
+        return _json_stdlib.dumps(obj, default=str)
+
+    def _loads(raw):
+        return _json_stdlib.loads(raw)
+
+import json  # used for stable cache key hashing in memoize
+
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import declarative_base
 from quart_auth import QuartAuth
@@ -128,7 +147,7 @@ class AsyncCache:
             try:
                 raw = self._redis.get(key)
                 if raw is not None:
-                    value = json.loads(raw)
+                    value = _loads(raw)
                     # Populate L1
                     l1_exp = _time.monotonic() + self.L1_DEFAULT_TTL
                     self._local[key] = (value, l1_exp)
@@ -147,7 +166,7 @@ class AsyncCache:
         # L2
         if self._redis_available:
             try:
-                raw = json.dumps(value, default=str)
+                raw = _dumps(value)
                 if timeout:
                     self._redis.setex(key, int(timeout), raw)
                 else:

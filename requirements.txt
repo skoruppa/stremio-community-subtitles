@@ -23,6 +23,7 @@ aiosignal==1.4.0
 aiofiles==24.1.0
 aiosmtplib==5.1.0
 redis[hiredis]==5.2.1
+orjson==3.10.14
 
 # Security
 cryptography==46.0.5

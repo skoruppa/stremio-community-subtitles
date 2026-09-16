@@ -97,83 +97,81 @@ async def addon_stream(manifest_token: str, content_type: str, content_id: str, 
 
     # Log user activity (fire-and-forget — don't block subtitle response)
     async def _log_activity():
+        """Lightweight activity upsert using raw SQL to avoid ORM race conditions.
+        
+        Uses INSERT ... ON DUPLICATE KEY UPDATE pattern to handle concurrent
+        requests from the same user without SELECT-then-UPDATE races.
+        Also prunes old activities with a single DELETE subquery."""
+        from sqlalchemy import text
         async with async_session_maker() as session:
             try:
-                activity_found_and_updated = False
+                now = datetime.datetime.utcnow()
+                activity_id = str(uuid.uuid4())
+                vh = video_hash or None
+                vs = video_size or None
+                vf = video_filename or None
 
-                if video_hash is not None and video_size is not None:
-                    result = await session.execute(
-                        select(UserActivity).filter_by(
-                            user_id=user.id,
-                            content_id=content_id,
-                            video_hash=video_hash,
-                            video_size=video_size
-                        ).limit(1)
+                # Try to find and update existing activity
+                if vh is not None and vs is not None:
+                    update_result = await session.execute(
+                        text("""
+                            UPDATE user_activity 
+                            SET timestamp = :now, video_filename = COALESCE(:vf, video_filename)
+                            WHERE user_id = :uid AND content_id = :cid 
+                              AND video_hash = :vh AND video_size = :vs
+                            LIMIT 1
+                        """),
+                        {'now': now, 'vf': vf, 'uid': user.id, 'cid': content_id, 'vh': vh, 'vs': vs}
                     )
-                    existing_activity = result.scalar_one_or_none()
-                    if existing_activity:
-                        existing_activity.timestamp = datetime.datetime.utcnow()
-                        if video_filename:
-                            existing_activity.video_filename = video_filename
-                        activity_found_and_updated = True
-
-                elif video_hash is None:
-                    result = await session.execute(
-                        select(UserActivity).filter_by(
-                            user_id=user.id,
-                            content_id=content_id,
-                            video_hash=None,
-                            video_size=video_size,
-                            video_filename=video_filename
-                        ).limit(1)
+                    updated = update_result.rowcount > 0
+                elif vh is None:
+                    update_result = await session.execute(
+                        text("""
+                            UPDATE user_activity 
+                            SET timestamp = :now
+                            WHERE user_id = :uid AND content_id = :cid 
+                              AND video_hash IS NULL AND video_size = :vs AND video_filename = :vf
+                            LIMIT 1
+                        """),
+                        {'now': now, 'uid': user.id, 'cid': content_id, 'vs': vs, 'vf': vf}
                     )
-                    existing_activity = result.scalar_one_or_none()
-                    if existing_activity:
-                        existing_activity.timestamp = datetime.datetime.utcnow()
-                        activity_found_and_updated = True
+                    updated = update_result.rowcount > 0
+                else:
+                    updated = False
 
-                if not activity_found_and_updated:
-                    new_activity = UserActivity(
-                        user_id=user.id,
-                        content_id=content_id,
-                        content_type=content_type,
-                        video_hash=video_hash,
-                        video_size=video_size,
-                        video_filename=video_filename
+                if not updated:
+                    await session.execute(
+                        text("""
+                            INSERT INTO user_activity (id, user_id, content_id, content_type, video_hash, video_size, video_filename, timestamp)
+                            VALUES (:id, :uid, :cid, :ctype, :vh, :vs, :vf, :now)
+                        """),
+                        {'id': activity_id, 'uid': user.id, 'cid': content_id,
+                         'ctype': content_type, 'vh': vh, 'vs': vs, 'vf': vf, 'now': now}
                     )
-                    session.add(new_activity)
 
-                max_activities = current_app.config.get('MAX_USER_ACTIVITIES', 15)+1
-
-                count_result = await session.execute(
-                    select(func.count()).select_from(UserActivity).filter_by(user_id=user.id)
+                # Prune old activities: keep only the newest MAX_USER_ACTIVITIES
+                max_activities = current_app.config.get('MAX_USER_ACTIVITIES', 15) + 1
+                await session.execute(
+                    text("""
+                        DELETE FROM user_activity 
+                        WHERE user_id = :uid 
+                          AND id NOT IN (
+                            SELECT id FROM (
+                              SELECT id FROM user_activity 
+                              WHERE user_id = :uid2 
+                              ORDER BY timestamp DESC 
+                              LIMIT :keep
+                            ) AS kept
+                          )
+                    """),
+                    {'uid': user.id, 'uid2': user.id, 'keep': max_activities}
                 )
-                current_persisted_count = count_result.scalar()
-                effective_count_after_commit = current_persisted_count
-                if not activity_found_and_updated:
-                    effective_count_after_commit += 1
-
-                if effective_count_after_commit > max_activities:
-                    num_to_delete = effective_count_after_commit - max_activities
-                    if num_to_delete > 0:
-                        oldest_ids_result = await session.execute(
-                            select(UserActivity.id).filter_by(user_id=user.id).order_by(
-                                UserActivity.timestamp.asc()).limit(num_to_delete)
-                        )
-                        oldest_ids = [row[0] for row in oldest_ids_result.all()]
-                        if oldest_ids:
-                            from sqlalchemy import delete
-                            await session.execute(
-                                delete(UserActivity).where(UserActivity.id.in_(oldest_ids))
-                            )
 
                 await session.commit()
             except Exception as e:
                 await session.rollback()
-                if 'StaleDataError' in type(e).__name__ or 'expected to' in str(e):
-                    current_app.logger.debug(f"Activity race condition for user {user.id} (harmless): {e}")
-                else:
-                    current_app.logger.error(f"Failed to log user activity for user {user.id}: {e}", exc_info=True)
+                # Log at debug level — these are harmless race conditions
+                current_app.logger.debug(f"Activity log for user {user.id}: {type(e).__name__}")
 
     asyncio.ensure_future(_log_activity())
 

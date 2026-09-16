@@ -1,10 +1,18 @@
 """Asynchronous provider search using asyncio with result caching"""
 import asyncio
 import hashlib
-import json
 import logging
 import time
 from dataclasses import asdict
+
+try:
+    import orjson
+    def _json_dumps(obj):
+        return orjson.dumps(obj, default=str).decode()
+except ImportError:
+    import json
+    def _json_dumps(obj):
+        return json.dumps(obj, sort_keys=True, separators=(',', ':'), default=str)
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +35,7 @@ def _make_provider_cache_key(provider_name: str, search_params: dict) -> str:
         'h': search_params.get('video_hash') or '',
         't': search_params.get('content_type') or '',
     }
-    raw = json.dumps(key_parts, sort_keys=True, separators=(',', ':'))
+    raw = _json_dumps(key_parts)
     digest = hashlib.md5(raw.encode()).hexdigest()
     return f"prov:{provider_name}:{digest}"
 
