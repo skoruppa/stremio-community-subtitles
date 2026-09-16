@@ -35,6 +35,7 @@ class BaseSubtitleProvider(ABC):
     can_return_ass: bool = False
     has_additional_settings: bool = False
     supported_languages: List[str] = None
+    returns_zip: bool = False  # True if download URL returns ZIP that needs unpacking
     
     def __init__(self):
         if not self.name or not self.display_name:

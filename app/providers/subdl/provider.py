@@ -17,6 +17,7 @@ class SubDLProvider(BaseSubtitleProvider):
     supports_hash_matching = False  # SubDL doesn't support hash matching
     can_return_ass = True  # SubDL returns ZIP files that may contain ASS
     has_additional_settings = True  # Has try_provide_ass setting
+    returns_zip = True
     
     async def authenticate(self, user, credentials: Dict[str, str]) -> Dict[str, Any]:
         """Authenticate with SubDL (validate API key)"""

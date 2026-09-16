@@ -610,7 +610,18 @@ async def unified_download(manifest_token: str, download_identifier: str):
                 message_key = 'error'
 
     if provider_subtitle_url:
-        # Regular URL download
+        # Check if provider returns direct subtitle files (not ZIP)
+        # If so, redirect the client to fetch directly — saves bandwidth and CPU
+        try:
+            from ..providers.registry import ProviderRegistry
+            provider_obj = ProviderRegistry.get(provider_subtitle_to_serve.get('provider')) if provider_subtitle_to_serve else None
+            if provider_obj and not provider_obj.returns_zip and not is_ass_request:
+                current_app.logger.info(f"Redirecting to provider URL: {provider_subtitle_url}")
+                return no_cache_redirect(provider_subtitle_url, code=302)
+        except Exception:
+            pass  # Fall through to proxied download
+
+        # Regular URL download (provider returns ZIP or needs proxying)
         try:
             async with aiohttp.ClientSession() as session:
                 async with session.get(provider_subtitle_url, timeout=aiohttp.ClientTimeout(total=5)) as r:

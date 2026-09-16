@@ -43,6 +43,7 @@ class SubSourceProvider(BaseSubtitleProvider):
     supports_hash_matching = False
     can_return_ass = True
     has_additional_settings = True
+    returns_zip = True
     
     async def authenticate(self, user, credentials: dict) -> dict:
         """Authenticate with SubSource API"""

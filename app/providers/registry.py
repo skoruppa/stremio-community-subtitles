@@ -179,6 +179,16 @@ class ProviderRegistry:
             import logging
             logging.error(f"Error loading Napisy24Provider: {e}", exc_info=True)
         
+        try:
+            from .subtitledb import SubtitleDBProvider
+            cls.register(SubtitleDBProvider)
+        except ImportError as e:
+            import logging
+            logging.warning(f"Could not load SubtitleDBProvider: {e}")
+        except Exception as e:
+            import logging
+            logging.error(f"Error loading SubtitleDBProvider: {e}", exc_info=True)
+        
         # Add more providers here as they are implemented
         
         cls._initialized = True
