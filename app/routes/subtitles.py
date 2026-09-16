@@ -150,22 +150,32 @@ async def addon_stream(manifest_token: str, content_type: str, content_id: str, 
                     )
 
                 # Prune old activities: keep only the newest MAX_USER_ACTIVITIES
-                max_activities = current_app.config.get('MAX_USER_ACTIVITIES', 15) + 1
-                await session.execute(
+                max_activities = current_app.config.get('MAX_USER_ACTIVITIES', 15)
+                
+                # MariaDB doesn't support LIMIT in subqueries, so we find
+                # IDs to DELETE explicitly: all except the N newest.
+                old_ids_result = await session.execute(
                     text("""
-                        DELETE FROM user_activity 
-                        WHERE user_id = :uid 
-                          AND id NOT IN (
-                            SELECT id FROM (
-                              SELECT id FROM user_activity 
-                              WHERE user_id = :uid2 
-                              ORDER BY timestamp DESC 
-                              LIMIT :keep
-                            ) AS kept
-                          )
+                        SELECT a.id FROM user_activity a
+                        LEFT JOIN (
+                            SELECT id FROM user_activity
+                            WHERE user_id = :uid
+                            ORDER BY timestamp DESC
+                            LIMIT :keep
+                        ) AS kept ON a.id = kept.id
+                        WHERE a.user_id = :uid2 AND kept.id IS NULL
                     """),
                     {'uid': user.id, 'uid2': user.id, 'keep': max_activities}
                 )
+                old_ids = [row[0] for row in old_ids_result.fetchall()]
+                if old_ids:
+                    # Delete in batches to avoid huge IN clauses
+                    placeholders = ','.join([f':id{i}' for i in range(len(old_ids))])
+                    params = {f'id{i}': oid for i, oid in enumerate(old_ids)}
+                    await session.execute(
+                        text(f"DELETE FROM user_activity WHERE id IN ({placeholders})"),
+                        params
+                    )
 
                 await session.commit()
             except Exception as e:
