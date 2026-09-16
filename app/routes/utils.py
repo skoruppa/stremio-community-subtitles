@@ -893,12 +893,8 @@ async def _find_fallback_subtitle(user, content_id, imdb_id, content_type, lang,
                 'moviehash_match': chosen.metadata.get('hash_match', False) if chosen.metadata else False,
                 'url': chosen.metadata.get('url', '') if chosen.metadata else ''
             }
-            if not cached_results:
-                gc.collect()
             return result
     
-    if not cached_results:
-        gc.collect()
     return None
 
 
@@ -1068,7 +1064,6 @@ async def process_subtitle_content(content: bytes, extension: str, encoding=None
             'original_format': extension.lstrip('.')
         }
         del content
-        gc.collect()
         return result
     
     del content
