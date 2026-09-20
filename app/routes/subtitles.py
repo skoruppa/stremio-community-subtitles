@@ -1351,10 +1351,21 @@ async def reset_selection(activity_id):
             select(UserSubtitleSelection).filter_by(
                 user_id=(current_user.auth_id),
                 content_id=activity.content_id,
-                video_hash=activity.video_hash
+                video_hash=activity.video_hash or ''
             )
         )
         selections_to_delete = sel_result.scalars().all()
+
+        # Also get selections with empty hash (if we searched with a specific hash)
+        if activity.video_hash:
+            sel_result2 = await session.execute(
+                select(UserSubtitleSelection).filter_by(
+                    user_id=(current_user.auth_id),
+                    content_id=activity.content_id,
+                    video_hash=''
+                )
+            )
+            selections_to_delete.extend(sel_result2.scalars().all())
 
         if selections_to_delete:
             try:

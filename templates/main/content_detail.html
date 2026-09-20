@@ -108,11 +108,11 @@
                         <form method="POST" action="{{ url_for('subtitles.reset_selection', activity_id=activity.id) }}" class="d-inline-block">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure you want to reset ALL your subtitle selections for this content?')">
-                                <i class="fas fa-times me-1"></i>{{ _('Reset All Selections') }}</button>
+                                <i class="fas fa-times me-1"></i><span class="d-none d-md-inline">{{ _('Reset All Selections') }}</span><span class="d-md-none">{{ _('Reset') }}</span></button>
                         </form>
                     {% endif %}
                     <a href="{{ url_for('subtitles.upload_subtitle', activity_id=activity.id) }}" class="btn btn-sm btn-success d-inline-block">
-                        <i class="fas fa-upload me-1"></i>{{ _('Upload New') }}</a>
+                        <i class="fas fa-upload me-1"></i><span class="d-none d-md-inline">{{ _('Upload New') }}</span><span class="d-md-none">{{ _('Upload') }}</span></a>
                 </div>
             </div>
             <div class="card-body p-0">
