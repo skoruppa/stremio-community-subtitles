@@ -101,11 +101,16 @@ class AsyncCache:
 
     # L1 in-process TTL (seconds). Kept short so workers converge quickly.
     L1_DEFAULT_TTL = 30
+    # Max L1 entries before forced eviction of oldest
+    L1_MAX_SIZE = 2000
+    # How often to run passive cleanup (every N set() calls)
+    _CLEANUP_INTERVAL = 100
 
     def __init__(self):
         self._local = {}          # key -> (value, expires_at)
         self._redis = None        # set by init_redis()
         self._redis_available = False
+        self._set_counter = 0
 
     # ------------------------------------------------------------------
     # Redis bootstrap
@@ -158,10 +163,20 @@ class AsyncCache:
         return None
 
     async def set(self, key: str, value, timeout=None):
+        # Periodic L1 cleanup to prevent memory leaks
+        self._set_counter += 1
+        if self._set_counter >= self._CLEANUP_INTERVAL:
+            self._set_counter = 0
+            self._evict_expired()
+
         # L1
         l1_ttl = min(timeout, self.L1_DEFAULT_TTL) if timeout else self.L1_DEFAULT_TTL
         expires_at = _time.monotonic() + l1_ttl
         self._local[key] = (value, expires_at)
+
+        # Enforce max size — drop oldest entries if over limit
+        if len(self._local) > self.L1_MAX_SIZE:
+            self._evict_oldest(len(self._local) - self.L1_MAX_SIZE)
 
         # L2
         if self._redis_available:
@@ -181,6 +196,24 @@ class AsyncCache:
                 self._redis.delete(key)
             except Exception:
                 pass
+
+    def _evict_expired(self):
+        """Remove all expired entries from L1."""
+        now = _time.monotonic()
+        expired = [k for k, (_, exp) in self._local.items() if exp and now > exp]
+        for k in expired:
+            del self._local[k]
+
+    def _evict_oldest(self, count):
+        """Remove the `count` entries with the earliest expiry from L1."""
+        if count <= 0:
+            return
+        sorted_keys = sorted(
+            self._local.keys(),
+            key=lambda k: self._local[k][1] or 0
+        )
+        for k in sorted_keys[:count]:
+            del self._local[k]
 
     def clear(self):
         self._local.clear()
