@@ -1750,6 +1750,80 @@ async def download_subtitle(subtitle_id):
         abort(404)
 
 
+@subtitles_bp.route('/download_provider/<provider_name>/<subtitle_id>')
+@login_required
+async def download_provider_subtitle(provider_name, subtitle_id):
+    """Download a subtitle from a provider. Redirects for direct-file providers,
+    serves extracted content for ZIP-based providers."""
+    from quart import abort
+
+    try:
+        from ..providers.registry import ProviderRegistry
+        from ..providers.base import ProviderDownloadError
+
+        provider = ProviderRegistry.get(provider_name)
+        if not provider:
+            await flash(_('Provider not found.'), 'danger')
+            return redirect(request.referrer or url_for('main.dashboard'))
+
+        async with async_session_maker() as session:
+            user_result = await session.execute(select(User).filter_by(id=int(current_user.auth_id)))
+            user = user_result.scalar_one_or_none()
+
+        if not user or not await provider.is_authenticated(user):
+            await flash(_('%(provider)s is not connected. Please connect in account settings.', provider=provider.display_name), 'warning')
+            return redirect(request.referrer or url_for('main.dashboard'))
+
+        try:
+            download_url = await provider.get_download_url(user, subtitle_id)
+
+            if download_url is None:
+                # Provider requires direct download (ZIP)
+                zip_content = await provider.download_subtitle(user, subtitle_id)
+                from .utils import extract_subtitle_from_zip
+                subtitle_content, filename, extension = extract_subtitle_from_zip(zip_content)
+                del zip_content
+
+                return Response(
+                    subtitle_content,
+                    mimetype='application/octet-stream',
+                    headers={'Content-Disposition': f'attachment; filename="{filename}"'}
+                )
+
+            if provider.returns_zip:
+                # Download ZIP, extract, and serve
+                async with aiohttp.ClientSession() as http_session:
+                    async with http_session.get(download_url, timeout=aiohttp.ClientTimeout(total=15)) as r:
+                        r.raise_for_status()
+                        zip_content = await r.read()
+
+                from .utils import extract_subtitle_from_zip
+                subtitle_content, filename, extension = extract_subtitle_from_zip(zip_content)
+                del zip_content
+
+                return Response(
+                    subtitle_content,
+                    mimetype='application/octet-stream',
+                    headers={'Content-Disposition': f'attachment; filename="{filename}"'}
+                )
+            else:
+                # Direct file — redirect client
+                return no_cache_redirect(download_url, code=302)
+
+        except ProviderDownloadError as e:
+            current_app.logger.warning(f"Provider download error: {e}")
+            await flash(_('Error downloading from %(provider)s: %(error)s', provider=provider.display_name, error=str(e)), 'danger')
+        except Exception as e:
+            current_app.logger.error(f"Error downloading provider subtitle: {e}", exc_info=True)
+            await flash(_('Error downloading subtitle.'), 'danger')
+
+    except Exception as e:
+        current_app.logger.error(f"Provider download error: {e}", exc_info=True)
+        await flash(_('Error downloading subtitle.'), 'danger')
+
+    return redirect(request.referrer or url_for('main.dashboard'))
+
+
 @subtitles_bp.route('/mark_compatible_hash/<uuid:subtitle_id>', methods=['POST'])
 @login_required
 async def mark_compatible_hash(subtitle_id):

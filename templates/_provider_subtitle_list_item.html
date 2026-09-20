@@ -49,6 +49,10 @@
                 <button class="btn btn-sm btn-success disabled" disabled>
                     <i class="fas fa-check-circle"></i> {{ _('Selected') }}
                 </button>
+                {# Download button for the active provider subtitle #}
+                <a href="{{ url_for('subtitles.download_provider_subtitle', provider_name=provider_result.provider_name, subtitle_id=provider_result.subtitle_id) }}" class="btn btn-sm btn-outline-secondary ms-1" title="{{ _('Download Subtitle') }}">
+                    <i class="fas fa-download"></i>
+                </a>
                 {% if activity.video_hash and provider_result.metadata and not provider_result.metadata.get('hash_match') %}
                     <form action="{{ url_for('providers.link_provider_subtitle', activity_id=activity.id) }}" method="POST" class="d-inline ms-2">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
