@@ -1336,7 +1336,6 @@ async def delete_selection(selection_id):
 @subtitles_bp.route('/reset_selection/<uuid:activity_id>', methods=['POST'])
 @login_required
 async def reset_selection(activity_id):
-    current_app.logger.warning(f"[RESET] Reset selection called for activity {activity_id} by user {current_user.auth_id}")
     async with async_session_maker() as session:
         # Get activity
         act_result = await session.execute(
@@ -1368,7 +1367,7 @@ async def reset_selection(activity_id):
             )
             selections_to_delete.extend(sel_result2.scalars().all())
 
-        current_app.logger.warning(f"[RESET] Found {len(selections_to_delete)} selections to delete for content={activity.content_id}, hash={activity.video_hash!r}")
+        current_app.logger.info(f"Reset: found {len(selections_to_delete)} selections for content={activity.content_id}")
 
         if selections_to_delete:
             try:
