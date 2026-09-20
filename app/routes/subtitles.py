@@ -1373,7 +1373,7 @@ async def reset_selection(activity_id):
         if selections_to_delete:
             try:
                 for selection in selections_to_delete:
-                    session.delete(selection)
+                    await session.delete(selection)
                 await session.commit()
                 await flash(_('All subtitle selections for this content have been reset.'), 'success')
             except Exception as e:
