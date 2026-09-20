@@ -101,9 +101,9 @@
                 </form>
             {% endif %}
 
-           {# Download Button #}
-           {% if subtitle.uploader_id == current_user_obj.auth_id|int %}
-                <a href="{{ url_for('subtitles.download_subtitle', subtitle_id=subtitle.id) }}" class="btn btn-sm btn-outline-secondary">
+           {# Download Button — available to any logged-in user #}
+           {% if subtitle.source_type == 'community' or subtitle.source_type.endswith('_community_link') %}
+                <a href="{{ url_for('subtitles.download_subtitle', subtitle_id=subtitle.id) }}" class="btn btn-sm btn-outline-secondary" title="{{ _('Download Subtitle') }}">
                     <i class="fas fa-download me-1"></i>
                 </a>
             {% endif %}

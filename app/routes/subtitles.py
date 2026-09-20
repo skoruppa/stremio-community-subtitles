@@ -1683,18 +1683,7 @@ async def download_subtitle(subtitle_id):
         if not subtitle:
             abort(404)
 
-    # Allow download only for the uploader or admins
-    is_owner = subtitle.uploader_id == int(current_user.auth_id)
-    if not is_owner:
-        async with async_session_maker() as session:
-            user_result = await session.execute(
-                select(User).options(selectinload(User.roles)).filter_by(id=int(current_user.auth_id))
-            )
-            user = user_result.scalar_one_or_none()
-            if not user or not user.has_role('Admin'):
-                await flash(_('You do not have permission to download this subtitle.'), 'danger')
-                return redirect(url_for('main.dashboard'))
-    
+    # Allow download for any logged-in user
     content_id_display = subtitle.content_id.replace(':', '_')
     download_filename = f"{content_id_display}_{subtitle.language}_{str(subtitle.id)[:8]}.vtt"
 
