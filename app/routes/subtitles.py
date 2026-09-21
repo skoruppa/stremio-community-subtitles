@@ -28,6 +28,7 @@ except ImportError:
     CLOUDINARY_AVAILABLE = False
 from ..extensions import async_session_maker
 from ..models import User, Subtitle, UserActivity, UserSubtitleSelection, SubtitleVote  
+from .manifest import MANIFEST
 from ..lib.subtitles import convert_to_vtt
 from .utils import respond_with, get_active_subtitle_details, respond_with_no_cache, NoCacheResponse, no_cache_redirect, get_vtt_content, generate_vtt_message, sanitize_filename
 from urllib.parse import parse_qs, unquote
@@ -37,6 +38,10 @@ import hashlib
 import aiofiles
 
 subtitles_bp = Blueprint('subtitles', __name__)
+
+# The content types this addon advertises. Taken from the manifest so the
+# two cannot drift apart.
+SUPPORTED_TYPES = frozenset(MANIFEST['types'])
 
 
 @subtitles_bp.route('/<manifest_token>/subtitles/<content_type>/<content_id>/<params>.json')
@@ -102,6 +107,15 @@ async def addon_stream(manifest_token: str, content_type: str, content_id: str, 
         Uses INSERT ... ON DUPLICATE KEY UPDATE pattern to handle concurrent
         requests from the same user without SELECT-then-UPDATE races.
         Also prunes old activities with a single DELETE subquery."""
+        # Stremio asks every enabled subtitle addon about whatever is
+        # playing, including types this addon does not serve -- a live TV
+        # addon's channels, for example. The manifest advertises movie and
+        # series, so anything else can never have a subtitle here, and
+        # recording it only fills the dashboard with rows that cannot be
+        # acted on. The subtitle response itself is unchanged.
+        if content_type not in SUPPORTED_TYPES:
+            return
+
         from sqlalchemy import text
         async with async_session_maker() as session:
             try:
