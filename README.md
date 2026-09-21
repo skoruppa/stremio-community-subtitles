@@ -16,6 +16,7 @@ Every subtitle you upload helps build a community database that benefits all use
 
 - **📱 Cross-Device Subtitle Support** – Use custom subtitles on web, mobile, TV, or desktop
 - **🌍 Community Database** – Your uploads help other users watching the same files
+- **🌓 Light, Dark & System Themes** – Match the website to your preferred appearance automatically
 - **🤖 Automatic Subtitle Selection** – Subtitles are selected automatically based on your video file
 - **📤 Upload Without Watching** – Upload subtitles without starting playback
 - **🎯 Multiple Subtitle Providers** – Connect to OpenSubtitles, SubDL, and Subsource for enhanced subtitle search

@@ -1,44 +1,183 @@
+:root,
+[data-bs-theme="light"] {
+    color-scheme: light;
+    --app-bg: #f4f6f8;
+    --app-surface: #ffffff;
+    --app-surface-muted: #f8f9fb;
+    --app-border: #e2e6ea;
+    --app-navbar-bg: rgba(28, 31, 37, 0.96);
+    --app-footer-bg: #ffffff;
+    --app-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+}
+
+[data-bs-theme="dark"] {
+    color-scheme: dark;
+    --app-bg: #0d1117;
+    --app-surface: #161b22;
+    --app-surface-muted: #1c2128;
+    --app-border: #30363d;
+    --app-navbar-bg: rgba(10, 13, 18, 0.94);
+    --app-footer-bg: #11161d;
+    --app-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    --bs-body-color: #e6edf3;
+    --bs-secondary-color: #9da7b3;
+    --bs-tertiary-bg: #21262d;
+    --bs-border-color: #30363d;
+}
+
 body {
+    min-height: 100vh;
     padding-top: 4.5rem;
     padding-bottom: 3rem;
-    background-color: #f8f9fa;
+    background-color: var(--app-bg);
+    color: var(--bs-body-color);
+    transition: background-color 0.2s ease, color 0.2s ease;
 }
+
+.app-navbar {
+    background: var(--app-navbar-bg);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.14);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+}
+
 .navbar-brand {
     font-weight: 700;
+    letter-spacing: -0.01em;
 }
+
+.navbar-controls {
+    gap: 0.25rem;
+}
+
+.theme-toggle {
+    width: 2.2rem;
+    height: 2.2rem;
+    display: inline-grid;
+    place-items: center;
+    padding: 0;
+    color: rgba(255, 255, 255, 0.82);
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 0.6rem;
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.15s ease;
+}
+
+.theme-toggle:hover,
+.theme-toggle:focus-visible,
+.theme-toggle.show {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.13);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.theme-toggle:active {
+    transform: translateY(1px);
+}
+
+.theme-menu {
+    min-width: 11.5rem;
+    padding: 0.45rem;
+    border-color: var(--app-border);
+    border-radius: 0.75rem;
+    background: var(--app-surface);
+    box-shadow: var(--app-shadow);
+}
+
+.theme-menu .dropdown-header {
+    padding: 0.35rem 0.65rem 0.45rem;
+}
+
+.theme-option {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    border-radius: 0.5rem;
+    padding: 0.5rem 0.65rem;
+}
+
+.theme-option .theme-check {
+    margin-left: auto;
+    opacity: 0;
+    font-size: 0.8rem;
+}
+
+.theme-option.is-active {
+    color: var(--bs-primary);
+    background: rgba(var(--bs-primary-rgb), 0.11);
+    font-weight: 600;
+}
+
+.theme-option.is-active .theme-check {
+    opacity: 1;
+}
+
 .footer {
     position: fixed;
     bottom: 0;
     width: 100%;
     height: 40px;
     line-height: 40px;
-    background-color: #f5f5f5;
+    background-color: var(--app-footer-bg);
+    border-top: 1px solid var(--app-border);
     text-align: center;
     z-index: 10;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
 }
+
 .card {
     margin-bottom: 20px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    background-color: var(--app-surface);
+    border-color: var(--app-border);
+    box-shadow: var(--app-shadow);
+    transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 }
+
+.dropdown-menu,
+.modal-content,
+.accordion-item,
+.offcanvas {
+    border-color: var(--app-border);
+}
+
+[data-bs-theme="dark"] .bootstrap-select > .dropdown-toggle {
+    color: var(--bs-body-color);
+    background-color: var(--bs-body-bg);
+    border-color: var(--bs-border-color);
+}
+
+[data-bs-theme="dark"] .bootstrap-select > .dropdown-toggle:focus,
+[data-bs-theme="dark"] .bootstrap-select > .dropdown-toggle:hover {
+    color: var(--bs-body-color);
+    background-color: var(--bs-tertiary-bg);
+    border-color: var(--bs-border-color);
+}
+
 .subtitle-card {
-    transition: transform 0.2s;
+    transition: transform 0.2s, background-color 0.2s ease, border-color 0.2s ease;
 }
+
 .subtitle-card:hover {
     transform: translateY(-5px);
 }
+
 .active-subtitle {
     border: 2px solid #198754;
 }
+
 .vote-buttons .btn {
     padding: 0.25rem 0.5rem;
     font-size: 0.875rem;
 }
+
 .vote-count {
     font-weight: bold;
     min-width: 30px;
     display: inline-block;
     text-align: center;
 }
+
 .poster-img {
     max-height: 300px;
     object-fit: contain;
@@ -79,17 +218,17 @@ body {
     justify-content: center;
     width: 100%;
     height: 100%;
-    background-color: #f8f9fa;
-    border: 1px solid #dee2e6;
+    background-color: var(--app-surface-muted);
+    border: 1px solid var(--app-border);
     border-radius: 0.375rem;
     z-index: 1;
     opacity: 1;
-    transition: opacity 0.3s ease-in-out;
+    transition: opacity 0.3s ease-in-out, background-color 0.2s ease, border-color 0.2s ease;
 }
 
 .poster-fallback i {
     font-size: 2rem;
-    color: #6c757d;
+    color: var(--bs-secondary-color);
     animation: pulse 2s infinite;
 }
 
@@ -102,6 +241,7 @@ body {
     50% { opacity: 1; }
     100% { opacity: 0.6; }
 }
+
 .poster-wrapper-card {
     position: relative;
     width: 100%;
@@ -134,7 +274,7 @@ body {
     justify-content: center;
     width: 100%;
     height: 100%;
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    background: linear-gradient(135deg, var(--app-surface-muted) 0%, var(--app-surface) 100%);
     z-index: 1;
     opacity: 1;
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
@@ -142,7 +282,7 @@ body {
 
 .poster-fallback-card i {
     font-size: 4rem;
-    color: #6c757d;
+    color: var(--bs-secondary-color);
     animation: fadeInOut 2s ease-in-out infinite;
 }
 
@@ -151,14 +291,28 @@ body {
     transform: scale(0.95);
 }
 
+/* Bootstrap 5.3 keeps .bg-info and .bg-light light in both themes, but
+   .list-group-item takes its colour from --bs-body-color, which the dark theme
+   sets near-white. That left the active-subtitle row at 1.66:1 and the language
+   headers at 1.12:1 -- unreadable. Pin a dark foreground where the panel stays
+   light; these reach 9.3:1 and 17.3:1. */
+[data-bs-theme="dark"] .list-group-item.bg-info,
+[data-bs-theme="dark"] .list-group-item.bg-light {
+    color: #10161d;
+}
+
+[data-bs-theme="dark"] .list-group-item.bg-info .text-muted,
+[data-bs-theme="dark"] .list-group-item.bg-light .text-muted {
+    color: #2f3945 !important;
+}
 
 .list-group-item.bg-info {
-    transition: filter 0.3s ease-in-out; 
-    filter: brightness(1); 
+    transition: filter 0.3s ease-in-out;
+    filter: brightness(1);
 }
 
 .list-group-item.bg-info.highlighted {
-    filter: brightness(0.9); 
+    filter: brightness(0.9);
 }
 
 /* Coffee Banner */
@@ -182,33 +336,55 @@ body {
     }
 }
 
+@media (min-width: 992px) {
+    .navbar-collapse {
+        order: 2;
+    }
+
+    .navbar-controls {
+        order: 3;
+        margin-left: 0.5rem;
+    }
+}
+
 /* Mobile navbar adjustments */
 @media (max-width: 991.98px) {
     .navbar-toggler {
         padding: 0.15rem 0.4rem;
         font-size: 1rem;
     }
-    
+
     .navbar-toggler-icon {
         width: 1.2em;
         height: 1.2em;
     }
-    
+
     #langDropdownMobile {
         padding: 0.25rem 0.25rem 0.25rem 0.5rem;
         font-size: 1.2rem;
     }
-    
+
     #langDropdownMobile::after {
         display: none;
     }
-    
+
     .navbar .container {
         flex-wrap: wrap;
         justify-content: space-between;
     }
-    
-    .navbar .d-flex.align-items-center {
+
+    .navbar-controls {
         margin-left: auto;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    body,
+    .card,
+    .footer,
+    .theme-toggle,
+    .subtitle-card,
+    .poster-fallback {
+        transition: none;
     }
 }
