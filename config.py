@@ -15,6 +15,15 @@ class Config:
     # URL Scheme for external URLs
     PREFERRED_URL_SCHEME = os.environ.get('PREFERRED_URL_SCHEME', 'http')
 
+    # Content ids whose activity is not worth recording, as a comma-separated
+    # list of prefixes. Anything else is recorded as before -- a subtitle can
+    # be attached to any id, so this is a blacklist and it is empty by default.
+    # Example: IGNORED_ACTIVITY_ID_PREFIXES=nuvio_sport_ keeps a live sports
+    # addon's channels out of the dashboard.
+    IGNORED_ACTIVITY_ID_PREFIXES = tuple(
+        p.strip() for p in os.environ.get('IGNORED_ACTIVITY_ID_PREFIXES', '').split(',') if p.strip()
+    )
+
     # Storage Backend ('local' or 'cloudinary')
     STORAGE_BACKEND = os.environ.get('STORAGE_BACKEND', 'local')
 

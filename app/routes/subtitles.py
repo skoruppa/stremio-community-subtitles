@@ -116,6 +116,15 @@ async def addon_stream(manifest_token: str, content_type: str, content_id: str, 
         if content_type not in SUPPORTED_TYPES:
             return
 
+        # ...and the type alone does not settle it: a client is free to ask
+        # about a live TV channel as a "series", which Nuvio does, so an addon
+        # serving something this one cannot subtitle still fills the dashboard.
+        # Left empty by default; an operator naming a prefix here is saying
+        # that addon's ids are not worth a row.
+        ignored = current_app.config.get('IGNORED_ACTIVITY_ID_PREFIXES') or ()
+        if ignored and content_id.startswith(tuple(ignored)):
+            return
+
         from sqlalchemy import text
         async with async_session_maker() as session:
             try:
