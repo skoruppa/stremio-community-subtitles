@@ -133,6 +133,15 @@ def create_app():
     app.jinja_env.filters['sanitize_filename'] = lambda s: sanitize_filename(s) or ''
 
     @app.context_processor
+    def inject_globals():
+        import datetime
+        from .version import VERSION
+        return {
+            'current_year': datetime.datetime.utcnow().year,
+            'app_version': VERSION,
+        }
+
+    @app.context_processor
     def inject_providers():
         try:
             from .providers.registry import ProviderRegistry
