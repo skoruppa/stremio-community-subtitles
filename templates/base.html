@@ -76,12 +76,12 @@
             </a>
 
             <div class="d-flex align-items-center navbar-controls">
-                <!-- Theme selector -->
-                <div class="dropdown me-2">
-                    <button class="theme-toggle" type="button" id="themeDropdown" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Choose appearance" title="Appearance">
-                        <i id="themeIcon" class="fas fa-desktop" aria-hidden="true"></i>
+                <!-- Theme + Language: visible only on mobile (before hamburger) -->
+                <div class="dropdown me-2 d-lg-none">
+                    <button class="theme-toggle" type="button" id="themeDropdownMobile" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Choose appearance" title="Appearance">
+                        <i class="themeIcon fas fa-desktop" aria-hidden="true"></i>
                     </button>
-                    <div class="dropdown-menu dropdown-menu-end theme-menu" aria-labelledby="themeDropdown">
+                    <div class="dropdown-menu dropdown-menu-end theme-menu" aria-labelledby="themeDropdownMobile">
                         <div class="dropdown-header">{{ _('Appearance') }}</div>
                         <button class="dropdown-item theme-option" type="button" data-theme-value="light">
                             <i class="fas fa-sun fa-fw" aria-hidden="true"></i>
@@ -100,13 +100,12 @@
                         </button>
                     </div>
                 </div>
-
-                <!-- Language selector - visible only on mobile (< lg) -->
                 <div class="dropdown me-2 d-lg-none">
-                    <a class="nav-link dropdown-toggle" href="#" id="langDropdownMobile" role="button" data-bs-toggle="dropdown">
-                        {{ language_map.get(current_language, language_map['en'])['flag'] }}
-                    </a>
-                    <ul class="dropdown-menu dropdown-menu-end">
+                    <button class="theme-toggle" type="button" id="langDropdownMobile" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Language" title="Language">
+                        <span aria-hidden="true">{{ language_map.get(current_language, language_map['en'])['flag'] }}</span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end theme-menu" aria-labelledby="langDropdownMobile">
+                        <div class="dropdown-header">{{ _('Language') }}</div>
                         {% for lang_code in supported_languages %}
                         <li><a class="dropdown-item" href="{{ url_for('language.set_language', lang_code=lang_code) }}">
                             {{ language_map[lang_code]['flag'] }} {{ language_map[lang_code]['name'] }}
@@ -114,6 +113,7 @@
                         {% endfor %}
                     </ul>
                 </div>
+
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse">
                     <span class="navbar-toggler-icon"></span>
                 </button>
@@ -131,12 +131,36 @@
                     {% endif %}
                 </ul>
                 <ul class="navbar-nav">
-                    {% if current_user.is_authenticated %}
-                    <li class="nav-item dropdown d-none d-lg-block">
-                        <a class="nav-link dropdown-toggle" href="#" id="langDropdownDesktop" role="button" data-bs-toggle="dropdown">
-                            {{ language_map.get(current_language, language_map['en'])['flag'] }}
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end">
+                    {# Theme + Language: desktop only (inside collapsed menu, before Upload) #}
+                    <li class="nav-item dropdown d-none d-lg-block me-2">
+                        <button class="theme-toggle" type="button" id="themeDropdown" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Choose appearance" title="Appearance">
+                            <i class="themeIcon fas fa-desktop" aria-hidden="true"></i>
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-end theme-menu" aria-labelledby="themeDropdown">
+                            <div class="dropdown-header">{{ _('Appearance') }}</div>
+                            <button class="dropdown-item theme-option" type="button" data-theme-value="light">
+                                <i class="fas fa-sun fa-fw" aria-hidden="true"></i>
+                                <span>{{ _('Light') }}</span>
+                                <i class="fas fa-check theme-check" aria-hidden="true"></i>
+                            </button>
+                            <button class="dropdown-item theme-option" type="button" data-theme-value="dark">
+                                <i class="fas fa-moon fa-fw" aria-hidden="true"></i>
+                                <span>{{ _('Dark') }}</span>
+                                <i class="fas fa-check theme-check" aria-hidden="true"></i>
+                            </button>
+                            <button class="dropdown-item theme-option" type="button" data-theme-value="system">
+                                <i class="fas fa-desktop fa-fw" aria-hidden="true"></i>
+                                <span>{{ _('System') }}</span>
+                                <i class="fas fa-check theme-check" aria-hidden="true"></i>
+                            </button>
+                        </div>
+                    </li>
+                    <li class="nav-item dropdown d-none d-lg-block me-2">
+                        <button class="theme-toggle" type="button" id="langDropdown" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Language" title="Language">
+                            <span aria-hidden="true">{{ language_map.get(current_language, language_map['en'])['flag'] }}</span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end theme-menu" aria-labelledby="langDropdown">
+                            <div class="dropdown-header">{{ _('Language') }}</div>
                             {% for lang_code in supported_languages %}
                             <li><a class="dropdown-item" href="{{ url_for('language.set_language', lang_code=lang_code) }}">
                                 {{ language_map[lang_code]['flag'] }} {{ language_map[lang_code]['name'] }}
@@ -144,6 +168,7 @@
                             {% endfor %}
                         </ul>
                     </li>
+                    {% if current_user.is_authenticated %}
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('subtitles.upload_subtitle') }}">
                             <i class="fas fa-upload me-1"></i>{{ _('Upload Subtitles') }}
@@ -167,19 +192,6 @@
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('auth.register') }}">{{ _('Register') }}</a>
-                    </li>
-                    <!-- Language selector - visible only on desktop (>= lg) for guests -->
-                    <li class="nav-item dropdown d-none d-lg-block">
-                        <a class="nav-link dropdown-toggle" href="#" id="langDropdownDesktopGuest" role="button" data-bs-toggle="dropdown">
-                            {{ language_map.get(current_language, language_map['en'])['flag'] }}
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            {% for lang_code in supported_languages %}
-                            <li><a class="dropdown-item" href="{{ url_for('language.set_language', lang_code=lang_code) }}">
-                                {{ language_map[lang_code]['flag'] }} {{ language_map[lang_code]['name'] }}
-                            </a></li>
-                            {% endfor %}
-                        </ul>
                     </li>
                     {% endif %}
                 </ul>
@@ -236,8 +248,8 @@
 
     <script>
         (() => {
-            const themeIcon = document.getElementById('themeIcon');
-            const themeToggle = document.getElementById('themeDropdown');
+            const themeIcons = document.querySelectorAll('.themeIcon');
+            const themeToggles = document.querySelectorAll('#themeDropdown, #themeDropdownMobile');
             const themeOptions = document.querySelectorAll('[data-theme-value]');
             const systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
             const iconClasses = {
@@ -256,16 +268,20 @@
                     option.setAttribute('aria-pressed', active ? 'true' : 'false');
                 });
 
-                if (themeIcon) {
-                    themeIcon.className = iconClasses[choice].join(' ');
+                if (themeIcons.length) {
+                    themeIcons.forEach(icon => {
+                        icon.className = 'themeIcon ' + iconClasses[choice].join(' ');
+                    });
                 }
 
-                if (themeToggle) {
+                if (themeToggles.length) {
                     const label = choice === 'system'
                         ? `Appearance: System (${resolved})`
                         : `Appearance: ${choice.charAt(0).toUpperCase() + choice.slice(1)}`;
-                    themeToggle.setAttribute('aria-label', label);
-                    themeToggle.setAttribute('title', label);
+                    themeToggles.forEach(toggle => {
+                        toggle.setAttribute('aria-label', label);
+                        toggle.setAttribute('title', label);
+                    });
                 }
             };
 
