@@ -308,17 +308,64 @@ body {
 
 /* Bootstrap 5.3 keeps .bg-info and .bg-light light in both themes, but
    .list-group-item takes its colour from --bs-body-color, which the dark theme
-   sets near-white. That left the active-subtitle row at 1.66:1 and the language
-   headers at 1.12:1 -- unreadable. Pin a dark foreground where the panel stays
-   light; these reach 9.3:1 and 17.3:1. */
-[data-bs-theme="dark"] .list-group-item.bg-info,
+   sets near-white. Override both background and text for dark mode. */
+[data-bs-theme="dark"] .list-group-item.bg-info {
+    background-color: rgba(13, 202, 240, 0.15) !important;
+    color: #a8d8ea;
+}
+
 [data-bs-theme="dark"] .list-group-item.bg-light {
-    color: #10161d;
+    background-color: rgba(255, 255, 255, 0.06) !important;
+    color: var(--bs-body-color);
 }
 
 [data-bs-theme="dark"] .list-group-item.bg-info .text-muted,
 [data-bs-theme="dark"] .list-group-item.bg-light .text-muted {
-    color: #2f3945 !important;
+    color: rgba(255, 255, 255, 0.5) !important;
+}
+
+/* Card headers in dark mode: muted versions of the Bootstrap colours */
+[data-bs-theme="dark"] .card-header.bg-primary {
+    background-color: rgba(13, 110, 253, 0.2) !important;
+    color: #8bb9fe;
+    border-color: rgba(13, 110, 253, 0.15);
+}
+
+[data-bs-theme="dark"] .card-header.bg-success {
+    background-color: rgba(25, 135, 84, 0.2) !important;
+    color: #75d4a7;
+    border-color: rgba(25, 135, 84, 0.15);
+}
+
+[data-bs-theme="dark"] .card-header.bg-info {
+    background-color: rgba(13, 202, 240, 0.15) !important;
+    color: #86e4f5;
+    border-color: rgba(13, 202, 240, 0.1);
+}
+
+/* "Install Addon" button in dark mode */
+[data-bs-theme="dark"] .card-body .btn-primary:not(.btn-outline-primary) {
+    background-color: rgba(13, 110, 253, 0.25);
+    border-color: rgba(13, 110, 253, 0.4);
+    color: #8bb9fe;
+}
+[data-bs-theme="dark"] .card-body .btn-primary:not(.btn-outline-primary):hover {
+    background-color: rgba(13, 110, 253, 0.4);
+    color: #fff;
+}
+
+/* Stats buttons and badges in dark mode */
+[data-bs-theme="dark"] .btn-outline-primary {
+    color: #8bb9fe;
+    border-color: rgba(13, 110, 253, 0.35);
+}
+[data-bs-theme="dark"] .btn-outline-primary:hover {
+    background-color: rgba(13, 110, 253, 0.2);
+    color: #fff;
+}
+[data-bs-theme="dark"] .btn-outline-primary .badge.bg-primary {
+    background-color: rgba(13, 110, 253, 0.3) !important;
+    color: #8bb9fe;
 }
 
 .list-group-item.bg-info {
