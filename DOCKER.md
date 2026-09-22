@@ -125,6 +125,12 @@ MAIL_USERNAME=your-email@gmail.com
 MAIL_PASSWORD=your-app-password
 ```
 
+**To disable new user registration (private instance):**
+```bash
+DISABLE_REGISTRATION=true
+```
+This hides all registration links and buttons. Existing users can still log in. Create accounts manually with `create-admin` command.
+
 Everything else has sensible defaults!
 
 **To enable OpenSubtitles integration:**
