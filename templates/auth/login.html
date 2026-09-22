@@ -28,9 +28,11 @@
                     <p>
                         <a href="{{ url_for('auth.resend_confirmation') }}">{{ _('Didn\'t receive confirmation email?') }}</a>
                     </p>
+                    {% if registration_enabled %}
                     <p>
                         {{ _("Don't have an account?") }} <a href="{{ url_for('auth.register') }}">{{ _('Register here') }}</a>
                     </p>
+                    {% endif %}
                 </div>
             </div>
         </div>

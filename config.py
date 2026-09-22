@@ -44,6 +44,9 @@ class Config:
     # Email verification (can be disabled for self-hosting)
     DISABLE_EMAIL_VERIFICATION = os.environ.get('DISABLE_EMAIL_VERIFICATION', 'false').lower() in ['true', '1', 't', 'y', 'yes']
     
+    # Registration (can be disabled for private/self-hosted instances)
+    DISABLE_REGISTRATION = os.environ.get('DISABLE_REGISTRATION', 'false').lower() in ['true', '1', 't', 'y', 'yes']
+    
     # Resend API
     RESEND_API_KEY = os.environ.get('RESEND_API_KEY')
     

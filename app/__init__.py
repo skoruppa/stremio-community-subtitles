@@ -139,6 +139,7 @@ def create_app():
         return {
             'current_year': datetime.datetime.utcnow().year,
             'app_version': VERSION,
+            'registration_enabled': not app.config.get('DISABLE_REGISTRATION', False),
         }
 
     @app.context_processor

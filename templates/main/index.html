@@ -7,11 +7,17 @@
     <h1 class="display-5 fw-bold text-body-emphasis">{{ _('Stremio Community Subtitles Addon') }}</h1>
     <div class="col-lg-8 mx-auto">
         <p class="lead mb-4">
+            {% if registration_enabled %}
             {{ _('Find, share, and vote on subtitles provided by the community for Stremio. Log in or register to get started and receive your personalized addon installation link.') }}
+            {% else %}
+            {{ _('Find, share, and vote on subtitles provided by the community for Stremio. Log in to get started and receive your personalized addon installation link.') }}
+            {% endif %}
         </p>
         <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
             <a href="{{ url_for('auth.login') }}" class="btn btn-primary btn-lg px-4 gap-3">{{ _('Login') }}</a>
+            {% if registration_enabled %}
             <a href="{{ url_for('auth.register') }}" class="btn btn-outline-primary btn-lg px-4">{{ _('Register') }}</a>
+            {% endif %}
         </div>
     </div>
 </div>
@@ -54,7 +60,9 @@
         <div class="card">
             <div class="card-body">
                 <ol class="list-group list-group-numbered mb-0">
+                    {% if registration_enabled %}
                     <li class="list-group-item border-0">{{ _('Register for an account') }}</li>
+                    {% endif %}
                     <li class="list-group-item border-0">{{ _('Install the addon in Stremio using your personal link') }}</li>
                     <li class="list-group-item border-0">{{ _('Start watching content with community subtitles') }}</li>
                     <li class="list-group-item border-0">{{ _('Upload your own subtitles or vote on existing ones') }}</li>

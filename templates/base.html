@@ -190,9 +190,11 @@
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('auth.login') }}">{{ _('Login') }}</a>
                     </li>
+                    {% if registration_enabled %}
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('auth.register') }}">{{ _('Register') }}</a>
                     </li>
+                    {% endif %}
                     {% endif %}
                 </ul>
             </div>

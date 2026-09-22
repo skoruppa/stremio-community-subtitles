@@ -78,6 +78,10 @@ async def logout():
 
 @auth_bp.route('/register', methods=['GET', 'POST'])
 async def register():
+    if current_app.config.get('DISABLE_REGISTRATION', False):
+        await flash(gettext('Registration is currently disabled.'), 'warning')
+        return redirect(url_for('auth.login'))
+
     if await current_user.is_authenticated:
         return redirect(url_for('main.index'))
 
