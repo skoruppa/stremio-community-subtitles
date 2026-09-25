@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block title %}{{ error_code }} — {{ error_title }}{% endblock %}
+
+{% block content %}
+<div class="px-4 py-5 my-5 text-center">
+    <h1 class="display-1 fw-bold text-body-emphasis">{{ error_code }}</h1>
+    <h2 class="mb-3">{{ error_title }}</h2>
+    <p class="lead text-muted mb-4">{{ error_message }}</p>
+    <div class="d-flex justify-content-center gap-3">
+        <a href="{{ url_for('main.index') }}" class="btn btn-primary">
+            <i class="fas fa-home me-1"></i>{{ _('Home') }}
+        </a>
+        {% if request.referrer %}
+        <a href="{{ request.referrer }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-1"></i>{{ _('Go Back') }}
+        </a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
