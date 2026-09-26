@@ -1041,6 +1041,14 @@ msgstr "Ignoruj napisy przetłumaczone przez AI"
 msgid "When enabled, AI/machine translated subtitles will be completely excluded from auto-selection"
 msgstr "Po włączeniu napisy przetłumaczone przez AI/maszynowo będą całkowicie wykluczone z automatycznego wyboru"
 
+#: templates/main/account_settings.html:105
+msgid "Return all results"
+msgstr "Zwróć wszystkie wyniki"
+
+#: templates/main/account_settings.html:106
+msgid "When enabled, all found subtitles will be returned instead of just the best match. Your auto/manual selection stays as #1, additional results appear as separate entries. ASS format from ZIP providers is excluded in this mode."
+msgstr "Po włączeniu wszystkie znalezione napisy będą zwracane zamiast tylko najlepszego dopasowania. Twój automatyczny/ręczny wybór pozostaje jako #1, dodatkowe wyniki pojawiają się jako osobne wpisy. Format ASS z providerów zwracających ZIP jest wykluczony w tym trybie."
+
 #: templates/main/account_settings.html:111
 msgid "Subtitle Providers"
 msgstr "Dostawcy napisów"
