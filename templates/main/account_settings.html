@@ -100,6 +100,21 @@
                                {% if user.ignore_ai_subtitles %}checked{% endif %}>
                     </div>
                 </div>
+                <div class="d-flex justify-content-between align-items-center mt-3 pt-3 border-top">
+                    <div style="max-width: 75%;">
+                        <strong>{{ _('Return all results') }}</strong>
+                        <div class="form-text small">{{ _('When enabled, all found subtitles will be returned instead of just the best match. Your auto/manual selection stays as #1, additional results appear as separate entries. ASS format from ZIP providers is excluded in this mode.') }}</div>
+                    </div>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="return_all_results" 
+                               data-account-url="{{ url_for('main.account_settings') }}" 
+                               data-success-msg="{{ _('Setting updated successfully') }}"
+                               data-error-msg="{{ _('Failed to update setting') }}"
+                               data-error-general="{{ _('Error updating setting') }}"
+                               style="width: 3rem; height: 1.5rem; cursor: pointer;" 
+                               {% if user.return_all_results %}checked{% endif %}>
+                    </div>
+                </div>
             </div>
         </div>
 

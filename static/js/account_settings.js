@@ -60,4 +60,5 @@ document.addEventListener('DOMContentLoaded', function () {
     handleToggle('prioritize_ass_subtitles', 'prioritize_ass_subtitles');
     handleToggle('prioritize_forced_subtitles', 'prioritize_forced_subtitles');
     handleToggle('ignore_ai_subtitles', 'ignore_ai_subtitles');
+    handleToggle('return_all_results', 'return_all_results');
 });

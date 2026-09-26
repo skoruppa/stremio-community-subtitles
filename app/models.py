@@ -23,7 +23,7 @@ class CachedUser:
     __slots__ = (
         'id', 'username', 'email', 'preferred_languages', 'manifest_token',
         'show_no_subtitles', 'prioritize_ass_subtitles', 'prioritize_forced_subtitles',
-        'ignore_ai_subtitles', 'provider_credentials', 'active',
+        'ignore_ai_subtitles', 'return_all_results', 'provider_credentials', 'active',
         'auth_id',
     )
 
@@ -37,6 +37,7 @@ class CachedUser:
         self.prioritize_ass_subtitles = d.get('prioritize_ass_subtitles', False)
         self.prioritize_forced_subtitles = d.get('prioritize_forced_subtitles', False)
         self.ignore_ai_subtitles = d.get('ignore_ai_subtitles', False)
+        self.return_all_results = d.get('return_all_results', False)
         self.provider_credentials = d.get('provider_credentials', {})
         self.active = d.get('active', True)
         self.auth_id = self.id  # compatibility
@@ -166,6 +167,7 @@ class User(Base):
     prioritize_ass_subtitles = Column(Boolean, default=False)
     prioritize_forced_subtitles = Column(Boolean, default=False)
     ignore_ai_subtitles = Column(Boolean, default=False)
+    return_all_results = Column(Boolean, default=False)
     provider_credentials = Column(MutableDict.as_mutable(JSONType), nullable=True, default=dict)
     last_login_at = Column(DateTime)
     current_login_at = Column(DateTime)
@@ -236,6 +238,7 @@ class User(Base):
             'prioritize_ass_subtitles': self.prioritize_ass_subtitles,
             'prioritize_forced_subtitles': self.prioritize_forced_subtitles,
             'ignore_ai_subtitles': self.ignore_ai_subtitles,
+            'return_all_results': self.return_all_results,
             'provider_credentials': self.provider_credentials or {},
             'active': self.active,
         }

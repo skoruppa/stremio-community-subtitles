@@ -30,7 +30,7 @@ from ..extensions import async_session_maker
 from ..models import User, Subtitle, UserActivity, UserSubtitleSelection, SubtitleVote  
 from .manifest import MANIFEST
 from ..lib.subtitles import convert_to_vtt
-from .utils import respond_with, get_active_subtitle_details, respond_with_no_cache, NoCacheResponse, no_cache_redirect, get_vtt_content, generate_vtt_message, sanitize_filename
+from .utils import respond_with, get_active_subtitle_details, respond_with_no_cache, NoCacheResponse, no_cache_redirect, get_vtt_content, generate_vtt_message, sanitize_filename, get_all_subtitle_candidates
 from urllib.parse import parse_qs, unquote
 import gzip
 import io
@@ -285,6 +285,8 @@ async def addon_stream(manifest_token: str, content_type: str, content_id: str, 
             return None
 
         try:
+            # Always get the primary subtitle via the standard selection logic
+            # (user selection → hash → filename → fallback) — this is result #1
             active_subtitle_info = await get_active_subtitle_details(user, content_id, video_hash, content_type, video_filename, preferred_lang, cached_provider_results=cached_provider_results)
             
             # Check if we should add subtitle entry
@@ -361,6 +363,96 @@ async def addon_stream(manifest_token: str, content_type: str, content_id: str, 
                 entries.append(vtt_entry)
             
             current_app.logger.info(f"Generated download URL for context: {download_context}")
+            
+            # --- Return All Results mode: append additional results after primary ---
+            if getattr(user, 'return_all_results', False) and has_subtitles:
+                all_candidates = await get_all_subtitle_candidates(
+                    user, content_id, video_hash, content_type, video_filename,
+                    preferred_lang, cached_provider_results=cached_provider_results
+                )
+                
+                # Determine what the primary subtitle is so we can skip it
+                primary_local_id = None
+                primary_provider_key = None
+                if active_subtitle_info['type'] == 'local' and active_subtitle_info.get('subtitle'):
+                    primary_local_id = active_subtitle_info['subtitle'].id
+                elif active_subtitle_info.get('provider_name') and active_subtitle_info.get('provider_subtitle_id'):
+                    primary_provider_key = (active_subtitle_info['provider_name'], active_subtitle_info['provider_subtitle_id'])
+                
+                extra_rank = 2
+                for candidate in all_candidates:
+                    # Skip the primary subtitle (already added as #1)
+                    if candidate.get('type') == 'local' and candidate.get('subtitle'):
+                        if candidate['subtitle'].id == primary_local_id:
+                            continue
+                    elif candidate.get('provider_name') and candidate.get('provider_subtitle_id'):
+                        if (candidate['provider_name'], candidate['provider_subtitle_id']) == primary_provider_key:
+                            continue
+                    
+                    # Build rank-specific download context
+                    rank_context = dict(download_context)
+                    if candidate.get('type') == 'local' and candidate.get('subtitle'):
+                        rank_context['_rank_local_id'] = candidate['subtitle'].id
+                    elif candidate.get('provider_name') and candidate.get('provider_subtitle_id'):
+                        rank_context['_rank_provider'] = candidate['provider_name']
+                        rank_context['_rank_sub_id'] = candidate['provider_subtitle_id']
+                    else:
+                        continue
+                    
+                    try:
+                        rank_context_json = json.dumps(rank_context, separators=(',', ':'))
+                        rank_identifier = base64.urlsafe_b64encode(rank_context_json.encode('utf-8')).decode('utf-8').rstrip('=')
+                    except Exception:
+                        continue
+                    
+                    # Generate subtitle name
+                    extra_name = candidate.get('release_name')
+                    if not extra_name and candidate.get('type') == 'local' and candidate.get('subtitle'):
+                        s = candidate['subtitle']
+                        extra_name = s.version_info or s.author
+                    if not extra_name:
+                        short_id = rank_identifier[:8] if len(rank_identifier) >= 8 else rank_identifier
+                        extra_name = f"{content_id}_{short_id}"
+                    if len(extra_name) > 80:
+                        extra_name = extra_name[:80]
+                    
+                    rank_download_url = url_for('subtitles.unified_download',
+                                                manifest_token=manifest_token,
+                                                download_identifier=rank_identifier,
+                                                _external=True,
+                                                _scheme=current_app.config['PREFERRED_URL_SCHEME'])
+                    
+                    extra_sub_id = f"{extra_name}_{preferred_lang}_{extra_rank}"
+                    
+                    extra_vtt_entry = {
+                        'id': extra_sub_id,
+                        'url': rank_download_url,
+                        'lang': preferred_lang
+                    }
+                    
+                    # ASS format: only when we KNOW it's available (skip ZIP providers)
+                    can_ass = candidate.get('can_provide_ass', False)
+                    
+                    if can_ass:
+                        extra_ass_url = rank_download_url.replace('.vtt', '.ass')
+                        extra_ass_entry = {
+                            'id': f"{extra_sub_id}_ass",
+                            'url': extra_ass_url,
+                            'lang': preferred_lang
+                        }
+                        if user.prioritize_ass_subtitles:
+                            entries.append(extra_ass_entry)
+                            entries.append(extra_vtt_entry)
+                        else:
+                            entries.append(extra_vtt_entry)
+                            entries.append(extra_ass_entry)
+                    else:
+                        entries.append(extra_vtt_entry)
+                    
+                    extra_rank += 1
+                
+                current_app.logger.info(f"Return all results: {len(entries)} entries for lang={preferred_lang}")
+            
             return entries
         except Exception as e:
             current_app.logger.error(f"Error generating download URL for identifier {download_identifier}: {e}")
@@ -442,8 +534,51 @@ async def unified_download(manifest_token: str, download_identifier: str):
         current_app.logger.error(f"Failed to decode download identifier '{download_identifier}': {e}")
         return NoCacheResponse(generate_vtt_message("Invalid download link."), status=400, mimetype='text/vtt')
 
-    # Use the utility function to get active subtitle details (now with OpenSubtitles fallback)
-    active_subtitle_info = await get_active_subtitle_details(user, content_id, video_hash, content_type, video_filename, lang, season, episode)
+    # --- Handle rank-specific download (return_all_results mode) ---
+    rank_local_id = context.get('_rank_local_id')
+    rank_provider = context.get('_rank_provider')
+    rank_sub_id = context.get('_rank_sub_id')
+    
+    if rank_local_id:
+        # Serve a specific local subtitle by ID
+        from sqlalchemy.orm import selectinload as sa_selectinload
+        from ..models import Subtitle as SubtitleModel
+        async with async_session_maker() as session:
+            result = await session.execute(
+                select(SubtitleModel).options(sa_selectinload(SubtitleModel.uploader)).filter_by(id=rank_local_id)
+            )
+            ranked_sub = result.scalar_one_or_none()
+        
+        if ranked_sub:
+            active_subtitle_info = {
+                'type': 'local',
+                'subtitle': ranked_sub,
+                'provider_name': None,
+                'provider_subtitle_id': None,
+                'provider_metadata': None,
+                'details': None,
+                'auto': True,
+                'user_vote_value': None,
+                'user_selection_record': None
+            }
+        else:
+            return NoCacheResponse(generate_vtt_message("Subtitle not found."), status=404, mimetype='text/vtt')
+    elif rank_provider and rank_sub_id:
+        # Serve a specific provider subtitle
+        active_subtitle_info = {
+            'type': f'{rank_provider}_auto',
+            'subtitle': None,
+            'provider_name': rank_provider,
+            'provider_subtitle_id': str(rank_sub_id),
+            'provider_metadata': {},
+            'details': {'file_id': str(rank_sub_id)},
+            'auto': True,
+            'user_vote_value': None,
+            'user_selection_record': None
+        }
+    else:
+        # Standard flow: use the normal selection logic
+        active_subtitle_info = await get_active_subtitle_details(user, content_id, video_hash, content_type, video_filename, lang, season, episode)
 
     # TEMP DEBUG: log what get_active_subtitle_details returned for troubleshooting
     current_app.logger.warning(f"[DOWNLOAD DEBUG] user={user.id}, content={content_id}, hash={video_hash}, lang={lang}, result_type={active_subtitle_info['type']}, provider={active_subtitle_info.get('provider_name')}")

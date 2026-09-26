@@ -49,6 +49,16 @@ def create_app():
             app.logger.warning(f"Failed to setup Better Stack: {e}")
     
     init_async_db(app)
+    
+    # Auto-migrate schema: add missing columns so selfhosters don't need
+    # manual ALTER TABLE after updates. Runs once at startup, safe to call
+    # repeatedly (checks column existence before adding).
+    try:
+        from .schema_migrate import run_auto_migrations
+        run_auto_migrations(app.config['SQLALCHEMY_DATABASE_URI'])
+    except Exception as e:
+        app.logger.warning(f"Auto-migration check failed (non-fatal): {e}")
+    
     init_cache(app)
     auth_manager.init_app(app)
     csrf.init_app(app)

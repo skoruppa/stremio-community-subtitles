@@ -164,6 +164,11 @@ async def account_settings():
                     await session.commit()
                     await User.invalidate_token_cache(user.manifest_token)
                     return {'success': True}
+                if 'return_all_results' in data:
+                    user.return_all_results = data.get('return_all_results', False)
+                    await session.commit()
+                    await User.invalidate_token_cache(user.manifest_token)
+                    return {'success': True}
         except Exception as e:
             current_app.logger.error(f"Error updating settings for user {user_id}: {e}")
             return {'success': False, 'error': str(e)}, 500

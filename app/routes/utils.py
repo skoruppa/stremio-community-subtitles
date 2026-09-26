@@ -1114,3 +1114,183 @@ async def check_opensubtitles_token(user):
                         await flash(_('OpenSubtitles authentication expired. Please log in again in account settings.'), 'warning')
     except Exception as e:
         current_app.logger.debug(f"OpenSubtitles token check error: {e}")
+
+
+async def get_all_subtitle_candidates(user, content_id, video_hash=None, content_type=None, video_filename=None, lang=None, season=None, episode=None, cached_provider_results=None):
+    """Return ALL subtitle candidates for a language, ranked by quality.
+    
+    The first result is the same as what get_active_subtitle_details would pick
+    (user selection / hash match / best filename / fallback). Additional results
+    are returned in descending quality order.
+    
+    Each item is a dict with at minimum:
+      - rank: int (1-based)
+      - type: 'local' | '<provider>_auto' | '<provider>_selection'
+      - subtitle / provider_name / provider_subtitle_id etc.
+      - can_provide_ass: bool (True only when we KNOW ASS is available)
+    """
+    import time
+    func_start = time.time()
+    
+    # Parse Kitsu/MAL content_id and extract IMDb ID if needed
+    imdb_id = None
+    if content_id.startswith('tt'):
+        imdb_id = content_id.split(':')[0]
+    elif content_id.startswith('kitsu:'):
+        from ..lib.anime_mapping import get_imdb_from_kitsu
+        kitsu_id = int(content_id.split(':')[1])
+        result = get_imdb_from_kitsu(kitsu_id)
+        if result:
+            imdb_id = result['imdb_id']
+            if result['season']:
+                season = result['season']
+    elif content_id.startswith('mal:'):
+        from ..lib.anime_mapping import get_imdb_from_mal
+        mal_id = int(content_id.split(':')[1])
+        result = get_imdb_from_mal(mal_id)
+        if result:
+            imdb_id = result['imdb_id']
+            if result['season']:
+                season = result['season']
+    
+    # Extract season and episode from content_id if not provided
+    if content_type == 'series' and ':' in content_id:
+        parts = content_id.split(':')
+        if episode is None:
+            try:
+                episode = int(parts[-1])
+            except (ValueError, IndexError):
+                pass
+        if season is None and not content_id.startswith(('kitsu:', 'mal:')):
+            if len(parts) >= 3:
+                try:
+                    season = int(parts[-2])
+                except ValueError:
+                    pass
+    
+    all_candidates = []
+    seen_keys = set()  # Deduplicate by (type, id)
+    
+    def _dedup_key(candidate):
+        if candidate.get('type') == 'local' and candidate.get('subtitle'):
+            return ('local', candidate['subtitle'].id)
+        elif candidate.get('provider_name') and candidate.get('provider_subtitle_id'):
+            return (candidate['provider_name'], candidate['provider_subtitle_id'])
+        return None
+    
+    def _add_candidate(candidate, score=0.0):
+        key = _dedup_key(candidate)
+        if key and key in seen_keys:
+            return
+        if key:
+            seen_keys.add(key)
+        candidate['_score'] = score
+        all_candidates.append(candidate)
+    
+    async with async_session_maker() as session:
+        # --- Collect local subtitles ---
+        local_result = await session.execute(
+            select(Subtitle).options(selectinload(Subtitle.uploader)).filter_by(
+                content_id=content_id, language=lang
+            ).order_by(Subtitle.votes.desc())
+        )
+        local_subs = local_result.scalars().all()
+        
+        for sub in local_subs:
+            is_sub_forced = getattr(sub, 'forced', False) or (sub.version_info and 'forced' in sub.version_info.lower())
+            score = 0.0
+            if video_hash and sub.video_hash == video_hash:
+                score = 2.0  # Hash match bonus
+            if video_filename and sub.version_info:
+                fname_score = calculate_filename_similarity(video_filename, sub.version_info, is_forced=is_sub_forced)
+                score = max(score, fname_score)
+            
+            # Determine if this local subtitle can provide ASS
+            can_ass = False
+            if sub.source_metadata and sub.source_metadata.get('original_format') in ['ass', 'ssa']:
+                can_ass = True
+            
+            _add_candidate({
+                'type': 'local',
+                'subtitle': sub,
+                'auto': True,
+                'user_vote_value': await _get_user_vote(user, sub.id, session=session),
+                'forced': is_sub_forced,
+                'can_provide_ass': can_ass,
+                'release_name': sub.version_info,
+            }, score=score)
+        
+        # --- Collect provider results ---
+        if cached_provider_results:
+            for provider_name, results in cached_provider_results.items():
+                # Check if this provider uses ZIP (can't guarantee ASS from ZIP)
+                try:
+                    from ..providers.registry import ProviderRegistry
+                    provider_obj = ProviderRegistry.get(provider_name)
+                    provider_returns_zip = provider_obj.returns_zip if provider_obj else False
+                    provider_can_ass = provider_obj.can_return_ass if provider_obj else False
+                except Exception:
+                    provider_returns_zip = False
+                    provider_can_ass = False
+                
+                for result in results:
+                    if result.language != lang:
+                        continue
+                    if result.ai_translated and user.ignore_ai_subtitles:
+                        continue
+                    
+                    is_result_forced = result.forced or (result.release_name and 'forced' in result.release_name.lower())
+                    
+                    score = 0.0
+                    if result.metadata and result.metadata.get('hash_match'):
+                        score = 1.5  # Provider hash match (slightly below local hash)
+                    if video_filename and result.release_name:
+                        fname_score = calculate_filename_similarity(video_filename, result.release_name, is_forced=is_result_forced)
+                        score = max(score, fname_score)
+                    if result.ai_translated:
+                        score -= 0.05
+                    
+                    # For ZIP providers, we don't know if the subtitle inside is ASS
+                    # so can_provide_ass = False for them in return_all_results mode
+                    can_ass = False
+                    if provider_can_ass and not provider_returns_zip:
+                        # Provider supports ASS and returns direct files (not ZIP)
+                        can_ass = True
+                    
+                    _add_candidate({
+                        'type': f'{provider_name}_auto',
+                        'provider_name': provider_name,
+                        'provider_subtitle_id': result.subtitle_id,
+                        'provider_metadata': {
+                            'release_name': result.release_name,
+                            'uploader': result.uploader,
+                            'hash_match': result.metadata.get('hash_match', False) if result.metadata else False,
+                        },
+                        'details': {'file_id': result.subtitle_id, 'release_name': result.release_name},
+                        'release_name': result.release_name,
+                        'uploader': result.uploader,
+                        'rating': result.rating,
+                        'download_count': result.download_count,
+                        'hearing_impaired': result.hearing_impaired,
+                        'ai_translated': result.ai_translated,
+                        'forced': is_result_forced,
+                        'moviehash_match': result.metadata.get('hash_match', False) if result.metadata else False,
+                        'url': result.metadata.get('url', '') if result.metadata else '',
+                        'auto': True,
+                        'can_provide_ass': can_ass,
+                    }, score=score)
+    
+    # Sort by score descending
+    if user.prioritize_forced_subtitles:
+        all_candidates.sort(key=lambda c: (not c.get('forced', False), -c['_score']))
+    else:
+        all_candidates.sort(key=lambda c: -c['_score'])
+    
+    # Assign ranks
+    for i, candidate in enumerate(all_candidates):
+        candidate['rank'] = i + 1
+    
+    elapsed = time.time() - func_start
+    current_app.logger.debug(f"[TIMING] get_all_subtitle_candidates: {elapsed:.3f}s ({len(all_candidates)} candidates)")
+    
+    return all_candidates
