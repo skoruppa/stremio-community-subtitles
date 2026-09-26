@@ -31,8 +31,9 @@ OLD_HEAD=$(git rev-parse HEAD 2>/dev/null || echo "none")
 # Pull najnowszych zmian
 echo "[$(date)] Pobieranie zmian z git..."
 git fetch origin
+git submodule foreach --recursive 'git checkout . && git clean -fd' 2>/dev/null || true
 git reset --hard origin/main
-git submodule update --init --recursive
+git submodule update --init --recursive --force
 
 NEW_HEAD=$(git rev-parse HEAD)
 
