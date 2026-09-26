@@ -176,3 +176,6 @@ cython_debug/
 /uploads
 .aider*
 /deployment
+
+# Kiro agent workspace (local only)
+.kiro/
