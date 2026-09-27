@@ -430,7 +430,40 @@ async def addon_stream(manifest_token: str, content_type: str, content_id: str, 
                         'lang': preferred_lang
                     }
                     
-                    entries.append(extra_vtt_entry)
+                    # ASS variant: same logic as primary result
+                    # - Local ASS/SSA: always (file exists on disk)
+                    # - Provider: only if can_return_ass AND user enabled try_provide_ass
+                    add_extra_ass = False
+                    if candidate.get('type') == 'local' and candidate.get('subtitle'):
+                        sub_obj = candidate['subtitle']
+                        if hasattr(sub_obj, 'source_metadata') and sub_obj.source_metadata and sub_obj.source_metadata.get('original_format') in ['ass', 'ssa']:
+                            add_extra_ass = True
+                    elif candidate.get('provider_name'):
+                        try:
+                            from ..providers.registry import ProviderRegistry
+                            prov = ProviderRegistry.get(candidate['provider_name'])
+                            if prov and prov.can_return_ass:
+                                prov_config = (user.provider_credentials or {}).get(candidate['provider_name'], {})
+                                if prov_config.get('try_provide_ass', False):
+                                    add_extra_ass = True
+                        except Exception:
+                            pass
+                    
+                    if add_extra_ass:
+                        extra_ass_url = rank_download_url.replace('.vtt', '.ass')
+                        extra_ass_entry = {
+                            'id': f"{extra_sub_id}_ass",
+                            'url': extra_ass_url,
+                            'lang': preferred_lang
+                        }
+                        if user.prioritize_ass_subtitles:
+                            entries.append(extra_ass_entry)
+                            entries.append(extra_vtt_entry)
+                        else:
+                            entries.append(extra_vtt_entry)
+                            entries.append(extra_ass_entry)
+                    else:
+                        entries.append(extra_vtt_entry)
                     
                     extra_rank += 1
                 
