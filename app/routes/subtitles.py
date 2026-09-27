@@ -430,24 +430,7 @@ async def addon_stream(manifest_token: str, content_type: str, content_id: str, 
                         'lang': preferred_lang
                     }
                     
-                    # ASS format: only when we KNOW it's available (skip ZIP providers)
-                    can_ass = candidate.get('can_provide_ass', False)
-                    
-                    if can_ass:
-                        extra_ass_url = rank_download_url.replace('.vtt', '.ass')
-                        extra_ass_entry = {
-                            'id': f"{extra_sub_id}_ass",
-                            'url': extra_ass_url,
-                            'lang': preferred_lang
-                        }
-                        if user.prioritize_ass_subtitles:
-                            entries.append(extra_ass_entry)
-                            entries.append(extra_vtt_entry)
-                        else:
-                            entries.append(extra_vtt_entry)
-                            entries.append(extra_ass_entry)
-                    else:
-                        entries.append(extra_vtt_entry)
+                    entries.append(extra_vtt_entry)
                     
                     extra_rank += 1
                 

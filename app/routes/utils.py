@@ -1252,10 +1252,12 @@ async def get_all_subtitle_candidates(user, content_id, video_hash=None, content
                     
                     # For ZIP providers, we don't know if the subtitle inside is ASS
                     # so can_provide_ass = False for them in return_all_results mode
+                    # Also respect user's try_provide_ass setting per provider
                     can_ass = False
                     if provider_can_ass and not provider_returns_zip:
-                        # Provider supports ASS and returns direct files (not ZIP)
-                        can_ass = True
+                        provider_config = (user.provider_credentials or {}).get(provider_name, {})
+                        if provider_config.get('try_provide_ass', False):
+                            can_ass = True
                     
                     _add_candidate({
                         'type': f'{provider_name}_auto',
