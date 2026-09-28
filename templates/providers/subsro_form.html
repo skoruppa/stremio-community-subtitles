@@ -1,0 +1,14 @@
+<!-- Subs.ro Provider Connection Form -->
+<div class="mb-3">
+    <label for="subsro_api_key" class="form-label">{{ _('Subs.ro API Key') }}</label>
+    <input type="text" class="form-control" id="subsro_api_key" name="api_key" required
+           placeholder="{{ _('Your Subs.ro API key') }}">
+    <div class="form-text">
+        {{ _('Get your API key from') }} <a href="https://subs.ro" target="_blank">subs.ro</a>
+    </div>
+</div>
+
+<div class="alert alert-info small">
+    <i class="fas fa-info-circle me-2"></i>
+    <strong>Subs.ro</strong> {{ _('is a Romanian subtitle database. It primarily offers Romanian subtitles, but also supports English, Italian, French, German, Hungarian, Greek, Portuguese and Spanish.') }}
+</div>

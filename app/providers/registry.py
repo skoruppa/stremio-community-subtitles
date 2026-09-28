@@ -189,6 +189,16 @@ class ProviderRegistry:
             import logging
             logging.error(f"Error loading SubtitleDBProvider: {e}", exc_info=True)
         
+        try:
+            from .subsro import SubsRoProvider
+            cls.register(SubsRoProvider)
+        except ImportError as e:
+            import logging
+            logging.warning(f"Could not load SubsRoProvider: {e}")
+        except Exception as e:
+            import logging
+            logging.error(f"Error loading SubsRoProvider: {e}", exc_info=True)
+        
         # Add more providers here as they are implemented
         
         cls._initialized = True

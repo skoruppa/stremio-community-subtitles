@@ -733,7 +733,7 @@ async def unified_download(manifest_token: str, download_identifier: str):
                                 zip_content = await provider.download_subtitle(user, subtitle_id)
                                 from .utils import extract_subtitle_from_zip, process_subtitle_content
                                 
-                                subtitle_content, filename, extension = extract_subtitle_from_zip(zip_content, episode=episode)
+                                subtitle_content, filename, extension = extract_subtitle_from_zip(zip_content, episode=episode, video_filename=video_filename)
                                 del zip_content  # Free memory immediately
                                 
                                 processed = await process_subtitle_content(subtitle_content, extension)
@@ -811,7 +811,7 @@ async def unified_download(manifest_token: str, download_identifier: str):
                             # Extract subtitle from ZIP
                             zip_data = await r.read()
                             current_app.logger.info(f"Downloaded ZIP from {provider_subtitle_url}, size={len(zip_data)}, first_bytes={zip_data[:20].hex() if len(zip_data) >= 20 else zip_data.hex()}")
-                            subtitle_content, filename, extension = extract_subtitle_from_zip(zip_data, episode=episode)
+                            subtitle_content, filename, extension = extract_subtitle_from_zip(zip_data, episode=episode, video_filename=video_filename)
                             del zip_data  # Free memory
                             
                             # Process subtitle (convert to VTT, handle ASS)

@@ -956,10 +956,11 @@ def generate_vtt_message(message: str) -> str:
     return f"WEBVTT\n\n00:00:00.000 --> 00:00:08.000\n{message}"
 
 
-def extract_subtitle_from_zip(zip_content: bytes, episode: int = None):
+def extract_subtitle_from_zip(zip_content: bytes, episode: int = None, video_filename: str = None):
     """
     Extracts subtitle file from ZIP or RAR archive.
     If episode is provided, tries to find file matching episode number.
+    If video_filename is provided, scores files by release name similarity.
     Returns tuple: (subtitle_content: bytes, filename: str, extension: str)
     """
     subtitle_extensions = ['.srt', '.vtt', '.ass', '.ssa', '.sub', '.smi']
@@ -1025,6 +1026,26 @@ def extract_subtitle_from_zip(zip_content: bytes, episode: int = None):
                 match = re.search(r'[\s_\-.](\d+)$', name_without_ext)
                 if match and int(match.group(1)) == episode:
                     return (read_func(f), fname, os.path.splitext(fname)[1].lower())
+        
+        # Try filename similarity matching when video_filename is available
+        if video_filename and len(subtitle_files) > 1:
+            best_score = 0.0
+            best_file = None
+            for f in subtitle_files:
+                fname = f if isinstance(f, str) else f.filename
+                fname_base = os.path.basename(fname)
+                # Use both full path and basename for matching (folders often contain release info)
+                full_path = fname.replace('/', ' ').replace('\\', ' ')
+                score = max(
+                    calculate_filename_similarity(video_filename, fname_base),
+                    calculate_filename_similarity(video_filename, full_path),
+                )
+                if score > best_score:
+                    best_score = score
+                    best_file = f
+            if best_file and best_score > 0.05:
+                fname = best_file if isinstance(best_file, str) else best_file.filename
+                return (read_func(best_file), fname, os.path.splitext(fname)[1].lower())
         
         chosen = subtitle_files[0]
         fname = chosen if isinstance(chosen, str) else chosen.filename
