@@ -232,7 +232,7 @@
                 <div class="list-group list-group-flush">
                 {% for lang_code, provider_results in provider_results_by_lang.items() %}
                     {% if provider_results %}
-                        <h6 class="list-group-item bg-light mb-0">{{ LANGUAGE_DICT.get(lang_code, lang_code) }}</h6>
+                        <h6 class="list-group-item bg-light mb-0"><strong>{{ LANGUAGE_FLAGS.get(lang_code, '') }} {{ LANGUAGE_DICT.get(lang_code, lang_code) }}</strong></h6>
                             {% for provider_item in provider_results %}
                                 {% set attrs = provider_item.attributes %}
                                 {% set file = attrs.files[0] if attrs.files else none %}

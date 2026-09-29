@@ -7,7 +7,7 @@ from sqlalchemy import select
 from ..models import UserActivity, Subtitle, UserSubtitleSelection, SubtitleVote, User
 from iso639 import Lang
 from ..lib.metadata import get_metadata
-from ..languages import LANGUAGES, LANGUAGE_DICT
+from ..languages import LANGUAGES, LANGUAGE_DICT, LANGUAGE_FLAGS
 from ..extensions import async_session_maker
 from .utils import get_active_subtitle_details, check_opensubtitles_token
 
@@ -320,6 +320,7 @@ async def content_detail(activity_id):
         'user_votes': user_votes,
         'language_list': LANGUAGES,
         'LANGUAGE_DICT': LANGUAGE_DICT,
+        'LANGUAGE_FLAGS': LANGUAGE_FLAGS,
         'metadata': metadata,
         'provider_results_by_lang': provider_results_by_lang,
         'preferred_languages': preferred_languages,

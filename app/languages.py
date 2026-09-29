@@ -57,6 +57,20 @@ LANGUAGES = [
 # Dictionary for quick lookups
 LANGUAGE_DICT = dict(LANGUAGES)
 
+# ISO 639-3 code → flag emoji (for UI display)
+LANGUAGE_FLAGS = {
+    'eng': '🇬🇧', 'pol': '🇵🇱', 'spa': '🇪🇸', 'fra': '🇫🇷', 'deu': '🇩🇪',
+    'ita': '🇮🇹', 'por': '🇵🇹', 'pob': '🇧🇷', 'rus': '🇷🇺', 'jpn': '🇯🇵',
+    'zho': '🇨🇳', 'kor': '🇰🇷', 'ara': '🇸🇦', 'hin': '🇮🇳', 'tur': '🇹🇷',
+    'nld': '🇳🇱', 'swe': '🇸🇪', 'nor': '🇳🇴', 'dan': '🇩🇰', 'fin': '🇫🇮',
+    'ces': '🇨🇿', 'slk': '🇸🇰', 'hun': '🇭🇺', 'ron': '🇷🇴', 'bul': '🇧🇬',
+    'ell': '🇬🇷', 'heb': '🇮🇱', 'tha': '🇹🇭', 'vie': '🇻🇳', 'ind': '🇮🇩',
+    'msa': '🇲🇾', 'ukr': '🇺🇦', 'srp': '🇷🇸', 'hrv': '🇭🇷', 'slv': '🇸🇮',
+    'est': '🇪🇪', 'lav': '🇱🇻', 'lit': '🇱🇹', 'fas': '🇮🇷', 'pus': '🇦🇫',
+    'urd': '🇵🇰', 'ben': '🇧🇩', 'mya': '🇲🇲', 'cat': '🇪🇸', 'eus': '🇪🇸',
+    'mkd': '🇲🇰', 'tel': '🇮🇳', 'sqi': '🇦🇱', 'sin': '🇱🇰', 'mon': '🇲🇳',
+}
+
 
 def get_language_name(code):
     """Get language name from language code."""
