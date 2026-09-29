@@ -127,7 +127,7 @@
 
                     <div class="list-group list-group-flush">
                         <h6 class="list-group-item bg-light d-flex justify-content-between align-items-center">
-                            <span>{{ _('Currently Selected') }} ({{ LANGUAGE_DICT.get(lang_code, lang_code) }})</span>
+                            <span><strong>{{ LANGUAGE_FLAGS.get(lang_code, '') }} {{ _('Currently Selected') }} ({{ LANGUAGE_DICT.get(lang_code, lang_code) }})</strong></span>
                             <div class="text-nowrap">
                                 {% if active_subtitle %}
                                     {% if auto_selected %}
