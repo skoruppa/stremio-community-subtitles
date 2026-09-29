@@ -1845,3 +1845,23 @@ msgstr "Twój klucz API Subs.ro"
 #: templates/providers/subsro_form.html:12
 msgid "is a Romanian subtitle database. It primarily offers Romanian subtitles, but also supports English, Italian, French, German, Hungarian, Greek, Portuguese and Spanish."
 msgstr "to rumuńska baza napisów. Oferuje głównie napisy rumuńskie, ale obsługuje też angielski, włoski, francuski, niemiecki, węgierski, grecki, portugalski i hiszpański."
+
+#: templates/base.html
+msgid "Appearance"
+msgstr "Wygląd"
+
+#: templates/base.html
+msgid "Choose appearance"
+msgstr "Wybierz wygląd"
+
+#: templates/base.html
+msgid "Light"
+msgstr "Jasny"
+
+#: templates/base.html
+msgid "Dark"
+msgstr "Ciemny"
+
+#: templates/base.html
+msgid "System"
+msgstr "Systemowy"
