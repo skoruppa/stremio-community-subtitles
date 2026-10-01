@@ -1041,14 +1041,6 @@ msgstr "Ignoruj napisy przetłumaczone przez AI"
 msgid "When enabled, AI/machine translated subtitles will be completely excluded from auto-selection"
 msgstr "Po włączeniu napisy przetłumaczone przez AI/maszynowo będą całkowicie wykluczone z automatycznego wyboru"
 
-#: templates/main/account_settings.html:105
-msgid "Return all results"
-msgstr "Zwróć wszystkie wyniki"
-
-#: templates/main/account_settings.html:106
-msgid "When enabled, all found subtitles will be returned instead of just the best match. Your auto/manual selection stays as #1, additional results appear as separate entries."
-msgstr "Po włączeniu wszystkie znalezione napisy będą zwracane zamiast tylko najlepszego dopasowania. Twój automatyczny/ręczny wybór pozostaje jako #1, dodatkowe wyniki pojawiają się jako osobne wpisy."
-
 #: templates/main/account_settings.html:111
 msgid "Subtitle Providers"
 msgstr "Dostawcy napisów"
@@ -1833,35 +1825,3 @@ msgstr "SubSource zwraca pliki ZIP, które mogą zawierać format ASS. Ta opcja 
 msgid "SubSource offers API access for subtitle downloads. Check their website for current limits."
 msgstr "SubSource oferuje dostęp do API do pobierania napisów. Sprawdź ich stronę, aby poznać aktualne limity."
 
-
-#: templates/providers/subsro_form.html:3
-msgid "Subs.ro API Key"
-msgstr "Klucz API Subs.ro"
-
-#: templates/providers/subsro_form.html:5
-msgid "Your Subs.ro API key"
-msgstr "Twój klucz API Subs.ro"
-
-#: templates/providers/subsro_form.html:12
-msgid "is a Romanian subtitle database. It primarily offers Romanian subtitles, but also supports English, Italian, French, German, Hungarian, Greek, Portuguese and Spanish."
-msgstr "to rumuńska baza napisów. Oferuje głównie napisy rumuńskie, ale obsługuje też angielski, włoski, francuski, niemiecki, węgierski, grecki, portugalski i hiszpański."
-
-#: templates/base.html
-msgid "Appearance"
-msgstr "Wygląd"
-
-#: templates/base.html
-msgid "Choose appearance"
-msgstr "Wybierz wygląd"
-
-#: templates/base.html
-msgid "Light"
-msgstr "Jasny"
-
-#: templates/base.html
-msgid "Dark"
-msgstr "Ciemny"
-
-#: templates/base.html
-msgid "System"
-msgstr "Systemowy"
