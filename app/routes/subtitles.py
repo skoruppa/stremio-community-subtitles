@@ -332,18 +332,24 @@ async def addon_stream(manifest_token: str, content_type: str, content_id: str, 
                 if active_sub.source_metadata and active_sub.source_metadata.get('original_format') in ['ass', 'ssa']:
                     add_ass_format = True
             else:
-                # Provider subtitle - check if the active provider supports ASS
+                # Provider subtitle - check for ASS format
                 provider_name = active_subtitle_info.get('provider_name')
                 if provider_name:
-                    try:
-                        from ..providers.registry import ProviderRegistry
-                        provider = ProviderRegistry.get(provider_name)
-                        if provider and provider.can_return_ass:
-                            provider_config = (user.provider_credentials or {}).get(provider_name, {})
-                            if provider_config.get('try_provide_ass', False):
-                                add_ass_format = True
-                    except:
-                        pass
+                    # Method 1: provider metadata says format is ASS (e.g. SubtitleDB)
+                    prov_meta = active_subtitle_info.get('provider_metadata') or {}
+                    if prov_meta.get('format') in ['ass', 'ssa']:
+                        add_ass_format = True
+                    else:
+                        # Method 2: provider can_return_ass + user enabled try_provide_ass
+                        try:
+                            from ..providers.registry import ProviderRegistry
+                            provider = ProviderRegistry.get(provider_name)
+                            if provider and provider.can_return_ass:
+                                provider_config = (user.provider_credentials or {}).get(provider_name, {})
+                                if provider_config.get('try_provide_ass', False):
+                                    add_ass_format = True
+                        except:
+                            pass
             
             if add_ass_format:
                 ass_download_url = download_url.replace('.vtt', '.ass')
