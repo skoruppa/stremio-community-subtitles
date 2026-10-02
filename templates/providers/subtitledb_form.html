@@ -3,6 +3,19 @@
     <i class="fas fa-info-circle me-2"></i>
     <strong>TheSubtitleDB</strong> {{ _("is a free subtitle database. No authentication required — just click Connect to activate.") }}
 </div>
+
+<div class="mb-3">
+    <div class="form-check">
+        <input class="form-check-input" type="checkbox" id="subtitledb_try_provide_ass" name="try_provide_ass" value="true">
+        <label class="form-check-label" for="subtitledb_try_provide_ass">
+            {{ _('Try to provide ASS/SSA format') }}
+        </label>
+        <div class="form-text">
+            {{ _('When enabled, ASS subtitles from TheSubtitleDB will be preferred over SRT when available.') }}
+        </div>
+    </div>
+</div>
+
 <div class="form-text text-muted small">
     {{ _('Rate limit: 150 downloads/hour. Subtitles are fetched directly by your player.') }}
     <a href="https://thesubtitledb.org" target="_blank">thesubtitledb.org</a>
