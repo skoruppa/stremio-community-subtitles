@@ -1934,6 +1934,19 @@ async def download_provider_subtitle(provider_name, subtitle_id):
     """Download a subtitle from a provider. Redirects for direct-file providers,
     serves extracted content for ZIP-based providers."""
     from quart import abort
+    import base64
+
+    # Decode subtitle_id from base64 (handles URLs with slashes and query params)
+    try:
+        padding_needed = len(subtitle_id) % 4
+        if padding_needed:
+            subtitle_id_padded = subtitle_id + '=' * (4 - padding_needed)
+        else:
+            subtitle_id_padded = subtitle_id
+        decoded = base64.urlsafe_b64decode(subtitle_id_padded.encode()).decode('utf-8')
+        subtitle_id = decoded
+    except Exception:
+        pass  # Not base64 encoded, use as-is
 
     try:
         from ..providers.registry import ProviderRegistry

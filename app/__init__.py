@@ -171,6 +171,9 @@ def create_app():
     # Register custom Jinja filters
     from .routes.utils import sanitize_filename
     app.jinja_env.filters['sanitize_filename'] = lambda s: sanitize_filename(s) or ''
+    
+    import base64
+    app.jinja_env.filters['b64encode'] = lambda s: base64.urlsafe_b64encode(str(s).encode()).decode().rstrip('=') if s else ''
 
     @app.context_processor
     def inject_globals():
