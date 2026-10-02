@@ -326,6 +326,7 @@ async def addon_stream(manifest_token: str, content_type: str, content_id: str, 
             
             entries = []
             add_ass_format = False
+            ass_only = False  # When True, skip VTT entry (provider serves ASS directly via redirect)
             
             if active_subtitle_info['type'] == 'local' and active_subtitle_info['subtitle']:
                 active_sub = active_subtitle_info['subtitle']
@@ -339,6 +340,15 @@ async def addon_stream(manifest_token: str, content_type: str, content_id: str, 
                     prov_meta = active_subtitle_info.get('provider_metadata') or {}
                     if prov_meta.get('format') in ['ass', 'ssa']:
                         add_ass_format = True
+                        # For non-ZIP providers, redirect goes to the same file regardless
+                        # of extension — only serve ASS entry to avoid duplicate
+                        try:
+                            from ..providers.registry import ProviderRegistry
+                            provider = ProviderRegistry.get(provider_name)
+                            if provider and not provider.returns_zip:
+                                ass_only = True
+                        except:
+                            pass
                     else:
                         # Method 2: provider can_return_ass + user enabled try_provide_ass
                         try:
@@ -358,7 +368,10 @@ async def addon_stream(manifest_token: str, content_type: str, content_id: str, 
                     'url': ass_download_url,
                     'lang': preferred_lang
                 }
-                if user.prioritize_ass_subtitles:
+                if ass_only:
+                    # Provider serves raw ASS file (no conversion possible) — single entry
+                    entries.append(ass_entry)
+                elif user.prioritize_ass_subtitles:
                     entries.append(ass_entry)
                     entries.append(vtt_entry)
                 else:
