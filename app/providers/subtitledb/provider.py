@@ -41,6 +41,7 @@ class SubtitleDBProvider(BaseSubtitleProvider):
     supports_search = True
     supports_hash_matching = False
     can_return_ass = True  # API supports format filter
+    has_additional_settings = True
 
     async def authenticate(self, user, credentials: Dict[str, str]) -> Dict[str, Any]:
         """No authentication needed — just mark as active."""
