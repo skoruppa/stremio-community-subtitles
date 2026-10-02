@@ -1313,6 +1313,7 @@ async def get_all_subtitle_candidates(user, content_id, video_hash=None, content
                             'release_name': result.release_name,
                             'uploader': result.uploader,
                             'hash_match': result.metadata.get('hash_match', False) if result.metadata else False,
+                            'format': result.metadata.get('format') if result.metadata else None,
                         },
                         'details': {'file_id': result.subtitle_id, 'release_name': result.release_name},
                         'release_name': result.release_name,
