@@ -677,6 +677,9 @@ async def _find_best_match_by_filename(user, content_id, imdb_id, video_filename
         is_sub_forced = getattr(sub, 'forced', False) or (sub.version_info and 'forced' in sub.version_info.lower())
         score = calculate_filename_similarity(video_filename, sub.version_info, is_forced=is_sub_forced)
         if score > 0:
+            # Bonus when user prioritizes ASS and we know this subtitle is ASS
+            if user.prioritize_ass_subtitles and sub.source_metadata and sub.source_metadata.get('original_format') in ['ass', 'ssa']:
+                score += 0.15
             candidates.append({'type': 'local', 'subtitle': sub, 'score': score, 'forced': is_sub_forced})
     
     # Providers (cached or live)
@@ -690,11 +693,9 @@ async def _find_best_match_by_filename(user, content_id, imdb_id, video_filename
                     score = calculate_filename_similarity(video_filename, result.release_name, is_forced=is_result_forced)
                     if result.ai_translated:
                         score -= 0.05
-                    # Bonus for ASS format when provider's try_provide_ass is enabled
-                    if result.metadata and result.metadata.get('format') in ['ass', 'ssa']:
-                        provider_config = (user.provider_credentials or {}).get(provider_name, {})
-                        if provider_config.get('try_provide_ass', False):
-                            score += 0.15
+                    # Bonus when user prioritizes ASS and we know this subtitle is ASS
+                    if user.prioritize_ass_subtitles and result.metadata and result.metadata.get('format') in ['ass', 'ssa']:
+                        score += 0.15
                     if score > 0:
                         candidates.append({
                             'type': 'provider',
@@ -738,11 +739,9 @@ async def _find_best_match_by_filename(user, content_id, imdb_id, video_filename
                     score = calculate_filename_similarity(video_filename, result.release_name, is_forced=is_result_forced)
                     if result.ai_translated:
                         score -= 0.05
-                    # Bonus for ASS format when provider's try_provide_ass is enabled
-                    if result.metadata and result.metadata.get('format') in ['ass', 'ssa']:
-                        provider_config = (user.provider_credentials or {}).get(provider_name, {})
-                        if provider_config.get('try_provide_ass', False):
-                            score += 0.15
+                    # Bonus when user prioritizes ASS and we know this subtitle is ASS
+                    if user.prioritize_ass_subtitles and result.metadata and result.metadata.get('format') in ['ass', 'ssa']:
+                        score += 0.15
                     if score > 0:
                         candidates.append({
                             'type': 'provider',
@@ -857,14 +856,9 @@ async def _find_fallback_subtitle(user, content_id, imdb_id, content_type, lang,
             if not lang_results:
                 continue
         
-        # Sort ASS subtitles first when provider has try_provide_ass enabled
-        def _ass_sort_key(r):
-            is_ass = (r.metadata or {}).get('format') in ('ass', 'ssa')
-            if not is_ass:
-                return 1
-            prov_config = (user.provider_credentials or {}).get(provider_name, {})
-            return 0 if prov_config.get('try_provide_ass', False) else 1
-        lang_results.sort(key=_ass_sort_key)
+        # Sort ASS subtitles first when user prioritizes ASS and format is known
+        if user.prioritize_ass_subtitles:
+            lang_results.sort(key=lambda r: (r.metadata or {}).get('format') not in ('ass', 'ssa'))
         
         if episode:
             matching = []
@@ -1245,10 +1239,12 @@ async def get_all_subtitle_candidates(user, content_id, video_hash=None, content
                 fname_score = calculate_filename_similarity(video_filename, sub.version_info, is_forced=is_sub_forced)
                 score = max(score, fname_score)
             
-            # Bonus for ASS format when provider's try_provide_ass is enabled
+            # Bonus when user prioritizes ASS and we know this subtitle is ASS
             can_ass = False
             if sub.source_metadata and sub.source_metadata.get('original_format') in ['ass', 'ssa']:
                 can_ass = True
+                if user.prioritize_ass_subtitles:
+                    score += 0.15
             
             _add_candidate({
                 'type': 'local',
@@ -1290,11 +1286,9 @@ async def get_all_subtitle_candidates(user, content_id, video_hash=None, content
                     if result.ai_translated:
                         score -= 0.05
                     
-                    # Bonus for ASS format when provider's try_provide_ass is enabled
-                    if result.metadata and result.metadata.get('format') in ['ass', 'ssa']:
-                        prov_config = (user.provider_credentials or {}).get(provider_name, {})
-                        if prov_config.get('try_provide_ass', False):
-                            score += 0.15
+                    # Bonus when user prioritizes ASS and we know this subtitle is ASS
+                    if user.prioritize_ass_subtitles and result.metadata and result.metadata.get('format') in ['ass', 'ssa']:
+                        score += 0.15
                     
                     # For ZIP providers, we don't know if the subtitle inside is ASS
                     # so can_provide_ass = False for them in return_all_results mode
