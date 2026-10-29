@@ -8,14 +8,14 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-09-21 23:22+0200\n"
+"POT-Creation-Date: 2026-10-29 15:50+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.18.0\n"
+"Generated-By: Babel 2.17.0\n"
 
 #: app/email.py:125
 msgid "Stremio Community Subtitles - Confirm Your Email"
@@ -33,85 +33,89 @@ msgstr ""
 msgid "Please confirm your email address before logging in."
 msgstr ""
 
-#: app/routes/auth.py:152
+#: app/routes/auth.py:82
+msgid "Registration is currently disabled."
+msgstr ""
+
+#: app/routes/auth.py:156
 msgid "A confirmation email has been sent."
 msgstr ""
 
-#: app/routes/auth.py:155
+#: app/routes/auth.py:159
 msgid ""
 "Registration successful, but failed to send confirmation email. Please "
 "contact support."
 msgstr ""
 
-#: app/routes/auth.py:157
+#: app/routes/auth.py:161
 msgid "Registration successful! You can now log in."
 msgstr ""
 
-#: app/routes/auth.py:164
+#: app/routes/auth.py:168
 msgid "An error occurred during registration."
 msgstr ""
 
-#: app/routes/auth.py:170
+#: app/routes/auth.py:174
 msgid "An unexpected error occurred."
 msgstr ""
 
-#: app/routes/auth.py:185
+#: app/routes/auth.py:189
 msgid "Current password is incorrect"
 msgstr ""
 
-#: app/routes/auth.py:191
+#: app/routes/auth.py:195
 msgid "Your password has been updated"
 msgstr ""
 
-#: app/routes/auth.py:211
+#: app/routes/auth.py:215
 msgid "Check your email for instructions"
 msgstr ""
 
-#: app/routes/auth.py:214
+#: app/routes/auth.py:218
 msgid "Failed to send reset email. Please try again later."
 msgstr ""
 
-#: app/routes/auth.py:216
+#: app/routes/auth.py:220
 msgid "If that email is in our database, we sent a reset link"
 msgstr ""
 
-#: app/routes/auth.py:237
+#: app/routes/auth.py:241
 msgid "Email is required."
 msgstr ""
 
-#: app/routes/auth.py:247
+#: app/routes/auth.py:251
 msgid "A new confirmation email has been sent."
 msgstr ""
 
-#: app/routes/auth.py:250
+#: app/routes/auth.py:254
 msgid "Failed to send confirmation email. Please try again later."
 msgstr ""
 
-#: app/routes/auth.py:252
+#: app/routes/auth.py:256
 msgid "If that email is in our database and not confirmed, we sent a link."
 msgstr ""
 
-#: app/routes/auth.py:264
+#: app/routes/auth.py:268
 msgid "The confirmation link is invalid or has expired."
 msgstr ""
 
-#: app/routes/auth.py:270 app/routes/auth.py:299
+#: app/routes/auth.py:274 app/routes/auth.py:303
 msgid "User not found."
 msgstr ""
 
-#: app/routes/auth.py:274
+#: app/routes/auth.py:278
 msgid "Your email has already been confirmed."
 msgstr ""
 
-#: app/routes/auth.py:282
+#: app/routes/auth.py:286
 msgid "Your email has been confirmed. You can now log in."
 msgstr ""
 
-#: app/routes/auth.py:293
+#: app/routes/auth.py:297
 msgid "The reset link is invalid or has expired."
 msgstr ""
 
-#: app/routes/auth.py:306
+#: app/routes/auth.py:310
 msgid "Your password has been reset."
 msgstr ""
 
@@ -123,39 +127,39 @@ msgstr ""
 msgid "Please log in to access this page."
 msgstr ""
 
-#: app/routes/main.py:190
+#: app/routes/main.py:195
 msgid "Preferred languages updated successfully!"
 msgstr ""
 
-#: app/routes/main.py:195
+#: app/routes/main.py:200
 msgid "Failed to update language."
 msgstr ""
 
-#: app/routes/main.py:227
+#: app/routes/main.py:232
 msgid "Activity record not found."
 msgstr ""
 
-#: app/routes/main.py:237
+#: app/routes/main.py:242
 msgid "You do not have permission to delete this activity record."
 msgstr ""
 
-#: app/routes/main.py:243
+#: app/routes/main.py:248
 msgid "Activity record deleted successfully."
 msgstr ""
 
-#: app/routes/main.py:247
+#: app/routes/main.py:252
 msgid "Error deleting activity record. Please try again."
 msgstr ""
 
-#: app/routes/main.py:265
+#: app/routes/main.py:270
 msgid "Username confirmation does not match. Account not deleted."
 msgstr ""
 
-#: app/routes/main.py:286
+#: app/routes/main.py:291
 msgid "Your account has been permanently deleted."
 msgstr ""
 
-#: app/routes/main.py:292
+#: app/routes/main.py:297
 msgid "Error deleting account. Please try again or contact support."
 msgstr ""
 
@@ -219,211 +223,211 @@ msgstr ""
 msgid "Subtitle successfully linked to this video version!"
 msgstr ""
 
-#: app/routes/providers.py:319 app/routes/subtitles.py:1202
+#: app/routes/providers.py:319 app/routes/subtitles.py:1386
 msgid "Error linking subtitle"
 msgstr ""
 
-#: app/routes/subtitles.py:848
+#: app/routes/subtitles.py:1032
 msgid ""
 "Content ID must be either IMDB ID (starting with \"tt\") or Kitsu ID "
 "(format \"kitsu:12345\") or MAL ID (format \"mal:12345\")"
 msgstr ""
 
-#: app/routes/subtitles.py:858
+#: app/routes/subtitles.py:1042
 msgid "Episode number is required for series"
 msgstr ""
 
-#: app/routes/subtitles.py:949
+#: app/routes/subtitles.py:1133
 msgid "These subtitles already exist for this content and video version."
 msgstr ""
 
-#: app/routes/subtitles.py:980
+#: app/routes/subtitles.py:1164
 msgid "Server error: Cloudinary storage is not properly configured."
 msgstr ""
 
-#: app/routes/subtitles.py:1006
+#: app/routes/subtitles.py:1190
 #, python-format
 msgid "Error processing/uploading subtitle: %(error)s"
 msgstr ""
 
-#: app/routes/subtitles.py:1015
+#: app/routes/subtitles.py:1199
 msgid "Internal error: Subtitle path not determined."
 msgstr ""
 
-#: app/routes/subtitles.py:1074
+#: app/routes/subtitles.py:1258
 msgid "Subtitle uploaded and selected successfully!"
 msgstr ""
 
-#: app/routes/subtitles.py:1078
+#: app/routes/subtitles.py:1262
 msgid "Subtitle uploaded, but failed to auto-select."
 msgstr ""
 
-#: app/routes/subtitles.py:1090
+#: app/routes/subtitles.py:1274
 msgid "Error uploading subtitle. Please try again."
 msgstr ""
 
-#: app/routes/subtitles.py:1111
+#: app/routes/subtitles.py:1295
 msgid "Cannot link: your video has no hash (try playing it first)"
 msgstr ""
 
-#: app/routes/subtitles.py:1125
+#: app/routes/subtitles.py:1309
 msgid "Subtitle does not match this content"
 msgstr ""
 
-#: app/routes/subtitles.py:1138
+#: app/routes/subtitles.py:1322
 msgid "This subtitle is already linked to your video version"
 msgstr ""
 
-#: app/routes/subtitles.py:1196
+#: app/routes/subtitles.py:1380
 msgid ""
 "Subtitle linked to your video version. It will now auto-select for others"
 " with the same file."
 msgstr ""
 
-#: app/routes/subtitles.py:1254
+#: app/routes/subtitles.py:1438
 msgid "Subtitle selection updated."
 msgstr ""
 
-#: app/routes/subtitles.py:1258
+#: app/routes/subtitles.py:1442
 msgid "Error updating subtitle selection."
 msgstr ""
 
-#: app/routes/subtitles.py:1280
+#: app/routes/subtitles.py:1464
 msgid "Voting is not available for this type of subtitle."
 msgstr ""
 
-#: app/routes/subtitles.py:1295 templates/main/content_detail.html:328
+#: app/routes/subtitles.py:1479 templates/main/content_detail.html:328
 #: templates/main/my_subtitles.html:142
 #: templates/main/selected_subtitles.html:168
 #: templates/main/voted_subtitles.html:140
 msgid "Vote removed."
 msgstr ""
 
-#: app/routes/subtitles.py:1300 templates/main/content_detail.html:330
+#: app/routes/subtitles.py:1484 templates/main/content_detail.html:330
 #: templates/main/my_subtitles.html:144
 #: templates/main/selected_subtitles.html:170
 #: templates/main/voted_subtitles.html:142
 msgid "Vote updated."
 msgstr ""
 
-#: app/routes/subtitles.py:1306 templates/main/content_detail.html:329
+#: app/routes/subtitles.py:1490 templates/main/content_detail.html:329
 #: templates/main/my_subtitles.html:143
 #: templates/main/selected_subtitles.html:169
 #: templates/main/voted_subtitles.html:141
 msgid "Vote recorded."
 msgstr ""
 
-#: app/routes/subtitles.py:1317 templates/main/content_detail.html:331
+#: app/routes/subtitles.py:1501 templates/main/content_detail.html:331
 #: templates/main/my_subtitles.html:145
 #: templates/main/selected_subtitles.html:171
 #: templates/main/voted_subtitles.html:143
 msgid "Error processing vote."
 msgstr ""
 
-#: app/routes/subtitles.py:1335
+#: app/routes/subtitles.py:1519
 msgid "You do not have permission to delete this selection."
 msgstr ""
 
-#: app/routes/subtitles.py:1341
+#: app/routes/subtitles.py:1525
 msgid "Selection deleted successfully."
 msgstr ""
 
-#: app/routes/subtitles.py:1345
+#: app/routes/subtitles.py:1529
 msgid "Error deleting selection."
 msgstr ""
 
-#: app/routes/subtitles.py:1391
+#: app/routes/subtitles.py:1575
 msgid "All subtitle selections for this content have been reset."
 msgstr ""
 
-#: app/routes/subtitles.py:1397
+#: app/routes/subtitles.py:1581
 msgid "No selections to reset for this content."
 msgstr ""
 
-#: app/routes/subtitles.py:1626
+#: app/routes/subtitles.py:1810
 msgid "You do not have permission to delete this subtitle."
 msgstr ""
 
-#: app/routes/subtitles.py:1690
+#: app/routes/subtitles.py:1874
 msgid "Subtitle deleted successfully."
 msgstr ""
 
-#: app/routes/subtitles.py:1694
+#: app/routes/subtitles.py:1878
 msgid "Error deleting subtitle."
 msgstr ""
 
-#: app/routes/subtitles.py:1736
+#: app/routes/subtitles.py:1920
 #, python-format
 msgid ""
 "Admin's %(provider)s account is not configured/active; cannot download "
 "this linked subtitle."
 msgstr ""
 
-#: app/routes/subtitles.py:1751 app/routes/subtitles.py:1761
-#: app/routes/subtitles.py:1842
+#: app/routes/subtitles.py:1935 app/routes/subtitles.py:1945
+#: app/routes/subtitles.py:2039
 #, python-format
 msgid "Error downloading from %(provider)s: %(error)s"
 msgstr ""
 
-#: app/routes/subtitles.py:1758
+#: app/routes/subtitles.py:1942
 #, python-format
 msgid ""
 "%(provider)s authentication expired. Please log in again in account "
 "settings."
 msgstr ""
 
-#: app/routes/subtitles.py:1793
+#: app/routes/subtitles.py:1990
 msgid "Provider not found."
 msgstr ""
 
-#: app/routes/subtitles.py:1801
+#: app/routes/subtitles.py:1998
 #, python-format
 msgid "%(provider)s is not connected. Please connect in account settings."
 msgstr ""
 
-#: app/routes/subtitles.py:1845 app/routes/subtitles.py:1849
+#: app/routes/subtitles.py:2042 app/routes/subtitles.py:2046
 msgid "Error downloading subtitle."
 msgstr ""
 
-#: app/routes/subtitles.py:1861
+#: app/routes/subtitles.py:2058
 msgid "Target video hash is missing."
 msgstr ""
 
-#: app/routes/subtitles.py:1864
+#: app/routes/subtitles.py:2061
 msgid "Activity ID is missing."
 msgstr ""
 
-#: app/routes/subtitles.py:1870
+#: app/routes/subtitles.py:2067
 msgid "Invalid Activity ID format."
 msgstr ""
 
-#: app/routes/subtitles.py:1889
+#: app/routes/subtitles.py:2086
 msgid "Content ID mismatch between subtitle and activity."
 msgstr ""
 
-#: app/routes/subtitles.py:1893
+#: app/routes/subtitles.py:2090
 msgid ""
 "This operation is not applicable to provider-linked entries in this "
 "manner."
 msgstr ""
 
-#: app/routes/subtitles.py:1896
+#: app/routes/subtitles.py:2093
 msgid "Original subtitle does not have a file path, cannot mark as compatible."
 msgstr ""
 
-#: app/routes/subtitles.py:1914
+#: app/routes/subtitles.py:2111
 msgid "A compatible subtitle entry for this hash already exists. Selecting it."
 msgstr ""
 
-#: app/routes/subtitles.py:1933
+#: app/routes/subtitles.py:2130
 msgid "Subtitle marked as compatible with the current video version."
 msgstr ""
 
-#: app/routes/subtitles.py:1974
+#: app/routes/subtitles.py:2171
 msgid "An error occurred."
 msgstr ""
 
-#: app/routes/utils.py:1114
+#: app/routes/utils.py:1148
 msgid ""
 "OpenSubtitles authentication expired. Please log in again in account "
 "settings."
@@ -472,7 +476,7 @@ msgid "Connect to %(name)s"
 msgstr ""
 
 #: templates/_provider_status.html:71 templates/_provider_status.html:119
-#: templates/main/account_settings.html:219
+#: templates/main/account_settings.html:234
 msgid "Cancel"
 msgstr ""
 
@@ -615,7 +619,12 @@ msgstr ""
 msgid "Delete Subtitle"
 msgstr ""
 
-#: templates/base.html:85 templates/base.html:140
+#: templates/base.html:81 templates/base.html:136
+msgid "Choose appearance"
+msgstr ""
+
+#: templates/base.html:81 templates/base.html:85 templates/base.html:136
+#: templates/base.html:140
 msgid "Appearance"
 msgstr ""
 
@@ -631,7 +640,8 @@ msgstr ""
 msgid "System"
 msgstr ""
 
-#: templates/base.html:108 templates/base.html:163
+#: templates/base.html:104 templates/base.html:108 templates/base.html:159
+#: templates/base.html:163
 msgid "Language"
 msgstr ""
 
@@ -640,7 +650,7 @@ msgstr ""
 msgid "Dashboard"
 msgstr ""
 
-#: templates/base.html:129 templates/main/account_settings.html:160
+#: templates/base.html:129 templates/main/account_settings.html:175
 #: templates/main/dashboard.html:101
 msgid "Install Addon"
 msgstr ""
@@ -664,24 +674,24 @@ msgid "Logout"
 msgstr ""
 
 #: templates/auth/login.html:11 templates/base.html:191
-#: templates/main/index.html:13
+#: templates/main/index.html:17
 msgid "Login"
 msgstr ""
 
-#: templates/base.html:194 templates/main/index.html:14
+#: templates/base.html:195 templates/main/index.html:19
 msgid "Register"
 msgstr ""
 
-#: templates/base.html:205
+#: templates/base.html:207
 msgid "Like my addon? Consider"
 msgstr ""
 
-#: templates/base.html:205
+#: templates/base.html:207
 msgid "buying me a coffee"
 msgstr ""
 
 #: templates/auth/change_password.html:11
-#: templates/main/account_settings.html:172
+#: templates/main/account_settings.html:187
 msgid "Change Password"
 msgstr ""
 
@@ -717,11 +727,11 @@ msgstr ""
 msgid "Didn't receive confirmation email?"
 msgstr ""
 
-#: templates/auth/login.html:32 templates/providers/opensubtitles_form.html:7
+#: templates/auth/login.html:33 templates/providers/opensubtitles_form.html:7
 msgid "Don't have an account?"
 msgstr ""
 
-#: templates/auth/login.html:32 templates/providers/opensubtitles_form.html:7
+#: templates/auth/login.html:33 templates/providers/opensubtitles_form.html:7
 msgid "Register here"
 msgstr ""
 
@@ -887,6 +897,14 @@ msgid ""
 " set a new password:"
 msgstr ""
 
+#: templates/errors/error.html:12
+msgid "Home"
+msgstr ""
+
+#: templates/errors/error.html:16
+msgid "Go Back"
+msgstr ""
+
 #: templates/main/account_settings.html:11
 msgid "Manage your account preferences and settings."
 msgstr ""
@@ -919,6 +937,7 @@ msgstr ""
 #: templates/main/account_settings.html:66
 #: templates/main/account_settings.html:81
 #: templates/main/account_settings.html:96
+#: templates/main/account_settings.html:111
 msgid "Setting updated successfully"
 msgstr ""
 
@@ -926,6 +945,7 @@ msgstr ""
 #: templates/main/account_settings.html:67
 #: templates/main/account_settings.html:82
 #: templates/main/account_settings.html:97
+#: templates/main/account_settings.html:112
 msgid "Failed to update setting"
 msgstr ""
 
@@ -933,6 +953,7 @@ msgstr ""
 #: templates/main/account_settings.html:68
 #: templates/main/account_settings.html:83
 #: templates/main/account_settings.html:98
+#: templates/main/account_settings.html:113
 msgid "Error updating setting"
 msgstr ""
 
@@ -964,115 +985,126 @@ msgid ""
 " from auto-selection"
 msgstr ""
 
-#: templates/main/account_settings.html:109
+#: templates/main/account_settings.html:105
+msgid "Return all results"
+msgstr ""
+
+#: templates/main/account_settings.html:106
+msgid ""
+"When enabled, all found subtitles will be returned instead of just the "
+"best match. Your auto/manual selection stays as #1, additional results "
+"appear as separate entries."
+msgstr ""
+
+#: templates/main/account_settings.html:124
 msgid "Subtitle Providers"
 msgstr ""
 
-#: templates/main/account_settings.html:112
+#: templates/main/account_settings.html:127
 msgid "Connect to external subtitle providers for enhanced search capabilities."
 msgstr ""
 
-#: templates/main/account_settings.html:127
+#: templates/main/account_settings.html:142
 msgid "Account Information"
 msgstr ""
 
-#: templates/main/account_settings.html:132
+#: templates/main/account_settings.html:147
 msgid "Username:"
 msgstr ""
 
-#: templates/main/account_settings.html:135
+#: templates/main/account_settings.html:150
 msgid "Email:"
 msgstr ""
 
-#: templates/main/account_settings.html:138
+#: templates/main/account_settings.html:153
 msgid "Member Since:"
 msgstr ""
 
-#: templates/main/account_settings.html:141
+#: templates/main/account_settings.html:156
 msgid "Current Languages:"
 msgstr ""
 
-#: templates/main/account_settings.html:147
+#: templates/main/account_settings.html:162
 msgid "No languages selected"
 msgstr ""
 
-#: templates/main/account_settings.html:156 templates/main/dashboard.html:97
+#: templates/main/account_settings.html:171 templates/main/dashboard.html:97
 msgid "Addon Installation"
 msgstr ""
 
-#: templates/main/account_settings.html:159
+#: templates/main/account_settings.html:174
 msgid "Need to install your addon in Stremio?"
 msgstr ""
 
-#: templates/main/account_settings.html:166
+#: templates/main/account_settings.html:181
 msgid "Security"
 msgstr ""
 
-#: templates/main/account_settings.html:169
+#: templates/main/account_settings.html:184
 msgid "Manage your account security settings:"
 msgstr ""
 
-#: templates/main/account_settings.html:179
+#: templates/main/account_settings.html:194
 msgid "Danger Zone"
 msgstr ""
 
-#: templates/main/account_settings.html:182
+#: templates/main/account_settings.html:197
 msgid "Warning:"
 msgstr ""
 
-#: templates/main/account_settings.html:182
+#: templates/main/account_settings.html:197
 msgid "This action cannot be undone."
 msgstr ""
 
-#: templates/main/account_settings.html:183
+#: templates/main/account_settings.html:198
 msgid ""
 "Deleting your account will permanently remove all your data including "
 "uploaded subtitles, selections, and votes."
 msgstr ""
 
-#: templates/main/account_settings.html:185
-#: templates/main/account_settings.html:196
+#: templates/main/account_settings.html:200
+#: templates/main/account_settings.html:211
 msgid "Delete Account"
 msgstr ""
 
-#: templates/main/account_settings.html:200
+#: templates/main/account_settings.html:215
 msgid "Are you absolutely sure?"
 msgstr ""
 
-#: templates/main/account_settings.html:201
+#: templates/main/account_settings.html:216
 msgid "This will permanently delete your account and all associated data:"
 msgstr ""
 
-#: templates/main/account_settings.html:203
+#: templates/main/account_settings.html:218
 msgid "All uploaded subtitles"
 msgstr ""
 
-#: templates/main/account_settings.html:204
+#: templates/main/account_settings.html:219
 msgid "All subtitle selections"
 msgstr ""
 
-#: templates/main/account_settings.html:205
+#: templates/main/account_settings.html:220
 msgid "All votes"
 msgstr ""
 
-#: templates/main/account_settings.html:206
+#: templates/main/account_settings.html:221
 msgid "Activity history"
 msgstr ""
 
-#: templates/main/account_settings.html:207
+#: templates/main/account_settings.html:222
 msgid "Provider connections"
 msgstr ""
 
-#: templates/main/account_settings.html:209
+#: templates/main/account_settings.html:224
 msgid "This action cannot be undone!"
 msgstr ""
 
-#: templates/main/account_settings.html:213
+#: templates/main/account_settings.html:228
 #, python-format
 msgid "Type your username %(username)s to confirm:"
 msgstr ""
 
-#: templates/main/account_settings.html:221
+#: templates/main/account_settings.html:236
 msgid "Delete My Account"
 msgstr ""
 
@@ -1384,60 +1416,67 @@ msgstr ""
 msgid "Stremio Community Subtitles Addon"
 msgstr ""
 
-#: templates/main/index.html:10
+#: templates/main/index.html:11
 msgid ""
 "Find, share, and vote on subtitles provided by the community for Stremio."
 " Log in or register to get started and receive your personalized addon "
 "installation link."
 msgstr ""
 
-#: templates/main/index.html:24
+#: templates/main/index.html:13
+msgid ""
+"Find, share, and vote on subtitles provided by the community for Stremio."
+" Log in to get started and receive your personalized addon installation "
+"link."
+msgstr ""
+
+#: templates/main/index.html:30
 msgid "Find Subtitles"
 msgstr ""
 
-#: templates/main/index.html:25
+#: templates/main/index.html:31
 msgid ""
 "Easily find subtitles for your favorite movies and TV shows directly in "
 "Stremio."
 msgstr ""
 
-#: templates/main/index.html:33
+#: templates/main/index.html:39
 msgid "Share Subtitles"
 msgstr ""
 
-#: templates/main/index.html:34
+#: templates/main/index.html:40
 msgid ""
 "Upload and share your subtitles with the community to help others enjoy "
 "content in their language."
 msgstr ""
 
-#: templates/main/index.html:42
+#: templates/main/index.html:48
 msgid "Vote on Quality"
 msgstr ""
 
-#: templates/main/index.html:43
+#: templates/main/index.html:49
 msgid ""
 "Vote on subtitles to help others find the best quality translations for "
 "their viewing experience."
 msgstr ""
 
-#: templates/main/index.html:51
+#: templates/main/index.html:57
 msgid "How It Works"
 msgstr ""
 
-#: templates/main/index.html:57
+#: templates/main/index.html:64
 msgid "Register for an account"
 msgstr ""
 
-#: templates/main/index.html:58
+#: templates/main/index.html:66
 msgid "Install the addon in Stremio using your personal link"
 msgstr ""
 
-#: templates/main/index.html:59
+#: templates/main/index.html:67
 msgid "Start watching content with community subtitles"
 msgstr ""
 
-#: templates/main/index.html:60
+#: templates/main/index.html:68
 msgid "Upload your own subtitles or vote on existing ones"
 msgstr ""
 
@@ -1766,7 +1805,7 @@ msgstr ""
 msgid "Your SubDL API key"
 msgstr ""
 
-#: templates/providers/subdl_form.html:7
+#: templates/providers/subdl_form.html:7 templates/providers/subsro_form.html:7
 msgid "Get your API key from"
 msgstr ""
 
@@ -1815,6 +1854,21 @@ msgstr ""
 msgid ""
 "SubSource offers API access for subtitle downloads. Check their website "
 "for current limits."
+msgstr ""
+
+#: templates/providers/subsro_form.html:3
+msgid "Subs.ro API Key"
+msgstr ""
+
+#: templates/providers/subsro_form.html:5
+msgid "Your Subs.ro API key"
+msgstr ""
+
+#: templates/providers/subsro_form.html:13
+msgid ""
+"is a Romanian subtitle database. It primarily offers Romanian subtitles, "
+"but also supports English, Italian, French, German, Hungarian, Greek, "
+"Portuguese and Spanish."
 msgstr ""
 
 #: templates/providers/subtitledb_form.html:4
