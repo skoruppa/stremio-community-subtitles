@@ -101,7 +101,7 @@
                     </div>
                 </div>
                 <div class="dropdown me-2 d-lg-none">
-                    <button class="theme-toggle" type="button" id="langDropdownMobile" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Language" title="Language">
+                    <button class="theme-toggle" type="button" id="langDropdownMobile" data-bs-toggle="dropdown" aria-expanded="false" aria-label="{{ _('Language') }}" title="{{ _('Language') }}">
                         <span aria-hidden="true">{{ language_map.get(current_language, language_map['en'])['flag'] }}</span>
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end theme-menu" aria-labelledby="langDropdownMobile">
@@ -156,7 +156,7 @@
                         </div>
                     </li>
                     <li class="nav-item dropdown d-none d-lg-block me-2">
-                        <button class="theme-toggle" type="button" id="langDropdown" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Language" title="Language">
+                        <button class="theme-toggle" type="button" id="langDropdown" data-bs-toggle="dropdown" aria-expanded="false" aria-label="{{ _('Language') }}" title="{{ _('Language') }}">
                             <span aria-hidden="true">{{ language_map.get(current_language, language_map['en'])['flag'] }}</span>
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end theme-menu" aria-labelledby="langDropdown">
