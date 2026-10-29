@@ -277,9 +277,16 @@
                 }
 
                 if (themeToggles.length) {
+                    const themeLabelMap = {
+                        'light': '{{ _("Light") }}',
+                        'dark': '{{ _("Dark") }}',
+                        'system': '{{ _("System") }}'
+                    };
+                    const appearanceWord = '{{ _("Appearance") }}';
+                    const choiceLabel = themeLabelMap[choice] || choice;
                     const label = choice === 'system'
-                        ? `Appearance: System (${resolved})`
-                        : `Appearance: ${choice.charAt(0).toUpperCase() + choice.slice(1)}`;
+                        ? `${appearanceWord}: ${choiceLabel} (${resolved})`
+                        : `${appearanceWord}: ${choiceLabel}`;
                     themeToggles.forEach(toggle => {
                         toggle.setAttribute('aria-label', label);
                         toggle.setAttribute('title', label);
