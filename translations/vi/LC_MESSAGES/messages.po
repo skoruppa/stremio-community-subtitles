@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: stremio-community-subtitles\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2026-08-26 23:00+0200\n"
-"PO-Revision-Date: 2026-08-27 06:52\n"
+"PO-Revision-Date: 2026-10-22 02:58\n"
 "Last-Translator: \n"
 "Language-Team: Vietnamese\n"
 "MIME-Version: 1.0\n"
@@ -1035,11 +1035,11 @@ msgstr "Khi bật, phụ đề bắt buộc/phụ đề nước ngoài sẽ đư
 
 #: templates/main/account_settings.html:92
 msgid "Ignore AI-translated subtitles"
-msgstr ""
+msgstr "Bỏ qua phụ đề do AI dịch"
 
 #: templates/main/account_settings.html:93
 msgid "When enabled, AI/machine translated subtitles will be completely excluded from auto-selection"
-msgstr ""
+msgstr "Khi được bật, các phụ đề do AI/máy dịch sẽ bị loại trừ hoàn toàn khỏi quá trình tự động chọn"
 
 #: templates/main/account_settings.html:111
 msgid "Subtitle Providers"
