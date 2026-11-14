@@ -29,7 +29,7 @@ except ImportError:
 from ..extensions import async_session_maker
 from ..models import User, Subtitle, UserActivity, UserSubtitleSelection, SubtitleVote  
 from .manifest import MANIFEST
-from ..lib.subtitles import convert_to_vtt
+from ..lib.subtitles import convert_to_vtt, is_client_playable_subtitle_format, subtitle_extension_for_conversion
 from .utils import respond_with, get_active_subtitle_details, respond_with_no_cache, NoCacheResponse, no_cache_redirect, get_vtt_content, generate_vtt_message, sanitize_filename, get_all_subtitle_candidates
 from urllib.parse import parse_qs, unquote
 import gzip
@@ -415,6 +415,9 @@ async def addon_stream(manifest_token: str, content_type: str, content_id: str, 
                     elif candidate.get('provider_name') and candidate.get('provider_subtitle_id'):
                         rank_context['_rank_provider'] = candidate['provider_name']
                         rank_context['_rank_sub_id'] = candidate['provider_subtitle_id']
+                        candidate_format = (candidate.get('provider_metadata') or {}).get('format')
+                        if candidate_format:
+                            rank_context['_rank_fmt'] = candidate_format
                     else:
                         continue
                     
@@ -619,7 +622,7 @@ async def unified_download(manifest_token: str, download_identifier: str):
             'subtitle': None,
             'provider_name': rank_provider,
             'provider_subtitle_id': str(rank_sub_id),
-            'provider_metadata': {},
+            'provider_metadata': {'format': context.get('_rank_fmt')} if context.get('_rank_fmt') else {},
             'details': {'file_id': str(rank_sub_id)},
             'auto': True,
             'user_vote_value': None,
@@ -823,7 +826,13 @@ async def unified_download(manifest_token: str, download_identifier: str):
         try:
             from ..providers.registry import ProviderRegistry
             provider_obj = ProviderRegistry.get(provider_subtitle_to_serve.get('provider')) if provider_subtitle_to_serve else None
-            if provider_obj and not provider_obj.returns_zip and not is_ass_request:
+            served_format = ((provider_subtitle_to_serve or {}).get('metadata') or {}).get('format')
+            if (
+                provider_obj
+                and not provider_obj.returns_zip
+                and not is_ass_request
+                and is_client_playable_subtitle_format(served_format)
+            ):
                 current_app.logger.info(f"Redirecting to provider URL: {provider_subtitle_url}")
                 return no_cache_redirect(provider_subtitle_url, code=302)
         except Exception:
@@ -880,6 +889,16 @@ async def unified_download(manifest_token: str, download_identifier: str):
                         from ..lib.subtitles import detect_encoding
                         encoding = detect_encoding(raw_bytes)
                         vtt_content = raw_bytes.decode(encoding, errors='replace')
+                        if not is_ass_request and not vtt_content.lstrip('\ufeff').strip().upper().startswith("WEBVTT"):
+                            source_format = ((provider_subtitle_to_serve or {}).get('metadata') or {}).get('format')
+                            try:
+                                vtt_content = await convert_to_vtt(
+                                    raw_bytes,
+                                    subtitle_extension_for_conversion(source_format, r.headers.get('Content-Disposition'), provider_subtitle_url),
+                                    encoding=encoding,
+                                )
+                            except Exception as e:
+                                current_app.logger.warning(f"Could not convert provider subtitle to VTT (format={source_format}, url={provider_subtitle_url}): {e}")
         except asyncio.TimeoutError:
             current_app.logger.warning(f"Timeout fetching subtitle from {provider_subtitle_url}")
             message_key = 'provider_timeout'

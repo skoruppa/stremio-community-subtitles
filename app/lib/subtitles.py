@@ -50,6 +50,37 @@ def detect_encoding(raw_data):
     return encoding or 'utf-8'
 
 
+CLIENT_PLAYABLE_SUBTITLE_FORMATS = {'srt', 'vtt', 'webvtt', 'ass', 'ssa'}
+_CONVERSION_FORMATS = {'srt', 'vtt', 'ass', 'ssa', 'microdvd', 'mpl2', 'tmp'}
+_CONVERSION_FORMAT_ALIASES = {'sub': 'microdvd', 'txt': 'microdvd', 'webvtt': 'vtt'}
+
+
+def is_client_playable_subtitle_format(subtitle_format):
+    if not subtitle_format:
+        return True
+    return subtitle_format.lower().lstrip('.') in CLIENT_PLAYABLE_SUBTITLE_FORMATS
+
+
+def subtitle_extension_for_conversion(subtitle_format, content_disposition=None, url=None):
+    candidates = [subtitle_format]
+    if content_disposition:
+        match = re.search(r'filename\*?=(?:UTF-8\'\')?"?([^";]+)', content_disposition, re.IGNORECASE)
+        if match and '.' in match.group(1):
+            candidates.append(match.group(1).rsplit('.', 1)[-1])
+    if url:
+        path = url.split('?', 1)[0].rsplit('/', 1)[-1]
+        if '.' in path:
+            candidates.append(path.rsplit('.', 1)[-1])
+    for candidate in candidates:
+        if not candidate:
+            continue
+        normalized = candidate.lower().lstrip('.')
+        normalized = _CONVERSION_FORMAT_ALIASES.get(normalized, normalized)
+        if normalized in _CONVERSION_FORMATS:
+            return normalized
+    return 'srt'
+
+
 async def convert_to_vtt(file_data, file_extension, encoding=None, fps=None):
     """
     Convert subtitle file to VTT format.
