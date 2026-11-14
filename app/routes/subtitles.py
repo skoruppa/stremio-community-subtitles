@@ -320,7 +320,11 @@ async def addon_stream(manifest_token: str, content_type: str, content_id: str, 
             
             vtt_entry = {
                 'id': stremio_sub_id,
-                'url': download_url,
+                'url': with_direct_file_extension(
+                    download_url,
+                    active_subtitle_info.get('provider_name'),
+                    active_subtitle_info.get('provider_metadata'),
+                ),
                 'lang': preferred_lang
             }
             
@@ -445,7 +449,11 @@ async def addon_stream(manifest_token: str, content_type: str, content_id: str, 
                     
                     extra_vtt_entry = {
                         'id': extra_sub_id,
-                        'url': rank_download_url,
+                        'url': with_direct_file_extension(
+                            rank_download_url,
+                            candidate.get('provider_name'),
+                            candidate.get('provider_metadata'),
+                        ),
                         'lang': preferred_lang
                     }
                     
@@ -525,6 +533,26 @@ async def addon_stream(manifest_token: str, content_type: str, content_id: str, 
     return respond_with_no_cache({'subtitles': subtitles_list})
 
 
+_DIRECT_FILE_EXTENSIONS = {'srt': 'srt', 'sub': 'sub', 'txt': 'sub'}
+
+
+def with_direct_file_extension(download_url, provider_name, provider_metadata):
+    subtitle_format = ((provider_metadata or {}).get('format') or '').lower().lstrip('.')
+    extension = _DIRECT_FILE_EXTENSIONS.get(subtitle_format)
+    if not extension or not provider_name or not download_url.endswith('.vtt'):
+        return download_url
+    try:
+        from ..providers.registry import ProviderRegistry
+        provider = ProviderRegistry.get(provider_name)
+    except Exception:
+        return download_url
+    if not provider or provider.returns_zip:
+        return download_url
+    return f"{download_url[:-len('.vtt')]}.{extension}"
+
+
+@subtitles_bp.route('/<manifest_token>/download/<download_identifier>.sub')
+@subtitles_bp.route('/<manifest_token>/download/<download_identifier>.srt')
 @subtitles_bp.route('/<manifest_token>/download/<download_identifier>.ass')
 @subtitles_bp.route('/<manifest_token>/download/<download_identifier>.vtt')
 async def unified_download(manifest_token: str, download_identifier: str):
