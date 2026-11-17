@@ -131,7 +131,30 @@ async def search_providers_parallel(user, active_providers, search_params, timeo
             provider_name, provider_results = result
             results_by_provider[provider_name] = provider_results
 
-    return results_by_provider
+    return _drop_other_episodes(results_by_provider, search_params)
+
+
+def _drop_other_episodes(results_by_provider, search_params):
+    from .release_episode import release_matches_episode, numbers_outside_episode
+
+    episode = search_params.get('episode')
+    if not episode:
+        return results_by_provider
+
+    season = search_params.get('season')
+    ignored_numbers = numbers_outside_episode(search_params.get('video_filename'), episode)
+    filtered = {}
+    for provider_name, provider_results in results_by_provider.items():
+        kept = [
+            r for r in provider_results or []
+            if (r.metadata or {}).get('hash_match')
+            or release_matches_episode(r.release_name, season, episode, ignored_numbers)
+        ]
+        dropped = len(provider_results or []) - len(kept)
+        if dropped:
+            logger.info(f"Provider {provider_name}: dropped {dropped} results for other episodes than {episode}")
+        filtered[provider_name] = kept
+    return filtered
 
 
 async def search_providers_with_fallback(user, active_providers, search_params, timeout=10.0):
