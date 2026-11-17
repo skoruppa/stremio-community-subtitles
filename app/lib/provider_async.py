@@ -142,13 +142,15 @@ def _drop_other_episodes(results_by_provider, search_params):
         return results_by_provider
 
     season = search_params.get('season')
-    ignored_numbers = numbers_outside_episode(search_params.get('video_filename'), episode)
+    source_episode = search_params.get('source_episode')
+    alternate_episode = source_episode if source_episode != episode else None
+    ignored_numbers = numbers_outside_episode(search_params.get('video_filename'), episode, alternate_episode)
     filtered = {}
     for provider_name, provider_results in results_by_provider.items():
         kept = [
             r for r in provider_results or []
             if (r.metadata or {}).get('hash_match')
-            or release_matches_episode(r.release_name, season, episode, ignored_numbers)
+            or release_matches_episode(r.release_name, season, episode, ignored_numbers, alternate_episode)
         ]
         dropped = len(provider_results or []) - len(kept)
         if dropped:

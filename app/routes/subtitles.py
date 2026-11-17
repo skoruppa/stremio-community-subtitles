@@ -206,7 +206,8 @@ async def addon_stream(manifest_token: str, content_type: str, content_id: str, 
         imdb_id = None
         season = None
         episode = None
-        
+        mapping = None
+
         if content_id.startswith('tt'):
             imdb_id = content_id.split(':')[0]
         elif content_id.startswith('kitsu:'):
@@ -245,7 +246,11 @@ async def addon_stream(manifest_token: str, content_type: str, content_id: str, 
                         season = int(parts[-2])
                     except ValueError:
                         pass
-        
+
+        from ..lib.anime_mapping import to_provider_episode
+        source_episode = episode
+        episode = to_provider_episode(mapping, episode)
+
         if imdb_id:
             try:
                 from ..providers.registry import ProviderRegistry
@@ -259,6 +264,7 @@ async def addon_stream(manifest_token: str, content_type: str, content_id: str, 
                         'languages': preferred_langs,
                         'season': season,
                         'episode': episode,
+                        'source_episode': source_episode,
                         'content_type': content_type,
                         'video_filename': video_filename
                     }
@@ -611,6 +617,9 @@ async def unified_download(manifest_token: str, download_identifier: str):
         current_app.logger.error(f"Failed to decode download identifier '{download_identifier}': {e}")
         return NoCacheResponse(generate_vtt_message("Invalid download link."), status=400, mimetype='text/vtt')
 
+    from ..lib.anime_mapping import mapping_for_content_id, to_provider_episode
+    zip_episode = to_provider_episode(mapping_for_content_id(content_id), episode)
+
     # --- Handle rank-specific download (return_all_results mode) ---
     rank_local_id = context.get('_rank_local_id')
     rank_provider = context.get('_rank_provider')
@@ -794,7 +803,7 @@ async def unified_download(manifest_token: str, download_identifier: str):
                                 zip_content = await provider.download_subtitle(user, subtitle_id)
                                 from .utils import extract_subtitle_from_zip, process_subtitle_content
                                 
-                                subtitle_content, filename, extension = extract_subtitle_from_zip(zip_content, episode=episode, video_filename=video_filename)
+                                subtitle_content, filename, extension = extract_subtitle_from_zip(zip_content, episode=zip_episode, video_filename=video_filename, alternate_episode=episode)
                                 del zip_content  # Free memory immediately
                                 
                                 processed = await process_subtitle_content(subtitle_content, extension)
@@ -872,7 +881,7 @@ async def unified_download(manifest_token: str, download_identifier: str):
                             # Extract subtitle from ZIP
                             zip_data = await r.read()
                             current_app.logger.info(f"Downloaded ZIP from {provider_subtitle_url}, size={len(zip_data)}, first_bytes={zip_data[:20].hex() if len(zip_data) >= 20 else zip_data.hex()}")
-                            subtitle_content, filename, extension = extract_subtitle_from_zip(zip_data, episode=episode, video_filename=video_filename)
+                            subtitle_content, filename, extension = extract_subtitle_from_zip(zip_data, episode=zip_episode, video_filename=video_filename, alternate_episode=episode)
                             del zip_data  # Free memory
                             
                             # Process subtitle (convert to VTT, handle ASS)

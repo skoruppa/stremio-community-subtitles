@@ -60,7 +60,7 @@ def _is_year(number):
     return 1900 <= number <= 2099
 
 
-def numbers_outside_episode(video_filename, episode):
+def numbers_outside_episode(video_filename, *episodes):
     if not video_filename:
         return set()
     name = _normalize(video_filename)
@@ -68,10 +68,10 @@ def numbers_outside_episode(video_filename, episode):
         name = _SEASON_EPISODE.sub(' ', name)
         name = _CROSS_EPISODE.sub(' ', name)
     numbers, _ = _bare_episode_numbers(name)
-    return {n for n in numbers if n != episode}
+    return {n for n in numbers if n not in episodes}
 
 
-def _segment_matches(segment, season, episode, ignored_numbers):
+def _segment_matches(segment, season, episode, ignored_numbers, alternate_episode):
     name = _normalize(segment)
     labelled = _season_episodes(name)
     comparable = [
@@ -85,14 +85,15 @@ def _segment_matches(segment, season, episode, ignored_numbers):
         return True
 
     numbers, ranges = _bare_episode_numbers(name)
-    if episode in numbers or any(first <= episode <= last for first, last in ranges):
+    accepted = {episode, alternate_episode} - {None}
+    if accepted & numbers or any(first <= ep <= last for ep in accepted for first, last in ranges):
         return True
     meaningful = {n for n in numbers if n not in ignored_numbers and not _is_year(n)}
     return not meaningful and not ranges
 
 
-def release_matches_episode(release_name, season, episode, ignored_numbers=frozenset()):
+def release_matches_episode(release_name, season, episode, ignored_numbers=frozenset(), alternate_episode=None):
     if not release_name or not episode:
         return True
     segments = [s for s in release_name.split(';') if s.strip()] or [release_name]
-    return any(_segment_matches(s, season, episode, ignored_numbers) for s in segments)
+    return any(_segment_matches(s, season, episode, ignored_numbers, alternate_episode) for s in segments)

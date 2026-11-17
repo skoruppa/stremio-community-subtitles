@@ -145,12 +145,14 @@ async def content_detail(activity_id):
     # Determine imdb_id for provider search
     imdb_id = None
     search_query = None
+    anime_mapping = None
     if activity.content_id.startswith('tt'):
         imdb_id = activity.content_id.split(':')[0]
     elif activity.content_id.startswith('kitsu:'):
         from ..lib.anime_mapping import get_imdb_from_kitsu
         kitsu_id = int(activity.content_id.split(':')[1])
         result = get_imdb_from_kitsu(kitsu_id)
+        anime_mapping = result
         if result:
             imdb_id = result['imdb_id']
             if result['season']:
@@ -159,6 +161,7 @@ async def content_detail(activity_id):
         from ..lib.anime_mapping import get_imdb_from_mal
         mal_id = int(activity.content_id.split(':')[1])
         result = get_imdb_from_mal(mal_id)
+        anime_mapping = result
         if result:
             imdb_id = result['imdb_id']
             if result['season']:
@@ -178,6 +181,7 @@ async def content_detail(activity_id):
         try:
             from ..providers.registry import ProviderRegistry
             from ..lib.provider_async import search_providers_parallel
+            from ..lib.anime_mapping import to_provider_episode
             
             async with async_session_maker() as session:
                 result = await session.execute(select(User).filter_by(id=user_id))
@@ -190,7 +194,8 @@ async def content_detail(activity_id):
                 'video_hash': activity.video_hash,
                 'languages': preferred_languages,
                 'season': season,
-                'episode': episode,
+                'episode': to_provider_episode(anime_mapping, episode),
+                'source_episode': episode,
                 'content_type': activity.content_type,
                 'video_filename': activity.video_filename
             }

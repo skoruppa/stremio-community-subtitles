@@ -28,21 +28,27 @@ def _init_db():
     
     conn = sqlite3.connect(ANIME_DB_PATH)
     cursor = conn.cursor()
-    
+
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS metadata (
+            key TEXT PRIMARY KEY,
+            value TEXT
+        )
+    ''')
+
+    columns = {row[1] for row in cursor.execute('PRAGMA table_info(anime_mapping)')}
+    if columns and 'episode_offset' not in columns:
+        cursor.execute('DROP TABLE anime_mapping')
+        cursor.execute('DELETE FROM metadata WHERE key = ?', ('json_hash',))
+
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS anime_mapping (
             kitsu_id INTEGER,
             mal_id INTEGER,
             imdb_id TEXT,
             tvdb_season INTEGER,
+            episode_offset INTEGER,
             PRIMARY KEY (kitsu_id, mal_id)
-        )
-    ''')
-    
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS metadata (
-            key TEXT PRIMARY KEY,
-            value TEXT
         )
     ''')
 
@@ -66,14 +72,14 @@ def _load_cache():
     
     conn = sqlite3.connect(ANIME_DB_PATH)
     cursor = conn.cursor()
-    cursor.execute('SELECT kitsu_id, mal_id, imdb_id, tvdb_season FROM anime_mapping')
-    
+    cursor.execute('SELECT kitsu_id, mal_id, imdb_id, tvdb_season, episode_offset FROM anime_mapping')
+
     kitsu = {}
     mal = {}
     for row in cursor.fetchall():
-        kitsu_id, mal_id, imdb_id, tvdb_season = row
+        kitsu_id, mal_id, imdb_id, tvdb_season, episode_offset = row
         if imdb_id:
-            entry = {'imdb_id': imdb_id, 'season': tvdb_season}
+            entry = {'imdb_id': imdb_id, 'season': tvdb_season, 'episode_offset': episode_offset or 0}
             if kitsu_id:
                 kitsu[kitsu_id] = entry
             if mal_id:
@@ -121,7 +127,8 @@ def update_database():
         mal_id = entry.get('mal_id')
         imdb_id = entry.get('imdb_id')
         tvdb_season = entry.get('season', {}).get('tvdb') if entry.get('season') else None
-        
+        episode_offset = entry.get('episode_offset', {}).get('tvdb') if entry.get('episode_offset') else None
+
         # These fields can be lists in the JSON — take first value
         if isinstance(kitsu_id, list):
             kitsu_id = kitsu_id[0] if kitsu_id else None
@@ -131,11 +138,13 @@ def update_database():
             imdb_id = imdb_id[0] if imdb_id else None
         if isinstance(tvdb_season, list):
             tvdb_season = tvdb_season[0] if tvdb_season else None
-        
+        if isinstance(episode_offset, list):
+            episode_offset = episode_offset[0] if episode_offset else None
+
         if kitsu_id or mal_id:
             cursor.execute(
-                'INSERT OR REPLACE INTO anime_mapping (kitsu_id, mal_id, imdb_id, tvdb_season) VALUES (?, ?, ?, ?)',
-                (kitsu_id, mal_id, imdb_id, tvdb_season)
+                'INSERT OR REPLACE INTO anime_mapping (kitsu_id, mal_id, imdb_id, tvdb_season, episode_offset) VALUES (?, ?, ?, ?, ?)',
+                (kitsu_id, mal_id, imdb_id, tvdb_season, episode_offset)
             )
     
     cursor.execute('INSERT OR REPLACE INTO metadata (key, value) VALUES (?, ?)', ('json_hash', current_hash))
@@ -160,3 +169,21 @@ def get_imdb_from_mal(mal_id: int):
     if not _cache_loaded:
         _load_cache()
     return _mal_cache.get(mal_id)
+
+
+def mapping_for_content_id(content_id):
+    prefix, _, rest = (content_id or '').partition(':')
+    if prefix not in ('kitsu', 'mal'):
+        return None
+    try:
+        anime_id = int(rest.split(':')[0])
+    except ValueError:
+        return None
+    return get_imdb_from_kitsu(anime_id) if prefix == 'kitsu' else get_imdb_from_mal(anime_id)
+
+
+def to_provider_episode(mapping, episode):
+    if not mapping or episode is None:
+        return episode
+    shifted = episode + (mapping.get('episode_offset') or 0)
+    return shifted if shifted >= 1 else episode

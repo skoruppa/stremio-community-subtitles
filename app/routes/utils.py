@@ -336,12 +336,14 @@ async def get_active_subtitle_details(user, content_id, video_hash=None, content
     
     # Parse Kitsu/MAL content_id and extract IMDb ID if needed
     imdb_id = None
+    anime_mapping = None
     if content_id.startswith('tt'):
         imdb_id = content_id.split(':')[0]
     elif content_id.startswith('kitsu:'):
         from ..lib.anime_mapping import get_imdb_from_kitsu
         kitsu_id = int(content_id.split(':')[1])
         result = get_imdb_from_kitsu(kitsu_id)
+        anime_mapping = result
         if result:
             imdb_id = result['imdb_id']
             if result['season']:
@@ -350,6 +352,7 @@ async def get_active_subtitle_details(user, content_id, video_hash=None, content
         from ..lib.anime_mapping import get_imdb_from_mal
         mal_id = int(content_id.split(':')[1])
         result = get_imdb_from_mal(mal_id)
+        anime_mapping = result
         if result:
             imdb_id = result['imdb_id']
             if result['season']:
@@ -369,6 +372,10 @@ async def get_active_subtitle_details(user, content_id, video_hash=None, content
                     season = int(parts[-2])
                 except ValueError:
                     pass
+
+    from ..lib.anime_mapping import to_provider_episode
+    source_episode = episode
+    episode = to_provider_episode(anime_mapping, episode)
     
     result = {
         'type': 'none',
@@ -442,7 +449,7 @@ async def get_active_subtitle_details(user, content_id, video_hash=None, content
         
         # 3. Providers by hash
         if video_hash:
-            provider_result = await _search_providers_by_hash(user, imdb_id, video_hash, content_type, lang, season, episode, cached_provider_results)
+            provider_result = await _search_providers_by_hash(user, imdb_id, video_hash, content_type, lang, season, episode, cached_provider_results, source_episode=source_episode)
             if provider_result:
                 result.update(provider_result)
                 result['auto'] = True
@@ -452,7 +459,7 @@ async def get_active_subtitle_details(user, content_id, video_hash=None, content
         
         # 4. Best match by filename
         if video_filename:
-            best_match = await _find_best_match_by_filename(user, content_id, imdb_id, video_filename, content_type, lang, season, episode, cached_provider_results, video_hash=video_hash, session=session)
+            best_match = await _find_best_match_by_filename(user, content_id, imdb_id, video_filename, content_type, lang, season, episode, cached_provider_results, video_hash=video_hash, session=session, source_episode=source_episode)
             if best_match:
                 result.update(best_match)
                 result['auto'] = True
@@ -461,7 +468,7 @@ async def get_active_subtitle_details(user, content_id, video_hash=None, content
                 return result
         
         # 5. Fallback
-        fallback = await _find_fallback_subtitle(user, content_id, imdb_id, content_type, lang, season, episode, cached_provider_results, video_hash=video_hash, session=session)
+        fallback = await _find_fallback_subtitle(user, content_id, imdb_id, content_type, lang, season, episode, cached_provider_results, video_hash=video_hash, session=session, source_episode=source_episode)
         if fallback:
             result.update(fallback)
             result['auto'] = True
@@ -547,7 +554,7 @@ async def _find_local_by_hash(content_id, video_hash, lang, user, session=None):
         return await _query(s)
 
 
-async def _search_providers_by_hash(user, imdb_id, video_hash, content_type, lang, season=None, episode=None, cached_results=None):
+async def _search_providers_by_hash(user, imdb_id, video_hash, content_type, lang, season=None, episode=None, cached_results=None, source_episode=None):
     """Search for hash match from cache or live search"""
     if cached_results:
         # Collect all hash matches
@@ -607,6 +614,7 @@ async def _search_providers_by_hash(user, imdb_id, video_hash, content_type, lan
             'languages': [lang],
             'season': season,
             'episode': episode,
+            'source_episode': source_episode,
             'content_type': content_type
         }
         
@@ -656,7 +664,7 @@ async def _search_providers_by_hash(user, imdb_id, video_hash, content_type, lan
     return None
 
 
-async def _find_best_match_by_filename(user, content_id, imdb_id, video_filename, content_type, lang, season=None, episode=None, cached_results=None, video_hash=None, session=None):
+async def _find_best_match_by_filename(user, content_id, imdb_id, video_filename, content_type, lang, season=None, episode=None, cached_results=None, video_hash=None, session=None, source_episode=None):
     """Find best match by filename from cache or live search"""
     candidates = []
     
@@ -725,6 +733,7 @@ async def _find_best_match_by_filename(user, content_id, imdb_id, video_filename
                 'languages': [lang],
                 'season': season,
                 'episode': episode,
+                'source_episode': source_episode,
                 'content_type': content_type,
                 'video_filename': video_filename
             }
@@ -797,7 +806,7 @@ async def _find_best_match_by_filename(user, content_id, imdb_id, video_filename
         }
 
 
-async def _find_fallback_subtitle(user, content_id, imdb_id, content_type, lang, season=None, episode=None, cached_results=None, video_hash=None, session=None):
+async def _find_fallback_subtitle(user, content_id, imdb_id, content_type, lang, season=None, episode=None, cached_results=None, video_hash=None, session=None, source_episode=None):
     """Find fallback subtitle from cache or live search"""
     # Local first
     async def _local_query(s):
@@ -837,6 +846,7 @@ async def _find_fallback_subtitle(user, content_id, imdb_id, content_type, lang,
                 'languages': [lang],
                 'season': season,
                 'episode': episode,
+                'source_episode': source_episode,
                 'content_type': content_type
             }
             
@@ -969,7 +979,7 @@ def generate_vtt_message(message: str) -> str:
     return f"WEBVTT\n\n00:00:00.000 --> 00:00:08.000\n{message}"
 
 
-def extract_subtitle_from_zip(zip_content: bytes, episode: int = None, video_filename: str = None):
+def extract_subtitle_from_zip(zip_content: bytes, episode: int = None, video_filename: str = None, alternate_episode: int = None):
     """
     Extracts subtitle file from ZIP or RAR archive.
     If episode is provided, tries to find file matching episode number.
@@ -979,12 +989,11 @@ def extract_subtitle_from_zip(zip_content: bytes, episode: int = None, video_fil
     subtitle_extensions = ['.srt', '.vtt', '.ass', '.ssa', '.sub', '.smi']
     
     # Build episode matching patterns (both zero-padded and non-padded)
-    episode_patterns = []
-    if episode is not None:
+    def build_episode_patterns(episode):
         ep = episode
         ep2 = f'{episode:02d}'
         ep3 = f'{episode:03d}'
-        episode_patterns = [
+        return [
             f'e{ep2}',          # e04, E04
             f'e{ep}',           # e4
             f'ep{ep2}',         # ep04
@@ -1006,6 +1015,8 @@ def extract_subtitle_from_zip(zip_content: bytes, episode: int = None, video_fil
             f' {ep3} ',         # " 004 "
             f' {ep3}.',         # " 004."
         ]
+
+    episodes_to_try = [e for e in dict.fromkeys((episode, alternate_episode)) if e is not None]
     
     def find_and_extract(archive_files, read_func, archive_type):
         """Common logic for finding and extracting subtitle from archive"""
@@ -1020,7 +1031,8 @@ def extract_subtitle_from_zip(zip_content: bytes, episode: int = None, video_fil
             fname = chosen if isinstance(chosen, str) else chosen.filename
             return (read_func(chosen), fname, os.path.splitext(fname)[1].lower())
         
-        if episode_patterns:
+        for wanted_episode in episodes_to_try:
+            episode_patterns = build_episode_patterns(wanted_episode)
             for f in subtitle_files:
                 fname = f if isinstance(f, str) else f.filename
                 fname_lower = fname.lower()
@@ -1037,7 +1049,7 @@ def extract_subtitle_from_zip(zip_content: bytes, episode: int = None, video_fil
                 name_without_ext = os.path.splitext(fname_base)[0]
                 # Match number at end: "Title 4", "Title - 04", "Title_04"
                 match = re.search(r'[\s_\-.](\d+)$', name_without_ext)
-                if match and int(match.group(1)) == episode:
+                if match and int(match.group(1)) == wanted_episode:
                     return (read_func(f), fname, os.path.splitext(fname)[1].lower())
         
         # Try filename similarity matching when video_filename is available
