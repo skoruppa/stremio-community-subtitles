@@ -14,7 +14,7 @@ from sqlalchemy.orm import Session, joinedload
 from iso639 import Lang
 
 from ..forms import SubtitleUploadForm
-from ..languages import LANGUAGES, get_language_name
+from ..languages import LANGUAGES
 from ..lib.metadata import get_metadata
 from ..pagination import paginate_query
 
@@ -308,7 +308,6 @@ async def addon_stream(manifest_token: str, content_type: str, content_id: str, 
             elif active_subtitle_info.get('release_name'):
                 subtitle_name = active_subtitle_info['release_name']
             
-            has_subtitle_name = bool(subtitle_name)
             # Fallback: use content_id + short identifier
             if not subtitle_name:
                 short_id = download_identifier[:8] if len(download_identifier) >= 8 else download_identifier
@@ -334,8 +333,9 @@ async def addon_stream(manifest_token: str, content_type: str, content_id: str, 
                 ),
                 'lang': preferred_lang
             }
-            if has_subtitle_name:
-                vtt_entry['label'] = subtitle_label(preferred_lang, subtitle_name)
+            source_label = subtitle_source_label(active_subtitle_info)
+            if has_subtitles and source_label:
+                vtt_entry['label'] = source_label
             
             entries = []
             add_ass_format = False
@@ -444,7 +444,6 @@ async def addon_stream(manifest_token: str, content_type: str, content_id: str, 
                     if not extra_name and candidate.get('type') == 'local' and candidate.get('subtitle'):
                         s = candidate['subtitle']
                         extra_name = s.version_info or s.author
-                    has_extra_name = bool(extra_name)
                     if not extra_name:
                         short_id = rank_identifier[:8] if len(rank_identifier) >= 8 else rank_identifier
                         extra_name = f"{content_id}_{short_id}"
@@ -468,8 +467,9 @@ async def addon_stream(manifest_token: str, content_type: str, content_id: str, 
                         ),
                         'lang': preferred_lang
                     }
-                    if has_extra_name:
-                        extra_vtt_entry['label'] = subtitle_label(preferred_lang, extra_name)
+                    extra_source_label = subtitle_source_label(candidate)
+                    if extra_source_label:
+                        extra_vtt_entry['label'] = extra_source_label
                     
                     # ASS variant: same logic as primary result
                     add_extra_ass = False
@@ -552,8 +552,16 @@ async def addon_stream(manifest_token: str, content_type: str, content_id: str, 
 _DIRECT_FILE_EXTENSIONS = {'srt': 'srt', 'sub': 'sub', 'txt': 'sub'}
 
 
-def subtitle_label(lang, name):
-    return f"{get_language_name(lang)} · {name}"
+def subtitle_source_label(info):
+    subtitle = info.get('subtitle')
+    if info.get('type') == 'local' and subtitle:
+        return subtitle.author or 'Community'
+    provider_name = info.get('provider_name')
+    if not provider_name:
+        return None
+    from ..providers.registry import ProviderRegistry
+    provider = ProviderRegistry.get(provider_name)
+    return getattr(provider, 'display_name', None) or provider_name
 
 
 def with_direct_file_extension(download_url, provider_name, provider_metadata):
