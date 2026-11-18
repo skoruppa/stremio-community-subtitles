@@ -555,7 +555,7 @@ _DIRECT_FILE_EXTENSIONS = {'srt': 'srt', 'sub': 'sub', 'txt': 'sub'}
 def subtitle_source_label(info):
     subtitle = info.get('subtitle')
     if info.get('type') == 'local' and subtitle:
-        return subtitle.author or 'Community'
+        return f"SCS · {subtitle.author}" if subtitle.author else 'SCS'
     provider_name = info.get('provider_name')
     if not provider_name:
         return None
